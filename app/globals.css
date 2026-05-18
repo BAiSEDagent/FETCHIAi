@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Fetchi parchment background, near-black foreground */
+    --background: 44 26% 88%;            /* #EBE6D9 parchment */
+    --foreground: 30 4% 17%;             /* #2D2B2A near-black */
+
+    --card: 0 0% 100%;
+    --card-foreground: 30 4% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 4% 17%;
+
+    /* Brand green as primary */
+    --primary: 160 25% 47%;              /* #58937E brand green */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 44 26% 80%;
+    --secondary-foreground: 30 4% 17%;
+
+    --muted: 44 26% 82%;
+    --muted-foreground: 30 4% 35%;
+
+    --accent: 15 67% 52%;                /* #D85A30 coral */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 44 18% 72%;
+    --input: 44 18% 78%;
+    --ring: 160 25% 47%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 30 4% 17%;
+    --foreground: 44 26% 88%;
+    --card: 30 4% 20%;
+    --card-foreground: 44 26% 88%;
+    --popover: 30 4% 20%;
+    --popover-foreground: 44 26% 88%;
+    --primary: 160 25% 47%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 4% 25%;
+    --secondary-foreground: 44 26% 88%;
+    --muted: 30 4% 25%;
+    --muted-foreground: 44 10% 65%;
+    --accent: 15 67% 52%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 4% 28%;
+    --input: 30 4% 28%;
+    --ring: 160 25% 47%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-dm-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-outfit), system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Fetchi avatar — ツ tile used in the sidebar and landing */
+.fetchi-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #58937E;
+  color: white;
+  border: 3.5px solid #2D2B2A;
+  border-radius: 14px;
+  box-shadow: 5px 5px 0 #2D2B2A;
+  transform: rotate(-2deg);
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  font-weight: 700;
+}
+
+.fetchi-wordmark {
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
