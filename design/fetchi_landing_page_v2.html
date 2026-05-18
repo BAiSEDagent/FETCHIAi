@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fetchi — Find buyers who need you this week</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brand: #58937E;
+    --brand-dark: #3D6B5A;
+    --brand-light: #EAF3EF;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --parchment: #EBE6D9;
+    --dark: #2D2B2A;
+    --mid: #5a5550;
+    --light: #8a8580;
+    --white: #ffffff;
+    --serif: 'Outfit', Georgia, serif;
+    --sans: 'DM Sans', -apple-system, sans-serif;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--parchment);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(235, 230, 217, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(42,42,42,0.08);
+  }
+
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: white;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .nav-link {
+    font-size: 14px;
+    color: var(--mid);
+    cursor: pointer;
+    transition: color 0.15s;
+    text-decoration: none;
+  }
+
+  .nav-link:hover { color: var(--dark); }
+
+  .nav-cta {
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--dark);
+    color: white;
+    border: none;
+    border-radius: 100px;
+    padding: 9px 22px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .nav-cta:hover { background: var(--brand); }
+
+  /* HERO SPLIT */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: 65px;
+  }
+
+  /* LEFT PANEL */
+  .hero-left {
+    padding: 80px 56px 80px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 1px solid rgba(42,42,42,0.1);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: white;
+    border: 1.5px solid rgba(42,42,42,0.15);
+    border-radius: 100px;
+    padding: 5px 14px 5px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mid);
+    margin-bottom: 28px;
+    width: fit-content;
+  }
+
+  .eyebrow-pulse {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--brand);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .hero-h1 {
+    font-family: var(--serif);
+    font-size: 52px;
+    line-height: 1.05;
+    letter-spacing: -0.5px;
+    color: var(--dark);
+    margin-bottom: 22px;
+  }
+
+  .hero-h1 em {
+    font-style: italic;
+    color: var(--brand);
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--mid);
+    margin-bottom: 40px;
+    max-width: 400px;
+  }
+
+  .signup-box {
+    background: white;
+    border: 1.5px solid rgba(42,42,42,0.12);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+  }
+
+  .google-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 11px;
+    border: 1.5px solid rgba(42,42,42,0.15);
+    border-radius: 10px;
+    background: white;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--dark);
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .google-btn:hover {
+    border-color: rgba(42,42,42,0.3);
+    background: #fafaf8;
+  }
+
+  .google-icon {
+    width: 18px; height: 18px;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .divider-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(42,42,42,0.1);
+  }
+
+  .divider-text {
+    font-size: 12px;
+    color: var(--light);
+  }
+
+  .email-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid rgba(42,42,42,0.12);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: var(--sans);
+    color: var(--dark);
+    background: #fafaf8;
+    margin-bottom: 10px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .email-input:focus {
+    border-color: var(--brand);
+    background: white;
+  }
+
+  .email-input::placeholder { color: var(--light); }
+
+  .submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--dark);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .submit-btn:hover { background: var(--brand); }
+
+  .signup-note {
+    font-size: 11px;
+    color: var(--light);
+    text-align: center;
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  .signup-note a { color: var(--brand); text-decoration: none; }
+
+  /* RIGHT PANEL */
+  .hero-right {
+    background: var(--dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-right::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(29,158,117,0.15) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(216,90,48,0.1) 0%, transparent 60%);
+  }
+
+  .demo-header {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 28px;
+    z-index: 1;
+  }
+
+  .demo-panel {
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .demo-topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+
+  .topbar-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--brand);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .topbar-text { flex: 1; }
+
+  .topbar-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    line-height: 1.2;
+  }
+
+  .topbar-status {
+    font-size: 11px;
+    color: var(--brand);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+
+  .fetchi-msg {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px 14px 14px 4px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.55;
+    margin-bottom: 16px;
+  }
+
+  .leads-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .lead-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.2s;
+    cursor: pointer;
+  }
+
+  .lead-card:hover {
+    border-color: rgba(29,158,117,0.4);
+    background: rgba(29,158,117,0.08);
+  }
+
+  .lead-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .lead-left { flex: 1; }
+
+  .lead-biz {
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 4px;
+  }
+
+  .lead-signal {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .signal-pip {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .lead-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .score-badge {
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 100px;
+    padding: 3px 10px;
+  }
+
+  .score-high {
+    background: rgba(29,158,117,0.2);
+    color: #5DCAA5;
+    border: 1px solid rgba(29,158,117,0.3);
+  }
+
+  .score-mid {
+    background: rgba(216,90,48,0.2);
+    color: #F0997B;
+    border: 1px solid rgba(216,90,48,0.3);
+  }
+
+  .draft-btn {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 3px 9px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .draft-btn:hover {
+    background: var(--brand);
+    color: white;
+    border-color: var(--brand);
+  }
+
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .typing-indicator.visible { opacity: 1; }
+
+  .typing-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--brand);
+    animation: typingBounce 1.2s ease-in-out infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typingBounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-4px); opacity: 1; }
+  }
+
+  .scan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--brand);
+    background: rgba(29,158,117,0.12);
+    border: 1px solid rgba(29,158,117,0.2);
+    border-radius: 100px;
+    padding: 4px 12px;
+    margin-top: 16px;
+  }
+
+  .scan-spin {
+    width: 8px; height: 8px;
+    border: 1.5px solid rgba(29,158,117,0.3);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SOCIAL PROOF STRIP */
+  .proof-strip {
+    border-top: 1px solid rgba(42,42,42,0.08);
+    border-bottom: 1px solid rgba(42,42,42,0.08);
+    padding: 18px 48px;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    background: rgba(255,255,255,0.3);
+    overflow: hidden;
+  }
+
+  .proof-label {
+    font-size: 11px;
+    color: var(--light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .proof-ticker {
+    display: flex;
+    gap: 32px;
+    animation: ticker 20s linear infinite;
+    white-space: nowrap;
+  }
+
+  .proof-item {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mid);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .proof-pip {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--brand);
+    flex-shrink: 0;
+  }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* HOW IT WORKS */
+  .section {
+    padding: 96px 48px;
+  }
+
+  .section-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--brand);
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: 40px;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    text-align: center;
+    margin-bottom: 56px;
+    color: var(--dark);
+  }
+
+  .section-title em {
+    font-style: italic;
+    color: var(--brand);
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    max-width: 960px;
+    margin: 0 auto;
+    border: 2px solid var(--dark);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .step {
+    padding: 36px 28px;
+    position: relative;
+  }
+
+  .step:not(:last-child) {
+    border-right: 2px solid var(--dark);
+  }
+
+  .step-1 { background: var(--brand); }
+  .step-2 { background: var(--coral); }
+  .step-3 { background: var(--parchment); }
+
+  .step-num {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 32px;
+  }
+
+  .step-1 .step-num, .step-2 .step-num { color: rgba(255,255,255,0.5); }
+  .step-3 .step-num { color: rgba(42,42,42,0.35); }
+
+  .step-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+
+  .step-1 .step-title, .step-2 .step-title { color: white; }
+  .step-3 .step-title { color: var(--dark); }
+
+  .step-body {
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .step-1 .step-body, .step-2 .step-body { color: rgba(255,255,255,0.75); }
+  .step-3 .step-body { color: var(--mid); }
+
+  /* SIGNALS */
+  .signals-section {
+    padding: 0 48px 96px;
+  }
+
+  .signals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .sig-card {
+    background: white;
+    border: 1.5px solid rgba(42,42,42,0.12);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .sig-card:hover {
+    border-color: var(--brand);
+    transform: translateY(-2px);
+  }
+
+  .sig-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid rgba(42,42,42,0.1);
+  }
+
+  .sig-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+
+  .sig-body {
+    font-size: 12px;
+    color: var(--mid);
+    line-height: 1.55;
+  }
+
+  /* PRICING */
+  .pricing-section {
+    padding: 0 48px 96px;
+    background: white;
+  }
+
+  .pricing-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 96px 0 0;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 56px;
+  }
+
+  .price-card {
+    border: 2px solid rgba(42,42,42,0.12);
+    border-radius: 16px;
+    padding: 28px 22px;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+
+  .price-card:hover { border-color: var(--brand); }
+
+  .price-card.pop {
+    background: var(--dark);
+    border-color: var(--dark);
+  }
+
+  .pop-label {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--coral);
+    color: white;
+    border-radius: 100px;
+    padding: 3px 12px;
+    white-space: nowrap;
+    border: 2px solid var(--dark);
+  }
+
+  .price-tier {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--light);
+    margin-bottom: 12px;
+  }
+
+  .price-card.pop .price-tier { color: rgba(255,255,255,0.4); }
+
+  .price-amount {
+    font-family: var(--serif);
+    font-size: 40px;
+    color: var(--dark);
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .price-card.pop .price-amount { color: white; }
+
+  .price-per {
+    font-size: 12px;
+    color: var(--light);
+    margin-bottom: 20px;
+  }
+
+  .price-card.pop .price-per { color: rgba(255,255,255,0.4); }
+
+  .price-opps {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--brand);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(42,42,42,0.08);
+  }
+
+  .price-card.pop .price-opps {
+    color: #5DCAA5;
+    border-color: rgba(255,255,255,0.08);
+  }
+
+  .price-feat {
+    font-size: 12px;
+    color: var(--mid);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    line-height: 1.4;
+  }
+
+  .price-card.pop .price-feat { color: rgba(255,255,255,0.6); }
+
+  .feat-check {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--brand-light);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .price-card.pop .feat-check { background: rgba(29,158,117,0.3); }
+
+  .price-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 11px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1.5px solid rgba(42,42,42,0.15);
+    background: transparent;
+    color: var(--dark);
+  }
+
+  .price-btn:hover { background: var(--dark); color: white; border-color: var(--dark); }
+
+  .price-card.pop .price-btn {
+    background: white;
+    color: var(--dark);
+    border-color: white;
+  }
+
+  .price-card.pop .price-btn:hover { background: var(--brand-light); }
+
+  /* TOPUP NOTE */
+  .topup-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--mid);
+    margin-top: 20px;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .topup-note a { color: var(--brand); text-decoration: none; font-weight: 500; }
+
+  /* CTA */
+  .cta-section {
+    background: var(--dark);
+    padding: 96px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(29,158,117,0.12) 0%, transparent 70%);
+  }
+
+  .cta-title {
+    font-family: var(--serif);
+    font-size: 48px;
+    color: white;
+    line-height: 1.05;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .cta-title em { font-style: italic; color: var(--brand); }
+
+  .cta-sub {
+    font-size: 17px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 40px;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  .cta-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+  }
+
+  .cta-btn-primary {
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--sans);
+    background: var(--brand);
+    color: white;
+    border: none;
+    border-radius: 100px;
+    padding: 14px 32px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .cta-btn-primary:hover { background: var(--brand-dark); }
+
+  .cta-note {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    margin-top: 16px;
+    position: relative;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--dark);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 28px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-logo {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .footer-av {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--brand);
+    font-size: 10px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-link {
+    font-size: 13px;
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .footer-link:hover { color: rgba(255,255,255,0.7); }
+
+  .footer-copy {
+    font-size: 12px;
+    color: rgba(255,255,255,0.2);
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-avatar">ツ</div>
+    Fetchi
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="#how">How it works</a>
+    <a class="nav-link" href="#signals">Signals</a>
+    <a class="nav-link" href="#pricing">Pricing</a>
+  </div>
+  <button class="nav-cta">Get started free</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+
+  <!-- LEFT: SIGNUP -->
+  <div class="hero-left">
+    <div class="eyebrow">
+      <div class="eyebrow-pulse"></div>
+      Scanning your market right now
+    </div>
+
+    <h1 class="hero-h1">
+      Find buyers who<br>
+      need you <em>this week.</em>
+    </h1>
+
+    <p class="hero-sub">
+      Fetchi watches permits, storm reports, and new business activity — then tells you exactly who to call and what to say.
+    </p>
+
+    <div class="signup-box">
+      <button class="google-btn">
+        <svg class="google-icon" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">OR</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <input type="email" class="email-input" placeholder="Enter your email">
+      <button class="submit-btn">Continue with email</button>
+
+      <p class="signup-note">
+        Free for 7 days · 10 opportunities included · No card required<br>
+        By continuing you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- RIGHT: ANIMATED DEMO -->
+  <div class="hero-right">
+    <div class="demo-header">Live signal scan — Phoenix, AZ</div>
+
+    <div class="demo-panel">
+      <div class="demo-topbar">
+        <div class="topbar-avatar">ツ</div>
+        <div class="topbar-text">
+          <div class="topbar-name">Fetchi</div>
+          <div class="topbar-status">
+            <div class="status-dot"></div>
+            Scanning permits &amp; weather
+          </div>
+        </div>
+      </div>
+
+      <div class="fetchi-msg">
+        Found <strong style="color:white;">6 new opportunities</strong> in Phoenix this week. Here are the highest-scoring ones for your roofing business:
+      </div>
+
+      <div class="leads-stack" id="leadsStack">
+        <div class="lead-card" data-delay="400">
+          <div class="lead-left">
+            <div class="lead-biz">Mesa Commercial Partners</div>
+            <div class="lead-signal">
+              <div class="signal-pip" style="background:#EF9F27;"></div>
+              Hail storm · 2.1" reported · 3 days ago
+            </div>
+          </div>
+          <div class="lead-right">
+            <span class="score-badge score-high">94</span>
+            <button class="draft-btn">Draft email</button>
+          </div>
+        </div>
+
+        <div class="lead-card" data-delay="900">
+          <div class="lead-left">
+            <div class="lead-biz">Scottsdale Office Park LLC</div>
+            <div class="lead-signal">
+              <div class="signal-pip" style="background:#5DCAA5;"></div>
+              Permit filed · 12,000 sq ft commercial build
+            </div>
+          </div>
+          <div class="lead-right">
+            <span class="score-badge score-high">87</span>
+            <button class="draft-btn">Draft email</button>
+          </div>
+        </div>
+
+        <div class="lead-card" data-delay="1400">
+          <div class="lead-left">
+            <div class="lead-biz">Chandler Logistics Hub</div>
+            <div class="lead-signal">
+              <div class="signal-pip" style="background:#EF9F27;"></div>
+              Hail storm · same event · 3 days ago
+            </div>
+          </div>
+          <div class="lead-right">
+            <span class="score-badge score-mid">76</span>
+            <button class="draft-btn">Draft email</button>
+          </div>
+        </div>
+
+        <div class="lead-card" data-delay="1900">
+          <div class="lead-left">
+            <div class="lead-biz">Tempe Tech Campus</div>
+            <div class="lead-signal">
+              <div class="signal-pip" style="background:#5DCAA5;"></div>
+              New Google Maps listing · opened this week
+            </div>
+          </div>
+          <div class="lead-right">
+            <span class="score-badge score-mid">71</span>
+            <button class="draft-btn">Draft email</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+
+      <div class="scan-badge" id="scanBadge" style="opacity:0;transition:opacity 0.4s;">
+        <div class="scan-spin"></div>
+        Scanning 12 more signals...
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SOCIAL PROOF STRIP -->
+<div class="proof-strip">
+  <div class="proof-label">Live signals</div>
+  <div class="proof-ticker" id="ticker">
+    <div class="proof-item"><div class="proof-pip"></div>Roof permit · Dallas TX · 2 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>Hail event · Houston TX · 14 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>New tenant · Phoenix AZ · 22 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>Permit filed · Atlanta GA · 31 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>Storm report · Tampa FL · 45 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>New listing · Orlando FL · 58 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>HVAC permit · Denver CO · 1h ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>Commercial lease · Nashville TN · 1h ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>Roof permit · Dallas TX · 2 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>Hail event · Houston TX · 14 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>New tenant · Phoenix AZ · 22 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>Permit filed · Atlanta GA · 31 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>Storm report · Tampa FL · 45 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>New listing · Orlando FL · 58 min ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>HVAC permit · Denver CO · 1h ago</div>
+    <div class="proof-item"><div class="proof-pip"></div>Commercial lease · Nashville TN · 1h ago</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section" id="how">
+  <div class="section-eyebrow">How it works</div>
+  <h2 class="section-title">Signal. Score. <em>Send.</em></h2>
+  <div class="steps-grid">
+    <div class="step step-1">
+      <div class="step-num">Step 01</div>
+      <div class="step-title">Fetchi watches public signals</div>
+      <div class="step-body">Permit filings, storm damage reports, new business listings, and job postings. Every event that means someone needs your service — detected automatically.</div>
+    </div>
+    <div class="step step-2">
+      <div class="step-num">Step 02</div>
+      <div class="step-title">We score and explain why now</div>
+      <div class="step-body">Every lead gets a score and a reason. Not "this business might need you" — "this building just filed a permit for 8,000 sq ft of new office space in your target area."</div>
+    </div>
+    <div class="step step-3">
+      <div class="step-num">Step 03</div>
+      <div class="step-title">Fetchi drafts the outreach</div>
+      <div class="step-body">Ask Fetchi to write the email. It uses the signal — "I saw your new tenant is moving in May" — not a generic template. Personalized outreach in 10 seconds.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNALS -->
+<div class="signals-section" id="signals">
+  <div class="section-eyebrow" style="text-align:center;margin-bottom:14px;">What Fetchi watches</div>
+  <h2 class="section-title" style="margin-bottom:32px;">Real-world signals.<br><em>Real buying intent.</em></h2>
+  <div class="signals-grid">
+    <div class="sig-card">
+      <div class="sig-icon" style="background:#EAF3EF;">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="5" width="14" height="11" rx="1.5" stroke="#3D6B5A" stroke-width="1.5"/><path d="M5 5V4a4 4 0 018 0v1" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <div class="sig-title">Building permits</div>
+        <div class="sig-body">New construction and renovations mean someone needs cleaning, HVAC, roofing, or landscaping before move-in. 0–30 day window.</div>
+      </div>
+    </div>
+    <div class="sig-card">
+      <div class="sig-icon" style="background:#FAECE7;">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L11 7h5l-4 3 1.5 5L9 13l-4.5 2L6 10 2 7h5z" stroke="#993C1D" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div class="sig-title">Storm and weather events</div>
+        <div class="sig-body">Hail, wind, and flood reports create immediate roofing and restoration demand. 1–14 day emergency window, extending 6 months for full repairs.</div>
+      </div>
+    </div>
+    <div class="sig-card">
+      <div class="sig-icon" style="background:#E6F1FB;">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="2" stroke="#185FA5" stroke-width="1.5"/><path d="M5 9h8M5 12h5" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <div class="sig-title">New business listings</div>
+        <div class="sig-body">A new Google Maps listing means a new physical location — and every new location needs cleaning, HVAC, landscaping, and more from day one.</div>
+      </div>
+    </div>
+    <div class="sig-card">
+      <div class="sig-icon" style="background:#FAEEDA;">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="8" r="3" stroke="#854F0B" stroke-width="1.5"/><path d="M9 1v2M9 13v2M16 8h-2M4 8H2M14.2 3.8l-1.4 1.4M5.2 12.8l-1.4 1.4M14.2 12.2l-1.4-1.4M5.2 5.2L3.8 3.8" stroke="#854F0B" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <div class="sig-title">Job postings</div>
+        <div class="sig-body">A company hiring a Facilities Manager or Office Manager signals they're scaling and buying services. Beat the competition by knowing before they post on Angi.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="pricing-section" id="pricing">
+  <div class="pricing-inner">
+    <div class="section-eyebrow" style="text-align:center;">Pricing</div>
+    <h2 class="section-title" style="color:var(--dark);">Simple. <em style="color:var(--brand);">No surprises.</em></h2>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-tier">Starter</div>
+        <div class="price-amount">$49</div>
+        <div class="price-per">per month</div>
+        <div class="price-opps">40 delivered lead cards / month</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Only-when-I-ask + optional morning scout</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Basic evidence + outreach draft</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>1 territory · 1 user</div>
+        <button class="price-btn">Get started</button>
+      </div>
+
+      <div class="price-card pop">
+        <div class="pop-label">Most popular</div>
+        <div class="price-tier">Growth</div>
+        <div class="price-amount" style="color:white;">$129</div>
+        <div class="price-per">per month</div>
+        <div class="price-opps">140 delivered lead cards / month</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#5DCAA5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Everything in Starter</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#5DCAA5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Today’s Stack + Today’s Run</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#5DCAA5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Morning scout + up to 3/day cap</div>
+        <button class="price-btn">Get started</button>
+      </div>
+
+      <div class="price-card">
+        <div class="price-tier">Pro</div>
+        <div class="price-amount">$299</div>
+        <div class="price-per">per month</div>
+        <div class="price-opps">300 delivered lead cards / month</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Everything in Growth</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>CRM/webhook integrations</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Advanced filters + source controls</div>
+        <button class="price-btn">Get started</button>
+      </div>
+
+      <div class="price-card">
+        <div class="price-tier">Scale</div>
+        <div class="price-amount">$699</div>
+        <div class="price-per">per month</div>
+        <div class="price-opps">750 delivered lead cards / month</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Everything in Pro</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Custom scouting with hard spend caps</div>
+        <div class="price-feat"><div class="feat-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#3D6B5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>White-glove onboarding + priority support</div>
+        <button class="price-btn">Get started</button>
+      </div>
+    </div>
+    <p class="topup-note">Need more leads mid-month? <a href="#">Top up anytime</a> — bundles priced by plan and billing interval. No subscription required.</p>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2 class="cta-title">Your next customer<br>needs you <em>right now.</em></h2>
+  <p class="cta-sub">Fetchi is already watching. Start free and see who needs your service this week.</p>
+  <div class="cta-actions">
+    <button class="cta-btn-primary">Try Fetchi free — no card needed</button>
+  </div>
+  <p class="cta-note">7-day trial · 10 free opportunities · Cancel anytime</p>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">
+    <div class="footer-av">ツ</div>
+    Fetchi
+  </div>
+  <div class="footer-links">
+    <div class="footer-link">Privacy</div>
+    <div class="footer-link">Terms</div>
+    <div class="footer-link">Contact</div>
+  </div>
+  <div class="footer-copy">© 2026 Fetchi</div>
+</footer>
+
+<script>
+  // Animate lead cards in on load
+  function animateLeads() {
+    const cards = document.querySelectorAll('.lead-card')
+    const typing = document.getElementById('typingIndicator')
+    const scanBadge = document.getElementById('scanBadge')
+
+    typing.classList.add('visible')
+
+    cards.forEach((card, i) => {
+      const delay = parseInt(card.dataset.delay) || (i * 500 + 300)
+      setTimeout(() => {
+        card.classList.add('visible')
+      }, delay)
+    })
+
+    setTimeout(() => {
+      typing.classList.remove('visible')
+      scanBadge.style.opacity = '1'
+    }, 2600)
+  }
+
+  // Re-animate every 6 seconds
+  function startLoop() {
+    animateLeads()
+    setInterval(() => {
+      const cards = document.querySelectorAll('.lead-card')
+      const typing = document.getElementById('typingIndicator')
+      const scanBadge = document.getElementById('scanBadge')
+
+      cards.forEach(c => c.classList.remove('visible'))
+      scanBadge.style.opacity = '0'
+      typing.classList.add('visible')
+
+      setTimeout(() => { animateLeads() }, 600)
+    }, 7000)
+  }
+
+  window.addEventListener('load', () => {
+    setTimeout(startLoop, 600)
+  })
+</script>
+
+</body>
+</html>

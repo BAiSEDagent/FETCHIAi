@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fetchi.ai — Admin Screens Reference</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: #2D2B2A;
+      background: #F5F3EE;
+      line-height: 1.5;
+    }
+
+    /* ─── Reference file header ─── */
+    .ref-header {
+      background: #2D2B2A;
+      color: #EBE6D9;
+      padding: 32px 40px;
+      margin-bottom: 40px;
+    }
+    .ref-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .ref-header p {
+      font-size: 14px;
+      color: #999;
+      max-width: 600px;
+    }
+
+    /* ─── Section labels ─── */
+    .section-label {
+      background: #58937E;
+      color: white;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 8px 20px;
+      margin: 40px 40px 0;
+      border-radius: 8px 8px 0 0;
+      display: inline-block;
+    }
+    .section-note {
+      background: #EAF3EF;
+      color: #3D6B5A;
+      font-size: 12px;
+      padding: 10px 20px;
+      margin: 0 40px 20px;
+      border-radius: 0 8px 8px 8px;
+    }
+
+    /* ─── Screen container ─── */
+    .screen {
+      margin: 0 40px 40px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e0ddd6;
+      overflow: hidden;
+    }
+
+    /* ─── Admin shell (sidebar + content) ─── */
+    .admin-shell {
+      display: flex;
+      min-height: 700px;
+    }
+    .admin-sidebar {
+      width: 200px;
+      background: #1a1918;
+      padding: 20px 0;
+      flex-shrink: 0;
+    }
+    .admin-sidebar-brand {
+      padding: 0 16px 16px;
+      border-bottom: 1px solid #333;
+      margin-bottom: 12px;
+    }
+    .admin-sidebar-brand span {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: #58937E;
+      letter-spacing: -0.045em;
+    }
+    .admin-sidebar-brand small {
+      display: block;
+      font-size: 10px;
+      color: #666;
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .admin-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .admin-nav-item:hover { color: #ccc; background: rgba(255,255,255,0.03); }
+    .admin-nav-item.active { color: white; background: rgba(88,147,126,0.15); border-left: 3px solid #58937E; }
+    .admin-nav-icon { width: 16px; text-align: center; font-size: 14px; }
+    .admin-content {
+      flex: 1;
+      padding: 24px 28px;
+      background: #faf9f6;
+      overflow-x: auto;
+    }
+
+    /* ─── Page header ─── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .page-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 20px;
+      color: #2D2B2A;
+    }
+    .page-actions { display: flex; gap: 8px; }
+
+    /* ─── Metric cards ─── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .metric-card {
+      background: white;
+      border: 1px solid #e8e5de;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .metric-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .metric-value { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 24px; color: #2D2B2A; }
+    .metric-delta { font-size: 11px; margin-top: 2px; }
+    .delta-up { color: #3D6B5A; }
+    .delta-down { color: #D85A30; }
+
+    /* ─── Buttons ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: 1px solid #d0cdc6;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      background: white;
+      color: #2D2B2A;
+      cursor: pointer;
+    }
+    .btn:hover { background: #f5f3ee; }
+    .btn-primary { background: #58937E; color: white; border-color: #3D6B5A; }
+    .btn-primary:hover { background: #3D6B5A; }
+    .btn-danger { border-color: #D85A30; color: #D85A30; }
+    .btn-danger:hover { background: #fef2ee; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* ─── Badges ─── */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge-trial { background: #FFF3E0; color: #8B5E1A; }
+    .badge-starter { background: #E3F2FD; color: #1565C0; }
+    .badge-growth { background: #E8F5E9; color: #2E7D32; }
+    .badge-pro { background: #EDE7F6; color: #5E35B1; }
+    .badge-churned { background: #FFEBEE; color: #C62828; }
+    .badge-expired { background: #EFEBE9; color: #6D4C41; }
+
+    /* ─── Status dots ─── */
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot-green { background: #4CAF50; }
+    .dot-yellow { background: #FF9800; }
+    .dot-red { background: #f44336; }
+
+    /* ─── Status badges ─── */
+    .status-badge { padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 500; }
+    .sb-paid { background: #E8F5E9; color: #1B5E20; }
+    .sb-failed { background: #FFF3E0; color: #E65100; }
+    .sb-refund { background: #FFEBEE; color: #B71C1C; }
+    .sb-running { background: #E3F2FD; color: #0D47A1; }
+    .sb-queued { background: #FFF3E0; color: #8B5E1A; }
+    .sb-done { background: #E8F5E9; color: #1B5E20; }
+    .sb-error { background: #FFEBEE; color: #B71C1C; }
+    .sb-active { background: #E8F5E9; color: #1B5E20; }
+    .sb-draft { background: #FFF3E0; color: #8B5E1A; }
+    .sb-ab { background: #EDE7F6; color: #4527A0; }
+    .sb-healthy { background: #E8F5E9; color: #1B5E20; }
+    .sb-warning { background: #FFF3E0; color: #E65100; }
+
+    /* ─── Tables ─── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 8px 10px;
+      color: #888;
+      font-weight: 400;
+      font-size: 12px;
+      border-bottom: 1px solid #e8e5de;
+    }
+    .data-table td {
+      padding: 10px 10px;
+      border-bottom: 1px solid #f0ede6;
+      vertical-align: middle;
+    }
+    .data-table tr:hover td { background: #faf9f6; }
+
+    /* ─── Cards ─── */
+    .card {
+      background: white;
+      border: 1px solid #e8e5de;
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #2D2B2A;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    /* ─── Form fields (admin-style) ─── */
+    .field { margin-bottom: 10px; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #d0cdc6;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      background: white;
+      color: #2D2B2A;
+    }
+
+    /* ─── Tabs ─── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #e8e5de;
+      margin-bottom: 16px;
+    }
+    .tab {
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #888;
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active { color: #2D2B2A; border-bottom-color: #58937E; font-weight: 500; }
+
+    /* ─── Tier bar ─── */
+    .tier-bar {
+      display: flex;
+      gap: 2px;
+      height: 24px;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 6px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .tier-seg { display: flex; align-items: center; justify-content: center; }
+
+    /* ─── Progress bar ─── */
+    .progress { height: 4px; background: #e8e5de; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; background: #58937E; }
+
+    /* ─── Funnel ─── */
+    .funnel-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0ede6;
+    }
+    .funnel-label { width: 130px; flex-shrink: 0; font-size: 12px; color: #888; }
+    .funnel-bar {
+      flex: 1;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .funnel-num { width: 50px; flex-shrink: 0; font-size: 14px; font-weight: 500; text-align: right; }
+    .funnel-pct { width: 40px; flex-shrink: 0; font-size: 12px; color: #888; text-align: right; }
+    .funnel-drop { width: 70px; flex-shrink: 0; font-size: 11px; color: #D85A30; text-align: right; }
+
+    /* ─── Toggle ─── */
+    .toggle {
+      width: 40px; height: 22px;
+      background: #e0ddd6;
+      border-radius: 11px;
+      position: relative;
+      cursor: pointer;
+    }
+    .toggle.on { background: #58937E; }
+    .toggle .knob {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: white;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: left 0.2s;
+    }
+    .toggle.on .knob { left: 21px; }
+
+    /* ─── Agent run card ─── */
+    .run-card {
+      background: white;
+      border: 1px solid #e8e5de;
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+    .run-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .run-name { font-size: 13px; font-weight: 500; }
+    .run-detail { font-size: 12px; color: #888; line-height: 1.6; }
+    .run-detail strong { font-weight: 500; color: #2D2B2A; }
+
+    /* ─── Cohort heat cells ─── */
+    .cohort-high { background: #C8E6C9; color: #1B5E20; font-weight: 500; }
+    .cohort-mid { background: #E8F5E9; color: #2E7D32; font-weight: 500; }
+    .cohort-low { background: #FFF3E0; color: #E65100; font-weight: 500; }
+    .cohort-bad { background: #FFEBEE; color: #C62828; font-weight: 500; }
+
+    /* ─── Abuse flag ─── */
+    .abuse-flag {
+      background: white;
+      border: 1px solid #e8e5de;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .abuse-flag:hover { border-color: #d0cdc6; }
+
+    /* ─── Export row ─── */
+    .export-row {
+      background: white;
+      border: 1px solid #e8e5de;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+    .export-icon {
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* ─── Cost breakdown ─── */
+    .cost-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 4px 0;
+      border-bottom: 1px solid #f0ede6;
+    }
+    .cost-row:last-child { border-bottom: none; font-weight: 500; }
+
+    /* ─── Prompt card ─── */
+    .prompt-card {
+      background: white;
+      border: 1px solid #e8e5de;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+    }
+    .prompt-name { font-family: 'DM Sans', monospace; font-size: 14px; font-weight: 500; }
+    .prompt-preview {
+      background: #faf9f6;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-family: 'DM Sans', monospace;
+      color: #888;
+      max-height: 50px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ─── Announcement card ─── */
+    .announcement-card {
+      background: white;
+      border: 1px solid #e8e5de;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+    }
+
+    /* ─── Feature flag row ─── */
+    .ff-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0ede6;
+    }
+    .ff-name { font-family: 'DM Sans', monospace; font-size: 13px; font-weight: 500; }
+    .ff-desc { font-size: 11px; color: #888; margin-top: 2px; }
+
+    /* ─── Quick link tiles ─── */
+    .qlink-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .qlink {
+      background: #faf9f6;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+    .qlink:hover { background: #f0ede6; }
+    .qlink-icon { font-size: 20px; margin-bottom: 4px; color: #888; display: block; }
+    .qlink-label { font-size: 12px; color: #888; }
+
+    /* ─── Utility ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .mb-4 { margin-bottom: 4px; }
+    .mb-8 { margin-bottom: 8px; }
+    .mb-12 { margin-bottom: 12px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-20 { margin-bottom: 20px; }
+    .text-sm { font-size: 12px; }
+    .text-xs { font-size: 11px; }
+    .text-muted { color: #888; }
+    .text-danger { color: #D85A30; }
+    .fw-500 { font-weight: 500; }
+    .mono { font-family: 'DM Sans', monospace; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     REFERENCE FILE HEADER
+     ═══════════════════════════════════════════════════════════ -->
+<div class="ref-header">
+  <h1>Fetchi.ai — Admin Screens Reference</h1>
+  <p>
+    UI reference for the admin operations platform at /admin.
+    This file shows exact layouts, components, and data patterns for Claude Code to follow.
+    The admin uses the same design tokens (fonts, colors) as the main app but with a distinct
+    tool-like layout — no ツ branding, dark sidebar, utilitarian aesthetic.
+  </p>
+  <p style="margin-top:8px;font-size:12px;color:#666;">
+    Companion files: fetchi_core_screens.html (main app), fetchi_settings_screens.html (settings), fetchi_map_view.html (map tab)
+  </p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 1: ADMIN SIDEBAR NAV
+     Shows the admin shell layout with sidebar navigation
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 1: Admin shell + sidebar navigation</div>
+<div class="section-note">
+  Layout: /admin uses a separate Next.js layout group (admin). Dark sidebar (width 200px, bg #1a1918).
+  Not shared with the main app shell. Auth gated by FETCHI_ADMIN_USER_IDS env var, not Clerk org roles.
+</div>
+<div class="screen">
+  <div class="admin-shell" style="min-height:400px;">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand">
+        <span>fetchi</span>
+        <small>Admin console</small>
+      </div>
+      <div class="admin-nav-item active">
+        <span class="admin-nav-icon">📊</span> Dashboard
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">🏢</span> Workspaces
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">💳</span> Billing
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">🎧</span> Support
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">🤖</span> Agents
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">💬</span> Prompts
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">📈</span> Metrics
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">🛡️</span> Abuse
+        <span style="background:#D85A30;color:white;padding:1px 6px;border-radius:999px;font-size:10px;margin-left:auto;">3</span>
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">📦</span> Data export
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">🚩</span> Flags
+      </div>
+      <div class="admin-nav-item">
+        <span class="admin-nav-icon">📢</span> Announcements
+      </div>
+    </div>
+    <div class="admin-content" style="display:flex;align-items:center;justify-content:center;">
+      <div style="text-align:center;color:#888;">
+        <div style="font-size:40px;margin-bottom:12px;">📊</div>
+        <div style="font-family:'Outfit',sans-serif;font-weight:600;font-size:18px;color:#2D2B2A;margin-bottom:4px;">Admin console</div>
+        <div style="font-size:13px;">Select a section from the sidebar</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 2: DASHBOARD
+     /admin/dashboard — the first thing you see every morning
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 2: Dashboard — /admin/dashboard</div>
+<div class="section-note">
+  Route: GET /admin/dashboard. First screen on login. Shows business health at a glance.
+  Metric cards across top, tier distribution bar, recent signups table, quick action buttons.
+</div>
+<div class="screen">
+  <div class="admin-shell">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">📊</span> Dashboard</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">🏢</span> Workspaces</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">💳</span> Billing</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">🎧</span> Support</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">🤖</span> Agents</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">📈</span> Metrics</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">🛡️</span> Abuse <span style="background:#D85A30;color:white;padding:1px 6px;border-radius:999px;font-size:10px;margin-left:auto;">3</span></div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header">
+        <span class="page-title">Dashboard</span>
+        <span class="text-xs text-muted">Last updated: 2 min ago</span>
+      </div>
+
+      <!-- Metric cards row -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Active workspaces</div>
+          <div class="metric-value">24</div>
+          <div class="metric-delta delta-up">↑ +3 this week</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">MRR</div>
+          <div class="metric-value">$4,183</div>
+          <div class="metric-delta delta-up">↑ +12% vs last month</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Leads today</div>
+          <div class="metric-value">47</div>
+          <div class="metric-delta text-muted">30-day avg: 38</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Trial → paid (30d)</div>
+          <div class="metric-value">34%</div>
+          <div class="metric-delta delta-down">↓ -2% vs last month</div>
+        </div>
+      </div>
+
+      <!-- Tier distribution -->
+      <div class="mb-8" style="font-size:13px;font-weight:500;">Tier distribution</div>
+      <div class="tier-bar mb-16">
+        <div class="tier-seg" style="flex:3;background:#FFF3E0;color:#8B5E1A;">Trial (3)</div>
+        <div class="tier-seg" style="flex:6;background:#E3F2FD;color:#1565C0;">Starter (6)</div>
+        <div class="tier-seg" style="flex:6;background:#E8F5E9;color:#2E7D32;">Growth (6)</div>
+        <div class="tier-seg" style="flex:5;background:#EDE7F6;color:#5E35B1;">Pro (5)</div>
+        <div class="tier-seg" style="flex:2;background:#FFEBEE;color:#C62828;">Churned (2)</div>
+        <div class="tier-seg" style="flex:1;background:#EFEBE9;color:#6D4C41;">Exp (1)</div>
+      </div>
+
+      <!-- Secondary metrics row -->
+      <div class="grid-3 mb-20">
+        <div class="metric-card">
+          <div class="metric-label">Agent health</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:6px;">
+            <span class="status-dot dot-green"></span> <span style="font-size:12px;">Signal</span>
+            <span class="status-dot dot-green"></span> <span style="font-size:12px;">Enrichment</span>
+            <span class="status-dot dot-yellow"></span> <span style="font-size:12px;">Scoring</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Revenue at risk</div>
+          <div class="metric-value" style="color:#D85A30;">$198</div>
+          <div class="text-xs text-muted">1 past-due account (4 days)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">API cost today</div>
+          <div class="metric-value">$6.40</div>
+          <div class="text-xs text-muted">30-day avg: $5.80</div>
+        </div>
+      </div>
+
+      <!-- Recent signups -->
+      <div class="mb-8" style="font-size:13px;font-weight:500;">Recent signups</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Business</th><th>Vertical</th><th>Plan</th><th>Signed up</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fw-500">Greenleaf Landscaping</td>
+            <td class="text-muted">Landscaping</td>
+            <td><span class="badge badge-growth">Growth</span></td>
+            <td class="text-muted text-sm">May 10, 2026</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td class="fw-500">ProShine Cleaning Co</td>
+            <td class="text-muted">Commercial cleaning</td>
+            <td><span class="badge badge-starter">Starter</span></td>
+            <td class="text-muted text-sm">May 9, 2026</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td class="fw-500">TrueNorth Roofing</td>
+            <td class="text-muted">Roofing</td>
+            <td><span class="badge badge-pro">Pro</span></td>
+            <td class="text-muted text-sm">May 8, 2026</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td class="fw-500">Apex HVAC Solutions</td>
+            <td class="text-muted">HVAC</td>
+            <td><span class="badge badge-trial">Trial</span></td>
+            <td class="text-muted text-sm">May 7, 2026</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 3: WORKSPACES LIST
+     /admin/workspaces — sortable, filterable customer table
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 3: Workspaces list — /admin/workspaces</div>
+<div class="section-note">
+  Route: GET /admin/workspaces. Paginated, sortable, filterable list of all workspaces.
+  Filter pills: All, Active, Trial, At risk, Churned. Plan dropdown filter. Search by name/email/ID.
+  Columns: Business (name + vertical), Plan badge, Health dot, Credits, MRR, Leads, Signed up, View button.
+  Click any row → workspace detail view.
+</div>
+<div class="screen">
+  <div class="admin-shell">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">📊</span> Dashboard</div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">🏢</span> Workspaces</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">💳</span> Billing</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header">
+        <div>
+          <span class="page-title">Workspaces</span>
+          <span class="text-sm text-muted" style="margin-left:8px;">24 total</span>
+        </div>
+        <div class="page-actions">
+          <input type="text" placeholder="Search business name..." style="padding:7px 12px;border:1px solid #d0cdc6;border-radius:8px;font-size:13px;width:200px;" />
+          <select style="padding:7px 10px;border:1px solid #d0cdc6;border-radius:8px;font-size:13px;">
+            <option>All plans</option><option>Trial</option><option>Starter</option><option>Growth</option><option>Pro</option>
+          </select>
+          <button class="btn">↓ Export</button>
+        </div>
+      </div>
+
+      <!-- Filter pills -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;">
+        <span style="padding:4px 12px;border-radius:999px;font-size:12px;border:1px solid #d0cdc6;background:white;font-weight:500;">All</span>
+        <span style="padding:4px 12px;border-radius:999px;font-size:12px;border:1px solid #e8e5de;color:#888;">Active</span>
+        <span style="padding:4px 12px;border-radius:999px;font-size:12px;border:1px solid #e8e5de;color:#888;">Trial</span>
+        <span style="padding:4px 12px;border-radius:999px;font-size:12px;border:1px solid #e8e5de;color:#888;">At risk</span>
+        <span style="padding:4px 12px;border-radius:999px;font-size:12px;border:1px solid #e8e5de;color:#888;">Churned</span>
+      </div>
+
+      <!-- Table -->
+      <table class="data-table" style="table-layout:fixed;">
+        <thead>
+          <tr>
+            <th style="width:24%;">Business ↕</th>
+            <th style="width:10%;">Plan ↕</th>
+            <th style="width:7%;">Health</th>
+            <th style="width:9%;">Credits ↕</th>
+            <th style="width:9%;">MRR ↕</th>
+            <th style="width:8%;">Leads</th>
+            <th style="width:14%;">Signed up ↓</th>
+            <th style="width:8%;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="fw-500">Greenleaf Landscaping</div><div class="text-xs text-muted">Landscaping</div></td>
+            <td><span class="badge badge-growth">Growth</span></td>
+            <td style="text-align:center;"><span class="status-dot dot-green"></span></td>
+            <td>142</td>
+            <td class="fw-500">$149</td>
+            <td>87</td>
+            <td class="text-sm text-muted">May 10, 2026</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td><div class="fw-500">ProShine Cleaning Co</div><div class="text-xs text-muted">Commercial cleaning</div></td>
+            <td><span class="badge badge-starter">Starter</span></td>
+            <td style="text-align:center;"><span class="status-dot dot-green"></span></td>
+            <td>28</td>
+            <td class="fw-500">$49</td>
+            <td>34</td>
+            <td class="text-sm text-muted">May 9, 2026</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td><div class="fw-500">Apex HVAC Solutions</div><div class="text-xs text-muted">HVAC</div></td>
+            <td><span class="badge badge-trial">Trial</span></td>
+            <td style="text-align:center;"><span class="status-dot dot-yellow"></span></td>
+            <td>3</td>
+            <td class="text-muted">—</td>
+            <td>4</td>
+            <td class="text-sm text-muted">May 7, 2026</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td><div class="fw-500">Metro Plumbing Pros</div><div class="text-xs text-muted">Plumbing</div></td>
+            <td><span class="badge badge-trial">Trial</span></td>
+            <td style="text-align:center;"><span class="status-dot dot-red"></span></td>
+            <td>0</td>
+            <td class="text-muted">—</td>
+            <td>5</td>
+            <td class="text-sm text-muted">May 3, 2026</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td><div class="fw-500">Titan Concrete</div><div class="text-xs text-muted">Concrete</div></td>
+            <td><span class="badge badge-churned">Churned</span></td>
+            <td style="text-align:center;"><span class="status-dot dot-red"></span></td>
+            <td>0</td>
+            <td class="text-muted">—</td>
+            <td>44</td>
+            <td class="text-sm text-muted">Apr 18, 2026</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12px;color:#888;">
+        <span>Showing 1–5 of 24</span>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-sm" style="font-weight:500;">1</button>
+          <button class="btn btn-sm">2</button>
+          <button class="btn btn-sm">3</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 4: WORKSPACE DETAIL
+     /admin/workspaces/[id] — full 360° customer profile
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 4: Workspace detail — /admin/workspaces/[id]</div>
+<div class="section-note">
+  Route: GET /admin/workspaces/[id]. Shows everything about one workspace: business info, subscription,
+  opportunities list, agent runs, admin notes with category selector, activity timeline, and quick actions
+  (disable, extend trial, add credits, impersonate, reset onboarding).
+</div>
+<div class="screen">
+  <div class="admin-shell">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">📊</span> Dashboard</div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">🏢</span> Workspaces</div>
+    </div>
+    <div class="admin-content">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+        <span class="text-sm text-muted" style="cursor:pointer;">← Workspaces</span>
+        <span class="text-muted">/</span>
+        <span class="page-title" style="font-size:18px;">Greenleaf Landscaping</span>
+        <span class="badge badge-growth" style="margin-left:4px;">Growth</span>
+        <span class="status-dot dot-green" style="margin-left:4px;"></span>
+      </div>
+
+      <!-- Two-column layout: main + sidebar -->
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:20px;">
+        <!-- Left column: data sections -->
+        <div>
+          <!-- Business info card -->
+          <div class="card mb-16">
+            <div class="card-title">Business profile</div>
+            <div class="grid-2" style="font-size:13px;">
+              <div><span class="text-muted">Vertical:</span> Landscaping</div>
+              <div><span class="text-muted">Location:</span> Dallas-Fort Worth, TX</div>
+              <div><span class="text-muted">Service area:</span> 25 miles</div>
+              <div><span class="text-muted">Onboarding:</span> Complete ✓</div>
+              <div><span class="text-muted">Owner:</span> sarah@greenleaf.com</div>
+              <div><span class="text-muted">Last active:</span> 2 hours ago</div>
+            </div>
+          </div>
+
+          <!-- Subscription card -->
+          <div class="card mb-16">
+            <div class="card-title">Subscription</div>
+            <div class="grid-2" style="font-size:13px;">
+              <div><span class="text-muted">Tier:</span> Growth ($149/mo)</div>
+              <div><span class="text-muted">Status:</span> <span style="color:#2E7D32;">Active</span></div>
+              <div><span class="text-muted">Credits used:</span> 58 / 200</div>
+              <div><span class="text-muted">Resets:</span> Jun 10, 2026</div>
+              <div><span class="text-muted">Payment:</span> Visa •••• 4242</div>
+              <div><span class="text-muted">Since:</span> Apr 15, 2026</div>
+            </div>
+            <div class="progress" style="margin-top:10px;">
+              <div class="progress-fill" style="width:29%;"></div>
+            </div>
+            <div class="text-xs text-muted" style="margin-top:4px;">142 credits remaining</div>
+          </div>
+
+          <!-- Recent opportunities -->
+          <div class="card mb-16">
+            <div class="card-title">Recent opportunities (last 20)</div>
+            <table class="data-table">
+              <thead><tr><th>Prospect</th><th>Signal</th><th>Score</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="fw-500">Highland Park Estates</td>
+                  <td class="text-sm">Permit filing</td>
+                  <td class="fw-500">94</td>
+                  <td><span class="badge" style="background:#E8F5E9;color:#2E7D32;">Won</span></td>
+                  <td class="text-sm text-muted">May 9</td>
+                </tr>
+                <tr>
+                  <td class="fw-500">Lakewood HOA</td>
+                  <td class="text-sm">Storm damage</td>
+                  <td class="fw-500">88</td>
+                  <td><span class="badge" style="background:#E3F2FD;color:#1565C0;">Contacted</span></td>
+                  <td class="text-sm text-muted">May 8</td>
+                </tr>
+                <tr>
+                  <td class="fw-500">Frisco Dev Corp</td>
+                  <td class="text-sm">New construction</td>
+                  <td class="fw-500">76</td>
+                  <td><span class="badge" style="background:#FFF3E0;color:#8B5E1A;">New</span></td>
+                  <td class="text-sm text-muted">May 7</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Admin notes -->
+          <div class="card">
+            <div class="card-title">Admin notes</div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <textarea placeholder="Add a note..." style="flex:1;padding:8px;border:1px solid #d0cdc6;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;height:60px;resize:vertical;"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+              <select style="padding:5px 10px;border:1px solid #d0cdc6;border-radius:8px;font-size:12px;">
+                <option>General</option><option>Support</option><option>Billing</option><option>Abuse</option>
+              </select>
+              <button class="btn btn-primary btn-sm">Add note</button>
+            </div>
+            <!-- Existing notes -->
+            <div style="border-top:1px solid #f0ede6;padding-top:12px;">
+              <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;">
+                  <span class="text-sm fw-500">Extended trial by 7 days — customer was on vacation during first week</span>
+                  <span class="text-xs text-muted">May 5, 2026</span>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:4px;">
+                  <span class="status-badge sb-active">Support</span>
+                  <span class="text-xs text-muted">by Adam T.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column: quick actions + timeline -->
+        <div>
+          <div class="card mb-16">
+            <div class="card-title">Quick actions</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <button class="btn" style="width:100%;justify-content:flex-start;">🔍 Impersonate (read-only)</button>
+              <button class="btn" style="width:100%;justify-content:flex-start;">⏳ Extend trial</button>
+              <button class="btn" style="width:100%;justify-content:flex-start;">💰 Add credits</button>
+              <button class="btn" style="width:100%;justify-content:flex-start;">🔄 Reset onboarding</button>
+              <button class="btn" style="width:100%;justify-content:flex-start;">📧 Resend digest</button>
+              <button class="btn btn-danger" style="width:100%;justify-content:flex-start;">⏸ Disable workspace</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Activity timeline</div>
+            <div style="font-size:12px;">
+              <div style="padding:6px 0;border-bottom:1px solid #f0ede6;">
+                <div class="text-muted text-xs">2h ago</div>
+                <div>Viewed lead: Highland Park Estates</div>
+              </div>
+              <div style="padding:6px 0;border-bottom:1px solid #f0ede6;">
+                <div class="text-muted text-xs">5h ago</div>
+                <div>Signal detected: storm_damage in Dallas</div>
+              </div>
+              <div style="padding:6px 0;border-bottom:1px solid #f0ede6;">
+                <div class="text-muted text-xs">Yesterday</div>
+                <div>Outreach sent to Lakewood HOA</div>
+              </div>
+              <div style="padding:6px 0;">
+                <div class="text-muted text-xs">May 8</div>
+                <div>Subscription renewed ($149)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 5: BILLING OPERATIONS
+     /admin/billing — refunds, credits, subscription changes
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 5: Billing operations — /admin/billing</div>
+<div class="section-note">
+  Route: GET /admin/billing/overview. MRR + churn metrics, tier breakdown, quick action cards
+  (process refund, adjust credits, change subscription, extend trial), recent transactions table.
+  All money ops go through Stripe API — never modify workspace_subscriptions directly.
+</div>
+<div class="screen">
+  <div class="admin-shell">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">📊</span> Dashboard</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">🏢</span> Workspaces</div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">💳</span> Billing</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header">
+        <span class="page-title">Billing operations</span>
+        <div class="page-actions">
+          <button class="btn">⚠ Failed payments</button>
+          <button class="btn">📊 Revenue report</button>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Monthly recurring revenue</div>
+          <div class="metric-value">$4,183</div>
+          <div class="metric-delta delta-up">↑ +12% vs last month</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Active subscriptions</div>
+          <div class="metric-value">18</div>
+          <div class="metric-delta delta-up">↑ +3 this month</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Trial → paid rate</div>
+          <div class="metric-value">34%</div>
+          <div class="metric-delta delta-down">↓ -2% vs last month</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Churn rate</div>
+          <div class="metric-value">4.2%</div>
+          <div class="metric-delta delta-up">↑ improved from 5.8%</div>
+        </div>
+      </div>
+
+      <!-- Quick actions grid -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;">Quick actions</div>
+      <div class="grid-2 mb-20">
+        <!-- Refund card -->
+        <div class="card">
+          <div class="card-title"><span style="color:#D85A30;">↩</span> Process refund</div>
+          <div class="card-desc">Issue full or partial refund via Stripe. Credits auto-adjusted.</div>
+          <div class="field"><label>Workspace</label><select><option>Select workspace...</option></select></div>
+          <div class="field"><label>Amount</label><input type="text" placeholder="$0.00" /></div>
+          <div style="display:flex;gap:8px;"><button class="btn btn-danger">Process refund</button><button class="btn">Full refund</button></div>
+        </div>
+        <!-- Credits card -->
+        <div class="card">
+          <div class="card-title"><span style="color:#FF9800;">●</span> Adjust credits</div>
+          <div class="card-desc">Add or remove credits manually. Logs audit entry with reason.</div>
+          <div class="field"><label>Workspace</label><select><option>Select workspace...</option></select></div>
+          <div style="display:flex;gap:8px;">
+            <div class="field" style="flex:1;"><label>Credits</label><input type="number" placeholder="10" /></div>
+            <div class="field" style="flex:1;"><label>Reason</label><select><option>Goodwill</option><option>Bug compensation</option><option>Beta tester</option></select></div>
+          </div>
+          <button class="btn btn-primary">Apply credits</button>
+        </div>
+        <!-- Subscription change card -->
+        <div class="card">
+          <div class="card-title"><span style="color:#58937E;">↗</span> Change subscription</div>
+          <div class="card-desc">Upgrade, downgrade, or cancel. Proration handled by Stripe.</div>
+          <div class="field"><label>Workspace</label><select><option>Select workspace...</option></select></div>
+          <div class="field"><label>New plan</label><select><option>Starter ($49/mo)</option><option>Growth ($149/mo)</option><option>Pro ($349/mo)</option></select></div>
+          <div style="display:flex;gap:8px;"><button class="btn btn-primary">Update plan</button><button class="btn btn-danger">Cancel sub</button></div>
+        </div>
+        <!-- Extend trial card -->
+        <div class="card">
+          <div class="card-title"><span style="color:#5E35B1;">🎁</span> Extend trial</div>
+          <div class="card-desc">Give trial workspaces more time or credits to evaluate.</div>
+          <div class="field"><label>Workspace</label><select><option>Select workspace...</option></select></div>
+          <div style="display:flex;gap:8px;">
+            <div class="field" style="flex:1;"><label>Extra days</label><input type="number" placeholder="7" /></div>
+            <div class="field" style="flex:1;"><label>Bonus credits</label><input type="number" placeholder="5" /></div>
+          </div>
+          <button class="btn btn-primary">Extend trial</button>
+        </div>
+      </div>
+
+      <!-- Recent transactions -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;">Recent transactions</div>
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Workspace</th><th>Type</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="text-sm text-muted">May 10</td>
+            <td>TrueNorth Roofing</td>
+            <td>Subscription</td>
+            <td class="fw-500">$349.00</td>
+            <td><span class="status-badge sb-paid">Paid</span></td>
+            <td><button class="btn btn-sm">Details</button></td>
+          </tr>
+          <tr>
+            <td class="text-sm text-muted">May 8</td>
+            <td>Metro Plumbing Pros</td>
+            <td>Top-up (10 credits)</td>
+            <td class="fw-500">$29.00</td>
+            <td><span class="status-badge sb-failed">Failed</span></td>
+            <td><button class="btn btn-sm" style="border-color:#D85A30;color:#D85A30;">Investigate</button></td>
+          </tr>
+          <tr>
+            <td class="text-sm text-muted">May 7</td>
+            <td>Titan Concrete</td>
+            <td>Refund</td>
+            <td class="fw-500" style="color:#D85A30;">-$149.00</td>
+            <td><span class="status-badge sb-refund">Refunded</span></td>
+            <td><button class="btn btn-sm">Details</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 6: SUPPORT TOOLS
+     /admin/support — customer lookup and quick support actions
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 6: Support tools — /admin/support</div>
+<div class="section-note">
+  Route: GET /admin/support/search. Customer lookup searches across workspace_settings, Clerk users,
+  Stripe customers, and the events table. Quick action tiles for common support scenarios.
+</div>
+<div class="screen">
+  <div class="admin-shell" style="min-height:500px;">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">📊</span> Dashboard</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">🏢</span> Workspaces</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">💳</span> Billing</div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">🎧</span> Support</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header"><span class="page-title">Support tools</span></div>
+
+      <!-- Lookup -->
+      <div class="card mb-20">
+        <div class="card-title">🔍 Customer lookup</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input type="text" placeholder="Search by email, business name, workspace ID, or Clerk user ID..." style="flex:1;padding:8px 12px;border:1px solid #d0cdc6;border-radius:8px;font-size:13px;" />
+          <button class="btn btn-primary">Search</button>
+        </div>
+        <div class="text-xs text-muted">Searches across workspace_settings, Clerk users, Stripe customers, and events table</div>
+      </div>
+
+      <!-- Quick action tiles -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;">Quick actions</div>
+      <div class="qlink-grid">
+        <div class="qlink"><span class="qlink-icon">💳</span><span class="qlink-label">Failed payments</span></div>
+        <div class="qlink"><span class="qlink-icon">⏰</span><span class="qlink-label">Expiring trials</span></div>
+        <div class="qlink"><span class="qlink-icon">🔋</span><span class="qlink-label">Zero credits</span></div>
+        <div class="qlink"><span class="qlink-icon">💤</span><span class="qlink-label">Inactive 7d+</span></div>
+        <div class="qlink"><span class="qlink-icon">🐛</span><span class="qlink-label">Agent errors</span></div>
+        <div class="qlink"><span class="qlink-icon">📋</span><span class="qlink-label">Event timeline</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 7: ABUSE DETECTION
+     /admin/abuse — auto-flagging, severity, resolution
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 7: Abuse detection — /admin/abuse</div>
+<div class="section-note">
+  Route: GET /admin/abuse/flags. Auto-detected flags from nightly abuse query.
+  Each flag: severity dot (red=high, yellow=medium, blue=low), title, detail, timestamp, workspace ID.
+  Actions: Investigate, Dismiss, Merge (for duplicates), Ban. Detection rules panel at bottom.
+  Data lives in abuse_flags table.
+</div>
+<div class="screen">
+  <div class="admin-shell">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">📊</span> Dashboard</div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">🛡️</span> Abuse <span style="background:#D85A30;color:white;padding:1px 6px;border-radius:999px;font-size:10px;margin-left:auto;">3</span></div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header"><span class="page-title">Abuse detection</span></div>
+
+      <!-- Summary cards -->
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-label">Open flags</div><div class="metric-value" style="color:#D85A30;">3</div></div>
+        <div class="metric-card"><div class="metric-label">High severity</div><div class="metric-value">1</div></div>
+        <div class="metric-card"><div class="metric-label">Resolved this month</div><div class="metric-value">7</div></div>
+        <div class="metric-card"><div class="metric-label">Abuse rate</div><div class="metric-value">0.4%</div></div>
+      </div>
+
+      <!-- Flags -->
+      <div class="abuse-flag">
+        <span class="status-dot dot-red" style="margin-top:5px;flex-shrink:0;"></span>
+        <div style="flex:1;">
+          <div class="fw-500" style="font-size:13px;">Rapid credit consumption — Metro Plumbing Pros</div>
+          <div class="text-sm text-muted" style="line-height:1.5;">Consumed 47 credits in 2 hours (normal: ~5/day). Possible API abuse. All leads immediately exported.</div>
+          <div class="text-xs text-muted" style="margin-top:4px;">Flagged 3h ago · Auto-detected · workspace_id: ws_mp_001</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-sm">Investigate</button>
+          <button class="btn btn-sm">Dismiss</button>
+        </div>
+      </div>
+
+      <div class="abuse-flag">
+        <span class="status-dot dot-yellow" style="margin-top:5px;flex-shrink:0;"></span>
+        <div style="flex:1;">
+          <div class="fw-500" style="font-size:13px;">Disposable email signup attempt</div>
+          <div class="text-sm text-muted" style="line-height:1.5;">3 signup attempts from guerrillamail.com domains. Blocked by Clerk but pattern suggests bot activity.</div>
+          <div class="text-xs text-muted" style="margin-top:4px;">Flagged 1h ago · Auto-detected · No workspace created</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-sm">Investigate</button>
+          <button class="btn btn-sm">Dismiss</button>
+        </div>
+      </div>
+
+      <div class="abuse-flag" style="margin-bottom:20px;">
+        <span class="status-dot dot-yellow" style="margin-top:5px;flex-shrink:0;"></span>
+        <div style="flex:1;">
+          <div class="fw-500" style="font-size:13px;">Duplicate workspace — AllSeason Gutters</div>
+          <div class="text-sm text-muted" style="line-height:1.5;">Same business name + service area under different email. Original expired 18 days ago. Possible trial reset.</div>
+          <div class="text-xs text-muted" style="margin-top:4px;">Flagged 6h ago · Auto-detected · workspace_id: ws_ag_002</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-sm">Investigate</button>
+          <button class="btn btn-sm">Merge</button>
+          <button class="btn btn-sm">Dismiss</button>
+        </div>
+      </div>
+
+      <!-- Detection rules -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;">Detection rules</div>
+      <div class="grid-2">
+        <div style="background:#faf9f6;border-radius:8px;padding:10px;font-size:12px;">
+          <div class="fw-500">⚡ Rapid consumption</div><div class="text-muted">>20 credits/hour triggers flag</div>
+        </div>
+        <div style="background:#faf9f6;border-radius:8px;padding:10px;font-size:12px;">
+          <div class="fw-500">👥 Duplicate detection</div><div class="text-muted">Same biz name + service area match</div>
+        </div>
+        <div style="background:#faf9f6;border-radius:8px;padding:10px;font-size:12px;">
+          <div class="fw-500">📧 Email patterns</div><div class="text-muted">Disposable domains, rapid signups</div>
+        </div>
+        <div style="background:#faf9f6;border-radius:8px;padding:10px;font-size:12px;">
+          <div class="fw-500">🔌 API abuse</div><div class="text-muted">>100 API calls/min per workspace</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 8: AGENT OPERATIONS
+     /admin/agents — live runs, queue, throughput, costs
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 8: Agent operations — /admin/agents</div>
+<div class="section-note">
+  Route: GET /admin/agents/health. Active runs with progress bars, queue depth, 24h throughput chart,
+  run history table with debug buttons on failures, and daily cost breakdown (Claude API + external APIs).
+  Emergency controls: Pause all / Resume all buttons.
+</div>
+<div class="screen">
+  <div class="admin-shell">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">📊</span> Dashboard</div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">🤖</span> Agents</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header">
+        <span class="page-title">Agent operations</span>
+        <div class="page-actions">
+          <button class="btn btn-danger">⏸ Pause all</button>
+          <button class="btn">📋 Full logs</button>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-label">Active runs</div><div class="metric-value">3</div><div class="text-xs text-muted">2 signal, 1 enrichment</div></div>
+        <div class="metric-card"><div class="metric-label">Queued</div><div class="metric-value">12</div><div class="text-xs text-muted">Est. clear in 8 min</div></div>
+        <div class="metric-card"><div class="metric-label">Completed (24h)</div><div class="metric-value">847</div><div class="text-xs text-muted">98.2% success rate</div></div>
+        <div class="metric-card"><div class="metric-label">Avg run time</div><div class="metric-value">4.2s</div><div class="text-xs text-muted">P95: 11.8s</div></div>
+      </div>
+
+      <!-- Active runs -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;">Active runs</div>
+      <div class="grid-2 mb-20">
+        <div class="run-card">
+          <div class="run-head">
+            <span class="run-name">Signal — Greenleaf Landscaping</span>
+            <span class="status-badge sb-running">Running</span>
+          </div>
+          <div class="run-detail">Agent: <strong>Haiku 4.5</strong> · Query: <strong>storm_damage</strong><br/>Engine: <strong>google_news_light</strong> · Started: 42s ago</div>
+          <div class="progress" style="margin-top:8px;"><div class="progress-fill" style="width:65%;"></div></div>
+        </div>
+        <div class="run-card">
+          <div class="run-head">
+            <span class="run-name">Enrichment — Rapid Restoration TX</span>
+            <span class="status-badge sb-running">Running</span>
+          </div>
+          <div class="run-detail">Agent: <strong>Haiku 4.5</strong> · Prospect: <strong>Cedar Ridge Estates</strong><br/>SerpAPI calls: 3 · Advisor calls: 2/3</div>
+          <div class="progress" style="margin-top:8px;"><div class="progress-fill" style="width:80%;"></div></div>
+        </div>
+        <div class="run-card">
+          <div class="run-head">
+            <span class="run-name">Signal — DFW Pest Control</span>
+            <span class="status-badge sb-running">Running</span>
+          </div>
+          <div class="run-detail">Agent: <strong>Haiku 4.5</strong> · Query: <strong>new_construction</strong><br/>Engine: <strong>google_light</strong> · Advisor calls: 1/3</div>
+          <div class="progress" style="margin-top:8px;"><div class="progress-fill" style="width:30%;"></div></div>
+        </div>
+        <div class="run-card">
+          <div class="run-head">
+            <span class="run-name">Signal — Patio Kings</span>
+            <span class="status-badge sb-queued">Queued</span>
+          </div>
+          <div class="run-detail">Agent: <strong>Haiku 4.5</strong> · Query: <strong>permit_filing</strong><br/>Engine: <strong>google_light</strong> · Position: #1</div>
+          <div class="progress" style="margin-top:8px;"><div class="progress-fill" style="width:0%;"></div></div>
+        </div>
+      </div>
+
+      <!-- Run history -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;">Recent runs</div>
+      <table class="data-table mb-20">
+        <thead><tr><th>Time</th><th>Workspace</th><th>Type</th><th>Query</th><th>Duration</th><th>Status</th><th>Tokens</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="text-xs text-muted">12:42 PM</td><td>TrueNorth Roofing</td><td>Signal</td>
+            <td class="mono text-sm">storm_damage</td><td>3.8s</td>
+            <td><span class="status-badge sb-done">Done</span></td><td>1,204</td>
+            <td><button class="btn btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td class="text-xs text-muted">12:35 PM</td><td>BlueLine Electrical</td><td>Signal</td>
+            <td class="mono text-sm">new_construction</td><td>12.4s</td>
+            <td><span class="status-badge sb-error">Error</span></td><td>892</td>
+            <td><button class="btn btn-sm" style="border-color:#D85A30;color:#D85A30;">Debug</button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Cost breakdown -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;">Cost breakdown (today)</div>
+      <div class="grid-2 mb-12">
+        <div class="card">
+          <div class="card-title">Claude API</div>
+          <div class="cost-row"><span class="text-muted">Haiku 4.5 (executor)</span><span>$2.41</span></div>
+          <div class="cost-row"><span class="text-muted">Opus 4.6 (escalation)</span><span>$1.87</span></div>
+          <div class="cost-row"><span class="text-muted">Sonnet 4.6 (chat)</span><span>$0.54</span></div>
+          <div class="cost-row"><span class="text-muted">Total</span><span>$4.82</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">External APIs</div>
+          <div class="cost-row"><span class="text-muted">SerpAPI (287 calls)</span><span>$1.44</span></div>
+          <div class="cost-row"><span class="text-muted">Mapbox Geocoding</span><span>$0.12</span></div>
+          <div class="cost-row"><span class="text-muted">Resend (18 emails)</span><span>$0.02</span></div>
+          <div class="cost-row"><span class="text-muted">Total</span><span>$1.58</span></div>
+        </div>
+      </div>
+      <!-- Unit economics bar -->
+      <div style="background:#faf9f6;border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;">
+        <div><div class="text-xs text-muted">Daily all-in</div><div style="font-family:'Outfit',sans-serif;font-weight:600;font-size:18px;">$6.40</div></div>
+        <div><div class="text-xs text-muted">Cost per opportunity</div><div style="font-family:'Outfit',sans-serif;font-weight:600;font-size:18px;">$0.18</div></div>
+        <div><div class="text-xs text-muted">Gross margin (starter)</div><div style="font-family:'Outfit',sans-serif;font-weight:600;font-size:18px;color:#2E7D32;">87%</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 9: SYSTEM HEALTH
+     /admin/agents/health — status of every external dependency
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 9: System health — /admin/agents/health (tab or sub-route)</div>
+<div class="section-note">
+  One card per external dependency: Signal agents, Database, SerpAPI, Claude API, Resend, Stripe.
+  Each card: title, status badge (Healthy/Low credits/Error), 4 key stats.
+  SerpAPI card shows "Low credits" warning state as a pattern reference.
+</div>
+<div class="screen">
+  <div class="admin-shell" style="min-height:450px;">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">🤖</span> Agents</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header"><span class="page-title">System health</span></div>
+      <div class="grid-2">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span class="fw-500" style="font-size:13px;">🤖 Signal agents</span>
+            <span class="status-badge sb-healthy">Healthy</span>
+          </div>
+          <div class="text-sm text-muted">Active runs: <strong style="color:#2D2B2A;">3</strong></div>
+          <div class="text-sm text-muted">Failed (24h): <strong style="color:#2D2B2A;">0</strong></div>
+          <div class="text-sm text-muted">Avg run time: <strong style="color:#2D2B2A;">4.2s</strong></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span class="fw-500" style="font-size:13px;">🗄 Database</span>
+            <span class="status-badge sb-healthy">Healthy</span>
+          </div>
+          <div class="text-sm text-muted">Connections: <strong style="color:#2D2B2A;">8 / 100</strong></div>
+          <div class="text-sm text-muted">Avg query: <strong style="color:#2D2B2A;">12ms</strong></div>
+          <div class="text-sm text-muted">Size: <strong style="color:#2D2B2A;">142 MB</strong></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span class="fw-500" style="font-size:13px;">🔍 SerpAPI</span>
+            <span class="status-badge sb-warning">Low credits</span>
+          </div>
+          <div class="text-sm text-muted">Credits: <strong style="color:#FF9800;">142 / 10,000</strong></div>
+          <div class="text-sm text-muted">Calls today: <strong style="color:#2D2B2A;">287</strong></div>
+          <div class="text-sm text-muted">Error rate: <strong style="color:#2D2B2A;">0.3%</strong></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span class="fw-500" style="font-size:13px;">🧠 Claude API</span>
+            <span class="status-badge sb-healthy">Healthy</span>
+          </div>
+          <div class="text-sm text-muted">Haiku calls (24h): <strong style="color:#2D2B2A;">1,204</strong></div>
+          <div class="text-sm text-muted">Escalation calls: <strong style="color:#2D2B2A;">38</strong></div>
+          <div class="text-sm text-muted">Cost (24h): <strong style="color:#2D2B2A;">$4.82</strong></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span class="fw-500" style="font-size:13px;">📧 Resend</span>
+            <span class="status-badge sb-healthy">Healthy</span>
+          </div>
+          <div class="text-sm text-muted">Sent today: <strong style="color:#2D2B2A;">18</strong></div>
+          <div class="text-sm text-muted">Open rate (7d): <strong style="color:#2D2B2A;">62%</strong></div>
+          <div class="text-sm text-muted">Bounced: <strong style="color:#2D2B2A;">0</strong></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span class="fw-500" style="font-size:13px;">💳 Stripe</span>
+            <span class="status-badge sb-healthy">Healthy</span>
+          </div>
+          <div class="text-sm text-muted">Webhook success: <strong style="color:#2D2B2A;">100%</strong></div>
+          <div class="text-sm text-muted">Failed charges (7d): <strong style="color:#2D2B2A;">1</strong></div>
+          <div class="text-sm text-muted">Disputes: <strong style="color:#2D2B2A;">0</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 10: PROMPTS MANAGEMENT
+     /admin/prompts — prompt library, A/B testing, versions
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 10: Prompts — /admin/prompts</div>
+<div class="section-note">
+  Route: GET /admin/prompts. Lists all prompts from the prompts table with version, status (Active/Draft/A/B test),
+  preview of the prompt text, usage stats (30d call count, avg tokens), and A/B traffic splits.
+  Prompts stored in the prompts table — never hardcoded in source.
+</div>
+<div class="screen">
+  <div class="admin-shell" style="min-height:550px;">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">💬</span> Prompts</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header">
+        <div><span class="page-title">Prompts</span><span class="text-sm text-muted" style="margin-left:8px;">8 prompts · 1 A/B test</span></div>
+        <button class="btn">+ New prompt</button>
+      </div>
+
+      <div class="prompt-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span class="prompt-name">opportunity_scorer</span>
+          <div style="display:flex;gap:6px;align-items:center;"><span class="status-badge sb-ab">A/B test</span><button class="btn btn-sm">Results</button><button class="btn btn-sm">Edit</button></div>
+        </div>
+        <div class="text-sm text-muted mb-8">Scores enriched prospects 0-100. Powers opportunity ranking.</div>
+        <div class="prompt-preview">You are an opportunity scoring agent for a lead generation platform. Given a signal, prospect data, enrichment results, and a service profile, output a JSON object with: score (0-100), confidence...</div>
+        <div class="text-xs text-muted" style="margin-top:8px;">Version A: v3.2 (52%) · Version B: v3.3 (48%) · Avg score delta: +4.2 (B higher) · Last edited: May 8</div>
+      </div>
+
+      <div class="prompt-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span class="prompt-name">outreach_drafter</span>
+          <div style="display:flex;gap:6px;align-items:center;"><span class="status-badge sb-active">Active</span><button class="btn btn-sm">Edit</button></div>
+        </div>
+        <div class="text-sm text-muted mb-8">Drafts personalized outreach using opportunity context + workspace learning.</div>
+        <div class="prompt-preview">You are a B2B outreach specialist for a local service business. Given the following context about the prospect...</div>
+        <div class="text-xs text-muted" style="margin-top:8px;">v2.1 · Used 342 times (30d) · Avg tokens: 1,204 · Last edited: Apr 29</div>
+      </div>
+
+      <div class="prompt-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span class="prompt-name">signal_classifier</span>
+          <div style="display:flex;gap:6px;align-items:center;"><span class="status-badge sb-active">Active</span><button class="btn btn-sm">Edit</button></div>
+        </div>
+        <div class="text-sm text-muted mb-8">Classifies raw search results into signal types + extracts structured data.</div>
+        <div class="prompt-preview">You are a signal classification agent. Analyze the following search result and determine if it represents a legitimate...</div>
+        <div class="text-xs text-muted" style="margin-top:8px;">v4.0 · Used 1,891 times (30d) · Avg tokens: 487 · Last edited: May 2</div>
+      </div>
+
+      <div class="prompt-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span class="prompt-name">enrichment_agent</span>
+          <div style="display:flex;gap:6px;align-items:center;"><span class="status-badge sb-draft">Draft</span><button class="btn btn-sm">Edit</button></div>
+        </div>
+        <div class="text-sm text-muted mb-8">Takes raw prospect, enriches with business details and decision-maker contacts. In testing.</div>
+        <div class="prompt-preview">You are a business research agent. Given a company name and address, research and return a structured profile including...</div>
+        <div class="text-xs text-muted" style="margin-top:8px;">v0.3 (draft) · Used 47 times (testing) · Avg tokens: 1,678 · Last edited: May 10</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 11: AGENT REGISTRY
+     /admin/agents/registry — configure agent brains from admin
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 11: Agent Registry — /admin/agents/registry</div>
+<div class="section-note">
+  Route: GET /admin/agents/registry. Lists all 10 registered agents from agent_registry table.
+  Each agent card shows: slug, display name, provider, model, escalation model, pattern type,
+  trigger, enabled toggle, cost tier badge, and quick-action buttons (edit, toggle, swap model).
+  Detail view lets admins change provider, model, escalation, prompt, API permissions, skills, and config.
+  All changes log to events table as admin_agent_config_updated.
+</div>
+<div class="screen">
+  <div class="admin-shell" style="min-height:750px;">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">📊</span> Dashboard</div>
+      <div class="admin-nav-item"><span class="admin-nav-icon">🤖</span> Agents</div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">🧠</span> Agent Registry</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header">
+        <div><span class="page-title">Agent Registry</span><span class="text-sm text-muted" style="margin-left:8px;">10 agents · 9 enabled · 1 disabled</span></div>
+        <button class="btn">+ Register agent</button>
+      </div>
+
+      <!-- Summary row -->
+      <div class="metric-row" style="margin-bottom:20px;">
+        <div class="metric-card">
+          <div class="metric-label">Active agents</div>
+          <div class="metric-value">9</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Providers</div>
+          <div class="metric-value">1</div>
+          <div class="text-xs text-muted" style="margin-top:2px;">Anthropic (all agents)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Est. daily cost</div>
+          <div class="metric-value">$4.82</div>
+          <div class="text-xs text-muted" style="margin-top:2px;">across all providers</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Escalation calls (7d)</div>
+          <div class="metric-value">847</div>
+          <div class="text-xs text-muted" style="margin-top:2px;">4 agents · $12.40</div>
+        </div>
+      </div>
+
+      <!-- Agent cards -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+
+        <!-- Agent 1: Conversation -->
+        <div style="background:white;border:1px solid #e8e5e0;border-radius:10px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-family:'Outfit';font-weight:600;font-size:15px;">ツ Chat Agent</span>
+                <span style="font-family:monospace;font-size:11px;color:#888;background:#f5f3f0;padding:2px 6px;border-radius:4px;">conversation</span>
+                <span class="status-badge sb-active">Enabled</span>
+                <span style="background:#EAF3EF;color:#3D6B5A;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">MEDIUM COST</span>
+              </div>
+              <div class="text-sm text-muted">Real-time conversational assistant. Answers questions about leads, helps refine preferences.</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-sm">Edit</button>
+              <button class="btn btn-sm" style="color:#D85A30;">Disable</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div class="text-xs"><span class="text-muted">Provider:</span> <strong>anthropic</strong></div>
+            <div class="text-xs"><span class="text-muted">Model:</span> <strong>claude-sonnet-4-6</strong></div>
+            <div class="text-xs"><span class="text-muted">Escalation:</span> <strong>claude-opus-4-6</strong> <span class="text-muted">(max 3)</span></div>
+            <div class="text-xs"><span class="text-muted">Pattern:</span> Realtime</div>
+            <div class="text-xs"><span class="text-muted">Trigger:</span> User message</div>
+            <div class="text-xs"><span class="text-muted">Prompt:</span> <span style="color:#58937E;text-decoration:underline;cursor:pointer;">conversation_agent</span></div>
+            <div class="text-xs"><span class="text-muted">Cost/run:</span> ~$0.03</div>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;">
+            <span style="background:#EAF3EF;color:#3D6B5A;padding:2px 6px;border-radius:4px;font-size:10px;">serpapi</span>
+            <span style="background:#f5f3f0;color:#666;padding:2px 6px;border-radius:4px;font-size:10px;">search_signals</span>
+            <span style="background:#f5f3f0;color:#666;padding:2px 6px;border-radius:4px;font-size:10px;">get_my_leads</span>
+            <span style="background:#f5f3f0;color:#666;padding:2px 6px;border-radius:4px;font-size:10px;">draft_outreach</span>
+            <span style="background:#f5f3f0;color:#666;padding:2px 6px;border-radius:4px;font-size:10px;">save_lead</span>
+            <span style="background:#f5f3f0;color:#666;padding:2px 6px;border-radius:4px;font-size:10px;">+3 more</span>
+          </div>
+        </div>
+
+        <!-- Agent 2: Signal Detection -->
+        <div style="background:white;border:1px solid #e8e5e0;border-radius:10px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-family:'Outfit';font-weight:600;font-size:15px;">Signal Scanner</span>
+                <span style="font-family:monospace;font-size:11px;color:#888;background:#f5f3f0;padding:2px 6px;border-radius:4px;">signal_detection</span>
+                <span class="status-badge sb-active">Enabled</span>
+                <span style="background:#EAF3EF;color:#3D6B5A;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">LOW COST</span>
+              </div>
+              <div class="text-sm text-muted">Nightly scan for buying signals via SerpAPI. Highest-volume agent.</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-sm">Edit</button>
+              <button class="btn btn-sm" style="color:#D85A30;">Disable</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div class="text-xs"><span class="text-muted">Provider:</span> <strong>anthropic</strong></div>
+            <div class="text-xs"><span class="text-muted">Model:</span> <strong>claude-haiku-4-5</strong></div>
+            <div class="text-xs"><span class="text-muted">Escalation:</span> <strong>claude-opus-4-6</strong> <span class="text-muted">(max 3)</span></div>
+            <div class="text-xs"><span class="text-muted">Pattern:</span> Background</div>
+            <div class="text-xs"><span class="text-muted">Trigger:</span> Nightly cron</div>
+            <div class="text-xs"><span class="text-muted">Prompt:</span> <span style="color:#58937E;text-decoration:underline;cursor:pointer;">signal_detection_agent</span></div>
+            <div class="text-xs"><span class="text-muted">Cost/run:</span> ~$0.01</div>
+          </div>
+          <div style="margin-top:6px;display:flex;gap:20px;flex-wrap:wrap;">
+            <div class="text-xs"><span class="text-muted">Batch size:</span> 50</div>
+            <div class="text-xs"><span class="text-muted">Concurrency:</span> 5</div>
+            <div class="text-xs"><span class="text-muted">Timeout:</span> 10min</div>
+            <div class="text-xs"><span class="text-muted">Retries:</span> 3</div>
+          </div>
+        </div>
+
+        <!-- Agent 3: Outreach -->
+        <div style="background:white;border:1px solid #e8e5e0;border-radius:10px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-family:'Outfit';font-weight:600;font-size:15px;">Outreach Composer</span>
+                <span style="font-family:monospace;font-size:11px;color:#888;background:#f5f3f0;padding:2px 6px;border-radius:4px;">outreach</span>
+                <span class="status-badge sb-active">Enabled</span>
+                <span style="background:#EAF3EF;color:#3D6B5A;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">MEDIUM COST</span>
+              </div>
+              <div class="text-sm text-muted">Generates personalized outreach drafts. Never uses generic templates.</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-sm">Edit</button>
+              <button class="btn btn-sm" style="color:#D85A30;">Disable</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div class="text-xs"><span class="text-muted">Provider:</span> <strong>anthropic</strong></div>
+            <div class="text-xs"><span class="text-muted">Model:</span> <strong>claude-sonnet-4-6</strong></div>
+            <div class="text-xs"><span class="text-muted">Escalation:</span> <strong>claude-opus-4-6</strong> <span class="text-muted">(max 3)</span></div>
+            <div class="text-xs"><span class="text-muted">Pattern:</span> Background</div>
+            <div class="text-xs"><span class="text-muted">Trigger:</span> On demand</div>
+            <div class="text-xs"><span class="text-muted">Prompt:</span> <span style="color:#58937E;text-decoration:underline;cursor:pointer;">outreach_agent</span></div>
+            <div class="text-xs"><span class="text-muted">Cost/run:</span> ~$0.02</div>
+          </div>
+        </div>
+
+        <!-- Agent 4: Enrichment -->
+        <div style="background:white;border:1px solid #e8e5e0;border-radius:10px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-family:'Outfit';font-weight:600;font-size:15px;">Lead Enricher</span>
+                <span style="font-family:monospace;font-size:11px;color:#888;background:#f5f3f0;padding:2px 6px;border-radius:4px;">enrichment</span>
+                <span class="status-badge sb-active">Enabled</span>
+                <span style="background:#EAF3EF;color:#3D6B5A;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">LOW COST</span>
+              </div>
+              <div class="text-sm text-muted">Post-opportunity enrichment. Finds website, owner, phone, email, LinkedIn.</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-sm">Edit</button>
+              <button class="btn btn-sm" style="color:#D85A30;">Disable</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div class="text-xs"><span class="text-muted">Provider:</span> <strong>anthropic</strong></div>
+            <div class="text-xs"><span class="text-muted">Model:</span> <strong>claude-haiku-4-5</strong></div>
+            <div class="text-xs"><span class="text-muted">Escalation:</span> <strong>claude-opus-4-6</strong> <span class="text-muted">(max 3)</span></div>
+            <div class="text-xs"><span class="text-muted">Pattern:</span> Background</div>
+            <div class="text-xs"><span class="text-muted">Trigger:</span> New opportunity</div>
+            <div class="text-xs"><span class="text-muted">Prompt:</span> <span style="color:#58937E;text-decoration:underline;cursor:pointer;">enrichment_agent</span></div>
+            <div class="text-xs"><span class="text-muted">Cost/run:</span> ~$0.01</div>
+          </div>
+        </div>
+
+        <!-- Agent 5: Learning (disabled example) -->
+        <div style="background:white;border:1px solid #e8e5e0;border-radius:10px;padding:16px;opacity:0.6;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-family:'Outfit';font-weight:600;font-size:15px;">Learning Agent</span>
+                <span style="font-family:monospace;font-size:11px;color:#888;background:#f5f3f0;padding:2px 6px;border-radius:4px;">outcome_learning</span>
+                <span class="status-badge" style="background:#f5f3f0;color:#888;">Disabled</span>
+                <span style="background:#f5f3f0;color:#888;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">LOW COST</span>
+              </div>
+              <div class="text-sm text-muted">Analyzes win/loss outcomes. Builds learning context for scoring prompts. <em>Disabled — not enough outcome data yet.</em></div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-sm">Edit</button>
+              <button class="btn btn-sm" style="color:#58937E;">Enable</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div class="text-xs"><span class="text-muted">Provider:</span> <strong>anthropic</strong></div>
+            <div class="text-xs"><span class="text-muted">Model:</span> <strong>claude-haiku-4-5</strong></div>
+            <div class="text-xs"><span class="text-muted">Escalation:</span> <strong>claude-opus-4-6</strong> <span class="text-muted">(max 3)</span></div>
+            <div class="text-xs"><span class="text-muted">Pattern:</span> Background</div>
+            <div class="text-xs"><span class="text-muted">Trigger:</span> Outcome logged</div>
+            <div class="text-xs"><span class="text-muted">Prompt:</span> <span style="color:#888;">learning_agent</span></div>
+            <div class="text-xs"><span class="text-muted">Cost/run:</span> ~$0.01</div>
+          </div>
+        </div>
+
+        <!-- Remaining agents summary row -->
+        <div style="background:#f5f3f0;border-radius:10px;padding:14px;display:flex;gap:16px;flex-wrap:wrap;">
+          <div class="text-xs" style="flex:1;min-width:120px;">
+            <div style="font-weight:600;margin-bottom:2px;">Dedup Agent</div>
+            <div class="text-muted">Haiku 4.5 · Post-scan · Enabled</div>
+          </div>
+          <div class="text-xs" style="flex:1;min-width:120px;">
+            <div style="font-weight:600;margin-bottom:2px;">Staleness Checker</div>
+            <div class="text-muted">Haiku 4.5 · Weekly · Enabled</div>
+          </div>
+          <div class="text-xs" style="flex:1;min-width:120px;">
+            <div style="font-weight:600;margin-bottom:2px;">Quality Scorer</div>
+            <div class="text-muted">Haiku 4.5 · Nightly · Enabled</div>
+          </div>
+          <div class="text-xs" style="flex:1;min-width:120px;">
+            <div style="font-weight:600;margin-bottom:2px;">Onboarding Agent</div>
+            <div class="text-muted">Haiku 4.5 · Scheduled · Enabled</div>
+          </div>
+          <div class="text-xs" style="flex:1;min-width:120px;">
+            <div style="font-weight:600;margin-bottom:2px;">Notification Agent</div>
+            <div class="text-muted">Haiku 4.5 · Post-scan · Enabled</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent detail panel (edit mode) -->
+      <div style="margin-top:24px;background:white;border:2px solid #58937E;border-radius:10px;padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div>
+            <span style="font-family:'Outfit';font-weight:700;font-size:16px;">Edit: Signal Scanner</span>
+            <span style="font-family:monospace;font-size:11px;color:#888;margin-left:8px;">signal_detection</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" style="background:#58937E;color:white;">Save changes</button>
+            <button class="btn">Cancel</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <!-- Provider + Model config -->
+          <div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#58937E;">Provider &amp; model</div>
+            <div style="margin-bottom:10px;">
+              <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Provider</label>
+              <select style="width:100%;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;background:white;">
+                <option selected>anthropic</option>
+                <option>openai</option>
+                <option>google</option>
+                <option>groq</option>
+                <option>together</option>
+                <option>custom</option>
+              </select>
+            </div>
+            <div style="margin-bottom:10px;">
+              <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Model</label>
+              <select style="width:100%;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;background:white;">
+                <option>claude-haiku-4-5</option>
+                <option>claude-sonnet-4-6</option>
+                <option>claude-opus-4-6</option>
+              </select>
+              <div class="text-xs text-muted" style="margin-top:3px;">Options change based on provider</div>
+            </div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;margin-top:14px;color:#58937E;">Escalation (optional)</div>
+            <div style="margin-bottom:10px;">
+              <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Escalation provider</label>
+              <select style="width:100%;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;background:white;">
+                <option selected>anthropic</option>
+                <option>openai</option>
+                <option>google</option>
+                <option value="">None (disable escalation)</option>
+              </select>
+            </div>
+            <div style="margin-bottom:10px;">
+              <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Escalation model</label>
+              <select style="width:100%;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;background:white;">
+                <option>claude-opus-4-6</option>
+                <option>claude-sonnet-4-6</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Escalation max uses per session</label>
+              <input type="number" value="3" style="width:80px;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;" />
+            </div>
+          </div>
+
+          <!-- Operational config -->
+          <div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#58937E;">Operational config</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div>
+                <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Timeout (ms)</label>
+                <input type="number" value="600000" style="width:100%;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;" />
+              </div>
+              <div>
+                <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Max retries</label>
+                <input type="number" value="3" style="width:100%;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;" />
+              </div>
+              <div>
+                <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Batch size</label>
+                <input type="number" value="50" style="width:100%;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;" />
+              </div>
+              <div>
+                <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Concurrency</label>
+                <input type="number" value="5" style="width:100%;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Prompt -->
+          <div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#58937E;">Prompt</div>
+            <div style="margin-bottom:10px;">
+              <label class="text-xs text-muted" style="display:block;margin-bottom:3px;">Prompt key (from prompts table)</label>
+              <select style="width:100%;padding:8px 10px;border:1px solid #d5d0c8;border-radius:6px;font-size:13px;background:white;">
+                <option selected>signal_detection_agent</option>
+                <option>signal_classifier</option>
+                <option>opportunity_scorer</option>
+                <option>outreach_drafter</option>
+                <option>enrichment_agent</option>
+              </select>
+            </div>
+            <div class="text-xs text-muted">Current version: v4.0 · Active · <span style="color:#58937E;text-decoration:underline;cursor:pointer;">View prompt →</span></div>
+          </div>
+
+          <!-- API permissions & skills -->
+          <div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#58937E;">API permissions</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" checked /> SerpAPI</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" /> Resend</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" /> Mapbox</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" /> Stripe</label>
+            </div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#58937E;">Skills (tools available to this agent)</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" checked /> search_signals</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" checked /> write_opportunity</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" checked /> check_duplicate</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" checked /> enrich_prospect</label>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e8e5e0;">
+          <div class="text-xs text-muted">Last modified: May 12, 2026 by admin_user_001 · <span style="color:#58937E;text-decoration:underline;cursor:pointer;">View change history →</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 12: FEATURE FLAGS
+     /admin/feature-flags — toggle features globally or per-workspace
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 12: Feature flags — /admin/feature-flags</div>
+<div class="section-note">
+  Route: GET /admin/feature-flags. List of all flags from feature_flags table.
+  Each row: flag name (monospace), description, workspace overrides count, toggle switch.
+  Toggle globally or set workspace_overrides jsonb for per-workspace control.
+</div>
+<div class="screen">
+  <div class="admin-shell" style="min-height:400px;">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">🚩</span> Flags</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header">
+        <div><span class="page-title">Feature flags</span><span class="text-sm text-muted" style="margin-left:8px;">6 flags · 2 with overrides</span></div>
+        <button class="btn">+ New flag</button>
+      </div>
+
+      <div class="card" style="padding:0;">
+        <div class="ff-row">
+          <div><div class="ff-name">enable_voice_input</div><div class="ff-desc">Deepgram Nova-3 voice transcription in chat</div><div style="font-size:10px;color:#888;">2 workspace overrides</div></div>
+          <div class="toggle"><div class="knob"></div></div>
+        </div>
+        <div class="ff-row">
+          <div><div class="ff-name">enable_map_view</div><div class="ff-desc">Mapbox map tab showing leads geographically</div></div>
+          <div class="toggle"><div class="knob"></div></div>
+        </div>
+        <div class="ff-row">
+          <div><div class="ff-name">live_signal_agents</div><div class="ff-desc">Real-time signal detection via SerpAPI</div><div style="font-size:10px;color:#888;">1 workspace override (beta tester)</div></div>
+          <div class="toggle on"><div class="knob"></div></div>
+        </div>
+        <div class="ff-row">
+          <div><div class="ff-name">ab_test_scorer_v33</div><div class="ff-desc">A/B test for opportunity_scorer v3.3</div></div>
+          <div class="toggle on"><div class="knob"></div></div>
+        </div>
+        <div class="ff-row">
+          <div><div class="ff-name">daily_digest_v2</div><div class="ff-desc">New digest email template with score charts</div></div>
+          <div class="toggle"><div class="knob"></div></div>
+        </div>
+        <div class="ff-row" style="border-bottom:none;">
+          <div><div class="ff-name">stripe_topup_enabled</div><div class="ff-desc">Credit top-ups via Stripe one-time payments</div></div>
+          <div class="toggle on"><div class="knob"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 12: ANNOUNCEMENTS
+     /admin/announcements — in-app banners for all users
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 13: Announcements — /admin/announcements</div>
+<div class="section-note">
+  Route: GET /admin/announcements. Create form at top: title, type (info/warning/success), body, target
+  (All/Trial/Paid/Pro), start date, expiry date. Active announcements listed below with type badge,
+  target audience, date range, and author. Data lives in announcements table.
+</div>
+<div class="screen">
+  <div class="admin-shell" style="min-height:550px;">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">📢</span> Announcements</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header"><span class="page-title">Announcements</span></div>
+
+      <!-- Create form -->
+      <div class="card mb-20">
+        <div class="card-title">+ New announcement</div>
+        <div class="grid-2">
+          <div class="field"><label>Title</label><input type="text" placeholder="What's new..." /></div>
+          <div class="field"><label>Type</label><select><option>Info</option><option>Warning</option><option>Success</option></select></div>
+        </div>
+        <div class="field"><label>Body</label><textarea style="height:60px;resize:vertical;" placeholder="Write your announcement..."></textarea></div>
+        <div class="grid-3">
+          <div class="field"><label>Target</label><select><option>All workspaces</option><option>Trial only</option><option>Paid only</option><option>Pro tier</option></select></div>
+          <div class="field"><label>Starts</label><input type="date" value="2026-05-12" /></div>
+          <div class="field"><label>Expires</label><input type="date" value="2026-05-19" /></div>
+        </div>
+        <button class="btn btn-primary">Publish announcement</button>
+      </div>
+
+      <!-- Active announcements -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;">Active announcements</div>
+      <div class="announcement-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span class="fw-500">Map view is now available for Pro users</span>
+          <span class="status-badge sb-done">Success</span>
+        </div>
+        <div class="text-sm text-muted mb-8" style="line-height:1.5;">We've launched the geographic map view for all Pro tier workspaces. See your leads plotted on an interactive map.</div>
+        <div class="text-xs text-muted" style="display:flex;gap:12px;">
+          <span>🎯 Pro tier</span>
+          <span>📅 May 8 – May 22</span>
+          <span>👤 Adam T.</span>
+        </div>
+      </div>
+      <div class="announcement-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span class="fw-500">Scheduled maintenance — May 15, 2-4 AM CT</span>
+          <span class="status-badge sb-warning">Warning</span>
+        </div>
+        <div class="text-sm text-muted mb-8" style="line-height:1.5;">Database migration on May 15. Signal detection pauses 2-4 AM Central. No data loss.</div>
+        <div class="text-xs text-muted" style="display:flex;gap:12px;">
+          <span>🎯 All workspaces</span>
+          <span>📅 May 12 – May 16</span>
+          <span>👤 Adam T.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 13: CONVERSION FUNNEL
+     /admin/metrics/conversion-funnel — signup to paid
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 14: Conversion funnel — /admin/metrics/conversion-funnel</div>
+<div class="section-note">
+  Route: GET /admin/metrics/conversion-funnel. Full funnel: Visited signup → Created account →
+  Onboarding done → First lead viewed → 5th lead (trial gate) → Card added → Paid subscriber.
+  Each step: label, horizontal bar (width = percentage), count, percentage, drop-off rate.
+  KPI cards above: Signup→paid %, avg time to first lead, avg time to conversion.
+  Biggest drop-offs highlighted at bottom as clickable analysis cards.
+  Requires events: signup_page_visited, account_created, onboarding_completed, first_lead_viewed,
+  trial_gate_hit, card_added, subscription_started.
+</div>
+<div class="screen">
+  <div class="admin-shell">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">📈</span> Metrics</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header">
+        <span class="page-title">Conversion funnel</span>
+        <select style="padding:5px 10px;border:1px solid #d0cdc6;border-radius:8px;font-size:12px;">
+          <option>Last 30 days</option><option>Last 7 days</option><option>Last 90 days</option>
+        </select>
+      </div>
+
+      <!-- KPIs -->
+      <div class="grid-3 mb-20">
+        <div class="metric-card"><div class="metric-label">Signup → paid</div><div class="metric-value">34%</div><div class="text-xs text-muted">Industry avg: 15-25%</div></div>
+        <div class="metric-card"><div class="metric-label">Avg time to first lead</div><div class="metric-value">4.2 min</div><div class="text-xs text-muted">From onboarding complete</div></div>
+        <div class="metric-card"><div class="metric-label">Avg time to conversion</div><div class="metric-value">3.1 days</div><div class="text-xs text-muted">From signup to paid</div></div>
+      </div>
+
+      <!-- Funnel steps -->
+      <div class="funnel-step"><span class="funnel-label">Visited signup</span><div style="flex:1;"><div class="funnel-bar" style="width:100%;background:#E8F5E9;color:#1B5E20;">100%</div></div><span class="funnel-num">1,240</span><span class="funnel-pct">100%</span><span class="funnel-drop"></span></div>
+      <div class="funnel-step"><span class="funnel-label">Created account</span><div style="flex:1;"><div class="funnel-bar" style="width:58%;background:#C8E6C9;color:#1B5E20;">58%</div></div><span class="funnel-num">719</span><span class="funnel-pct">58%</span><span class="funnel-drop">-42%</span></div>
+      <div class="funnel-step"><span class="funnel-label">Onboarding done</span><div style="flex:1;"><div class="funnel-bar" style="width:41%;background:#A5D6A7;color:#1B5E20;">41%</div></div><span class="funnel-num">508</span><span class="funnel-pct">41%</span><span class="funnel-drop">-29%</span></div>
+      <div class="funnel-step"><span class="funnel-label">First lead viewed</span><div style="flex:1;"><div class="funnel-bar" style="width:38%;background:#81C784;color:white;">38%</div></div><span class="funnel-num">471</span><span class="funnel-pct">38%</span><span class="funnel-drop">-7%</span></div>
+      <div class="funnel-step"><span class="funnel-label">5th lead (gate)</span><div style="flex:1;"><div class="funnel-bar" style="width:22%;background:#4CAF50;color:white;">22%</div></div><span class="funnel-num">273</span><span class="funnel-pct">22%</span><span class="funnel-drop">-42%</span></div>
+      <div class="funnel-step"><span class="funnel-label">Card added</span><div style="flex:1;"><div class="funnel-bar" style="width:14%;background:#388E3C;color:white;">14%</div></div><span class="funnel-num">174</span><span class="funnel-pct">14%</span><span class="funnel-drop">-36%</span></div>
+      <div class="funnel-step" style="border-bottom:none;"><span class="funnel-label">Paid subscriber</span><div style="flex:1;"><div class="funnel-bar" style="width:10%;background:#2E7D32;color:white;">10%</div></div><span class="funnel-num">124</span><span class="funnel-pct">10%</span><span class="funnel-drop">-29%</span></div>
+
+      <!-- Drop-off analysis -->
+      <div style="font-size:13px;font-weight:500;margin:20px 0 10px;">Biggest drop-offs</div>
+      <div class="grid-2">
+        <div style="background:#faf9f6;border-radius:8px;padding:12px;">
+          <div class="fw-500 text-sm">Signup → account creation</div>
+          <div class="text-xs text-danger">42% drop — 521 visitors lost</div>
+        </div>
+        <div style="background:#faf9f6;border-radius:8px;padding:12px;">
+          <div class="fw-500 text-sm">First lead → trial gate</div>
+          <div class="text-xs text-danger">42% drop — 198 users lost</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 14: RETENTION COHORTS
+     /admin/metrics/retention — cohort heatmap + LTV
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 15: Retention cohorts — /admin/metrics/retention</div>
+<div class="section-note">
+  Route: GET /admin/metrics/retention. Monthly cohort table with color-coded retention percentages.
+  KPI cards: Month 1 retention, Month 3 retention, Avg lifetime, LTV (starter).
+  Cell colors: green (≥80%), light green (≥60%), amber (≥40%), red (&lt;40%).
+</div>
+<div class="screen">
+  <div class="admin-shell" style="min-height:400px;">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">📈</span> Metrics</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header"><span class="page-title">Retention cohorts</span></div>
+
+      <div class="metrics-grid mb-20">
+        <div class="metric-card"><div class="metric-label">Month 1 retention</div><div class="metric-value">78%</div></div>
+        <div class="metric-card"><div class="metric-label">Month 3 retention</div><div class="metric-value">61%</div></div>
+        <div class="metric-card"><div class="metric-label">Avg lifetime</div><div class="metric-value">8.2 mo</div></div>
+        <div class="metric-card"><div class="metric-label">LTV (starter)</div><div class="metric-value">$402</div></div>
+      </div>
+
+      <table class="data-table">
+        <thead><tr><th>Cohort</th><th>Size</th><th style="text-align:center;">M0</th><th style="text-align:center;">M1</th><th style="text-align:center;">M2</th><th style="text-align:center;">M3</th><th style="text-align:center;">M4</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="fw-500">Jan 2026</td><td class="text-muted">18</td>
+            <td style="text-align:center;" class="cohort-high">100%</td>
+            <td style="text-align:center;" class="cohort-high">83%</td>
+            <td style="text-align:center;" class="cohort-mid">72%</td>
+            <td style="text-align:center;" class="cohort-mid">67%</td>
+            <td style="text-align:center;" class="cohort-mid">61%</td>
+          </tr>
+          <tr>
+            <td class="fw-500">Feb 2026</td><td class="text-muted">24</td>
+            <td style="text-align:center;" class="cohort-high">100%</td>
+            <td style="text-align:center;" class="cohort-mid">79%</td>
+            <td style="text-align:center;" class="cohort-mid">67%</td>
+            <td style="text-align:center;" class="cohort-low">58%</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+          </tr>
+          <tr>
+            <td class="fw-500">Mar 2026</td><td class="text-muted">31</td>
+            <td style="text-align:center;" class="cohort-high">100%</td>
+            <td style="text-align:center;" class="cohort-high">81%</td>
+            <td style="text-align:center;" class="cohort-mid">68%</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+          </tr>
+          <tr>
+            <td class="fw-500">Apr 2026</td><td class="text-muted">38</td>
+            <td style="text-align:center;" class="cohort-high">100%</td>
+            <td style="text-align:center;" class="cohort-mid">76%</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+          </tr>
+          <tr>
+            <td class="fw-500">May 2026</td><td class="text-muted">42</td>
+            <td style="text-align:center;" class="cohort-high">100%</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+            <td style="text-align:center;" class="text-muted">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 15: DATA EXPORT
+     /admin/data — export workspace data, audit logs, signals
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">Screen 16: Data export — /admin/data</div>
+<div class="section-note">
+  Route: POST /admin/data/[workspace_id]/export. Five export types: Workspace data, Revenue/billing,
+  Agent performance, Signal/opportunity data (anonymized for marketplace), Audit log.
+  All exports logged in the events table. PII stripped from signal exports.
+  GDPR delete endpoint: POST /admin/data/[workspace_id]/delete with confirmation param.
+</div>
+<div class="screen">
+  <div class="admin-shell" style="min-height:500px;">
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-brand"><span>fetchi</span><small>Admin console</small></div>
+      <div class="admin-nav-item active"><span class="admin-nav-icon">📦</span> Data export</div>
+    </div>
+    <div class="admin-content">
+      <div class="page-header"><span class="page-title">Data export</span></div>
+      <div class="text-sm text-muted mb-16">Export data for analysis, reporting, or compliance. All exports logged.</div>
+
+      <div class="export-row">
+        <div class="export-icon" style="background:#E8F5E9;">👥</div>
+        <div style="flex:1;"><div class="fw-500">Workspace data</div><div class="text-sm text-muted">All workspaces with subscription, credits, plan, signup date, owner email, last active.</div></div>
+        <button class="btn">↓ CSV</button>
+      </div>
+      <div class="export-row">
+        <div class="export-icon" style="background:#E3F2FD;">📊</div>
+        <div style="flex:1;"><div class="fw-500">Revenue and billing</div><div class="text-sm text-muted">Transaction history, MRR by tier, churn events, refunds, failed charges.</div></div>
+        <button class="btn">↓ CSV</button>
+      </div>
+      <div class="export-row">
+        <div class="export-icon" style="background:#EDE7F6;">🤖</div>
+        <div style="flex:1;"><div class="fw-500">Agent performance</div><div class="text-sm text-muted">Run history with duration, token count, model, errors, cost per run. Last 30 days.</div></div>
+        <button class="btn">↓ CSV</button>
+      </div>
+      <div class="export-row">
+        <div class="export-icon" style="background:#FFF3E0;">📡</div>
+        <div style="flex:1;"><div class="fw-500">Signal and opportunity data</div><div class="text-sm text-muted">All signals, prospects, opportunities, contact routes. Anonymized workspace IDs.</div></div>
+        <button class="btn">↓ CSV</button>
+      </div>
+      <div class="export-row">
+        <div class="export-icon" style="background:#FFEBEE;">🛡</div>
+        <div style="flex:1;"><div class="fw-500">Audit log</div><div class="text-sm text-muted">All admin actions, abuse flags, credit adjustments, subscription changes, refunds.</div></div>
+        <button class="btn">↓ CSV</button>
+      </div>
+
+      <div style="background:#faf9f6;border-radius:8px;padding:12px 16px;margin-top:16px;font-size:12px;color:#888;">
+        ℹ All exports logged in audit trail. Signal exports use anonymized workspace IDs for data marketplace readiness. PII stripped from non-admin exports.
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

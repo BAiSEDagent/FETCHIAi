@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fetchi — Core Screens</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --brand: #58937E; --brand-dark: #3D6B5A; --brand-light: #EAF3EF;
+  --coral: #D85A30; --coral-light: #FAECE7;
+  --parchment: #EBE6D9; --surface: #F0EDE4;
+  --dark: #2D2B2A; --mid: #5a5550; --light: #8a8580; --faint: #b8b3ad;
+  --white: #ffffff;
+  --heading: 'Outfit', sans-serif;
+  --sans: 'DM Sans', -apple-system, sans-serif;
+}
+body { font-family: var(--sans); background: #e0dbd0; min-height: 100vh; }
+
+/* SWITCHER */
+.switcher { display: flex; gap: 8px; padding: 20px 24px 0; overflow-x: auto; white-space: nowrap; }
+.sw-btn { font-family: var(--sans); font-size: 12px; font-weight: 500; padding: 7px 16px; border-radius: 100px; border: 1.5px solid rgba(42,42,42,0.2); background: rgba(255,255,255,0.6); color: var(--mid); cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+.sw-btn.active { background: var(--dark); color: white; border-color: var(--dark); }
+.sw-btn:hover:not(.active) { background: white; color: var(--dark); }
+
+.screen { display: none; padding: 20px 24px 40px; }
+.screen.active { display: block; }
+
+/* SHELL */
+.shell { display: grid; grid-template-columns: 220px 1fr; background: var(--parchment); border: 2px solid var(--dark); border-radius: 16px; overflow: hidden; box-shadow: 3px 3px 0 #2D2B2A; min-height: 680px; }
+.shell.full { grid-template-columns: 220px 1fr 340px; }
+
+/* SIDEBAR */
+.sidebar { background: var(--dark); padding: 20px 0; display: flex; flex-direction: column; }
+.sb-logo { display: flex; align-items: center; gap: 8px; padding: 0 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; }
+.sb-av { width: 28px; height: 28px; border-radius: 10px; background: var(--brand); border: 2px solid #2D2B2A; box-shadow: 2px 2px 0 #2D2B2A; transform: rotate(-2deg); color: white; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sb-name { font-family: var(--heading); font-size: 18px; color: white; }
+.sb-section { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: rgba(255,255,255,0.25); padding: 0 18px; margin: 12px 0 6px; }
+.sb-link { display: flex; align-items: center; gap: 9px; padding: 8px 18px; font-size: 13px; color: rgba(255,255,255,0.55); cursor: pointer; transition: all 0.15s; }
+.sb-link:hover { color: white; background: rgba(255,255,255,0.06); }
+.sb-link.active { color: white; background: rgba(29,158,117,0.2); }
+.sb-link.active .sb-ico { color: var(--brand); }
+.sb-ico { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.6; }
+.sb-link.active .sb-ico { opacity: 1; }
+.sb-badge { margin-left: auto; font-size: 10px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); border-radius: 100px; padding: 1px 7px; }
+.sb-credits { margin-top: auto; padding: 16px 18px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+.cr-label { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.cr-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.cr-count { font-size: 13px; font-weight: 600; color: white; }
+.cr-reset { font-size: 10px; color: rgba(255,255,255,0.3); }
+.cr-bar-bg { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.cr-bar-fill { height: 100%; border-radius: 2px; background: var(--brand); }
+.cr-topup { font-size: 11px; color: var(--brand); margin-top: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+/* MAIN */
+.main { display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── CHAT ── */
+.chat-history { flex: 1; overflow-y: auto; padding: 24px 24px 16px; display: flex; flex-direction: column; gap: 16px; }
+.chat-row { display: flex; gap: 10px; align-items: flex-start; }
+.chat-row.user { flex-direction: row-reverse; }
+.chat-av { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+.chat-av.f { background: var(--brand); color: white; }
+.chat-av.u { background: rgba(42,42,42,0.12); color: var(--mid); border: 1px solid rgba(42,42,42,0.1); }
+.chat-bubble { max-width: 76%; background: white; border: 1px solid rgba(42,42,42,0.1); border-radius: 14px 14px 14px 4px; padding: 11px 15px; font-size: 13px; color: var(--dark); line-height: 1.6; }
+.chat-row.user .chat-bubble { background: var(--dark); color: white; border-color: var(--dark); border-radius: 14px 14px 4px 14px; }
+
+/* LEAD CARDS in chat */
+.lead-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.lead-card { background: var(--surface); border: 1.5px solid rgba(42,42,42,0.1); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; transition: all 0.15s; }
+.lead-card:hover { border-color: var(--brand); background: var(--brand-light); }
+.lead-left { flex: 1; min-width: 0; }
+.lead-biz { font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lead-sig { font-size: 11px; color: var(--light); display: flex; align-items: center; gap: 5px; }
+.sig-pip { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.lead-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.score { font-size: 11px; font-weight: 700; border-radius: 100px; padding: 3px 10px; }
+.score-hi { background: var(--brand-light); color: var(--brand-dark); border: 1px solid rgba(29,158,117,0.2); }
+.score-md { background: #FEF3E7; color: #854F0B; border: 1px solid rgba(133,79,11,0.15); }
+.draft-btn { font-size: 11px; font-weight: 500; color: var(--light); background: white; border: 1px solid rgba(42,42,42,0.12); border-radius: 6px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.draft-btn:hover { background: var(--brand); color: white; border-color: var(--brand); }
+
+/* outreach draft in chat */
+.outreach-card { background: white; border: 1.5px solid rgba(42,42,42,0.1); border-radius: 12px; padding: 16px; margin-top: 10px; }
+.outreach-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--brand); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.outreach-subject { font-size: 12px; font-weight: 600; color: var(--dark); margin-bottom: 8px; }
+.outreach-body { font-size: 12px; color: var(--mid); line-height: 1.65; }
+.outreach-actions { display: flex; gap: 8px; margin-top: 12px; }
+.oa-btn { font-size: 12px; font-weight: 500; font-family: var(--sans); padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+.oa-primary { background: var(--dark); color: white; border: none; }
+.oa-primary:hover { background: var(--brand); }
+.oa-ghost { background: transparent; color: var(--mid); border: 1px solid rgba(42,42,42,0.15); }
+.oa-ghost:hover { border-color: var(--dark); color: var(--dark); }
+
+.typing { display: flex; align-items: center; gap: 5px; padding: 4px 0; }
+.td { width: 5px; height: 5px; border-radius: 50%; background: var(--brand); animation: tb 1.2s ease-in-out infinite; }
+.td:nth-child(2) { animation-delay: 0.2s; }
+.td:nth-child(3) { animation-delay: 0.4s; }
+@keyframes tb { 0%,80%,100%{transform:translateY(0);opacity:0.4} 40%{transform:translateY(-4px);opacity:1} }
+
+.chat-bar { padding: 12px 16px; border-top: 1px solid rgba(42,42,42,0.08); display: flex; align-items: center; gap: 8px; background: white; }
+.chat-input { flex: 1; padding: 10px 14px; border: 1.5px solid rgba(42,42,42,0.12); border-radius: 100px; font-size: 13px; font-family: var(--sans); color: var(--dark); background: var(--surface); outline: none; transition: border-color 0.15s; }
+.chat-input:focus { border-color: var(--brand); background: white; }
+.chat-input::placeholder { color: var(--faint); }
+.mic-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(42,42,42,0.06); border: 1px solid rgba(42,42,42,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+.mic-btn:hover { background: var(--brand-light); border-color: var(--brand); }
+.send-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--brand); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
+.send-btn:hover { background: var(--brand-dark); }
+
+/* ── MY LEADS ── */
+.leads-toolbar { padding: 16px 24px; border-bottom: 1px solid rgba(42,42,42,0.08); display: flex; align-items: center; gap: 10px; }
+.filter-tabs { display: flex; gap: 2px; }
+.filter-tab { font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 8px; cursor: pointer; color: var(--light); transition: all 0.15s; border: 1px solid transparent; }
+.filter-tab.active { background: var(--dark); color: white; }
+.filter-tab:hover:not(.active) { background: rgba(42,42,42,0.06); color: var(--dark); }
+.search-input { flex: 1; padding: 8px 12px; border: 1.5px solid rgba(42,42,42,0.12); border-radius: 8px; font-size: 13px; font-family: var(--sans); background: white; color: var(--dark); outline: none; }
+.search-input:focus { border-color: var(--brand); }
+.sort-select { padding: 8px 12px; border: 1.5px solid rgba(42,42,42,0.12); border-radius: 8px; font-size: 12px; font-family: var(--sans); color: var(--mid); background: white; outline: none; cursor: pointer; }
+
+.leads-list { flex: 1; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; }
+.lead-row { background: white; border: 1.5px solid rgba(42,42,42,0.1); border-radius: 12px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.15s; }
+.lead-row:hover { border-color: var(--brand); }
+.lead-row-check { width: 16px; height: 16px; border: 1.5px solid rgba(42,42,42,0.2); border-radius: 4px; flex-shrink: 0; transition: all 0.15s; cursor: pointer; }
+.lead-row-check:hover { border-color: var(--brand); }
+.lead-row-icon { width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 1px solid rgba(42,42,42,0.08); }
+.lead-row-main { flex: 1; min-width: 0; }
+.lead-row-biz { font-size: 14px; font-weight: 600; color: var(--dark); margin-bottom: 3px; }
+.lead-row-sig { font-size: 12px; color: var(--light); display: flex; align-items: center; gap: 5px; }
+.lead-row-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.status-pill { font-size: 11px; font-weight: 600; border-radius: 100px; padding: 3px 10px; }
+.status-new { background: var(--brand-light); color: var(--brand-dark); }
+.status-contacted { background: #EEF2FF; color: #3730A3; }
+.status-won { background: #F0FDF4; color: #166534; }
+.days-ago { font-size: 11px; color: var(--faint); }
+.lead-row-score { font-size: 13px; font-weight: 700; color: var(--dark); min-width: 28px; text-align: right; }
+
+/* ── LEAD PROFILE ── */
+.profile-panel { flex: 1; overflow-y: auto; padding: 28px; }
+.profile-back { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--light); cursor: pointer; margin-bottom: 20px; transition: color 0.15s; }
+.profile-back:hover { color: var(--dark); }
+.profile-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
+.profile-biz-name { font-family: var(--heading); font-size: 26px; color: var(--dark); margin-bottom: 4px; }
+.profile-signal-row { display: flex; align-items: center; gap: 8px; }
+.signal-tag { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; background: var(--brand-light); color: var(--brand-dark); border-radius: 6px; padding: 4px 10px; border: 1px solid rgba(29,158,117,0.2); }
+.profile-score-big { text-align: right; flex-shrink: 0; }
+.score-num { font-family: var(--heading); font-size: 48px; color: var(--brand); line-height: 1; }
+.score-label { font-size: 11px; color: var(--light); margin-top: 2px; }
+
+.why-now-box { background: var(--brand-light); border: 1.5px solid rgba(29,158,117,0.2); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
+.why-now-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--brand-dark); margin-bottom: 6px; }
+.why-now-text { font-size: 13px; color: var(--brand-dark); line-height: 1.65; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.info-card { background: white; border: 1px solid rgba(42,42,42,0.1); border-radius: 10px; padding: 14px; }
+.info-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--faint); margin-bottom: 4px; }
+.info-val { font-size: 13px; color: var(--dark); font-weight: 500; }
+.info-val a { color: var(--brand); text-decoration: none; }
+
+.contact-box { background: white; border: 1px solid rgba(42,42,42,0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+.contact-box-title { font-size: 12px; font-weight: 600; color: var(--dark); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.contact-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(42,42,42,0.06); }
+.contact-row:last-child { border-bottom: none; padding-bottom: 0; }
+.contact-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.contact-info { flex: 1; }
+.contact-name { font-size: 13px; font-weight: 600; color: var(--dark); }
+.contact-title { font-size: 11px; color: var(--light); }
+.contact-email { font-size: 12px; color: var(--brand); }
+.confidence-bar { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.conf-dots { display: flex; gap: 3px; }
+.conf-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(42,42,42,0.1); }
+.conf-dot.filled { background: var(--brand); }
+
+.status-controls { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.status-btn { font-size: 12px; font-weight: 500; font-family: var(--sans); padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.15s; border: 1.5px solid rgba(42,42,42,0.15); background: white; color: var(--mid); }
+.status-btn:hover { border-color: var(--dark); color: var(--dark); }
+.status-btn.primary { background: var(--dark); color: white; border-color: var(--dark); }
+.status-btn.primary:hover { background: var(--brand); border-color: var(--brand); }
+
+/* CHAT SIDE PANEL */
+.chat-panel { border-left: 1px solid rgba(42,42,42,0.1); display: flex; flex-direction: column; background: white; }
+.cp-header { padding: 16px 18px; border-bottom: 1px solid rgba(42,42,42,0.08); display: flex; align-items: center; gap: 8px; }
+.cp-av { width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: white; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cp-title { font-size: 13px; font-weight: 600; color: var(--dark); flex: 1; }
+.cp-close { cursor: pointer; color: var(--light); font-size: 18px; line-height: 1; transition: color 0.15s; }
+.cp-close:hover { color: var(--dark); }
+.cp-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.cp-msg { font-size: 12px; line-height: 1.6; }
+.cp-msg.f { background: var(--surface); border-radius: 10px 10px 10px 3px; padding: 10px 12px; color: var(--dark); }
+.cp-msg.u { background: var(--dark); color: white; border-radius: 10px 10px 3px 10px; padding: 10px 12px; align-self: flex-end; }
+.cp-bar { padding: 10px 12px; border-top: 1px solid rgba(42,42,42,0.08); display: flex; gap: 8px; }
+.cp-input { flex: 1; padding: 8px 11px; border: 1.5px solid rgba(42,42,42,0.12); border-radius: 8px; font-size: 12px; font-family: var(--sans); color: var(--dark); background: var(--surface); outline: none; }
+.cp-input:focus { border-color: var(--brand); background: white; }
+.cp-send { width: 30px; height: 30px; border-radius: 8px; background: var(--brand); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* ── ONBOARDING ── */
+.onboard-wrap { min-height: 100vh; background: var(--parchment); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; position: relative; }
+.onboard-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 48px; }
+.onboard-av { width: 36px; height: 36px; border-radius: 50%; background: var(--brand); color: white; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.onboard-name { font-family: var(--heading); font-size: 22px; color: var(--dark); }
+.onboard-card { background: white; border: 2px solid var(--dark); border-radius: 20px; padding: 40px; max-width: 520px; width: 100%; box-shadow: 4px 4px 0 var(--dark); }
+.onboard-step-row { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; transition: all 0.2s; }
+.step-dot.done { background: var(--brand); color: white; }
+.step-dot.active { background: var(--dark); color: white; }
+.step-dot.pending { background: rgba(42,42,42,0.08); color: var(--faint); }
+.step-line { flex: 1; height: 2px; background: rgba(42,42,42,0.1); }
+.step-line.done { background: var(--brand); }
+.onboard-q { font-family: var(--heading); font-size: 28px; color: var(--dark); margin-bottom: 8px; line-height: 1.15; }
+.onboard-sub { font-size: 14px; color: var(--mid); margin-bottom: 28px; line-height: 1.55; }
+.vertical-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 28px; }
+.vert-card { border: 2px solid rgba(42,42,42,0.12); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; gap: 6px; }
+.vert-card:hover { border-color: var(--brand); background: var(--brand-light); }
+.vert-card.selected { border-color: var(--brand); background: var(--brand-light); }
+.vert-icon { font-size: 24px; }
+.vert-name { font-size: 14px; font-weight: 600; color: var(--dark); }
+.vert-desc { font-size: 11px; color: var(--light); line-height: 1.4; }
+.onboard-input { width: 100%; padding: 12px 14px; border: 2px solid rgba(42,42,42,0.15); border-radius: 12px; font-size: 15px; font-family: var(--sans); color: var(--dark); outline: none; transition: border-color 0.15s; margin-bottom: 10px; }
+.onboard-input:focus { border-color: var(--brand); }
+.onboard-input::placeholder { color: var(--faint); }
+.onboard-textarea { width: 100%; padding: 12px 14px; border: 2px solid rgba(42,42,42,0.15); border-radius: 12px; font-size: 14px; font-family: var(--sans); color: var(--dark); outline: none; resize: none; height: 100px; line-height: 1.55; transition: border-color 0.15s; margin-bottom: 20px; }
+.onboard-textarea:focus { border-color: var(--brand); }
+.onboard-textarea::placeholder { color: var(--faint); }
+.onboard-next { width: 100%; padding: 14px; background: var(--dark); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; font-family: var(--sans); cursor: pointer; transition: background 0.15s; }
+.onboard-next:hover { background: var(--brand); }
+.onboard-back { font-size: 13px; color: var(--light); cursor: pointer; text-align: center; margin-top: 14px; transition: color 0.15s; }
+.onboard-back:hover { color: var(--dark); }
+
+/* FINDING SCREEN */
+.finding-wrap { min-height: 100vh; background: var(--dark); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; position: relative; overflow: hidden; }
+.finding-wrap::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(29,158,117,0.12) 0%, transparent 70%); }
+.finding-av-wrap { position: relative; margin-bottom: 28px; z-index: 1; }
+.finding-av { width: 72px; height: 72px; border-radius: 50%; background: var(--brand); color: white; font-size: 30px; font-weight: 600; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; }
+.ring { position: absolute; border-radius: 50%; border: 1.5px solid rgba(29,158,117,0.3); animation: ringOut 2s ease-out infinite; }
+.ring-1 { width: 96px; height: 96px; top: -12px; left: -12px; animation-delay: 0s; }
+.ring-2 { width: 120px; height: 120px; top: -24px; left: -24px; animation-delay: 0.5s; }
+.ring-3 { width: 144px; height: 144px; top: -36px; left: -36px; animation-delay: 1s; }
+@keyframes ringOut { 0%{transform:scale(0.8);opacity:1} 100%{transform:scale(1.2);opacity:0} }
+.finding-title { font-family: var(--heading); font-size: 36px; color: white; margin-bottom: 10px; z-index: 1; }
+.finding-title em { font-style: italic; color: var(--brand); }
+.finding-sub { font-size: 15px; color: rgba(255,255,255,0.45); margin-bottom: 40px; line-height: 1.6; z-index: 1; max-width: 380px; }
+.finding-leads { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 420px; z-index: 1; }
+.finding-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; opacity: 0; transform: translateY(8px); transition: opacity 0.4s, transform 0.4s; }
+.finding-card.show { opacity: 1; transform: translateY(0); }
+.finding-card-biz { font-size: 13px; font-weight: 600; color: white; margin-bottom: 3px; }
+.finding-card-sig { font-size: 11px; color: rgba(255,255,255,0.4); }
+.finding-card-score { font-size: 12px; font-weight: 700; color: #5DCAA5; background: rgba(29,158,117,0.15); border-radius: 100px; padding: 3px 10px; flex-shrink: 0; }
+.finding-progress { width: 200px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 32px; z-index: 1; }
+.finding-bar { height: 100%; background: var(--brand); border-radius: 2px; animation: scan 3s ease-in-out infinite; }
+@keyframes scan { 0%{width:0%} 70%{width:100%} 100%{width:100%} }
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <button class="sw-btn active" data-screen="chat">1 · Chat (with leads)</button>
+  <button class="sw-btn" data-screen="leads">2 · My Leads</button>
+  <button class="sw-btn" data-screen="profile">3 · Lead Profile</button>
+  <button class="sw-btn" data-screen="onboard1">4 · Onboarding step 1</button>
+  <button class="sw-btn" data-screen="onboard2">5 · Onboarding step 2</button>
+  <button class="sw-btn" data-screen="onboard3">6 · Onboarding step 3</button>
+  <button class="sw-btn" data-screen="finding">7 · Finding screen</button>
+</div>
+
+<!-- ═══ SCREEN 1: CHAT WITH LEADS ═══ -->
+<div class="screen active" id="screen-chat">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="sb-logo"><div class="sb-av">ツ</div><div class="sb-name">Fetchi</div></div>
+      <div class="sb-section">Workspace</div>
+      <div class="sb-link active">
+        <svg class="sb-ico" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M4 7h8M4 10h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Chat
+      </div>
+      <div class="sb-link">
+        <svg class="sb-ico" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        My Leads <span class="sb-badge">6</span>
+      </div>
+      <div class="sb-section" style="margin-top:16px;">Settings</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Business Profile</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><path d="M8 2l1 4h4l-3 2 1 4-3-2-3 2 1-4-3-2h4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Signal Preferences</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Usage</div>
+      <div class="sb-credits">
+        <div class="cr-label">Opportunities</div>
+        <div class="cr-row"><div class="cr-count">32 / 40</div><div class="cr-reset">resets in 18d</div></div>
+        <div class="cr-bar-bg"><div class="cr-bar-fill" style="width:64%"></div></div>
+        <div class="cr-topup">↑ Add more leads</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="chat-history">
+        <!-- User message -->
+        <div class="chat-row user">
+          <div class="chat-av u">A</div>
+          <div class="chat-bubble">Find me commercial roofing leads in Dallas this week</div>
+        </div>
+        <!-- Fetchi response with leads -->
+        <div class="chat-row">
+          <div class="chat-av f">ツ</div>
+          <div style="flex:1;max-width:84%">
+            <div class="chat-bubble" style="border-radius:4px 14px 14px 14px;max-width:100%">
+              Found <strong>4 leads</strong> in Dallas this week — 2 storm signals from Tuesday's hail event and 2 new permit filings. Here are the strongest:
+              <div class="lead-cards">
+                <div class="lead-card">
+                  <div class="lead-left">
+                    <div class="lead-biz">Parkview Office Complex</div>
+                    <div class="lead-sig"><div class="sig-pip" style="background:#EF9F27"></div>Hail storm · 1.8" · Irving TX · 3 days ago</div>
+                  </div>
+                  <div class="lead-right"><span class="score score-hi">94</span><button class="draft-btn">Draft email</button></div>
+                </div>
+                <div class="lead-card">
+                  <div class="lead-left">
+                    <div class="lead-biz">Addison Corporate Park</div>
+                    <div class="lead-sig"><div class="sig-pip" style="background:#EF9F27"></div>Hail storm · same event · 3 days ago</div>
+                  </div>
+                  <div class="lead-right"><span class="score score-hi">88</span><button class="draft-btn">Draft email</button></div>
+                </div>
+                <div class="lead-card">
+                  <div class="lead-left">
+                    <div class="lead-biz">Frisco Medical Center</div>
+                    <div class="lead-sig"><div class="sig-pip" style="background:#5DCAA5"></div>Permit filed · 22,000 sq ft commercial build</div>
+                  </div>
+                  <div class="lead-right"><span class="score score-md">76</span><button class="draft-btn">Draft email</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- User asks for draft -->
+        <div class="chat-row user">
+          <div class="chat-av u">A</div>
+          <div class="chat-bubble">Draft outreach for Parkview Office Complex</div>
+        </div>
+        <!-- Fetchi outreach draft -->
+        <div class="chat-row">
+          <div class="chat-av f">ツ</div>
+          <div style="flex:1;max-width:84%">
+            <div class="chat-bubble" style="border-radius:4px 14px 14px 14px;max-width:100%">
+              Here's a draft referencing Tuesday's hail event:
+              <div class="outreach-card">
+                <div class="outreach-label">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M9 5L1 1l2 4-2 4 8-4z" fill="currentColor"/></svg>
+                  Outreach draft
+                </div>
+                <div class="outreach-subject">Subject: Hail damage inspection for Parkview Office Complex</div>
+                <div class="outreach-body">Hi — I noticed Tuesday's hail event hit the Irving/Las Colinas corridor pretty hard. We're Johnson Roofing and have been doing commercial work in Dallas for 12 years.<br><br>We're offering free storm inspections this week for properties in the affected area. Worth 30 minutes to make sure you're covered before filing any insurance claims.<br><br>Are you the right person to coordinate this, or is there someone else I should reach out to?</div>
+                <div class="outreach-actions">
+                  <button class="oa-btn oa-primary">Copy email</button>
+                  <button class="oa-btn oa-ghost">Edit</button>
+                  <button class="oa-btn oa-ghost">Regenerate</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-bar">
+        <div class="mic-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4" y="1" width="6" height="8" rx="3" stroke="#8a8580" stroke-width="1.5"/><path d="M2 7a5 5 0 0010 0M7 12v2" stroke="#8a8580" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <input class="chat-input" type="text" placeholder="Ask Fetchi anything about your leads...">
+        <button class="send-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7L1 2l3 5-3 5 12-5z" fill="white"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 2: MY LEADS ═══ -->
+<div class="screen" id="screen-leads">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="sb-logo"><div class="sb-av">ツ</div><div class="sb-name">Fetchi</div></div>
+      <div class="sb-section">Workspace</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>Chat</div>
+      <div class="sb-link active"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>My Leads <span class="sb-badge">6</span></div>
+      <div class="sb-section" style="margin-top:16px;">Settings</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Business Profile</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><path d="M8 2l1 4h4l-3 2 1 4-3-2-3 2 1-4-3-2h4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Signal Preferences</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/></svg>Usage</div>
+      <div class="sb-credits">
+        <div class="cr-label">Opportunities</div>
+        <div class="cr-row"><div class="cr-count">32 / 40</div><div class="cr-reset">resets in 18d</div></div>
+        <div class="cr-bar-bg"><div class="cr-bar-fill" style="width:64%"></div></div>
+        <div class="cr-topup">↑ Add more leads</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="leads-toolbar">
+        <div class="filter-tabs">
+          <div class="filter-tab active">All <span style="opacity:0.5;margin-left:3px">6</span></div>
+          <div class="filter-tab">New <span style="opacity:0.5;margin-left:3px">3</span></div>
+          <div class="filter-tab">Contacted <span style="opacity:0.5;margin-left:3px">2</span></div>
+          <div class="filter-tab">Won <span style="opacity:0.5;margin-left:3px">1</span></div>
+          <div class="filter-tab">Lost</div>
+        </div>
+        <input class="search-input" type="text" placeholder="Search leads...">
+        <select class="sort-select"><option>Score ↓</option><option>Date found</option><option>Expiring soon</option></select>
+      </div>
+      <div class="leads-list">
+        <div class="lead-row">
+          <div class="lead-row-check"></div>
+          <div class="lead-row-icon" style="background:#FEF3E7">⛈️</div>
+          <div class="lead-row-main">
+            <div class="lead-row-biz">Parkview Office Complex</div>
+            <div class="lead-row-sig"><div class="sig-pip" style="background:#EF9F27"></div>Hail storm · Irving TX · 3 days ago</div>
+          </div>
+          <div class="lead-row-meta">
+            <span class="status-pill status-new">New</span>
+            <span class="days-ago">3d ago</span>
+            <span class="lead-row-score" style="color:var(--brand)">94</span>
+          </div>
+        </div>
+        <div class="lead-row">
+          <div class="lead-row-check"></div>
+          <div class="lead-row-icon" style="background:#FEF3E7">⛈️</div>
+          <div class="lead-row-main">
+            <div class="lead-row-biz">Addison Corporate Park</div>
+            <div class="lead-row-sig"><div class="sig-pip" style="background:#EF9F27"></div>Hail storm · same event · 3 days ago</div>
+          </div>
+          <div class="lead-row-meta">
+            <span class="status-pill status-new">New</span>
+            <span class="days-ago">3d ago</span>
+            <span class="lead-row-score" style="color:var(--brand)">88</span>
+          </div>
+        </div>
+        <div class="lead-row">
+          <div class="lead-row-check"></div>
+          <div class="lead-row-icon" style="background:var(--brand-light)">🏗️</div>
+          <div class="lead-row-main">
+            <div class="lead-row-biz">Frisco Medical Center</div>
+            <div class="lead-row-sig"><div class="sig-pip" style="background:#5DCAA5"></div>Permit filed · 22,000 sq ft commercial build</div>
+          </div>
+          <div class="lead-row-meta">
+            <span class="status-pill status-contacted">Contacted</span>
+            <span class="days-ago">5d ago</span>
+            <span class="lead-row-score">76</span>
+          </div>
+        </div>
+        <div class="lead-row">
+          <div class="lead-row-check"></div>
+          <div class="lead-row-icon" style="background:#F0FDF4">✅</div>
+          <div class="lead-row-main">
+            <div class="lead-row-biz">Legacy Town Center</div>
+            <div class="lead-row-sig"><div class="sig-pip" style="background:#5DCAA5"></div>Permit filed · roof replacement approved</div>
+          </div>
+          <div class="lead-row-meta">
+            <span class="status-pill status-won">Won</span>
+            <span class="days-ago">12d ago</span>
+            <span class="lead-row-score">82</span>
+          </div>
+        </div>
+        <div class="lead-row">
+          <div class="lead-row-check"></div>
+          <div class="lead-row-icon" style="background:var(--brand-light)">📍</div>
+          <div class="lead-row-main">
+            <div class="lead-row-biz">North Dallas Tech Hub</div>
+            <div class="lead-row-sig"><div class="sig-pip" style="background:#5DCAA5"></div>New Google Maps listing · opened this week</div>
+          </div>
+          <div class="lead-row-meta">
+            <span class="status-pill status-new">New</span>
+            <span class="days-ago">1d ago</span>
+            <span class="lead-row-score">71</span>
+          </div>
+        </div>
+        <div class="lead-row">
+          <div class="lead-row-check"></div>
+          <div class="lead-row-icon" style="background:#EEF2FF">💼</div>
+          <div class="lead-row-main">
+            <div class="lead-row-biz">Plano Business Campus</div>
+            <div class="lead-row-sig"><div class="sig-pip" style="background:#3730A3"></div>Facilities manager job posting · hiring now</div>
+          </div>
+          <div class="lead-row-meta">
+            <span class="status-pill status-contacted">Contacted</span>
+            <span class="days-ago">8d ago</span>
+            <span class="lead-row-score">68</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 3: LEAD PROFILE ═══ -->
+<div class="screen" id="screen-profile">
+  <div class="shell full">
+    <div class="sidebar">
+      <div class="sb-logo"><div class="sb-av">ツ</div><div class="sb-name">Fetchi</div></div>
+      <div class="sb-section">Workspace</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>Chat</div>
+      <div class="sb-link active"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>My Leads <span class="sb-badge">6</span></div>
+      <div class="sb-section" style="margin-top:16px;">Settings</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Business Profile</div>
+      <div class="sb-link"><svg class="sb-ico" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/></svg>Usage</div>
+      <div class="sb-credits">
+        <div class="cr-label">Opportunities</div>
+        <div class="cr-row"><div class="cr-count">32 / 40</div><div class="cr-reset">resets in 18d</div></div>
+        <div class="cr-bar-bg"><div class="cr-bar-fill" style="width:64%"></div></div>
+        <div class="cr-topup">↑ Add more leads</div>
+      </div>
+    </div>
+
+    <!-- PROFILE MAIN -->
+    <div class="main" style="overflow-y:auto;">
+      <div class="profile-panel">
+        <div class="profile-back">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L5 7l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Back to My Leads
+        </div>
+        <div class="profile-header">
+          <div>
+            <div class="profile-biz-name">Parkview Office Complex</div>
+            <div class="profile-signal-row">
+              <div class="signal-tag">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1L6 4h3L7 6l1 3-3-2-3 2 1-3-2-2h3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                Storm damage
+              </div>
+              <span style="font-size:12px;color:var(--light)">Hail · 1.8" · Irving TX · 3 days ago</span>
+            </div>
+          </div>
+          <div class="profile-score-big">
+            <div class="score-num">94</div>
+            <div class="score-label">Signal score</div>
+          </div>
+        </div>
+
+        <div class="why-now-box">
+          <div class="why-now-label">Why now</div>
+          <div class="why-now-text">Tuesday's hail event dropped 1.8" stones across the Irving/Las Colinas corridor — the exact size range that causes significant flat roof membrane damage. This is a commercial complex with approximately 80,000 sq ft of roof surface. The 3-day window is ideal: insurance adjusters haven't been called yet, but the decision-maker is aware something happened.</div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-label">Address</div>
+            <div class="info-val">7500 John Carpenter Fwy<br>Irving, TX 75063</div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Business type</div>
+            <div class="info-val">Commercial office complex</div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Website</div>
+            <div class="info-val"><a href="#">parkviewoffice.com</a></div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Signal detected</div>
+            <div class="info-val">April 9, 2026 · 3 days ago</div>
+          </div>
+        </div>
+
+        <div class="contact-box">
+          <div class="contact-box-title">
+            Contacts found
+            <span style="font-size:11px;color:var(--light);font-weight:400">via enrichment</span>
+          </div>
+          <div class="contact-row">
+            <div class="contact-icon">👤</div>
+            <div class="contact-info">
+              <div class="contact-name">Michael Torres</div>
+              <div class="contact-title">Property Manager</div>
+              <div class="contact-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bdd093c9d2cfcfd8cefdcddccfd6cbd4d8cad2dbdbd4ded893ded2d0">[email&#160;protected]</a></div>
+            </div>
+            <div class="confidence-bar">
+              <div class="conf-dots">
+                <div class="conf-dot filled"></div>
+                <div class="conf-dot filled"></div>
+                <div class="conf-dot filled"></div>
+                <div class="conf-dot"></div>
+              </div>
+              <span style="font-size:10px;color:var(--faint)">High</span>
+            </div>
+          </div>
+          <div class="contact-row">
+            <div class="contact-icon">👤</div>
+            <div class="contact-info">
+              <div class="contact-name">Sandra Kim</div>
+              <div class="contact-title">Facilities Director</div>
+              <div class="contact-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="eb98c5808286ab9b8a99809d828e9c848d8d82888ec5888486">[email&#160;protected]</a></div>
+            </div>
+            <div class="confidence-bar">
+              <div class="conf-dots">
+                <div class="conf-dot filled"></div>
+                <div class="conf-dot filled"></div>
+                <div class="conf-dot"></div>
+                <div class="conf-dot"></div>
+              </div>
+              <span style="font-size:10px;color:var(--faint)">Med</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-controls">
+          <button class="status-btn primary">Mark as contacted</button>
+          <button class="status-btn">Won ✓</button>
+          <button class="status-btn">Lost</button>
+          <button class="status-btn">Skip</button>
+          <button class="status-btn">Draft outreach →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ツ CHAT PANEL -->
+    <div class="chat-panel">
+      <div class="cp-header">
+        <div class="cp-av">ツ</div>
+        <div class="cp-title">Ask Fetchi about this lead</div>
+        <div class="cp-close">×</div>
+      </div>
+      <div class="cp-msgs">
+        <div class="cp-msg f">I've loaded full context on Parkview Office Complex — the storm event, the property details, and the contact info. What do you want to know?</div>
+        <div class="cp-msg u">What's the best angle for outreach here?</div>
+        <div class="cp-msg f">Lead with the free inspection offer — don't sell the roof replacement yet. Michael Torres is a property manager, which means he's accountable to an owner. His first instinct will be "do I need to tell the owner about this?" A free inspection gives him a professional assessment he can share up the chain without committing to anything. Once you're on the roof, you're the expert.</div>
+        <div class="cp-msg u">Draft an email to Michael</div>
+        <div class="cp-msg f">
+          <div style="font-size:11px;font-weight:700;color:var(--brand);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px">Draft →</div>
+          <div style="font-size:11px;font-weight:600;color:var(--dark);margin-bottom:5px">Subject: Free hail inspection — Parkview Complex</div>
+          <div style="font-size:11px;color:var(--mid);line-height:1.6">Hi Michael — Tuesday's hail hit the Las Colinas corridor hard. We do commercial roofing across DFW and are offering free storm inspections this week for properties in the affected area. Worth 30 minutes before you report anything to ownership. Available Thursday or Friday?</div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button style="font-size:11px;font-weight:500;padding:5px 10px;background:var(--dark);color:white;border:none;border-radius:6px;cursor:pointer;font-family:var(--sans)">Copy</button>
+            <button style="font-size:11px;font-weight:500;padding:5px 10px;background:transparent;color:var(--mid);border:1px solid rgba(42,42,42,0.15);border-radius:6px;cursor:pointer;font-family:var(--sans)">Edit</button>
+          </div>
+        </div>
+      </div>
+      <div class="cp-bar">
+        <input class="cp-input" type="text" placeholder="Ask about this lead...">
+        <button class="cp-send">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M11 6L1 1.5l2 4.5-2 4.5L11 6z" fill="white"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 4: ONBOARDING STEP 1 ═══ -->
+<div class="screen" id="screen-onboard1">
+  <div class="onboard-wrap">
+    <div class="onboard-logo"><div class="onboard-av">ツ</div><div class="onboard-name">Fetchi</div></div>
+    <div class="onboard-card">
+      <div class="onboard-step-row">
+        <div class="step-dot active">1</div>
+        <div class="step-line"></div>
+        <div class="step-dot pending">2</div>
+        <div class="step-line"></div>
+        <div class="step-dot pending">3</div>
+      </div>
+      <div class="onboard-q">What does your business sell?</div>
+      <div class="onboard-sub">Pick your main service vertical. You can add more after setup.</div>
+      <div class="vertical-grid">
+        <div class="vert-card selected">
+          <div class="vert-icon">🏠</div>
+          <div class="vert-name">Roofing</div>
+          <div class="vert-desc">Storm damage, permits, new builds</div>
+        </div>
+        <div class="vert-card">
+          <div class="vert-icon">🧹</div>
+          <div class="vert-name">Commercial Cleaning</div>
+          <div class="vert-desc">New tenants, office openings</div>
+        </div>
+        <div class="vert-card">
+          <div class="vert-icon">❄️</div>
+          <div class="vert-name">HVAC</div>
+          <div class="vert-desc">New builds, system permits</div>
+        </div>
+        <div class="vert-card">
+          <div class="vert-icon">🌿</div>
+          <div class="vert-name">Landscaping</div>
+          <div class="vert-desc">New properties, HOA contracts</div>
+        </div>
+        <div class="vert-card">
+          <div class="vert-icon">🎪</div>
+          <div class="vert-name">Event Services</div>
+          <div class="vert-desc">Corporate events, weddings</div>
+        </div>
+        <div class="vert-card">
+          <div class="vert-icon">➕</div>
+          <div class="vert-name">Other</div>
+          <div class="vert-desc">I'll describe my service</div>
+        </div>
+      </div>
+      <button class="onboard-next">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 5: ONBOARDING STEP 2 ═══ -->
+<div class="screen" id="screen-onboard2">
+  <div class="onboard-wrap">
+    <div class="onboard-logo"><div class="onboard-av">ツ</div><div class="onboard-name">Fetchi</div></div>
+    <div class="onboard-card">
+      <div class="onboard-step-row">
+        <div class="step-dot done" style="font-size:14px">✓</div>
+        <div class="step-line done"></div>
+        <div class="step-dot active">2</div>
+        <div class="step-line"></div>
+        <div class="step-dot pending">3</div>
+      </div>
+      <div class="onboard-q">Where do you work?</div>
+      <div class="onboard-sub">Fetchi scans signals in your area every night. The more specific, the better the leads.</div>
+      <div style="display:grid;grid-template-columns:1fr 80px;gap:10px;margin-bottom:10px">
+        <input class="onboard-input" style="margin:0" type="text" placeholder="City — e.g. Dallas">
+        <select class="onboard-input" style="margin:0;padding:12px 8px;appearance:none;background-image:url('data:image/svg+xml,<svg width=10 height=6 viewBox=0 0 10 6 fill=none xmlns=http://www.w3.org/2000/svg><path d=M1 1l4 4 4-4 stroke=%238a8580 stroke-width=1.5 stroke-linecap=round stroke-linejoin=round/></svg>');background-repeat:no-repeat;background-position:right 8px center"><option>TX</option><option>AZ</option><option>FL</option><option>GA</option><option>TN</option></select>
+      </div>
+      <div style="margin-bottom:24px">
+        <label class="onboard-back" style="color:var(--mid);font-size:13px;display:block;margin:0 0 8px">Search radius</label>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;padding:10px;border:2px solid var(--brand);border-radius:10px;text-align:center;background:var(--brand-light);font-size:13px;font-weight:600;color:var(--brand-dark);cursor:pointer">25 miles</div>
+          <div style="flex:1;padding:10px;border:2px solid rgba(42,42,42,0.12);border-radius:10px;text-align:center;font-size:13px;color:var(--mid);cursor:pointer">50 miles</div>
+          <div style="flex:1;padding:10px;border:2px solid rgba(42,42,42,0.12);border-radius:10px;text-align:center;font-size:13px;color:var(--mid);cursor:pointer">100 miles</div>
+        </div>
+      </div>
+      <button class="onboard-next">Continue →</button>
+      <div class="onboard-back">← Back</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 6: ONBOARDING STEP 3 ═══ -->
+<div class="screen" id="screen-onboard3">
+  <div class="onboard-wrap">
+    <div class="onboard-logo"><div class="onboard-av">ツ</div><div class="onboard-name">Fetchi</div></div>
+    <div class="onboard-card">
+      <div class="onboard-step-row">
+        <div class="step-dot done" style="font-size:14px">✓</div>
+        <div class="step-line done"></div>
+        <div class="step-dot done" style="font-size:14px">✓</div>
+        <div class="step-line done"></div>
+        <div class="step-dot active">3</div>
+      </div>
+      <div class="onboard-q">Who's your best customer?</div>
+      <div class="onboard-sub">Describe the kind of business you most want to work with. Fetchi uses this to score every lead it finds — the more detail, the better.</div>
+      <textarea class="onboard-textarea" placeholder="e.g. Commercial property managers and HOA boards. Buildings 5,000–50,000 sq ft. Prefer ongoing service contracts. Decision maker is usually a facilities director or property manager."></textarea>
+      <button class="onboard-next">Find my leads →</button>
+      <div class="onboard-back">← Back</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 7: FINDING SCREEN ═══ -->
+<div class="screen" id="screen-finding">
+  <div class="finding-wrap">
+    <div class="finding-av-wrap">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="finding-av">ツ</div>
+    </div>
+    <div class="finding-title">On it, <em>Adam.</em></div>
+    <div class="finding-sub">Scanning Dallas for roofing leads right now — permits, storm reports, and new listings.</div>
+    <div class="finding-leads">
+      <div class="finding-card" id="fc1">
+        <div>
+          <div class="finding-card-biz">Parkview Office Complex</div>
+          <div class="finding-card-sig">⛈ Hail event · Irving TX · 3 days ago</div>
+        </div>
+        <div class="finding-card-score">94</div>
+      </div>
+      <div class="finding-card" id="fc2">
+        <div>
+          <div class="finding-card-biz">Frisco Medical Center</div>
+          <div class="finding-card-sig">🏗 Permit filed · 22,000 sq ft build</div>
+        </div>
+        <div class="finding-card-score">76</div>
+      </div>
+      <div class="finding-card" id="fc3">
+        <div>
+          <div class="finding-card-biz">North Dallas Tech Hub</div>
+          <div class="finding-card-sig">📍 New listing · opened this week</div>
+        </div>
+        <div class="finding-card-score">71</div>
+      </div>
+    </div>
+    <div class="finding-progress">
+      <div class="finding-bar"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Tab switching — no global functions, no onclick
+  document.querySelectorAll('.sw-btn[data-screen]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var name = this.getAttribute('data-screen')
+      document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active') })
+      document.querySelectorAll('.sw-btn').forEach(function(b) { b.classList.remove('active') })
+      var target = document.getElementById('screen-' + name)
+      if (target) target.classList.add('active')
+      this.classList.add('active')
+      if (name === 'finding') startFinding()
+    })
+  })
+
+  // Vertical card selection
+  document.querySelectorAll('.vert-card').forEach(function(c) {
+    c.addEventListener('click', function() {
+      var grid = this.closest('.vertical-grid')
+      if (grid) grid.querySelectorAll('.vert-card').forEach(function(x) { x.classList.remove('selected') })
+      this.classList.add('selected')
+    })
+  })
+
+  // Finding screen animation
+  function startFinding() {
+    var cards = ['fc1','fc2','fc3']
+    cards.forEach(function(id) {
+      var el = document.getElementById(id)
+      if (el) el.classList.remove('show')
+    })
+    cards.forEach(function(id, i) {
+      setTimeout(function() {
+        var el = document.getElementById(id)
+        if (el) el.classList.add('show')
+      }, 600 + i * 500)
+    })
+  }
+
+})
+</script>

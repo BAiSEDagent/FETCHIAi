@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fetchi — Map View</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --brand: #58937E; --brand-dark: #3D6B5A; --brand-light: #EAF3EF;
+  --coral: #D85A30; --coral-light: #FAECE7;
+  --parchment: #EBE6D9; --surface: #F0EDE4;
+  --dark: #2D2B2A; --mid: #5a5550; --light: #8a8580; --faint: #b8b3ad;
+  --heading: 'Outfit', sans-serif;
+  --sans: 'DM Sans', -apple-system, sans-serif;
+}
+body { font-family: var(--sans); background: #e0dbd0; padding: 20px 24px 40px; }
+
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  background: var(--parchment);
+  border: 2px solid var(--dark);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 3px 3px 0 var(--dark);
+  height: 720px;
+}
+
+/* SIDEBAR */
+.sidebar { background: var(--dark); padding: 20px 0; display: flex; flex-direction: column; }
+.sb-logo { display: flex; align-items: center; gap: 8px; padding: 0 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; }
+.sb-av { width: 28px; height: 28px; border-radius: 10px; background: var(--brand); border: 2px solid #2D2B2A; box-shadow: 2px 2px 0 #2D2B2A; transform: rotate(-2deg); color: white; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.sb-name { font-family: var(--heading); font-size: 18px; color: white; }
+.sb-section { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: rgba(255,255,255,0.25); padding: 0 18px; margin: 12px 0 6px; }
+.sb-link { display: flex; align-items: center; gap: 9px; padding: 8px 18px; font-size: 13px; color: rgba(255,255,255,0.55); cursor: pointer; transition: all 0.15s; }
+.sb-link:hover { color: white; background: rgba(255,255,255,0.06); }
+.sb-link.active { color: white; background: rgba(29,158,117,0.2); }
+.sb-link.active svg { color: var(--brand); opacity: 1 !important; }
+.sb-ico { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.6; }
+.sb-badge { margin-left: auto; font-size: 10px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); border-radius: 100px; padding: 1px 7px; }
+.sb-credits { margin-top: auto; padding: 16px 18px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+.cr-label { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.cr-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.cr-count { font-size: 13px; font-weight: 600; color: white; }
+.cr-reset { font-size: 10px; color: rgba(255,255,255,0.3); }
+.cr-bar-bg { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.cr-bar-fill { height: 100%; border-radius: 2px; background: var(--brand); }
+.cr-topup { font-size: 11px; color: var(--brand); margin-top: 8px; cursor: pointer; }
+
+/* MAIN */
+.main { display: flex; flex-direction: column; overflow: hidden; }
+
+/* TOOLBAR */
+.toolbar {
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(42,42,42,0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  flex-shrink: 0;
+}
+
+.filter-tabs { display: flex; gap: 2px; }
+.tab {
+  font-size: 12px; font-weight: 500; padding: 6px 14px;
+  border-radius: 8px; cursor: pointer; color: var(--light);
+  transition: all 0.15s; border: 1px solid transparent;
+  display: flex; align-items: center; gap: 5px;
+}
+.tab.active { background: var(--dark); color: white; }
+.tab:hover:not(.active) { background: rgba(42,42,42,0.06); color: var(--dark); }
+.tab-count { font-size: 10px; opacity: 0.6; }
+
+.toolbar-sep { width: 1px; height: 20px; background: rgba(42,42,42,0.1); flex-shrink: 0; }
+
+.search-input {
+  flex: 1; padding: 7px 11px; border: 1.5px solid rgba(42,42,42,0.12);
+  border-radius: 8px; font-size: 12px; font-family: var(--sans);
+  background: var(--surface); color: var(--dark); outline: none;
+}
+.search-input:focus { border-color: var(--brand); background: white; }
+.search-input::placeholder { color: var(--faint); }
+
+.sort-select {
+  padding: 7px 10px; border: 1.5px solid rgba(42,42,42,0.12);
+  border-radius: 8px; font-size: 12px; font-family: var(--sans);
+  color: var(--mid); background: white; outline: none; cursor: pointer;
+}
+
+/* MAP AREA */
+.map-area {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  overflow: hidden;
+}
+
+/* MAP CANVAS */
+.map-canvas {
+  position: relative;
+  background: #f2efe8;
+  overflow: hidden;
+}
+
+/* SVG Map */
+.map-svg { width: 100%; height: 100%; }
+
+/* MAP CONTROLS */
+.map-controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+}
+
+.map-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1.5px solid rgba(42,42,42,0.15);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  width: 260px;
+}
+.map-search input {
+  border: none; outline: none; font-size: 13px;
+  font-family: var(--sans); color: var(--dark); flex: 1; background: transparent;
+}
+.map-search input::placeholder { color: var(--faint); }
+
+.signal-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chip {
+  font-size: 11px; font-weight: 500; padding: 5px 11px;
+  border-radius: 100px; cursor: pointer; transition: all 0.15s;
+  background: white; border: 1.5px solid rgba(42,42,42,0.15);
+  color: var(--mid); box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  display: flex; align-items: center; gap: 4px;
+}
+.chip.active { border-color: var(--brand); color: var(--brand-dark); background: var(--brand-light); }
+.chip.active .chip-dot { background: var(--brand); }
+.chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--light); }
+.chip.chip-storm.active .chip-dot { background: #EF9F27; }
+.chip.chip-permit.active .chip-dot { background: var(--brand); }
+.chip.chip-listing.active .chip-dot { background: #3B82F6; }
+
+/* ZOOM CONTROLS */
+.zoom-controls {
+  position: absolute;
+  bottom: 70px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid rgba(42,42,42,0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 10;
+}
+.zoom-btn {
+  width: 32px; height: 32px; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; font-size: 18px; color: var(--mid);
+  border-bottom: 1px solid rgba(42,42,42,0.08); transition: background 0.1s;
+}
+.zoom-btn:last-child { border-bottom: none; }
+.zoom-btn:hover { background: var(--surface); }
+
+/* SCAN BUTTON */
+.scan-btn-wrap {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+.scan-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--dark); color: white;
+  border: none; border-radius: 100px;
+  padding: 11px 22px; font-size: 13px; font-weight: 600;
+  font-family: var(--sans); cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.scan-btn:hover { background: var(--brand); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
+.scan-btn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
+.scan-btn:hover .scan-btn-dot { background: white; }
+
+/* RADIUS BADGE */
+.radius-badge {
+  position: absolute;
+  bottom: 16px;
+  right: 12px;
+  background: white;
+  border: 1.5px solid rgba(42,42,42,0.12);
+  border-radius: 10px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--mid);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  z-index: 10;
+}
+.radius-val { font-weight: 700; color: var(--dark); }
+.radius-slider { width: 80px; accent-color: var(--brand); }
+
+/* LEAD PINS on map */
+.pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.15s;
+}
+.pin:hover { transform: translate(-50%, -100%) scale(1.15); z-index: 20; }
+.pin-bubble {
+  background: var(--dark); color: white;
+  border-radius: 100px; padding: 4px 10px;
+  font-size: 11px; font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  white-space: nowrap; display: flex; align-items: center; gap: 5px;
+}
+.pin-bubble.high { background: var(--brand); }
+.pin-bubble.mid { background: #CA8A04; }
+.pin-tail {
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid var(--dark);
+  margin: 0 auto;
+}
+.pin-tail.high { border-top-color: var(--brand); }
+.pin-tail.mid { border-top-color: #CA8A04; }
+.pin.active .pin-bubble { outline: 3px solid white; outline-offset: 1px; }
+
+/* RESULTS PANEL */
+.results-panel {
+  border-left: 1px solid rgba(42,42,42,0.1);
+  display: flex; flex-direction: column;
+  background: white;
+  overflow: hidden;
+}
+.rp-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(42,42,42,0.08);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.rp-title { font-size: 13px; font-weight: 600; color: var(--dark); }
+.rp-count { font-size: 11px; color: var(--light); background: var(--surface); border-radius: 100px; padding: 2px 9px; }
+
+.rp-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+
+.rp-card {
+  background: var(--surface); border: 1.5px solid rgba(42,42,42,0.08);
+  border-radius: 10px; padding: 12px 14px; cursor: pointer;
+  transition: all 0.15s;
+}
+.rp-card:hover, .rp-card.active { border-color: var(--brand); background: var(--brand-light); }
+.rp-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.rp-biz { font-size: 13px; font-weight: 600; color: var(--dark); line-height: 1.3; }
+.rp-score { font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.rp-score.high { color: var(--brand); }
+.rp-score.mid { color: #854F0B; }
+.rp-sig { font-size: 11px; color: var(--light); display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+.rp-sig-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.rp-why { font-size: 11px; color: var(--mid); line-height: 1.5; margin-bottom: 8px; }
+.rp-actions { display: flex; gap: 6px; }
+.rp-btn {
+  font-size: 11px; font-weight: 500; font-family: var(--sans);
+  padding: 5px 10px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+.rp-btn.primary { background: var(--dark); color: white; border: none; }
+.rp-btn.primary:hover { background: var(--brand); }
+.rp-btn.ghost { background: transparent; color: var(--mid); border: 1px solid rgba(42,42,42,0.15); }
+.rp-btn.ghost:hover { border-color: var(--dark); color: var(--dark); }
+
+.rp-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 24px; color: var(--light);
+}
+.rp-empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.6; }
+.rp-empty-text { font-size: 13px; line-height: 1.55; }
+
+/* SELECTED LEAD EXPANDED */
+.rp-lead-detail {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.rp-lead-detail.visible { display: flex; }
+.rp-detail-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(42,42,42,0.08);
+  display: flex; align-items: center; gap: 10px;
+}
+.rp-detail-back { cursor: pointer; color: var(--light); font-size: 18px; transition: color 0.15s; }
+.rp-detail-back:hover { color: var(--dark); }
+.rp-detail-name { font-size: 14px; font-weight: 600; color: var(--dark); flex: 1; }
+.rp-detail-score { font-size: 20px; font-weight: 700; color: var(--brand); font-family: var(--heading); }
+.rp-detail-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.detail-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--faint); margin-bottom: 5px; }
+.detail-why { background: var(--brand-light); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--brand-dark); line-height: 1.6; }
+.detail-info { font-size: 12px; color: var(--mid); line-height: 1.6; }
+.detail-actions { display: flex; gap: 6px; margin-top: 4px; }
+.detail-btn { flex: 1; font-size: 12px; font-weight: 600; font-family: var(--sans); padding: 9px; border-radius: 8px; cursor: pointer; transition: all 0.15s; text-align: center; }
+.detail-btn.primary { background: var(--dark); color: white; border: none; }
+.detail-btn.primary:hover { background: var(--brand); }
+.detail-btn.ghost { background: transparent; color: var(--mid); border: 1.5px solid rgba(42,42,42,0.15); }
+.detail-btn.ghost:hover { border-color: var(--dark); color: var(--dark); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo"><div class="sb-av">ツ</div><div class="sb-name">Fetchi</div></div>
+    <div class="sb-section">Workspace</div>
+    <div class="sb-link">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+      Chat
+    </div>
+    <div class="sb-link active">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      My Leads <span class="sb-badge">6</span>
+    </div>
+    <div class="sb-section" style="margin-top:16px;">Settings</div>
+    <div class="sb-link">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Business Profile
+    </div>
+    <div class="sb-link">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none"><path d="M8 2l1 4h4l-3 2 1 4-3-2-3 2 1-4-3-2h4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      Signal Preferences
+    </div>
+    <div class="sb-link">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/></svg>
+      Usage
+    </div>
+    <div class="sb-credits">
+      <div class="cr-label">Opportunities</div>
+      <div class="cr-row"><div class="cr-count">32 / 40</div><div class="cr-reset">resets in 18d</div></div>
+      <div class="cr-bar-bg"><div class="cr-bar-fill" style="width:64%"></div></div>
+      <div class="cr-topup">↑ Add more leads</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="filter-tabs">
+        <div class="tab" onclick="switchTab(this,'list')">All <span class="tab-count">6</span></div>
+        <div class="tab" onclick="switchTab(this,'list')">New <span class="tab-count">3</span></div>
+        <div class="tab" onclick="switchTab(this,'list')">Contacted <span class="tab-count">2</span></div>
+        <div class="tab" onclick="switchTab(this,'list')">Won <span class="tab-count">1</span></div>
+        <div class="tab" onclick="switchTab(this,'list')">Lost</div>
+        <div class="tab active" onclick="switchTab(this,'map')">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1C3.567 1 2 2.567 2 4.5c0 2.719 3.5 5.5 3.5 5.5S9 7.219 9 4.5C9 2.567 7.433 1 5.5 1z" stroke="currentColor" stroke-width="1.3"/><circle cx="5.5" cy="4.5" r="1.2" stroke="currentColor" stroke-width="1.2"/></svg>
+          Map
+        </div>
+      </div>
+      <div class="toolbar-sep"></div>
+      <input class="search-input" type="text" placeholder="Search location or business...">
+      <select class="sort-select"><option>Score ↓</option><option>Distance</option><option>Date found</option></select>
+    </div>
+
+    <!-- MAP AREA -->
+    <div class="map-area">
+
+      <!-- MAP CANVAS -->
+      <div class="map-canvas" id="mapCanvas">
+
+        <!-- SVG STREET MAP -->
+        <svg class="map-svg" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+          <!-- Base -->
+          <rect width="800" height="600" fill="#f0ece0"/>
+
+          <!-- Parks -->
+          <rect x="60" y="80" width="120" height="90" rx="4" fill="#d4e8c2" opacity="0.7"/>
+          <rect x="580" y="300" width="100" height="80" rx="4" fill="#d4e8c2" opacity="0.7"/>
+          <rect x="300" y="460" width="140" height="70" rx="4" fill="#d4e8c2" opacity="0.7"/>
+
+          <!-- Major roads - horizontal -->
+          <rect x="0" y="140" width="800" height="14" fill="#e8e0d0"/>
+          <rect x="0" y="138" width="800" height="2" fill="#d0c8b8"/>
+          <rect x="0" y="150" width="800" height="2" fill="#d0c8b8"/>
+
+          <rect x="0" y="280" width="800" height="14" fill="#e8e0d0"/>
+          <rect x="0" y="278" width="800" height="2" fill="#d0c8b8"/>
+          <rect x="0" y="290" width="800" height="2" fill="#d0c8b8"/>
+
+          <rect x="0" y="420" width="800" height="14" fill="#e8e0d0"/>
+          <rect x="0" y="418" width="800" height="2" fill="#d0c8b8"/>
+          <rect x="0" y="430" width="800" height="2" fill="#d0c8b8"/>
+
+          <!-- Major roads - vertical -->
+          <rect x="160" y="0" width="14" height="600" fill="#e8e0d0"/>
+          <rect x="158" y="0" width="2" height="600" fill="#d0c8b8"/>
+          <rect x="172" y="0" width="2" height="600" fill="#d0c8b8"/>
+
+          <rect x="380" y="0" width="14" height="600" fill="#e8e0d0"/>
+          <rect x="378" y="0" width="2" height="600" fill="#d0c8b8"/>
+          <rect x="392" y="0" width="2" height="600" fill="#d0c8b8"/>
+
+          <rect x="600" y="0" width="14" height="600" fill="#e8e0d0"/>
+          <rect x="598" y="0" width="2" height="600" fill="#d0c8b8"/>
+          <rect x="612" y="0" width="2" height="600" fill="#d0c8b8"/>
+
+          <!-- Minor roads - horizontal -->
+          <rect x="0" y="80" width="800" height="6" fill="#e4dfd3"/>
+          <rect x="0" y="200" width="800" height="6" fill="#e4dfd3"/>
+          <rect x="0" y="340" width="800" height="6" fill="#e4dfd3"/>
+          <rect x="0" y="500" width="800" height="6" fill="#e4dfd3"/>
+          <rect x="0" y="560" width="800" height="6" fill="#e4dfd3"/>
+
+          <!-- Minor roads - vertical -->
+          <rect x="80" y="0" width="6" height="600" fill="#e4dfd3"/>
+          <rect x="260" y="0" width="6" height="600" fill="#e4dfd3"/>
+          <rect x="480" y="0" width="6" height="600" fill="#e4dfd3"/>
+          <rect x="700" y="0" width="6" height="600" fill="#e4dfd3"/>
+
+          <!-- Blocks / buildings (subtle) -->
+          <rect x="20" y="20" width="50" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="90" y="20" width="55" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="200" y="20" width="48" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="270" y="20" width="95" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="410" y="20" width="55" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="490" y="20" width="90" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="630" y="20" width="55" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="710" y="20" width="70" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+
+          <rect x="20" y="165" width="120" height="60" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="200" y="165" width="70" height="60" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="290" y="165" width="75" height="60" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="410" y="165" width="155" height="60" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="630" y="165" width="155" height="60" rx="3" fill="#e8e3d6" opacity="0.8"/>
+
+          <rect x="20" y="305" width="120" height="65" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="200" y="305" width="165" height="65" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="410" y="305" width="165" height="65" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="630" y="305" width="80" height="65" rx="3" fill="#e8e3d6" opacity="0.8"/>
+
+          <rect x="20" y="445" width="120" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="200" y="445" width="75" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="460" y="445" width="120" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+          <rect x="630" y="445" width="155" height="50" rx="3" fill="#e8e3d6" opacity="0.8"/>
+
+          <!-- Road labels -->
+          <text x="400" y="136" font-family="DM Sans, sans-serif" font-size="9" fill="#a09890" text-anchor="middle">E MAIN ST</text>
+          <text x="400" y="276" font-family="DM Sans, sans-serif" font-size="9" fill="#a09890" text-anchor="middle">COMMERCE BLVD</text>
+          <text x="400" y="416" font-family="DM Sans, sans-serif" font-size="9" fill="#a09890" text-anchor="middle">INDUSTRIAL PKWY</text>
+          <text x="157" y="300" font-family="DM Sans, sans-serif" font-size="9" fill="#a09890" text-anchor="middle" transform="rotate(-90,157,300)">N CEDAR AVE</text>
+          <text x="379" y="300" font-family="DM Sans, sans-serif" font-size="9" fill="#a09890" text-anchor="middle" transform="rotate(-90,379,300)">CENTRAL EXPWY</text>
+
+          <!-- RADIUS CIRCLE - centered at pin location -->
+          <circle cx="387" cy="287" r="155" fill="rgba(29,158,117,0.08)" stroke="#58937E" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.8"/>
+
+          <!-- CENTER PIN indicator -->
+          <circle cx="387" cy="287" r="6" fill="white" stroke="#58937E" stroke-width="2"/>
+          <circle cx="387" cy="287" r="3" fill="#58937E"/>
+        </svg>
+
+        <!-- MAP CONTROLS -->
+        <div class="map-controls">
+          <div class="map-search">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="#8a8580" stroke-width="1.5"/><path d="M9 9l2.5 2.5" stroke="#8a8580" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input type="text" placeholder="Search for a location...">
+          </div>
+          <div class="signal-chips">
+            <div class="chip chip-storm active" onclick="this.classList.toggle('active')">
+              <div class="chip-dot"></div>
+              Storm
+            </div>
+            <div class="chip chip-permit active" onclick="this.classList.toggle('active')">
+              <div class="chip-dot"></div>
+              Permits
+            </div>
+            <div class="chip chip-listing active" onclick="this.classList.toggle('active')">
+              <div class="chip-dot"></div>
+              New listings
+            </div>
+          </div>
+        </div>
+
+        <!-- LEAD PINS -->
+        <!-- Pin 1: Parkview - high -->
+        <div class="pin active" style="left:31%;top:40%" onclick="selectLead(0)">
+          <div class="pin-bubble high">94 · Parkview</div>
+          <div class="pin-tail high"></div>
+        </div>
+
+        <!-- Pin 2: Addison - high -->
+        <div class="pin" style="left:52%;top:28%" onclick="selectLead(1)">
+          <div class="pin-bubble high">88 · Addison Corp</div>
+          <div class="pin-tail high"></div>
+        </div>
+
+        <!-- Pin 3: Frisco - medium -->
+        <div class="pin" style="left:66%;top:52%" onclick="selectLead(2)">
+          <div class="pin-bubble mid">76 · Frisco Med</div>
+          <div class="pin-tail mid"></div>
+        </div>
+
+        <!-- Pin 4: North Dallas - medium -->
+        <div class="pin" style="left:44%;top:60%" onclick="selectLead(3)">
+          <div class="pin-bubble mid">71 · N Dallas Tech</div>
+          <div class="pin-tail mid"></div>
+        </div>
+
+        <!-- ZOOM -->
+        <div class="zoom-controls">
+          <div class="zoom-btn">+</div>
+          <div class="zoom-btn">−</div>
+        </div>
+
+        <!-- BOTTOM BAR — scan + radius merged, no overlap -->
+        <div style="
+          position: absolute;
+          bottom: 14px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          align-items: center;
+          gap: 0;
+          background: white;
+          border: 1.5px solid rgba(42,42,42,0.15);
+          border-radius: 100px;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+          overflow: hidden;
+          z-index: 10;
+        ">
+          <!-- Scan button left side -->
+          <button onclick="runScan()" style="
+            display: flex; align-items: center; gap: 8px;
+            background: var(--dark); color: white;
+            border: none; padding: 10px 20px;
+            font-size: 13px; font-weight: 600;
+            font-family: var(--sans); cursor: pointer;
+            transition: background 0.15s; white-space: nowrap;
+            border-radius: 100px 0 0 100px;
+          " onmouseover="this.style.background='var(--brand)'" onmouseout="this.style.background='var(--dark)'">
+            <div style="width:7px;height:7px;border-radius:50%;background:var(--brand);flex-shrink:0;" id="scanDot"></div>
+            Scan this area
+          </button>
+          <!-- Divider -->
+          <div style="width:1px;height:100%;background:rgba(42,42,42,0.12);flex-shrink:0;"></div>
+          <!-- Radius right side -->
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:white;">
+            <span style="font-size:11px;color:var(--light);white-space:nowrap;">Radius</span>
+            <input type="range" style="width:80px;accent-color:var(--brand);" min="5" max="100" value="50" id="radiusSlider" oninput="document.getElementById('radiusVal').textContent=this.value">
+            <span style="font-size:13px;font-weight:700;color:var(--dark);min-width:24px;" id="radiusVal">50</span>
+            <span style="font-size:11px;color:var(--light);">mi</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS PANEL -->
+      <div class="results-panel">
+
+        <!-- LEAD LIST -->
+        <div id="leadList" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+          <div class="rp-header">
+            <div class="rp-title">Leads in this area</div>
+            <div class="rp-count">4 found</div>
+          </div>
+          <div class="rp-list">
+
+            <div class="rp-card active" onclick="selectLead(0)">
+              <div class="rp-card-top">
+                <div class="rp-biz">Parkview Office Complex</div>
+                <div class="rp-score high">94</div>
+              </div>
+              <div class="rp-sig"><div class="rp-sig-dot" style="background:#EF9F27"></div>Hail storm · Irving TX · 3 days ago</div>
+              <div class="rp-why">1.8" hail hit this area Tuesday. Commercial flat roof — high damage probability.</div>
+              <div class="rp-actions">
+                <button class="rp-btn primary">View lead</button>
+                <button class="rp-btn ghost">Draft email</button>
+              </div>
+            </div>
+
+            <div class="rp-card" onclick="selectLead(1)">
+              <div class="rp-card-top">
+                <div class="rp-biz">Addison Corporate Park</div>
+                <div class="rp-score high">88</div>
+              </div>
+              <div class="rp-sig"><div class="rp-sig-dot" style="background:#EF9F27"></div>Hail storm · same event · 3 days ago</div>
+              <div class="rp-why">Same hail cell. Multiple buildings across this campus — larger opportunity.</div>
+              <div class="rp-actions">
+                <button class="rp-btn primary">View lead</button>
+                <button class="rp-btn ghost">Draft email</button>
+              </div>
+            </div>
+
+            <div class="rp-card" onclick="selectLead(2)">
+              <div class="rp-card-top">
+                <div class="rp-biz">Frisco Medical Center</div>
+                <div class="rp-score mid">76</div>
+              </div>
+              <div class="rp-sig"><div class="rp-sig-dot" style="background:#5DCAA5"></div>Permit filed · 22,000 sq ft commercial build</div>
+              <div class="rp-why">New construction permit — roofing needed before occupancy approval.</div>
+              <div class="rp-actions">
+                <button class="rp-btn primary">View lead</button>
+                <button class="rp-btn ghost">Draft email</button>
+              </div>
+            </div>
+
+            <div class="rp-card" onclick="selectLead(3)">
+              <div class="rp-card-top">
+                <div class="rp-biz">North Dallas Tech Hub</div>
+                <div class="rp-score mid">71</div>
+              </div>
+              <div class="rp-sig"><div class="rp-sig-dot" style="background:#3B82F6"></div>New Google Maps listing · opened this week</div>
+              <div class="rp-why">New location opened — will need preventative roof assessment within 90 days.</div>
+              <div class="rp-actions">
+                <button class="rp-btn primary">View lead</button>
+                <button class="rp-btn ghost">Draft email</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SCANNING STATE (hidden initially) -->
+        <div id="scanState" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;">
+          <div style="width:48px;height:48px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px;">ツ</div>
+          <div style="font-size:14px;font-weight:600;color:var(--dark);margin-bottom:6px">Scanning this area...</div>
+          <div style="font-size:12px;color:var(--light);line-height:1.55;margin-bottom:20px">Running storm, permit, and listing queries for your selected radius.</div>
+          <div style="width:160px;height:3px;background:rgba(42,42,42,0.08);border-radius:2px;overflow:hidden;margin:0 auto;">
+            <div id="scanBar" style="height:100%;background:var(--brand);border-radius:2px;width:0%;transition:width 0.1s linear;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const leads = [
+  { name: 'Parkview Office Complex', score: 94, scoreClass: 'high', sig: 'Hail storm · Irving TX · 3 days ago', why: 'Tuesday\'s 1.8" hail event hit the Irving/Las Colinas corridor. This commercial complex has approximately 80,000 sq ft of flat roof. The 3-day window is ideal — insurance adjusters haven\'t been called yet but the decision-maker knows something happened.', contact: 'Michael Torres, Property Manager · m.torres@parkviewoffice.com' },
+  { name: 'Addison Corporate Park', score: 88, scoreClass: 'high', sig: 'Hail storm · same event · 3 days ago', why: 'Same hail cell as Parkview. Multiple buildings across this campus — potentially the largest opportunity in the area. Facilities director handles vendor relationships.', contact: 'Jane Park, Facilities Director · j.park@addisoncp.com' },
+  { name: 'Frisco Medical Center', score: 76, scoreClass: 'mid', sig: 'Permit filed · 22,000 sq ft commercial build', why: 'New construction permit filed 5 days ago. Roofing needs to be contracted before the occupancy inspection — typically 60-90 days from permit filing.', contact: 'Robert Chen, Project Manager · r.chen@friscomedical.com' },
+  { name: 'North Dallas Tech Hub', score: 71, scoreClass: 'mid', sig: 'New Google Maps listing · opened this week', why: 'New location appeared on Google Maps this week. New tenants in new locations typically assess roofing within 90 days of move-in — especially after any recent weather events.', contact: 'Contact info — enrichment in progress' },
+]
+
+let selectedLead = 0
+
+function selectLead(index) {
+  selectedLead = index
+  const lead = leads[index]
+
+  document.querySelectorAll('.rp-card').forEach((c,i) => {
+    c.classList.toggle('active', i === index)
+  })
+
+  document.querySelectorAll('.pin').forEach((p,i) => {
+    p.classList.toggle('active', i === index)
+  })
+}
+
+function switchTab(el, type) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+  el.classList.add('active')
+}
+
+let scanning = false
+function runScan() {
+  if (scanning) return
+  scanning = true
+
+  const leadList = document.getElementById('leadList')
+  const scanState = document.getElementById('scanState')
+  const scanBar = document.getElementById('scanBar')
+  const btn = document.querySelector('.scan-btn')
+
+  leadList.style.display = 'none'
+  scanState.style.display = 'flex'
+  btn.textContent = '  Scanning...'
+  btn.style.background = 'var(--brand)'
+
+  let progress = 0
+  const interval = setInterval(() => {
+    progress += 2
+    scanBar.style.width = progress + '%'
+    if (progress >= 100) {
+      clearInterval(interval)
+      setTimeout(() => {
+        scanState.style.display = 'none'
+        leadList.style.display = 'flex'
+        btn.innerHTML = '<div class="scan-btn-dot"></div> Scan this area for leads'
+        btn.style.background = ''
+        scanning = false
+      }, 400)
+    }
+  }, 50)
+}
+
+// Chip toggles
+document.querySelectorAll('.chip').forEach(c => {
+  c.addEventListener('click', () => c.classList.toggle('active'))
+})
+</script>
+</body>
+</html>

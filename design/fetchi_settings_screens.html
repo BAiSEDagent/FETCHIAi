@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fetchi — Settings Screens</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --brand: #58937E; --brand-dark: #3D6B5A; --brand-light: #EAF3EF;
+  --coral: #D85A30; --coral-light: #FAECE7;
+  --parchment: #EBE6D9; --parchment-dark: #DDD8CB;
+  --dark: #2D2B2A; --mid: #5a5550; --light: #8a8580; --faint: #b8b3ad;
+  --white: #ffffff; --surface: #F7F4EE;
+  --heading: 'Outfit', sans-serif;
+  --sans: 'DM Sans', -apple-system, sans-serif;
+  --shadow: 3px 3px 0px #2D2B2A;
+  --radius-wobbly: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+body { font-family: var(--sans); background: #e8e3d6; min-height: 100vh; }
+
+/* SCREEN SWITCHER */
+.switcher {
+  display: flex; gap: 8px; padding: 20px 24px 0;
+  overflow-x: auto; white-space: nowrap;
+}
+.sw-btn {
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  padding: 7px 16px; border-radius: 100px;
+  border: 1.5px solid rgba(42,42,42,0.2); background: rgba(255,255,255,0.6);
+  color: var(--mid); cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.sw-btn.active { background: var(--dark); color: white; border-color: var(--dark); }
+.sw-btn:hover:not(.active) { background: white; color: var(--dark); }
+
+/* SCREENS */
+.screen { display: none; padding: 20px 24px 40px; }
+.screen.active { display: block; }
+
+/* APP SHELL */
+.shell {
+  display: grid; grid-template-columns: 220px 1fr;
+  background: var(--parchment); border: 2px solid var(--dark);
+  border-radius: 16px; overflow: hidden; box-shadow: var(--shadow);
+  min-height: 640px;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--dark); padding: 20px 0;
+  display: flex; flex-direction: column;
+}
+.sb-logo {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 16px;
+}
+.sb-av {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--brand); color: white; font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.sb-name { font-family: var(--heading); font-size: 18px; color: white; }
+
+.sb-section { font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1.2px; color: rgba(255,255,255,0.25);
+  padding: 0 18px; margin: 12px 0 6px; }
+.sb-link {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 18px; font-size: 13px; color: rgba(255,255,255,0.55);
+  cursor: pointer; transition: all 0.15s; border-radius: 0;
+}
+.sb-link:hover { color: white; background: rgba(255,255,255,0.06); }
+.sb-link.active { color: white; background: rgba(29,158,117,0.2); }
+.sb-link.active .sb-icon { color: var(--brand); }
+.sb-icon { width: 16px; height: 16px; opacity: 0.6; flex-shrink: 0; }
+.sb-link.active .sb-icon { opacity: 1; }
+
+.sb-credits {
+  margin-top: auto; padding: 16px 18px 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.credits-label { font-size: 10px; color: rgba(255,255,255,0.3);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.credits-row { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px; }
+.credits-count { font-size: 13px; font-weight: 600; color: white; }
+.credits-reset { font-size: 10px; color: rgba(255,255,255,0.3); }
+.credits-bar-bg { height: 4px; background: rgba(255,255,255,0.1);
+  border-radius: 2px; overflow: hidden; }
+.credits-bar-fill { height: 100%; border-radius: 2px; background: var(--brand); }
+.credits-topup { font-size: 11px; color: var(--brand); margin-top: 8px;
+  cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+/* MAIN CONTENT */
+.main { overflow-y: auto; }
+.page-header {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid rgba(42,42,42,0.08);
+}
+.page-title { font-family: var(--heading); font-size: 24px; color: var(--dark); margin-bottom: 3px; }
+.page-sub { font-size: 13px; color: var(--light); }
+
+/* FORM ELEMENTS */
+.form-section { padding: 24px 28px; border-bottom: 1px solid rgba(42,42,42,0.06); }
+.form-section:last-child { border-bottom: none; }
+.form-section-title { font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 4px; }
+.form-section-desc { font-size: 12px; color: var(--light); margin-bottom: 16px; line-height: 1.5; }
+
+.generate-box {
+  background: var(--brand-light); border: 1.5px solid rgba(29,158,117,0.25);
+  border-radius: 12px; padding: 16px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.generate-box-icon { font-size: 18px; flex-shrink: 0; }
+.generate-box-text { flex: 1; }
+.generate-box-label { font-size: 12px; font-weight: 600; color: var(--brand-dark); margin-bottom: 2px; }
+.generate-box-desc { font-size: 11px; color: var(--brand-dark); opacity: 0.7; }
+.generate-input-row { display: flex; gap: 8px; margin-top: 10px; }
+.generate-input {
+  flex: 1; padding: 9px 12px; border: 1.5px solid rgba(29,158,117,0.3);
+  border-radius: 8px; font-size: 13px; font-family: var(--sans);
+  background: white; color: var(--dark); outline: none;
+}
+.generate-input:focus { border-color: var(--brand); }
+.generate-input::placeholder { color: var(--faint); }
+.generate-btn {
+  padding: 9px 16px; background: var(--brand); color: white;
+  border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+  font-family: var(--sans); cursor: pointer; white-space: nowrap;
+  transition: background 0.15s;
+}
+.generate-btn:hover { background: var(--brand-dark); }
+
+.field-label { font-size: 12px; font-weight: 600; color: var(--dark); margin-bottom: 6px; display: block; }
+.field-desc { font-size: 11px; color: var(--light); margin-bottom: 8px; line-height: 1.4; }
+.field-input, .field-select, .field-textarea {
+  width: 100%; padding: 10px 13px;
+  border: 1.5px solid rgba(42,42,42,0.12); border-radius: 10px;
+  font-size: 13px; font-family: var(--sans); color: var(--dark);
+  background: white; outline: none; transition: border-color 0.15s;
+}
+.field-input:focus, .field-select:focus, .field-textarea:focus { border-color: var(--brand); }
+.field-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.field-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8580' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 32px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.field-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+.field-group { margin-bottom: 16px; }
+
+.save-row { padding: 20px 28px; display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid rgba(42,42,42,0.08); background: rgba(255,255,255,0.4); }
+.save-hint { font-size: 12px; color: var(--light); }
+.save-btn {
+  padding: 10px 24px; background: var(--dark); color: white;
+  border: none; border-radius: 10px; font-size: 13px; font-weight: 600;
+  font-family: var(--sans); cursor: pointer; transition: background 0.15s;
+}
+.save-btn:hover { background: var(--brand); }
+
+/* TOGGLE ROW */
+.toggle-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 16px 0; border-bottom: 1px solid rgba(42,42,42,0.06); gap: 20px;
+}
+.toggle-row:last-child { border-bottom: none; padding-bottom: 0; }
+.toggle-info { flex: 1; }
+.toggle-title { font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 3px; }
+.toggle-desc { font-size: 12px; color: var(--light); line-height: 1.5; }
+.toggle-switch {
+  position: relative; width: 40px; height: 22px; flex-shrink: 0; margin-top: 1px; cursor: pointer;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; background: rgba(42,42,42,0.15);
+  border-radius: 11px; transition: background 0.2s;
+}
+.toggle-track.on { background: var(--brand); }
+.toggle-thumb {
+  position: absolute; width: 16px; height: 16px; background: white;
+  border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-track.on ~ .toggle-thumb,
+.toggle-switch input:checked ~ .toggle-track ~ .toggle-thumb { left: 21px; }
+
+/* SLIDER */
+.slider-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.slider-input {
+  flex: 1; -webkit-appearance: none; height: 4px;
+  background: rgba(42,42,42,0.12); border-radius: 2px; outline: none;
+}
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--brand); cursor: pointer; border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.slider-val {
+  font-size: 13px; font-weight: 600; color: var(--brand);
+  background: var(--brand-light); border-radius: 6px; padding: 3px 10px;
+  min-width: 40px; text-align: center;
+}
+
+/* TAG INPUT */
+.tag-input-area {
+  border: 1.5px solid rgba(42,42,42,0.12); border-radius: 10px;
+  padding: 8px 10px; background: white; display: flex; flex-wrap: wrap; gap: 6px;
+  min-height: 44px; cursor: text;
+}
+.tag {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--parchment); border: 1px solid rgba(42,42,42,0.15);
+  border-radius: 6px; padding: 3px 10px 3px 10px; font-size: 12px; color: var(--dark);
+}
+.tag-x { cursor: pointer; color: var(--light); font-size: 14px; line-height: 1;
+  transition: color 0.15s; }
+.tag-x:hover { color: var(--coral); }
+.tag-input-inline {
+  border: none; outline: none; font-size: 13px; font-family: var(--sans);
+  color: var(--dark); background: transparent; min-width: 120px;
+}
+.tag-hint { font-size: 11px; color: var(--faint); margin-top: 6px; }
+
+/* USAGE PAGE */
+.usage-tabs { display: flex; gap: 0; border-bottom: 1px solid rgba(42,42,42,0.1); padding: 0 28px; }
+.usage-tab {
+  font-size: 13px; font-weight: 500; color: var(--light);
+  padding: 14px 16px; cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all 0.15s;
+}
+.usage-tab.active { color: var(--dark); border-color: var(--brand); }
+.usage-tab:hover:not(.active) { color: var(--dark); }
+
+.usage-main { padding: 24px 28px; }
+.usage-header-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
+.usage-tier-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--dark); color: white; border-radius: 100px;
+  padding: 5px 14px; font-size: 12px; font-weight: 600;
+}
+.usage-tier-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
+.usage-actions { display: flex; gap: 8px; }
+.usage-action-btn {
+  padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  font-family: var(--sans); cursor: pointer; transition: all 0.15s;
+}
+.usage-action-btn.outline { border: 1.5px solid rgba(42,42,42,0.2); background: white; color: var(--dark); }
+.usage-action-btn.outline:hover { border-color: var(--dark); }
+.usage-action-btn.filled { border: none; background: var(--brand); color: white; }
+.usage-action-btn.filled:hover { background: var(--brand-dark); }
+
+.usage-card {
+  background: white; border: 1.5px solid rgba(42,42,42,0.1);
+  border-radius: 14px; padding: 22px; margin-bottom: 16px;
+}
+.usage-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.usage-card-icon { font-size: 16px; }
+.usage-card-title { font-size: 14px; font-weight: 600; color: var(--dark); }
+.usage-card-desc { font-size: 12px; color: var(--light); margin-bottom: 16px; }
+
+.usage-stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.usage-stat { background: var(--surface); border-radius: 10px; padding: 12px 16px; }
+.usage-stat-val { font-family: var(--heading); font-size: 26px; color: var(--dark); line-height: 1; }
+.usage-stat-label { font-size: 11px; color: var(--light); margin-top: 3px; }
+
+.progress-wrap { margin-bottom: 6px; }
+.progress-label-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.progress-label { font-size: 12px; color: var(--mid); }
+.progress-count { font-size: 12px; font-weight: 600; color: var(--dark); }
+.progress-bg { height: 10px; background: rgba(42,42,42,0.08); border-radius: 5px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 5px; background: var(--brand); transition: width 0.5s ease; }
+.progress-fill.warning { background: var(--coral); }
+.progress-reset { font-size: 11px; color: var(--light); margin-top: 6px; }
+
+.topup-options { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 16px; }
+.topup-card {
+  border: 1.5px solid rgba(42,42,42,0.12); border-radius: 10px;
+  padding: 14px; text-align: center; cursor: pointer;
+  transition: all 0.15s; background: white;
+}
+.topup-card:hover { border-color: var(--brand); background: var(--brand-light); }
+.topup-leads { font-size: 18px; font-weight: 700; color: var(--dark); font-family: var(--heading); }
+.topup-price { font-size: 12px; color: var(--light); margin-top: 2px; }
+.topup-rate { font-size: 10px; color: var(--brand); margin-top: 3px; font-weight: 600; }
+.topup-btn {
+  width: 100%; margin-top: 14px; padding: 10px; background: var(--dark); color: white;
+  border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+  font-family: var(--sans); cursor: pointer; transition: background 0.15s;
+}
+.topup-btn:hover { background: var(--brand); }
+
+/* SIGNAL PREFERENCES */
+.signal-grid { display: flex; flex-direction: column; gap: 2px; }
+.signal-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; background: white; border: 1.5px solid rgba(42,42,42,0.1);
+  border-radius: 10px; cursor: pointer; transition: border-color 0.15s;
+}
+.signal-item.on { border-color: var(--brand); background: var(--brand-light); }
+.signal-icon {
+  width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid rgba(42,42,42,0.1); font-size: 16px;
+}
+.signal-item.on .signal-icon { border-color: rgba(29,158,117,0.3); background: white; }
+.signal-info { flex: 1; }
+.signal-name { font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 2px; }
+.signal-desc { font-size: 11px; color: var(--light); line-height: 1.4; }
+.signal-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 100px; }
+.badge-high { background: var(--brand-light); color: var(--brand-dark); }
+.badge-med { background: #FEF3E7; color: #854F0B; }
+
+/* EMPTY STATE */
+.empty-chat {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 40px 28px; text-align: center;
+}
+.empty-avatar {
+  width: 56px; height: 56px; border-radius: 50%; background: var(--brand);
+  color: white; font-size: 24px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px; position: relative;
+}
+.empty-avatar::after {
+  content: ''; position: absolute; inset: -6px;
+  border-radius: 50%; border: 2px solid rgba(29,158,117,0.2);
+  animation: ripple 2s ease-out infinite;
+}
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.empty-msg { font-family: var(--heading); font-size: 20px; color: var(--dark); margin-bottom: 6px; }
+.empty-sub { font-size: 13px; color: var(--light); margin-bottom: 28px; max-width: 320px; line-height: 1.55; }
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 440px; }
+.action-card {
+  background: white; border: 1.5px solid rgba(42,42,42,0.1);
+  border-radius: 12px; padding: 16px; text-align: left; cursor: pointer;
+  transition: all 0.15s; display: flex; flex-direction: column; gap: 8px;
+}
+.action-card:hover { border-color: var(--brand); background: var(--brand-light); transform: translateY(-1px); }
+.action-icon { font-size: 20px; }
+.action-title { font-size: 13px; font-weight: 600; color: var(--dark); line-height: 1.3; }
+.action-hint { font-size: 11px; color: var(--light); line-height: 1.4; }
+
+/* CHAT BOTTOM BAR */
+.chat-input-bar {
+  padding: 12px 16px; border-top: 1px solid rgba(42,42,42,0.08);
+  display: flex; align-items: center; gap: 8px; background: white;
+}
+.chat-input {
+  flex: 1; padding: 10px 14px; border: 1.5px solid rgba(42,42,42,0.12);
+  border-radius: 100px; font-size: 13px; font-family: var(--sans); color: var(--dark);
+  background: var(--surface); outline: none;
+}
+.chat-input:focus { border-color: var(--brand); background: white; }
+.chat-input::placeholder { color: var(--faint); }
+.chat-send {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--brand);
+  border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s; flex-shrink: 0;
+}
+.chat-send:hover { background: var(--brand-dark); }
+
+/* NOTIFICATION SPECIFIC */
+.notif-time-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.notif-time-label { font-size: 12px; color: var(--mid); white-space: nowrap; }
+.notif-time-select {
+  padding: 7px 12px; border: 1.5px solid rgba(42,42,42,0.12); border-radius: 8px;
+  font-size: 13px; font-family: var(--sans); color: var(--dark); background: white;
+  outline: none; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- SCREEN SWITCHER -->
+<div class="switcher">
+  <button class="sw-btn active" data-screen="profile">1 · Business Profile</button>
+  <button class="sw-btn" data-screen="signals">2 · Signal Preferences</button>
+  <button class="sw-btn" data-screen="notifications">3 · Notifications</button>
+  <button class="sw-btn" data-screen="usage">4 · Usage</button>
+  <button class="sw-btn" data-screen="empty">5 · Empty State (Chat)</button>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 1 — BUSINESS PROFILE
+═══════════════════════════════════════════ -->
+<div class="screen active" id="screen-profile">
+  <div class="shell">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sb-logo">
+        <div class="sb-av">ツ</div>
+        <div class="sb-name">Fetchi</div>
+      </div>
+      <div class="sb-section">Workspace</div>
+      <div class="sb-link">
+        <svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Chat
+      </div>
+      <div class="sb-link">
+        <svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        My Leads
+      </div>
+      <div class="sb-section" style="margin-top:16px;">Settings</div>
+      <div class="sb-link active">
+        <svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Business Profile
+      </div>
+      <div class="sb-link">
+        <svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2l1 4h4l-3 2 1 4-3-2-3 2 1-4-3-2h4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        Signal Preferences
+      </div>
+      <div class="sb-link">
+        <svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2a5 5 0 015 5c0 3-1 4-1 4H4s-1-1-1-4a5 5 0 015-5z" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 11S6.5 13 8 13s1.5-2 1.5-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Notifications
+      </div>
+      <div class="sb-link">
+        <svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+        Plan & Billing
+      </div>
+      <div class="sb-link">
+        <svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Usage
+      </div>
+      <div class="sb-credits">
+        <div class="credits-label">Opportunities</div>
+        <div class="credits-row">
+          <div class="credits-count">32 / 40</div>
+          <div class="credits-reset">resets in 18d</div>
+        </div>
+        <div class="credits-bar-bg">
+          <div class="credits-bar-fill" style="width:64%"></div>
+        </div>
+        <div class="credits-topup">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Add more leads
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="page-header">
+        <div class="page-title">Business Profile</div>
+        <div class="page-sub">Tell Fetchi about your business — this shapes every signal scan and lead score.</div>
+      </div>
+
+      <!-- Auto-generate -->
+      <div class="form-section">
+        <div class="form-section-title">Auto-generate from your website</div>
+        <div class="form-section-desc">Paste your domain and Fetchi will research your business and fill in the fields below automatically.</div>
+        <div class="generate-box">
+          <div class="generate-box-icon">✦</div>
+          <div class="generate-box-text">
+            <div class="generate-box-label">Generate profile with AI</div>
+            <div class="generate-box-desc">Takes 10–30 seconds. You can edit anything afterwards.</div>
+          </div>
+        </div>
+        <div class="generate-input-row">
+          <input class="generate-input" type="text" placeholder="yourcompany.com">
+          <button class="generate-btn">↓ Generate</button>
+        </div>
+      </div>
+
+      <!-- Business basics -->
+      <div class="form-section">
+        <div class="form-section-title">Business details</div>
+        <div class="field-row">
+          <div class="field-group" style="margin:0">
+            <label class="field-label">Business name</label>
+            <input class="field-input" type="text" value="Johnson Roofing Co.">
+          </div>
+          <div class="field-group" style="margin:0">
+            <label class="field-label">Service vertical</label>
+            <select class="field-select">
+              <option>Roofing</option>
+              <option>Commercial Cleaning</option>
+              <option>HVAC</option>
+              <option>Landscaping</option>
+              <option>Event Services</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Service description</label>
+          <div class="field-desc">What do you actually sell? Be specific — this goes directly into every search query Fetchi builds.</div>
+          <textarea class="field-textarea" style="height:72px">Residential and commercial roofing — repairs, replacements, storm damage restoration. Licensed in Texas. Minimum job size $5,000.</textarea>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="form-section">
+        <div class="form-section-title">Service area</div>
+        <div class="field-row triple">
+          <div>
+            <label class="field-label">City</label>
+            <input class="field-input" type="text" value="Dallas">
+          </div>
+          <div>
+            <label class="field-label">State</label>
+            <select class="field-select"><option>TX</option><option>AZ</option><option>FL</option></select>
+          </div>
+          <div>
+            <label class="field-label">Radius (miles)</label>
+            <input class="field-input" type="number" value="50">
+          </div>
+        </div>
+      </div>
+
+      <!-- Ideal customer -->
+      <div class="form-section">
+        <div class="form-section-title">Ideal customer</div>
+        <div class="field-group">
+          <label class="field-label">Describe your best customer</label>
+          <div class="field-desc">Who do you most want to work with? Industry, size, location, decision-maker type. Fetchi uses this to score leads.</div>
+          <textarea class="field-textarea">Commercial property managers and HOA boards. Buildings 5,000–50,000 sq ft. Prefer ongoing relationships over one-off jobs. Decision maker is usually a facilities director or property manager.</textarea>
+        </div>
+      </div>
+
+      <div class="save-row">
+        <div class="save-hint">Changes trigger a new signal scan within minutes.</div>
+        <button class="save-btn">Save profile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 2 — SIGNAL PREFERENCES
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-signals">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="sb-logo"><div class="sb-av">ツ</div><div class="sb-name">Fetchi</div></div>
+      <div class="sb-section">Workspace</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>Chat</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>My Leads</div>
+      <div class="sb-section" style="margin-top:16px;">Settings</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Business Profile</div>
+      <div class="sb-link active"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2l1 4h4l-3 2 1 4-3-2-3 2 1-4-3-2h4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Signal Preferences</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2a5 5 0 015 5c0 3-1 4-1 4H4s-1-1-1-4a5 5 0 015-5z" stroke="currentColor" stroke-width="1.5"/></svg>Notifications</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>Plan & Billing</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/></svg>Usage</div>
+      <div class="sb-credits">
+        <div class="credits-label">Opportunities</div>
+        <div class="credits-row"><div class="credits-count">32 / 40</div><div class="credits-reset">resets in 18d</div></div>
+        <div class="credits-bar-bg"><div class="credits-bar-fill" style="width:64%"></div></div>
+        <div class="credits-topup">↑ Add more leads</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="page-header">
+        <div class="page-title">Signal Preferences</div>
+        <div class="page-sub">Choose which signals Fetchi scans for and set your minimum quality threshold.</div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Active signal types</div>
+        <div class="form-section-desc">Turn off any signal type you don't want leads from. Active signals are scanned nightly.</div>
+        <div class="signal-grid">
+          <div class="signal-item on">
+            <div class="signal-icon">🏗️</div>
+            <div class="signal-info">
+              <div class="signal-name">Building permits</div>
+              <div class="signal-desc">New construction, renovations, and fit-outs. 0–30 day window.</div>
+            </div>
+            <span class="signal-badge badge-high">High signal</span>
+            <div class="toggle-switch" data-toggle="true">
+              <div class="toggle-track on"></div>
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+          <div class="signal-item on">
+            <div class="signal-icon">⛈️</div>
+            <div class="signal-info">
+              <div class="signal-name">Storm and weather events</div>
+              <div class="signal-desc">Hail, wind, and flood damage reports. 1–14 day emergency window.</div>
+            </div>
+            <span class="signal-badge badge-high">High signal</span>
+            <div class="toggle-switch" data-toggle="true">
+              <div class="toggle-track on"></div>
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+          <div class="signal-item on">
+            <div class="signal-icon">📍</div>
+            <div class="signal-info">
+              <div class="signal-name">New business listings</div>
+              <div class="signal-desc">New Google Maps listings — new locations need services from day one.</div>
+            </div>
+            <span class="signal-badge badge-med">Medium</span>
+            <div class="toggle-switch" data-toggle="true">
+              <div class="toggle-track on"></div>
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+          <div class="signal-item">
+            <div class="signal-icon">💼</div>
+            <div class="signal-info">
+              <div class="signal-name">Job postings</div>
+              <div class="signal-desc">Facilities manager hires signal scaling businesses buying services.</div>
+            </div>
+            <span class="signal-badge badge-med">Medium</span>
+            <div class="toggle-switch" data-toggle="true">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+          <div class="signal-item">
+            <div class="signal-icon">🎪</div>
+            <div class="signal-info">
+              <div class="signal-name">Events and bookings</div>
+              <div class="signal-desc">Conferences and large events create pre/post-event service demand.</div>
+            </div>
+            <span class="signal-badge badge-med">Medium</span>
+            <div class="toggle-switch" data-toggle="true">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Minimum score threshold</div>
+        <div class="form-section-desc">Fetchi only surfaces leads at or above this score. Lower it to see more leads, raise it to see fewer but stronger ones.</div>
+        <div class="slider-row">
+          <span style="font-size:12px;color:var(--light);">0</span>
+          <input type="range" class="slider-input" min="0" max="100" value="70" id="scoreSlider" oninput="document.getElementById('scoreVal').textContent=this.value">
+          <span style="font-size:12px;color:var(--light);">100</span>
+          <div class="slider-val" id="scoreVal">70</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Excluded keywords</div>
+        <div class="form-section-desc">Any lead mentioning these words will be filtered out before it reaches you.</div>
+        <div class="tag-input-area">
+          <div class="tag">residential <span class="tag-x">×</span></div>
+          <div class="tag">single family <span class="tag-x">×</span></div>
+          <div class="tag">mobile home <span class="tag-x">×</span></div>
+          <input class="tag-input-inline" placeholder="Add keyword...">
+        </div>
+        <div class="tag-hint">Press Enter to add · Click × to remove</div>
+      </div>
+
+      <div class="save-row">
+        <div class="save-hint">Changes apply to the next nightly scan.</div>
+        <button class="save-btn">Save preferences</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 3 — NOTIFICATIONS
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-notifications">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="sb-logo"><div class="sb-av">ツ</div><div class="sb-name">Fetchi</div></div>
+      <div class="sb-section">Workspace</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>Chat</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>My Leads</div>
+      <div class="sb-section" style="margin-top:16px;">Settings</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Business Profile</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2l1 4h4l-3 2 1 4-3-2-3 2 1-4-3-2h4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Signal Preferences</div>
+      <div class="sb-link active"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2a5 5 0 015 5c0 3-1 4-1 4H4s-1-1-1-4a5 5 0 015-5z" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 11S6.5 13 8 13s1.5-2 1.5-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Notifications</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>Plan & Billing</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/></svg>Usage</div>
+      <div class="sb-credits">
+        <div class="credits-label">Opportunities</div>
+        <div class="credits-row"><div class="credits-count">32 / 40</div><div class="credits-reset">resets in 18d</div></div>
+        <div class="credits-bar-bg"><div class="credits-bar-fill" style="width:64%"></div></div>
+        <div class="credits-topup">↑ Add more leads</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="page-header">
+        <div class="page-title">Notifications</div>
+        <div class="page-sub">Choose when and how Fetchi reaches out to you.</div>
+      </div>
+
+      <div class="form-section">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">Daily digest email</div>
+            <div class="toggle-desc">A morning summary of new leads found overnight, leads expiring soon, and follow-up reminders.</div>
+            <div class="notif-time-row">
+              <span class="notif-time-label">Send at</span>
+              <select class="notif-time-select"><option>7:00 AM</option><option>8:00 AM</option><option>9:00 AM</option></select>
+              <span class="notif-time-label">local time</span>
+            </div>
+          </div>
+          <div class="toggle-switch" data-toggle="true">
+            <div class="toggle-track on"></div><div class="toggle-thumb"></div>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">High-score lead alert</div>
+            <div class="toggle-desc">Immediate email when Fetchi finds a lead above your score threshold. Good for time-sensitive signals like storm damage.</div>
+            <div class="slider-row" style="margin-top:10px;max-width:300px">
+              <span style="font-size:12px;color:var(--light);">Score threshold</span>
+              <input type="range" class="slider-input" min="50" max="100" value="85" id="alertSlider" oninput="document.getElementById('alertVal').textContent=this.value">
+              <div class="slider-val" id="alertVal">85</div>
+            </div>
+          </div>
+          <div class="toggle-switch" data-toggle="true">
+            <div class="toggle-track on"></div><div class="toggle-thumb"></div>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">Expiring leads</div>
+            <div class="toggle-desc">Alert when a saved lead hasn't been contacted and is about to expire. Default: 3 days before expiry.</div>
+          </div>
+          <div class="toggle-switch" data-toggle="true">
+            <div class="toggle-track on"></div><div class="toggle-thumb"></div>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">Weekly performance summary</div>
+            <div class="toggle-desc">Every Monday: leads found, contacted, won/lost. Keeps you accountable without being noisy.</div>
+          </div>
+          <div class="toggle-switch" data-toggle="true">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">Limit warning</div>
+            <div class="toggle-desc">Email when you've used 80% of your monthly opportunities, so you can top up before running out.</div>
+          </div>
+          <div class="toggle-switch" data-toggle="true">
+            <div class="toggle-track on"></div><div class="toggle-thumb"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Notification email</div>
+        <div class="form-section-desc">Where all Fetchi emails are sent.</div>
+        <input class="field-input" type="email" value="adam@johnsonroofing.com" style="max-width:340px">
+      </div>
+
+      <div class="save-row">
+        <div class="save-hint">Email preferences update immediately.</div>
+        <button class="save-btn">Save notifications</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 4 — USAGE
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-usage">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="sb-logo"><div class="sb-av">ツ</div><div class="sb-name">Fetchi</div></div>
+      <div class="sb-section">Workspace</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>Chat</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>My Leads</div>
+      <div class="sb-section" style="margin-top:16px;">Settings</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Business Profile</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2l1 4h4l-3 2 1 4-3-2-3 2 1-4-3-2h4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Signal Preferences</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2a5 5 0 015 5c0 3-1 4-1 4H4s-1-1-1-4a5 5 0 015-5z" stroke="currentColor" stroke-width="1.5"/></svg>Notifications</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>Plan & Billing</div>
+      <div class="sb-link active"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Usage</div>
+      <div class="sb-credits">
+        <div class="credits-label">Opportunities</div>
+        <div class="credits-row"><div class="credits-count">32 / 40</div><div class="credits-reset">resets in 18d</div></div>
+        <div class="credits-bar-bg"><div class="credits-bar-fill" style="width:64%"></div></div>
+        <div class="credits-topup">↑ Add more leads</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="page-header">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="page-title">Usage</div>
+            <div class="page-sub">Track your opportunities this billing cycle.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="usage-tier-badge"><div class="usage-tier-dot"></div>Starter Plan</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="usage-tabs">
+        <div class="usage-tab active">Overview</div>
+        <div class="usage-tab">History</div>
+        <div class="usage-tab">Signals breakdown</div>
+      </div>
+
+      <div class="usage-main">
+        <div style="display:flex;gap:10px;margin-bottom:16px;justify-content:flex-end">
+          <button class="usage-action-btn outline">Manage plan</button>
+          <button class="usage-action-btn filled">+ Add leads</button>
+        </div>
+
+        <!-- Opportunities card -->
+        <div class="usage-card">
+          <div class="usage-card-header">
+            <span class="usage-card-icon">🎯</span>
+            <span class="usage-card-title">Opportunities this month</span>
+          </div>
+          <div class="usage-card-desc">Your Starter plan includes 40 delivered lead cards per month. Resets on the 1st.</div>
+
+          <div class="usage-stats-row">
+            <div class="usage-stat">
+              <div class="usage-stat-val">32</div>
+              <div class="usage-stat-label">Used this month</div>
+            </div>
+            <div class="usage-stat">
+              <div class="usage-stat-val">8</div>
+              <div class="usage-stat-label">Remaining</div>
+            </div>
+            <div class="usage-stat">
+              <div class="usage-stat-val">18d</div>
+              <div class="usage-stat-label">Until reset</div>
+            </div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-label-row">
+              <span class="progress-label">Monthly usage</span>
+              <span class="progress-count">32 of 50</span>
+            </div>
+            <div class="progress-bg">
+              <div class="progress-fill" style="width:64%"></div>
+            </div>
+            <div class="progress-reset">Resets April 1st · 18 days away</div>
+          </div>
+        </div>
+
+        <!-- Top up card -->
+        <div class="usage-card">
+          <div class="usage-card-header">
+            <span class="usage-card-icon">⚡</span>
+            <span class="usage-card-title">Need more leads now?</span>
+          </div>
+          <div class="usage-card-desc">Top up anytime. Credits are added instantly and don't expire until end of month.</div>
+          <div class="topup-options">
+            <div class="topup-card">
+              <div class="topup-leads">10</div>
+              <div class="topup-price">$5.00</div>
+              <div class="topup-rate">$0.50 / lead</div>
+            </div>
+            <div class="topup-card" style="border-color:var(--brand);background:var(--brand-light);">
+              <div class="topup-leads">25</div>
+              <div class="topup-price">$11.00</div>
+              <div class="topup-rate">$0.44 / lead</div>
+            </div>
+            <div class="topup-card">
+              <div class="topup-leads">50</div>
+              <div class="topup-price">$20.00</div>
+              <div class="topup-rate">$0.40 / lead</div>
+            </div>
+          </div>
+          <button class="topup-btn">Add 25 leads — $11.00</button>
+        </div>
+
+        <!-- Upgrade nudge -->
+        <div style="background:var(--dark);border-radius:14px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:white;margin-bottom:4px">Get 3× more leads every month</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5)">Growth plan — 100 delivered lead cards for $129/month. Includes Today’s Stack, Today’s Run, and morning scouting.</div>
+          </div>
+          <button style="flex-shrink:0;padding:9px 18px;background:var(--brand);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:var(--sans);cursor:pointer;white-space:nowrap">Upgrade →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 5 — EMPTY STATE (CHAT)
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-empty">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="sb-logo"><div class="sb-av">ツ</div><div class="sb-name">Fetchi</div></div>
+      <div class="sb-section">Workspace</div>
+      <div class="sb-link active"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>Chat</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>My Leads <span style="margin-left:auto;font-size:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);border-radius:100px;padding:1px 7px">0</span></div>
+      <div class="sb-section" style="margin-top:16px;">Settings</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Business Profile</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2l1 4h4l-3 2 1 4-3-2-3 2 1-4-3-2h4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Signal Preferences</div>
+      <div class="sb-link"><svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/></svg>Usage</div>
+      <div class="sb-credits">
+        <div class="credits-label">Opportunities</div>
+        <div class="credits-row"><div class="credits-count">50 / 50</div><div class="credits-reset">full — trial</div></div>
+        <div class="credits-bar-bg"><div class="credits-bar-fill" style="width:100%"></div></div>
+        <div class="credits-topup">↑ Add more leads</div>
+      </div>
+    </div>
+
+    <!-- EMPTY CHAT MAIN -->
+    <div class="main" style="display:flex;flex-direction:column;">
+      <div style="flex:1;overflow-y:auto;">
+        <div class="empty-chat">
+          <div class="empty-avatar">ツ</div>
+          <div class="empty-msg">Morning, Adam.</div>
+          <div class="empty-sub">I'm scanning Dallas for roofing leads right now. First results usually arrive within a few hours — often sooner.<br><br>In the meantime, here's what you can do:</div>
+
+          <div class="action-grid">
+            <div class="action-card" data-action="Find storm damage leads near Dallas this week">
+              <div class="action-icon">⛈️</div>
+              <div class="action-title">Find storm leads near Dallas</div>
+              <div class="action-hint">Check recent hail and wind events in your area</div>
+            </div>
+            <div class="action-card" data-action="Check building permit filings in Dallas this month">
+              <div class="action-icon">🏗️</div>
+              <div class="action-title">Check permit filings this month</div>
+              <div class="action-hint">New construction in your radius that needs roofing</div>
+            </div>
+            <div class="action-card" data-action="Update my ideal customer profile">
+              <div class="action-icon">✏️</div>
+              <div class="action-title">Update my customer profile</div>
+              <div class="action-hint">The more Fetchi knows, the better it scores leads</div>
+            </div>
+            <div class="action-card" data-action="Show me how outreach drafting works with an example">
+              <div class="action-icon">✉️</div>
+              <div class="action-title">See how outreach drafting works</div>
+              <div class="action-hint">Watch Fetchi write a personalized email from a signal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT INPUT -->
+      <div class="chat-input-bar">
+        <input class="chat-input" type="text" placeholder="Ask Fetchi anything about your leads..." id="chatInput">
+        <button class="chat-send" id="chatSendBtn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8L2 3l3 5-3 5 12-5z" fill="white"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Tab switching — no global functions, no onclick
+  document.querySelectorAll('.sw-btn[data-screen]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var name = this.getAttribute('data-screen')
+      document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active') })
+      document.querySelectorAll('.sw-btn').forEach(function(b) { b.classList.remove('active') })
+      var target = document.getElementById('screen-' + name)
+      if (target) target.classList.add('active')
+      this.classList.add('active')
+    })
+  })
+
+  // Action cards — pre-fill chat input
+  document.querySelectorAll('.action-card[data-action]').forEach(function(card) {
+    card.addEventListener('click', function() {
+      var input = document.getElementById('chatInput')
+      if (input) {
+        input.value = this.getAttribute('data-action')
+        input.focus()
+      }
+    })
+  })
+
+  // Chat send button
+  var sendBtn = document.getElementById('chatSendBtn')
+  if (sendBtn) {
+    sendBtn.addEventListener('click', function() {
+      var input = document.getElementById('chatInput')
+      if (input && input.value.trim()) {
+        input.value = ''
+        input.placeholder = 'Fetchi is thinking...'
+        setTimeout(function() {
+          input.placeholder = 'Ask Fetchi anything about your leads...'
+        }, 2000)
+      }
+    })
+  }
+
+  // Toggle switches — driven by data-toggle attribute, no inline onclick
+  document.querySelectorAll('[data-toggle]').forEach(function(sw) {
+    sw.addEventListener('click', function() {
+      var track = this.querySelector('.toggle-track')
+      var thumb = this.querySelector('.toggle-thumb')
+      if (track) track.classList.toggle('on')
+      if (thumb) thumb.style.left = track && track.classList.contains('on') ? '21px' : '3px'
+    })
+  })
+
+  // Init toggle thumb positions
+  document.querySelectorAll('.toggle-track.on').forEach(function(track) {
+    var thumb = track.parentElement.querySelector('.toggle-thumb')
+    if (thumb) thumb.style.left = '21px'
+  })
+
+})
+</script>
+</body>
+</html>
