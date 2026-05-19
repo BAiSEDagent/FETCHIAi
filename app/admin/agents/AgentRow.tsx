@@ -26,8 +26,8 @@ export function AgentRow({
       try {
         await updateAgent({
           id: agent.id,
-          provider: provider.trim() || 'anthropic',
-          model: model.trim() || 'set-in-admin',
+          provider: provider.trim(),
+          model: model.trim(),
           escalationProvider: escProvider.trim() || null,
           escalationModel: escModel.trim() || null,
           promptKey: promptKey.trim() || null,
@@ -53,6 +53,9 @@ export function AgentRow({
       </td>
       <td className="px-3 py-2">
         <select value={provider} onChange={e => setProvider(e.target.value)} className={cell()}>
+          {!providers.includes(provider) && (
+            <option value={provider}>{provider} (unset — choose one)</option>
+          )}
           {providers.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
       </td>
