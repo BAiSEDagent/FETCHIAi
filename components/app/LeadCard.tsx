@@ -23,8 +23,7 @@ export type LeadCardSignalType =
   | undefined
 
 // Variant union reserved for future surfaces (chat / chat-hero / run / map /
-// related). CP2.5A implements `list` and leaves the existing `chat` and
-// `chat-hero` rendering paths untouched.
+// related). CP2.5B keeps `list` as the canonical anatomy.
 type Variant = 'list' | 'chat' | 'chat-hero' | 'run' | 'map' | 'related'
 
 type Props = {
@@ -32,6 +31,7 @@ type Props = {
   businessName: string
   signalLabel: string
   signalType?: LeadCardSignalType
+  signalToken?: string | null
   score: number
   whyNow?: string | null
   status?: string | null
@@ -49,24 +49,29 @@ function scoreTier(score: number): string {
   return 'bg-brand-cream-muted text-brand-near-black/60 border border-brand-near-black/10'
 }
 
+// CP2.5B status pill palette — calm, sentence-case, no uppercase tracking.
+// Coral is intentionally NOT used here; it stays reserved for actual urgency
+// signals elsewhere in the app.
 function statusTone(status: string | null | undefined): string {
   switch (status) {
     case 'new':
-      return 'bg-brand-coral/12 text-brand-coral'
-    case 'won':
-      return 'bg-brand-light text-brand-dark border border-brand-green/30'
-    case 'contacted':
-      return 'bg-brand-cream-muted text-brand-near-black/70 border border-brand-near-black/10'
-    case 'responded':
-      return 'bg-amber-50 text-amber-900 border border-amber-200'
-    case 'lost':
-    case 'skipped':
-    case 'expired':
-      return 'bg-brand-near-black/5 text-brand-near-black/55 border border-brand-near-black/10'
+      return 'bg-brand-light text-brand-dark'
     case 'saved':
-      return 'bg-brand-light text-brand-dark border border-brand-green/30'
+      return 'bg-brand-green/15 text-brand-dark'
+    case 'contacted':
+      return 'bg-brand-cream-muted text-brand-near-black/70'
+    case 'responded':
+      return 'bg-amber-100/70 text-amber-900'
+    case 'won':
+      return 'bg-brand-green text-white'
+    case 'lost':
+      return 'bg-brand-near-black/[0.06] text-brand-near-black/55'
+    case 'skipped':
+      return 'bg-brand-near-black/[0.06] text-brand-near-black/55'
+    case 'expired':
+      return 'bg-brand-near-black/[0.05] text-brand-near-black/45'
     default:
-      return 'bg-brand-cream-muted text-brand-near-black/65 border border-brand-near-black/10'
+      return 'bg-brand-cream-muted text-brand-near-black/65'
   }
 }
 
@@ -87,18 +92,18 @@ export function LeadCard(props: Props) {
   if (variant === 'chat') return <ChatCard {...props} />
 
   // Default + future variants (run / map / related) currently render via the
-  // canonical list layout — CP2.5A only locks the `list` visuals.
+  // canonical list layout — CP2.5B locks the `list` visuals.
   return <ListCard {...props} />
 }
 
 // ─────────────────────────────────────────────
-// LIST VARIANT — locked CP2.5A My Leads anatomy
+// LIST VARIANT — CP2.5B My Leads anatomy
 // ─────────────────────────────────────────────
 function ListCard({
   href,
   businessName,
   signalLabel,
-  signalType,
+  signalToken,
   score,
   whyNow,
   status,
@@ -108,6 +113,9 @@ function ListCard({
   contactConfidence,
 }: Props) {
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
+  // Prefer the compact uppercase token; fall back to the human label when no
+  // structured metadata exists yet.
+  const tokenText = signalToken ?? signalLabel
 
   return (
     <Link
@@ -117,32 +125,35 @@ function ListCard({
         'shadow-[0_1px_2px_rgba(45,43,42,0.04)]',
         'hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(45,43,42,0.18)]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/40 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-parchment',
-        'p-4 lg:p-5',
+        'p-3.5 lg:p-5',
       )}
     >
-      {/* Top row: status pill + signal token + freshness · score */}
+      {/* Top row: status pill + compact signal token + freshness · score */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex flex-wrap items-center gap-1.5">
           <span
             className={cn(
-              'inline-flex items-center rounded-full px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.04em]',
+              'inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold',
               statusTone(status),
             )}
           >
             {statusLabel(status)}
           </span>
-          <span className="inline-flex items-center rounded-full bg-brand-near-black/[0.04] border border-brand-near-black/8 px-2 py-0.5 text-[11px] font-semibold text-brand-near-black/65">
-            <span className="truncate max-w-[140px]">{signalLabel}</span>
+          <span
+            className={cn(
+              'inline-flex items-center rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums',
+              'bg-brand-near-black/[0.05] text-brand-near-black/70',
+            )}
+          >
+            <span className="truncate max-w-[180px]">{tokenText}</span>
           </span>
-          {ageLabel && (
-            <span className="text-[11px] text-brand-near-black/45">
-              · {ageLabel}
-            </span>
+          {ageLabel && !signalToken && (
+            <span className="text-[11px] text-brand-near-black/45">· {ageLabel}</span>
           )}
         </div>
 
         <div className="flex-shrink-0 text-right leading-none">
-          <div className="font-outfit text-[26px] lg:text-[28px] font-extrabold text-brand-dark tabular-nums">
+          <div className="font-outfit text-[24px] lg:text-[28px] font-extrabold text-brand-dark tabular-nums">
             {score}
           </div>
           <div className="mt-0.5 text-[9px] uppercase tracking-[0.08em] font-bold text-brand-near-black/40">
@@ -152,12 +163,12 @@ function ListCard({
       </div>
 
       {/* Business name + location */}
-      <div className="mt-3 min-w-0">
-        <h3 className="font-outfit text-[17px] lg:text-[18px] font-bold text-brand-near-black leading-tight truncate">
+      <div className="mt-2.5 min-w-0">
+        <h3 className="font-outfit text-[16.5px] lg:text-[18px] font-bold text-brand-near-black leading-tight truncate">
           {businessName}
         </h3>
         {location && (
-          <div className="mt-1 text-[12.5px] text-brand-near-black/55 truncate">
+          <div className="mt-0.5 text-[12px] text-brand-near-black/55 truncate">
             {location}
           </div>
         )}
@@ -165,13 +176,13 @@ function ListCard({
 
       {/* Why-now reason */}
       {whyNow && (
-        <p className="fetchi-clamp-2 mt-3 text-[13px] text-brand-near-black/75 leading-[1.55]">
+        <p className="fetchi-clamp-2 mt-2.5 text-[12.5px] lg:text-[13px] text-brand-near-black/75 leading-[1.5]">
           {whyNow}
         </p>
       )}
 
       {/* Contact row + chevron */}
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-3 lg:mt-4 flex items-center justify-between gap-3">
         {contactName ? (
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-full bg-brand-light text-brand-dark text-[11px] font-bold flex items-center justify-center flex-shrink-0">
@@ -202,9 +213,9 @@ function ListCard({
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-[11.5px] text-brand-near-black/45">
+          <div className="flex items-center gap-1.5 text-[11.5px] text-brand-near-black/50">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-near-black/20" />
-            Contact pending
+            Finding best contact
           </div>
         )}
 
@@ -306,7 +317,7 @@ function ChatHeroCard({
 }
 
 // ─────────────────────────────────────────────
-// CHAT VARIANT — preserved from CP2.3
+// CHAT VARIANT — preserved from CP2.3, with calm status pill
 // ─────────────────────────────────────────────
 function ChatCard({
   href,
@@ -355,8 +366,8 @@ function ChatCard({
           {(status || ageLabel) && (
             <div className="flex items-center gap-2 mt-2">
               {status && (
-                <span className={cn('hidden sm:inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize', statusTone(status))}>
-                  {status}
+                <span className={cn('hidden sm:inline-flex rounded-full px-2.5 h-[20px] items-center text-[11px] font-semibold', statusTone(status))}>
+                  {statusLabel(status)}
                 </span>
               )}
               {ageLabel && (

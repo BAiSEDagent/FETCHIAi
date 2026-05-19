@@ -3,6 +3,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { db, opportunities, prospects, signals } from '@/db'
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { MyLeadsView, type LeadRow } from '@/components/app/MyLeadsView'
+import { formatSignalToken } from '@/lib/signals/token'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,63 +33,72 @@ function devDemoLeads(): LeadRow[] {
   return [
     {
       id: 'demo-1', href: '/app/leads', businessName: 'Pine & Co. Construction',
-      signalLabel: 'Building permit', signalType: 'building_permit', score: 92,
+      signalLabel: 'Building permit', signalToken: 'PERMIT · RESIDENTIAL · 4H',
+      signalType: 'building_permit', score: 92,
       whyNow: 'New roofing permit filed last Thursday for a 4,200 sqft single-family rebuild in Plano — your service zone, your trade.',
       status: 'new', location: 'Plano, TX', ageLabel: '4h ago', createdAtMs: m(240),
       contactName: 'Marcus Pine', contactConfidence: 3,
     },
     {
       id: 'demo-2', href: '/app/leads', businessName: 'Hillside Storage LLC',
-      signalLabel: 'Hail event', signalType: 'weather_hail', score: 88,
+      signalLabel: 'Hail event', signalToken: 'HAIL · 1.25" · 11H',
+      signalType: 'weather_hail', score: 88,
       whyNow: '1.25" hail confirmed within 2 miles of their address two nights ago — likely roof inspection request inbound.',
       status: 'new', location: 'Frisco, TX', ageLabel: '11h ago', createdAtMs: m(660),
       contactName: 'Dana Reyes', contactConfidence: 2,
     },
     {
       id: 'demo-3', href: '/app/leads', businessName: 'North Loop Dental',
-      signalLabel: 'New listing', signalType: 'new_business_listing', score: 81,
+      signalLabel: 'New listing', signalToken: 'NEW · 1D',
+      signalType: 'new_business_listing', score: 81,
       whyNow: 'Just opened a second location last week — typically need signage, HVAC commissioning, and exterior cleanup in the first 30 days.',
       status: 'saved', location: 'Allen, TX', ageLabel: '1d ago', createdAtMs: m(1500),
       contactName: 'Office Manager', contactConfidence: 1,
     },
     {
       id: 'demo-4', href: '/app/leads', businessName: 'Maple Ridge HOA',
-      signalLabel: 'High-wind event', signalType: 'weather_wind', score: 76,
+      signalLabel: 'High-wind event', signalToken: 'WIND · 62 MPH · 2D',
+      signalType: 'weather_wind', score: 76,
       whyNow: '62 mph wind gusts logged over the community Saturday. HOAs in this zone historically request fence and roof inspections within the week.',
       status: 'saved', location: 'McKinney, TX', ageLabel: '2d ago', createdAtMs: m(2880),
       contactName: 'Karen Walsh', contactConfidence: 2,
     },
     {
       id: 'demo-5', href: '/app/leads', businessName: 'Brewhouse 12',
-      signalLabel: 'Local event', signalType: 'event', score: 74,
+      signalLabel: 'Local event', signalToken: 'EVENT · 3D',
+      signalType: 'event', score: 74,
       whyNow: 'Hosting a 400-person taproom anniversary event in 16 days — likely needs signage, light retrofit, and patio prep.',
       status: 'contacted', location: 'Dallas, TX', ageLabel: '3d ago', createdAtMs: m(4320),
       contactName: 'Sam Whitlow', contactConfidence: 3,
     },
     {
       id: 'demo-6', href: '/app/leads', businessName: 'Vega Boutique Hotel',
-      signalLabel: 'Funding announcement', signalType: 'funding', score: 69,
+      signalLabel: 'Funding announcement', signalToken: 'FUNDING · $2.4M · 5D',
+      signalType: 'funding', score: 69,
       whyNow: 'Closed a $2.4M renovation round — historically expand spend across construction trades in first 60 days.',
       status: 'responded', location: 'Fort Worth, TX', ageLabel: '5d ago', createdAtMs: m(7200),
       contactName: 'Priya Devan', contactConfidence: 2,
     },
     {
       id: 'demo-7', href: '/app/leads', businessName: 'Ridgepoint Properties',
-      signalLabel: 'Building permit', signalType: 'building_permit', score: 64,
+      signalLabel: 'Building permit', signalToken: 'PERMIT · TI · 1W',
+      signalType: 'building_permit', score: 64,
       whyNow: 'Filed a tenant-improvement permit for a strip-mall remodel — typical timeline for trade subs starts in ~10 days.',
       status: 'won', location: 'Garland, TX', ageLabel: '1w ago', createdAtMs: m(10080),
       contactName: 'Jeff Ridge', contactConfidence: 3,
     },
     {
       id: 'demo-8', href: '/app/leads', businessName: 'Ortega & Sons Auto',
-      signalLabel: 'Storm damage', signalType: 'storm_damage', score: 58,
+      signalLabel: 'Storm damage', signalToken: 'HAIL · SAME CELL · 1W',
+      signalType: 'storm_damage', score: 58,
       whyNow: 'Reported lot flooding after Tuesday\u2019s storm — possible drainage, signage, and asphalt patch scope.',
       status: 'skipped', location: 'Arlington, TX', ageLabel: '1w ago', createdAtMs: m(10500),
       contactName: null, contactConfidence: null,
     },
     {
       id: 'demo-9', href: '/app/leads', businessName: 'Westgate Athletic Club',
-      signalLabel: 'Expansion', signalType: 'expansion', score: 52,
+      signalLabel: 'Expansion', signalToken: 'EXPANSION · 2W',
+      signalType: 'expansion', score: 52,
       whyNow: 'Announced a 12,000 sqft fitness annex — slated to break ground in Q3 per their LinkedIn.',
       status: 'expired', location: 'Irving, TX', ageLabel: '2w ago', createdAtMs: m(21600),
       contactName: 'Connor Hayes', contactConfidence: 1,
@@ -142,11 +152,19 @@ export default async function LeadsPage() {
     const prospect = opp.prospectId ? prospectById.get(opp.prospectId) ?? null : null
     const signal = opp.signalId ? signalById.get(opp.signalId) ?? null : null
     const createdAt = new Date(opp.createdAt)
+    const signalToken = signal
+      ? formatSignalToken({
+          signalType: signal.signalType,
+          detectedAt: signal.detectedAt ?? signal.createdAt,
+          parsedData: (signal.parsedData ?? null) as Record<string, unknown> | null,
+        })
+      : null
     return {
       id: opp.id,
       href: `/app/leads/${opp.id}`,
       businessName: prospect?.businessName ?? 'Unknown business',
       signalLabel: SIGNAL_LABELS[signal?.signalType ?? ''] ?? 'Signal',
+      signalToken,
       signalType: signal?.signalType ?? null,
       score: opp.score,
       whyNow: opp.whyNow ?? signal?.whyRelevant ?? null,

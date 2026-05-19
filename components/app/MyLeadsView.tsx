@@ -11,6 +11,7 @@ export type LeadRow = {
   href: string
   businessName: string
   signalLabel: string
+  signalToken: string | null
   signalType: LeadCardSignalType
   score: number
   whyNow: string | null
@@ -226,6 +227,7 @@ export function MyLeadsView({
               href={lead.href}
               businessName={lead.businessName}
               signalLabel={lead.signalLabel}
+              signalToken={lead.signalToken}
               signalType={lead.signalType}
               score={lead.score}
               whyNow={lead.whyNow}
@@ -287,16 +289,16 @@ export function MyLeadsView({
           </div>
           <SortControl sort={sort} onChange={setSort} open={sortOpen} setOpen={setSortOpen} />
         </div>
-        {/* Mobile icons */}
-        <div className="flex lg:hidden items-center gap-1">
+        {/* Mobile icons — soft circular tap targets */}
+        <div className="flex lg:hidden items-center gap-2">
           <button
             ref={searchTriggerRef}
             type="button"
             onClick={() => setMobileSearch(true)}
-            className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-brand-near-black/[0.04]"
+            className="h-10 w-10 rounded-full bg-brand-cream border border-brand-near-black/8 flex items-center justify-center text-brand-near-black/70 hover:bg-white hover:text-brand-near-black transition-colors active:scale-95"
             aria-label="Search leads"
           >
-            <Search className="h-5 w-5 text-brand-near-black/70" />
+            <Search className="h-[18px] w-[18px]" />
           </button>
           <button
             ref={sortTriggerRef}
@@ -304,10 +306,10 @@ export function MyLeadsView({
             onClick={() => setSortOpen(true)}
             aria-haspopup="dialog"
             aria-expanded={sortOpen}
-            className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-brand-near-black/[0.04]"
+            className="h-10 w-10 rounded-full bg-brand-cream border border-brand-near-black/8 flex items-center justify-center text-brand-near-black/70 hover:bg-white hover:text-brand-near-black transition-colors active:scale-95"
             aria-label="Sort leads"
           >
-            <ArrowUpDown className="h-5 w-5 text-brand-near-black/70" />
+            <ArrowUpDown className="h-[18px] w-[18px]" />
           </button>
         </div>
       </div>
@@ -336,9 +338,9 @@ export function MyLeadsView({
       )}
 
       {/* Chip row */}
-      <div className="px-4 lg:px-7 mb-4 -mx-1 lg:mx-0">
+      <div className="relative px-4 lg:px-7 mb-4 -mx-1 lg:mx-0">
         <div
-          className="flex items-center gap-2 overflow-x-auto px-1 lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden"
+          className="flex items-center gap-2 overflow-x-auto pl-1 pr-6 lg:px-1 lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden"
           style={{ scrollbarWidth: 'none' }}
         >
           {STATUS_TABS.map(tab => {
@@ -372,6 +374,11 @@ export function MyLeadsView({
             )
           })}
         </div>
+        {/* Right-edge fade so the last chip never feels sheared on mobile */}
+        <div
+          aria-hidden
+          className="lg:hidden pointer-events-none absolute top-0 bottom-0 right-0 w-10 bg-gradient-to-l from-brand-parchment via-brand-parchment/85 to-transparent"
+        />
       </div>
 
       {/* Card list */}
@@ -384,6 +391,7 @@ export function MyLeadsView({
                 href={lead.href}
                 businessName={lead.businessName}
                 signalLabel={lead.signalLabel}
+                signalToken={lead.signalToken}
                 signalType={lead.signalType}
                 score={lead.score}
                 whyNow={lead.whyNow}
