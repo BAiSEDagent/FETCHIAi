@@ -1,11 +1,18 @@
-import { db, pricingTiers } from '@/db'
-import { asc } from 'drizzle-orm'
+import Link from 'next/link'
+import { db, pricingTiers, systemSettings } from '@/db'
+import { asc, eq } from 'drizzle-orm'
 import { PricingRow } from './PricingRow'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPricingPage() {
-  const tiers = await db.select().from(pricingTiers).orderBy(asc(pricingTiers.displayOrder))
+  const [tiers, trialDaysRow, trialLeadsRow] = await Promise.all([
+    db.select().from(pricingTiers).orderBy(asc(pricingTiers.displayOrder)),
+    db.select().from(systemSettings).where(eq(systemSettings.key, 'trial_days')),
+    db.select().from(systemSettings).where(eq(systemSettings.key, 'trial_total_leads')),
+  ])
+  const trialDays = trialDaysRow[0]?.value ?? '—'
+  const trialLeads = trialLeadsRow[0]?.value ?? '—'
 
   return (
     <div className="p-7 max-w-[1400px]">
@@ -15,6 +22,17 @@ export default async function AdminPricingPage() {
           Editable source of truth for tier prices, opportunity limits, top-up rates, and Stripe price IDs.
           Code reads these values at runtime — never hardcoded.
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-light text-brand-dark text-[11px] font-medium">
+            Trial: <span className="font-mono">{trialDays}</span> days · <span className="font-mono">{trialLeads}</span> total leads
+          </span>
+          <Link
+            href="/admin/system-settings"
+            className="text-[11px] text-brand-near-black/55 hover:text-brand-green underline underline-offset-2"
+          >
+            Edit trial settings →
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white border border-brand-near-black/10 rounded-[10px] overflow-x-auto">
