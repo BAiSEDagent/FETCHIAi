@@ -8,6 +8,78 @@ import { OutcomeForm } from './OutcomeForm'
 
 export const dynamic = 'force-dynamic'
 
+function ScoreBreakdown({
+  score,
+  signalDetectedAt,
+  hasWhyNow,
+  contactCount,
+  enrichmentStatus,
+}: {
+  score: number
+  signalDetectedAt: Date | null
+  hasWhyNow: boolean
+  contactCount: number
+  enrichmentStatus: string | null
+}) {
+  // Lightweight, deterministic breakdown derived from existing fields. The
+  // live multi-factor scorer lands with the scoring agent (CP6) — until then
+  // this gives the user a transparent read on *why* the score is what it is.
+  const signalStrength = Math.max(0, Math.min(100, score))
+  const ageDays = signalDetectedAt
+    ? Math.max(
+        0,
+        Math.floor((Date.now() - signalDetectedAt.getTime()) / 86_400_000),
+      )
+    : null
+  const recency =
+    ageDays === null ? 50 : Math.max(0, Math.min(100, 100 - ageDays * 7))
+  const fit = hasWhyNow ? 85 : 60
+  const reachability =
+    enrichmentStatus === 'complete'
+      ? Math.min(100, 50 + contactCount * 15)
+      : contactCount > 0
+        ? Math.min(100, 35 + contactCount * 15)
+        : 25
+
+  const rows = [
+    { label: 'Signal strength', pct: signalStrength },
+    { label: 'Recency', pct: recency },
+    { label: 'Fit to your business', pct: fit },
+    { label: 'Reachability', pct: reachability },
+  ]
+
+  return (
+    <div className="bg-white border border-brand-near-black/10 rounded-xl p-4 lg:p-5 mb-5">
+      <div className="text-[10px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-3">
+        Score breakdown
+      </div>
+      <div className="space-y-2.5">
+        {rows.map(r => (
+          <div key={r.label}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[12px] text-brand-near-black/70">
+                {r.label}
+              </span>
+              <span className="text-[11px] font-semibold text-brand-near-black/55 tabular-nums">
+                {r.pct}
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-brand-near-black/8 overflow-hidden">
+              <div
+                className="h-full bg-brand-green"
+                style={{ width: `${r.pct}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="text-[11px] text-brand-near-black/45 mt-3 leading-snug">
+        Live multi-factor scoring ships with the scoring agent in Checkpoint 6.
+      </div>
+    </div>
+  )
+}
+
 function ConfidenceDots({ pct }: { pct: number }) {
   const filled = Math.round((pct / 100) * 5)
   return (
@@ -107,6 +179,14 @@ export default async function LeadProfilePage({
           <div className="text-[11px] text-brand-near-black/55 mt-1">score</div>
         </div>
       </div>
+
+      <ScoreBreakdown
+        score={opp.score}
+        signalDetectedAt={signal?.detectedAt ?? null}
+        hasWhyNow={Boolean(opp.whyNow)}
+        contactCount={contacts.length}
+        enrichmentStatus={prospect?.enrichmentStatus ?? null}
+      />
 
       {opp.whyNow && (
         <div className="bg-brand-light border-[1.5px] border-brand-green/20 rounded-xl p-4 lg:p-5 mb-5">

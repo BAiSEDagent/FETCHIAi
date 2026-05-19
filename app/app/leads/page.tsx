@@ -98,6 +98,11 @@ export default async function LeadsPage() {
                 {signalLabel(signal?.signalType)}
                 {prospect?.city ? ` · ${prospect.city}, ${prospect.state}` : ''}
               </div>
+              {(opp.whyNow ?? signal?.whyRelevant) && (
+                <div className="text-[12px] text-brand-near-black/65 mt-1 line-clamp-2 leading-snug">
+                  {opp.whyNow ?? signal?.whyRelevant}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
               <span
