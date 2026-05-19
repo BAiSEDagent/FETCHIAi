@@ -1,5 +1,5 @@
 import { db, agentRegistry, prompts } from '@/db'
-import { asc, desc, eq } from 'drizzle-orm'
+import { asc } from 'drizzle-orm'
 import { AgentRow } from './AgentRow'
 
 export const dynamic = 'force-dynamic'
@@ -9,11 +9,10 @@ const PROVIDERS = ['anthropic', 'openai', 'google', 'groq', 'together', 'custom'
 export default async function AdminAgentsPage() {
   const [agents, promptList] = await Promise.all([
     db.select().from(agentRegistry).orderBy(asc(agentRegistry.slug)),
-    db
-      .selectDistinctOn([prompts.name], { name: prompts.name })
-      .from(prompts)
-      .where(eq(prompts.isActive, true))
-      .orderBy(prompts.name, desc(prompts.version)),
+    // Show every prompt slug — even ones whose active version hasn't been
+    // chosen yet — so admins can wire an agent to a slug they're still
+    // staging.
+    db.selectDistinct({ name: prompts.name }).from(prompts).orderBy(prompts.name),
   ])
   const promptSlugs = promptList.map(p => p.name)
 
