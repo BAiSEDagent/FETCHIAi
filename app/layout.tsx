@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Outfit, DM_Sans } from 'next/font/google'
+import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
 const outfit = Outfit({
@@ -28,10 +29,22 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${dmSans.variable}`}>
-      <body className="min-h-screen bg-brand-parchment text-brand-near-black antialiased">
-        {children}
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: '#58937E',
+          colorText: '#2D2B2A',
+          colorBackground: '#EBE6D9',
+          fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
+          borderRadius: '12px',
+        },
+      }}
+    >
+      <html lang="en" className={`${outfit.variable} ${dmSans.variable}`}>
+        <body className="min-h-screen bg-brand-parchment text-brand-near-black antialiased">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
