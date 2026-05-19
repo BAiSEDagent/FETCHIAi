@@ -12,6 +12,8 @@ type Props = {
   greetingName: string | null
   isEmptyRun: boolean
   sourcesChecked: number
+  scoutingLocation?: string | null
+  leadsReady?: number
 }
 
 export function ChatClient({
@@ -19,6 +21,8 @@ export function ChatClient({
   greetingName,
   isEmptyRun,
   sourcesChecked,
+  scoutingLocation,
+  leadsReady = 0,
 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [input, setInput] = useState('')
@@ -67,23 +71,44 @@ export function ChatClient({
   }
 
   const hasInput = input.trim().length > 0
+  const greetFirst = greetingName ? greetingName.split(' ')[0] : null
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] lg:h-screen bg-brand-parchment">
-      <div className="px-5 lg:px-7 pt-5 pb-4 bg-brand-cream">
-        <div className="font-outfit text-[20px] lg:text-[22px] font-semibold text-brand-near-black">
-          {greetingName ? `Hey, ${greetingName.split(' ')[0]}` : 'Welcome to Fetchi'}
-        </div>
-        <div className="text-[13px] text-brand-near-black/60 mt-0.5">
-          Ask for leads, draft outreach, or tell ツ what you&apos;re working on.
-        </div>
+      <div className="px-5 lg:px-7 pt-6 lg:pt-7 pb-5">
+        <h1 className="font-outfit text-[28px] lg:text-[32px] font-bold text-brand-near-black leading-tight">
+          {greetFirst ? `Hey, ${greetFirst}` : 'Fetchi'}
+        </h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 lg:px-7 py-6 space-y-5">
+      <div className="flex-1 overflow-y-auto px-4 lg:px-7 pb-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-full bg-brand-green text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0"
+            aria-hidden
+          >
+            ツ
+          </div>
+          <div className="min-w-0">
+            <div className="text-[14px] font-bold text-brand-near-black leading-tight">
+              Fetchi
+            </div>
+            <div className="text-[12.5px] text-brand-near-black/60 mt-0.5 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-green" />
+              {scoutingLocation ? `Scouting ${scoutingLocation}` : 'Listening for signals'}
+              {leadsReady > 0 && (
+                <span className="text-brand-near-black/45">
+                  · {leadsReady} lead{leadsReady === 1 ? '' : 's'} ready
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
         {isEmptyRun && (
           <div
             role="status"
-            className="mx-auto max-w-md rounded-2xl bg-brand-cream shadow-fetchi-soft px-5 py-4 text-center"
+            className="rounded-2xl bg-brand-cream shadow-fetchi-soft px-5 py-4"
           >
             <div className="text-[14px] font-semibold text-brand-near-black mb-1">
               Fetchi checked {sourcesChecked} sources
@@ -101,7 +126,7 @@ export function ChatClient({
             role={m.role}
             trailing={
               m.leads && m.leads.length > 0 ? (
-                <div className="flex flex-col gap-2 pt-1">
+                <div className="flex flex-col gap-3 pt-1">
                   {m.leads.map(l => (
                     <LeadCard
                       key={l.opportunityId}
@@ -109,7 +134,11 @@ export function ChatClient({
                       businessName={l.businessName}
                       signalLabel={l.signalLabel}
                       score={l.score}
-                      variant="chat"
+                      location={l.location ?? null}
+                      whyNow={l.whyNow ?? null}
+                      ageLabel={l.ageLabel ?? null}
+                      evidenceChips={l.evidenceChips}
+                      variant="chat-hero"
                     />
                   ))}
                 </div>

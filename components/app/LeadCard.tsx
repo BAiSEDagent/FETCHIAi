@@ -20,7 +20,7 @@ export type LeadCardSignalType =
   | null
   | undefined
 
-type Variant = 'list' | 'chat'
+type Variant = 'list' | 'chat' | 'chat-hero'
 
 type Props = {
   href: string
@@ -32,6 +32,7 @@ type Props = {
   status?: string | null
   location?: string | null
   ageLabel?: string | null
+  evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' }>
   variant?: Variant
 }
 
@@ -91,8 +92,79 @@ export function LeadCard({
   status,
   location,
   ageLabel,
+  evidenceChips,
   variant = 'list',
 }: Props) {
+  if (variant === 'chat-hero') {
+    return (
+      <div className="rounded-2xl bg-brand-cream shadow-fetchi-soft p-4 lg:p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="text-[15.5px] font-bold text-brand-near-black leading-tight">
+              {businessName}
+            </div>
+            <div className="text-[12.5px] text-brand-near-black/55 mt-1">
+              {location ?? signalLabel}
+            </div>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <div className="font-outfit text-[28px] leading-none font-bold text-brand-green tabular-nums">
+              {score}
+            </div>
+            <div className="text-[10px] uppercase tracking-[1px] text-brand-near-black/45 mt-1 font-bold">
+              score
+            </div>
+          </div>
+        </div>
+
+        {(ageLabel || evidenceChips?.length || signalLabel) && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-coral/12 text-brand-coral px-2.5 py-1 text-[11.5px] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-coral" />
+              {signalLabel}
+              {ageLabel ? ` · ${ageLabel}` : ''}
+            </span>
+            {evidenceChips?.map(chip => (
+              <span
+                key={chip.label}
+                className={cn(
+                  'inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold',
+                  chip.tone === 'coral'
+                    ? 'bg-brand-coral/12 text-brand-coral'
+                    : 'bg-brand-cream-muted text-brand-near-black/65 border border-brand-near-black/10',
+                )}
+              >
+                {chip.label}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {whyNow && (
+          <p className="mt-3 text-[13.5px] text-brand-near-black/75 leading-[1.6]">
+            {whyNow}
+          </p>
+        )}
+
+        <div className="mt-4 flex items-center gap-2">
+          <Link
+            href={href}
+            className="flex-1 inline-flex items-center justify-center h-11 rounded-full bg-brand-green text-white text-[14px] font-semibold hover:bg-brand-dark transition-colors"
+          >
+            Open lead
+          </Link>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-brand-cream-muted text-brand-near-black/75 text-[14px] font-semibold border border-brand-near-black/8 hover:text-brand-near-black hover:bg-white transition-colors"
+            aria-label="Pass on this lead"
+          >
+            Pass
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const isChat = variant === 'chat'
 
   return (

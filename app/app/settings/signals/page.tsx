@@ -1,74 +1,186 @@
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { db } from '@/db'
 import { MobileScreenHeader } from '@/components/app/MobileScreenHeader'
-import { SettingsGroup, SettingsRow } from '@/components/app/SettingsGroup'
 
 export const dynamic = 'force-dynamic'
 
-export default async function SignalPreferencesPage() {
+type SensitivityId = 'conservative' | 'balanced' | 'aggressive'
+
+const SENSITIVITIES: {
+  id: SensitivityId
+  label: string
+  desc: string
+  volume: string
+  recommended?: boolean
+}[] = [
+  {
+    id: 'conservative',
+    label: 'Conservative',
+    desc: 'Fewer leads, all very strong signals.',
+    volume: '~12/wk',
+  },
+  {
+    id: 'balanced',
+    label: 'Balanced',
+    desc: 'Recommended — good mix of strength and volume.',
+    volume: '~22/wk',
+    recommended: true,
+  },
+  {
+    id: 'aggressive',
+    label: 'Aggressive',
+    desc: 'More leads, weaker signals still surface.',
+    volume: '~38/wk',
+  },
+]
+
+export default async function SignalSensitivityPage() {
   const ctx = await requireWorkspaceContext()
   const prefs = await db.query.signalPreferences.findFirst({
     where: (t, { eq }) => eq(t.workspaceId, ctx.workspaceId),
   })
 
-  const rows: Array<{ key: string; label: string; hint?: string; on: boolean }> = [
-    { key: 'permits', label: 'Building permits', hint: 'New permits filed in your service area.', on: prefs?.permitsEnabled ?? true },
-    { key: 'storm', label: 'Storm & weather damage', hint: 'NOAA hail, wind, and storm reports.', on: prefs?.stormEnabled ?? true },
-    { key: 'listings', label: 'New business listings', hint: 'Businesses opening near you.', on: prefs?.newListingsEnabled ?? true },
-    { key: 'jobs', label: 'Job postings', hint: 'Hiring signals tied to growth.', on: prefs?.jobPostingsEnabled ?? false },
-    { key: 'events', label: 'Local events', hint: 'Civic events and gatherings.', on: prefs?.eventsEnabled ?? false },
+  const threshold = prefs?.minScoreThreshold ?? 70
+  const active: SensitivityId =
+    threshold >= 85 ? 'conservative' : threshold <= 60 ? 'aggressive' : 'balanced'
+
+  const signals: Array<{
+    key: string
+    label: string
+    hint: string
+    on: boolean
+  }> = [
+    {
+      key: 'storm',
+      label: 'Storm damage',
+      hint: 'Hail ≥ 1.0" in last 14 days',
+      on: prefs?.stormEnabled ?? true,
+    },
+    {
+      key: 'permits',
+      label: 'New permits',
+      hint: 'Roof or HVAC permits',
+      on: prefs?.permitsEnabled ?? true,
+    },
+    {
+      key: 'listings',
+      label: 'New business filings',
+      hint: 'LLCs in your area',
+      on: prefs?.newListingsEnabled ?? true,
+    },
+    {
+      key: 'jobs',
+      label: 'Hiring posts',
+      hint: 'Growth-stage hiring signals',
+      on: prefs?.jobPostingsEnabled ?? false,
+    },
+    {
+      key: 'events',
+      label: 'Local events',
+      hint: 'Civic events and gatherings',
+      on: prefs?.eventsEnabled ?? false,
+    },
   ]
 
   return (
     <div className="max-w-3xl">
       <MobileScreenHeader
-        title="Signal Preferences"
-        description="Which buying signals should ツ surface for you? Editing these thresholds goes live with the signal-detection wiring in Checkpoint 6."
+        title="Signal sensitivity"
+        backHref="/app/settings"
+        backLabel="Settings · How Fetchi works for you"
+        description="How aggressive should Fetchi be when picking your leads? You can always change this later."
       />
-      <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
-        <SettingsGroup
-          title="Signal sources"
-          description="Read-only preview — toggles ship with Checkpoint 6."
-        >
-          {rows.map(r => (
-            <SettingsRow
-              key={r.key}
-              label={r.label}
-              hint={r.hint}
-              value={<TogglePreview on={r.on} />}
-            />
-          ))}
-        </SettingsGroup>
 
-        <SettingsGroup title="Scoring threshold">
-          <SettingsRow
-            label="Minimum score"
-            hint="Signals below this score never reach your inbox."
-            value={
-              <span className="text-[16px] font-bold text-brand-near-black tabular-nums">
-                {prefs?.minScoreThreshold ?? 70}
-              </span>
-            }
-          />
-        </SettingsGroup>
-
-        {prefs?.excludedKeywords && prefs.excludedKeywords.length > 0 && (
-          <SettingsGroup
-            title="Excluded keywords"
-            description="Signals matching any of these are dropped automatically."
-          >
-            <ul className="flex flex-wrap gap-2">
-              {prefs.excludedKeywords.map(k => (
-                <li
-                  key={k}
-                  className="rounded-full bg-brand-cream-muted border border-brand-near-black/10 px-3 py-1 text-[12px] text-brand-near-black/70"
+      <div className="px-4 lg:px-7 pb-10 space-y-6">
+        {/* One decision — three radio cards */}
+        <div className="flex flex-col gap-3">
+          {SENSITIVITIES.map(s => {
+            const selected = s.id === active
+            return (
+              <div
+                key={s.id}
+                aria-pressed={selected}
+                role="button"
+                tabIndex={-1}
+                className={`text-left rounded-2xl p-4 lg:p-5 transition-all min-h-[88px] flex items-start gap-3.5 ${
+                  selected
+                    ? 'bg-brand-near-black text-white shadow-fetchi-card'
+                    : 'bg-brand-cream text-brand-near-black shadow-fetchi-soft'
+                }`}
+              >
+                <span
+                  className={`mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full border-2 flex-shrink-0 ${
+                    selected
+                      ? 'border-brand-green'
+                      : 'border-brand-near-black/20'
+                  }`}
+                  aria-hidden
                 >
-                  {k}
-                </li>
-              ))}
-            </ul>
-          </SettingsGroup>
-        )}
+                  {selected && (
+                    <span className="w-3 h-3 rounded-full bg-brand-green" />
+                  )}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[16px] font-bold">{s.label}</span>
+                    {s.recommended && (
+                      <span className="inline-flex items-center rounded-full bg-brand-light text-brand-dark px-2 py-0.5 text-[10px] font-bold tracking-[0.5px] uppercase border border-brand-green/30">
+                        Recommended
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className={`text-[13px] mt-1 leading-relaxed ${
+                      selected ? 'text-white/70' : 'text-brand-near-black/60'
+                    }`}
+                  >
+                    {s.desc}
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0 ${
+                    selected
+                      ? 'bg-brand-green/25 text-brand-green'
+                      : 'bg-brand-light text-brand-dark border border-brand-green/30'
+                  }`}
+                >
+                  {s.volume}
+                </span>
+              </div>
+            )
+          })}
+          <p className="text-[12px] text-brand-near-black/45 px-1 leading-relaxed">
+            Live tuning of these thresholds ships with the signal-detection
+            agent (Checkpoint 6).
+          </p>
+        </div>
+
+        {/* Secondary group — which signals to watch */}
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-brand-near-black/45 px-1 mb-2.5">
+            Which signals to watch
+          </div>
+          <div className="rounded-2xl bg-brand-cream shadow-fetchi-soft overflow-hidden">
+            {signals.map((s, i) => (
+              <div
+                key={s.key}
+                className={`flex items-center gap-3 px-4 lg:px-5 py-3.5 min-h-[64px] ${
+                  i < signals.length - 1 ? 'border-b border-brand-near-black/6' : ''
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-[14.5px] font-bold text-brand-near-black leading-tight">
+                    {s.label}
+                  </div>
+                  <div className="text-[12.5px] text-brand-near-black/55 mt-0.5">
+                    {s.hint}
+                  </div>
+                </div>
+                <TogglePreview on={s.on} />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -77,13 +189,17 @@ export default async function SignalPreferencesPage() {
 function TogglePreview({ on }: { on: boolean }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border ${
-        on
-          ? 'bg-brand-light text-brand-dark border-brand-green/30'
-          : 'bg-brand-cream-muted text-brand-near-black/55 border-brand-near-black/10'
+      className={`relative inline-flex items-center w-12 h-7 rounded-full transition-colors flex-shrink-0 ${
+        on ? 'bg-brand-green' : 'bg-brand-near-black/15'
       }`}
+      aria-label={on ? 'On' : 'Off'}
+      role="img"
     >
-      {on ? 'On' : 'Off'}
+      <span
+        className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-transform ${
+          on ? 'translate-x-[22px]' : 'translate-x-0.5'
+        }`}
+      />
     </span>
   )
 }

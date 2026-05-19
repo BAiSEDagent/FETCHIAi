@@ -15,12 +15,20 @@ export default async function ChatPage() {
     greetingName: ctx.fullName ?? ctx.workspace.businessName ?? null,
     businessVertical: sp?.vertical ?? null,
   })
+  const scoutingLocation = sp?.locationCity
+    ? `${sp.locationCity}${sp.locationState ? `, ${sp.locationState}` : ''}`
+    : null
+  const leadsReady = thread.isEmptyRun
+    ? 0
+    : thread.messages.reduce((n, m) => n + (m.leads?.length ?? 0), 0)
   return (
     <ChatClient
       initialMessages={thread.messages}
       isEmptyRun={thread.isEmptyRun}
       sourcesChecked={thread.sourcesChecked}
       greetingName={ctx.fullName ?? ctx.workspace.businessName ?? null}
+      scoutingLocation={scoutingLocation}
+      leadsReady={leadsReady}
     />
   )
 }

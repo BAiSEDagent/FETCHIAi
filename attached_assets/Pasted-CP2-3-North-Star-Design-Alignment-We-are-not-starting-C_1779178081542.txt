@@ -1,0 +1,112 @@
+CP2.3 — North Star Design Alignment
+
+We are not starting CP3.
+
+Use the newly uploaded reference files as the visual north star for the customer app:
+
+- Chat _ conversational_ embedded lead.html / .png
+- Lead detail _ transaction-card hero.html / .png
+- Onboarding _ what do you sell_.html / .png
+- Settings home _ calm cards.html / .png
+- Signal sensitivity _ one setting.html / .png
+
+Important:
+Use these files as visual/design references only.
+Do NOT copy raw exported HTML, injected scripts, embedded base64 fonts, iPhone chrome, status bars, mock browser/device frames, or one-off prototype code into the app.
+
+Design target:
+Cash App × Claude × Fetchi.
+
+Core phrase:
+“Calmer. One decision per step. Big tap targets. No SaaS clutter.”
+
+Apply the reference direction to the existing CP2 customer app only.
+
+Scope:
+1. Update DESIGN_SYSTEM_V2.md to include these files as the north-star references.
+2. Refine /app/onboarding to match the uploaded onboarding direction:
+   - large “Setup” / onboarding feel
+   - one decision per step
+   - big selectable cards
+   - thick rounded green CTA
+   - calm progress indicator
+   - mobile-first 375px
+   - no border-2 stamp card
+3. Refine /app/chat to match the uploaded chat direction:
+   - Claude-like conversational spacing
+   - Fetchi avatar beside assistant messages
+   - embedded lead card that feels native to the conversation
+   - strong but calm “Open lead” CTA
+   - composer remains functional
+   - preserve sendChatMessage wiring
+4. Refine /app/leads/[id] to match the uploaded lead detail direction:
+   - large score hero
+   - “why now” card
+   - evidence list
+   - sticky bottom primary CTA on mobile if already appropriate
+   - preserve OutcomeForm and existing data joins/actions
+5. Refine /app/settings and /app/settings/profile to match the uploaded settings direction:
+   - calm grouped rows/cards
+   - simple account/business card
+   - no dense SaaS form feel
+   - keep all existing fields and server actions
+6. For the Signal Sensitivity reference:
+   - document this pattern in DESIGN_SYSTEM_V2.md
+   - lightly apply its visual language to existing /app/settings/signals if that route already exists as a stub
+   - do NOT create new routes
+   - do NOT build live signal/scout logic
+
+Hard constraints:
+- Do not start CP3
+- Do not create /admin routes
+- Do not build billing
+- Do not add Stripe code
+- Do not build agents
+- Do not add LLM/provider code
+- Do not build SearchProvider/live scout execution
+- Do not add dependencies
+- Do not modify db/schema.ts, db/index.ts, db/seed.ts, or drizzle.config.ts
+- Preserve Clerk auth, webhook provisioning, workspace_id scoping
+- Preserve opportunities as the backing table for “My Leads”
+- Preserve existing server actions and data writes
+- No live API calls
+
+Implementation rules:
+- Use existing Next.js App Router, Tailwind, shadcn/ui, lucide-react, Radix primitives
+- Preserve component public APIs where possible
+- Prefer shared primitives/components over one-off styling
+- Keep mobile-first at 375px
+- Minimum 44px touch targets
+- Keep Fetchi palette:
+  - #58937E green
+  - #2D2B2A near-black
+  - #EBE6D9 parchment
+  - #EAF3EF selected/active
+  - #D85A30 warning/destructive only
+- Keep Outfit headings and DM Sans body
+- Do not clone Cash App or Claude
+- Do not include native iPhone chrome in the web UI
+
+After changes:
+1. Run npm run type-check
+2. Run npm run build
+3. Confirm no CP4 files exist:
+   - app/api/stripe/*
+   - app/api/cron/trial-expiry/*
+   - components/billing/*
+   - lib/stripe/*
+   - lib/billing/*
+   - app/app/expired/*
+4. Confirm no CP5 files exist:
+   - lib/agents/*
+   - lib/prompts/index.ts
+5. Confirm no /admin routes exist
+6. Return CP2.3 report:
+   - files changed
+   - how each uploaded reference influenced the app
+   - type-check result
+   - build result
+   - screenshots/visual notes if available
+   - blockers/warnings
+
+Stop after CP2.3.

@@ -16,6 +16,10 @@ export type ChatLeadCard = {
   businessName: string
   signalLabel: string
   score: number
+  location?: string | null
+  whyNow?: string | null
+  ageLabel?: string | null
+  evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' }>
 }
 
 export type ChatMessage = {
@@ -153,11 +157,28 @@ export async function buildChatThread(
           })
         : Promise.resolve(null),
     ])
+    const where = signalLocation(signal)
+    const locParts = [prospect?.city, prospect?.state].filter(Boolean) as string[]
+    const location = locParts.length > 0 ? locParts.join(', ') : where
+
+    const baseLabel =
+      SIGNAL_LABELS[signal?.signalType ?? 'other'] ?? 'Signal detected'
+    const ageLabel = relativeTime(signal?.detectedAt ?? signal?.createdAt ?? null)
+
+    const evidenceChips: Array<{ label: string; tone?: 'coral' | 'neutral' }> = []
+    if (prospect?.enrichmentStatus === 'complete') {
+      evidenceChips.push({ label: 'Owner reachable', tone: 'neutral' })
+    }
+
     cards.push({
       opportunityId: opp.id,
       businessName: prospect?.businessName ?? 'Unknown business',
       signalLabel: signalLabel(signal),
       score: opp.score,
+      location,
+      whyNow: opp.whyNow ?? signal?.whyRelevant ?? null,
+      ageLabel: `${baseLabel.split(' ').slice(-1)[0] === 'detected' ? 'Signal' : baseLabel.split(' · ')[0]} · ${ageLabel}`,
+      evidenceChips,
     })
   }
 

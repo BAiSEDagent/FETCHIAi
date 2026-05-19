@@ -12,6 +12,33 @@ The system is a deliberate blend of three influences:
 
 ---
 
+## 0. North Star (CP2.3)
+
+The phrase the whole team repeats before they ship a screen:
+
+> **Calmer. One decision per step. Big tap targets. No SaaS clutter.**
+
+Every customer surface should feel like the five reference screens below. They are the visual ground truth — not the design HTMLs in `design/`, not earlier CP2 work. When in doubt, match these five.
+
+| Surface | Reference asset | What to take from it |
+| --- | --- | --- |
+| Onboarding | `attached_assets/Onboarding___what_do_you_sell__1779178085863.png` | One big question per step, supporting one-liner under the title, 4-segment progress bar, 2-col vertical-grid choice cards (selected = near-black with green icon tile), single primary "Continue →" CTA, tiny "Step N of 4 · ~time left" helper. |
+| Chat | `attached_assets/Chat___conversational__embedded_lead_1779178085862.png` | Status header (ツ avatar + "Fetchi · Scouting <city> · N leads ready"), conversational bubbles with the ツ avatar in green, leads rendered as inline transaction cards inside the conversation (not a sidebar grid), big "Open lead" primary + quiet "Pass" secondary inside the lead card itself. |
+| Lead detail | `attached_assets/Lead_detail___transaction-card_hero_1779178085863.png` | Eyebrow chip with the signal at-a-glance, GIANT brand-green score, one-line summary, BIG business name, location subtext — all centered — *then* the Why-now, Evidence, and Outcome cards beneath. Single primary "Open draft & contact" CTA, secondary "Save for later · Pass" links underneath. |
+| Settings home | `attached_assets/Settings_home___calm_cards_1779178085863.png` | Workspace summary card on top (avatar + business + tier chip + usage chip), then sectioned groups with eyebrow labels ("HOW FETCHI WORKS FOR YOU", "CONNECTIONS"). Each row = soft icon tile + bold label + one-line subtitle + right value + chevron. No dense table rows. |
+| Signal sensitivity | `attached_assets/Signal_sensitivity___one_setting_1779178085864.png` | One decision per page: three sensitivity radio cards (Conservative / Balanced / Aggressive — selected card is near-black with a green radio dot and "RECOMMENDED" chip), volume estimate on the right. Secondary "WHICH SIGNALS TO WATCH" toggle list lives below as a separate calm group. |
+
+**Four principles, in this order:**
+
+1. **Calmer surfaces.** Cream over parchment, no harsh borders, generous breathing room between groups (`space-y-3 lg:space-y-4` for stacked cards; `pt-5 lg:pt-7` for page headers).
+2. **One decision per step.** A screen should have a single primary action; everything else is secondary text or chevron rows.
+3. **Big tap targets.** Buttons and selection cards ≥ 44px tall (selection cards ≥ 72px). Score/sensitivity chips have inner padding, not micro-text.
+4. **No SaaS clutter.** No dense tables, no decorative borders, no status palettes outside brand tokens, no labels that exist just to feel "complete". If a number, threshold, or schedule needs to live somewhere, it goes in admin-controlled config — not as UI noise on the customer screen.
+
+**What references are *not* for:** ignore embedded base64 fonts, injected scripts, iPhone status bars, and home-indicator chrome in the attached HTMLs. References are visual targets only — never copy their markup.
+
+---
+
 ## 1. Visual principles
 
 1. **Calm by default.** Soft surfaces, no harsh borders, generous spacing, no decorative noise.
