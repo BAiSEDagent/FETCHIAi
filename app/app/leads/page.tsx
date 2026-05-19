@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { and, eq, desc } from 'drizzle-orm'
-import { db, opportunities } from '@/db'
+import { and, eq, desc, inArray } from 'drizzle-orm'
+import { db, opportunities, prospects, signals } from '@/db'
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -43,25 +43,46 @@ export default async function LeadsPage() {
     .where(eq(opportunities.workspaceId, ctx.workspaceId))
     .orderBy(desc(opportunities.score), desc(opportunities.createdAt))
 
-  const enriched = await Promise.all(
-    rows.map(async opp => {
-      const [prospect, signal] = await Promise.all([
-        opp.prospectId
-          ? db.query.prospects.findFirst({
-              where: (t, { eq: e, and: a }) =>
-                a(e(t.id, opp.prospectId!), e(t.workspaceId, ctx.workspaceId)),
-            })
-          : Promise.resolve(null),
-        opp.signalId
-          ? db.query.signals.findFirst({
-              where: (t, { eq: e, and: a }) =>
-                a(e(t.id, opp.signalId!), e(t.workspaceId, ctx.workspaceId)),
-            })
-          : Promise.resolve(null),
-      ])
-      return { opp, prospect, signal }
-    }),
+  // Two batched workspace-scoped lookups instead of N+1. The explicit
+  // workspaceId predicate is kept so any future FK drift can't leak a row
+  // from another tenant through this query.
+  const prospectIds = Array.from(
+    new Set(rows.map(r => r.prospectId).filter((v): v is string => Boolean(v))),
   )
+  const signalIds = Array.from(
+    new Set(rows.map(r => r.signalId).filter((v): v is string => Boolean(v))),
+  )
+  const [prospectRows, signalRows] = await Promise.all([
+    prospectIds.length > 0
+      ? db
+          .select()
+          .from(prospects)
+          .where(
+            and(
+              eq(prospects.workspaceId, ctx.workspaceId),
+              inArray(prospects.id, prospectIds),
+            ),
+          )
+      : Promise.resolve([] as Array<typeof prospects.$inferSelect>),
+    signalIds.length > 0
+      ? db
+          .select()
+          .from(signals)
+          .where(
+            and(
+              eq(signals.workspaceId, ctx.workspaceId),
+              inArray(signals.id, signalIds),
+            ),
+          )
+      : Promise.resolve([] as Array<typeof signals.$inferSelect>),
+  ])
+  const prospectById = new Map(prospectRows.map(p => [p.id, p]))
+  const signalById = new Map(signalRows.map(s => [s.id, s]))
+  const enriched = rows.map(opp => ({
+    opp,
+    prospect: opp.prospectId ? prospectById.get(opp.prospectId) ?? null : null,
+    signal: opp.signalId ? signalById.get(opp.signalId) ?? null : null,
+  }))
 
   return (
     <div className="flex flex-col">
