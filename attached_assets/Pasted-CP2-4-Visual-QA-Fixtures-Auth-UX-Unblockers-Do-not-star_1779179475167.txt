@@ -1,0 +1,80 @@
+CP2.4 — Visual QA Fixtures + Auth UX Unblockers
+
+Do not start CP3.
+Do not start CP4.
+Do not start CP5.
+Do not start CP6 or CP7.
+Do not run queued tasks.
+
+Goal:
+Unblock manual visual QA of CP2.3 by giving my real signed-in workspace demo data, a way to replay onboarding, and a visible sign-out control.
+
+This is not a product feature checkpoint. This is a QA/support checkpoint only.
+
+Approved scope:
+
+1. Add a visible sign-out control:
+   - Use Clerk's existing SignOutButton or UserButton from @clerk/nextjs.
+   - Add it to the customer sidebar footer and mobile header/menu if applicable.
+   - Keep styling aligned with Fetchi DSv2.
+   - Do not add dependencies.
+
+2. Create a dev-only QA script:
+   - Add scripts/dev/seed-demo-workspace.ts or similar.
+   - It should copy the seeded demo data from seed_workspace_01 into my real non-seed workspace.
+   - Copy enough data to visually test:
+     - conversations/messages if seeded
+     - signals
+     - prospects
+     - opportunities
+     - contact_routes
+     - outreach_plays
+   - Preserve workspace_id scoping.
+   - Do not modify db/schema.ts, db/index.ts, db/seed.ts, or drizzle.config.ts.
+   - Do not create new tables.
+   - Do not hardcode my workspace ID if it can be inferred safely from the only non-seed workspace or FETCHI_ADMIN_USER_IDS.
+   - Make the script idempotent: running it twice should not duplicate the same demo records.
+
+3. Add a dev-only onboarding reset script:
+   - Add scripts/dev/reset-onboarding.ts or similar.
+   - It should set my real non-seed workspace onboarding_step back to 0 so I can replay onboarding.
+   - It should not delete my workspace.
+   - It should not affect seed_workspace_01.
+   - It should be clearly dev-only.
+
+4. Run the demo-data script and onboarding reset script once in dev.
+
+5. Verify:
+   - My real workspace now has demo opportunities.
+   - /app/leads shows populated lead cards.
+   - one /app/leads/[id] opens a populated lead detail page.
+   - /app/chat can show seeded/demo conversation content or an embedded lead card if current code supports it.
+   - /app/onboarding loads again because onboarding_step is reset.
+   - Sign-out control is visible.
+
+6. Run:
+   npm run type-check
+   npm run build
+
+Hard constraints:
+- Do not create /admin routes.
+- Do not build billing.
+- Do not add Stripe code.
+- Do not build agents.
+- Do not add LLM/provider code.
+- Do not build SearchProvider/live scout execution.
+- Do not add dependencies.
+- Do not modify db/schema.ts, db/index.ts, db/seed.ts, or drizzle.config.ts.
+- Preserve Clerk auth, webhook provisioning, workspace_id scoping.
+- Preserve opportunities as the backing table for “My Leads”.
+- Stop after the CP2.4 report.
+
+Return report:
+- files changed
+- sign-out location
+- demo data copied with row counts
+- onboarding reset result
+- populated routes verified
+- type-check result
+- build result
+- blockers/warnings

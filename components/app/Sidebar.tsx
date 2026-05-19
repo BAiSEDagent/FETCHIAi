@@ -14,6 +14,7 @@ import {
   CreditCard,
 } from 'lucide-react'
 import { FetchiAvatar } from './FetchiAvatar'
+import { SignOutControl } from './SignOutControl'
 
 type NavItem = {
   href: string
@@ -111,7 +112,10 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
       </div>
       <nav className="flex flex-col gap-0.5">{settingsNav.map(renderLink)}</nav>
 
-      <div className="mt-auto">{creditsSlot}</div>
+      <div className="mt-auto">
+        {creditsSlot}
+        <SignOutControl variant="sidebar" />
+      </div>
     </aside>
   )
 }

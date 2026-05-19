@@ -6,6 +6,7 @@ import { Menu } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { FetchiAvatar } from './FetchiAvatar'
 import { Sidebar } from './Sidebar'
+import { SignOutControl } from './SignOutControl'
 
 type Props = {
   leadsCount: number
@@ -46,7 +47,7 @@ export function MobileHeader({ leadsCount, creditsSlot }: Props) {
         <span className="fetchi-wordmark text-[18px] text-white">Fetchi</span>
       </Link>
 
-      <div className="h-11 w-11" aria-hidden />
+      <SignOutControl variant="mobile-header" />
     </header>
   )
 }
