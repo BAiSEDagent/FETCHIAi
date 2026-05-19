@@ -7,40 +7,47 @@ export default async function Home() {
   if (userId) redirect('/app/chat')
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="max-w-xl w-full text-center space-y-8">
-        <div className="flex items-center justify-center">
+    <main className="min-h-screen bg-brand-parchment flex flex-col items-center justify-center px-5 py-12">
+      <div className="max-w-md w-full text-center">
+        <div className="flex justify-center mb-8">
           <span
             className="fetchi-avatar"
-            style={{ width: 88, height: 88, fontSize: 44, lineHeight: 1 }}
+            style={{ width: 80, height: 80, fontSize: 40, lineHeight: 1 }}
             aria-hidden="true"
           >
             ツ
           </span>
         </div>
-        <div className="space-y-3">
-          <h1 className="fetchi-wordmark text-5xl text-brand-near-black">Fetchi</h1>
-          <p className="text-sm uppercase tracking-widest text-brand-dark font-semibold">
-            Signal-based lead generation
-          </p>
+
+        <h1 className="fetchi-wordmark text-[44px] lg:text-[52px] leading-none text-brand-near-black">
+          Fetchi
+        </h1>
+        <div className="text-[12px] font-bold uppercase tracking-[1.5px] text-brand-dark mt-3">
+          Signal-based lead generation
         </div>
-        <p className="text-lg text-brand-near-black/80 leading-relaxed">
-          Tell us what your business sells — we&apos;ll find the buyers who need
-          it this week.
+
+        <p className="text-[16px] text-brand-near-black/75 leading-relaxed mt-6 mx-auto max-w-sm">
+          Tell ツ what your business sells. We&apos;ll find the buyers who need
+          it this week — before your competition even sees them.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+
+        <div className="flex flex-col gap-3 mt-9">
           <Link
             href="/sign-up"
-            className="inline-flex items-center justify-center min-h-[44px] px-6 rounded-xl bg-brand-near-black text-white font-semibold hover:bg-brand-green transition-colors"
+            className="inline-flex items-center justify-center h-12 px-7 rounded-xl bg-brand-near-black text-white font-semibold text-[15px] hover:bg-brand-green transition-colors"
           >
-            Start your trial
+            Start your free trial
           </Link>
           <Link
             href="/sign-in"
-            className="inline-flex items-center justify-center min-h-[44px] px-6 rounded-xl border-2 border-brand-near-black/15 bg-white text-brand-near-black font-semibold hover:border-brand-near-black transition-colors"
+            className="inline-flex items-center justify-center h-11 px-6 text-brand-near-black/70 hover:text-brand-near-black font-medium text-[14px]"
           >
-            Sign in
+            I already have an account
           </Link>
+        </div>
+
+        <div className="text-[12px] text-brand-near-black/45 mt-8">
+          10 free leads. No card required.
         </div>
       </div>
     </main>

@@ -15,7 +15,10 @@ const items = [
 export function MobileBottomNav() {
   const pathname = usePathname()
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-brand-near-black/10 flex items-stretch h-16 pb-[env(safe-area-inset-bottom)]">
+    <nav
+      aria-label="Primary"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-brand-cream shadow-fetchi-sticky flex items-stretch h-16 pb-[env(safe-area-inset-bottom)]"
+    >
       {items.map(item => {
         const Icon = item.icon
         const active =
@@ -27,11 +30,21 @@ export function MobileBottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] text-[11px] font-medium transition-colors ${
-              active ? 'text-brand-green' : 'text-brand-near-black/55'
+            aria-current={active ? 'page' : undefined}
+            className={`relative flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] text-[11px] font-semibold transition-colors ${
+              active ? 'text-brand-near-black' : 'text-brand-near-black/50 hover:text-brand-near-black/80'
             }`}
           >
-            <Icon className="h-5 w-5" strokeWidth={active ? 2.2 : 1.8} />
+            {active && (
+              <span
+                aria-hidden
+                className="absolute top-1.5 h-[3px] w-7 rounded-full bg-brand-green"
+              />
+            )}
+            <Icon
+              className="h-[22px] w-[22px] mt-1"
+              strokeWidth={active ? 2.2 : 1.8}
+            />
             <span>{item.label}</span>
           </Link>
         )

@@ -6,8 +6,8 @@ type Sub = typeof workspaceSubscriptions.$inferSelect | null
 export function CreditsWidget({ subscription }: { subscription: Sub }) {
   if (!subscription) {
     return (
-      <div className="px-[18px] py-4 border-t border-white/10">
-        <div className="text-[10px] uppercase tracking-[1px] text-white/30 mb-1.5">
+      <div className="mx-3 mt-4 mb-2 rounded-xl bg-white/5 px-3.5 py-3">
+        <div className="text-[10px] font-bold uppercase tracking-[1.2px] text-white/35 mb-1">
           Opportunities
         </div>
         <div className="text-[13px] font-semibold text-white">Not provisioned</div>
@@ -43,21 +43,21 @@ export function CreditsWidget({ subscription }: { subscription: Sub }) {
   })()
 
   return (
-    <div className="px-[18px] py-4 border-t border-white/10">
-      <div className="text-[10px] uppercase tracking-[1px] text-white/30 mb-1.5">
+    <div className="mx-3 mt-4 mb-2 rounded-xl bg-white/5 px-3.5 py-3">
+      <div className="text-[10px] font-bold uppercase tracking-[1.2px] text-white/40 mb-1.5">
         Opportunities
       </div>
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="text-[13px] font-semibold text-white">
-          {used} / {limit ?? '∞'}
+      <div className="flex items-baseline justify-between mb-1.5">
+        <div className="text-[14px] font-bold text-white tabular-nums">
+          {used} <span className="text-white/40 font-medium">/ {limit ?? '∞'}</span>
         </div>
         {resetLabel && (
-          <div className="text-[10px] text-white/30">{resetLabel}</div>
+          <div className="text-[10px] text-white/40">{resetLabel}</div>
         )}
       </div>
-      <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
         <div
-          className="h-full bg-brand-green rounded-full"
+          className="h-full bg-brand-green rounded-full transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>

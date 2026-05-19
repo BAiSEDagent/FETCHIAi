@@ -1,5 +1,7 @@
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { db } from '@/db'
+import { MobileScreenHeader } from '@/components/app/MobileScreenHeader'
+import { SectionCard } from '@/components/app/SectionCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,35 +22,43 @@ export default async function UsagePage() {
   const pct = unlimited ? 0 : cap > 0 ? Math.min(100, Math.round((used / cap) * 100)) : 0
 
   return (
-    <div className="px-5 lg:px-7 py-6 lg:py-8 max-w-3xl">
-      <h1 className="font-outfit text-2xl text-brand-near-black mb-1">Usage</h1>
-      <p className="text-sm text-brand-near-black/60 mb-6">
-        {inTrial
-          ? 'Tracking your free trial credits. Top-ups and post-trial usage detail land with the billing checkpoint (Checkpoint 4).'
-          : 'Real-time usage detail, daily spend caps, and top-up CTAs ship with the billing checkpoint (Checkpoint 4).'}
-      </p>
-      <div className="rounded-2xl border border-brand-near-black/10 bg-white p-5">
-        <div className="flex items-end justify-between mb-2">
-          <div>
-            <div className="text-xs uppercase tracking-wider text-brand-near-black/55">
-              {inTrial ? 'Trial opportunities' : 'Opportunities this cycle'}
+    <div className="max-w-3xl">
+      <MobileScreenHeader
+        title="Usage"
+        description={
+          inTrial
+            ? 'Tracking your free trial credits. Top-ups and post-trial usage detail land with the billing checkpoint (Checkpoint 4).'
+            : 'Real-time usage detail, daily spend caps, and top-up CTAs ship with the billing checkpoint (Checkpoint 4).'
+        }
+      />
+      <div className="px-4 lg:px-7 pb-10">
+        <SectionCard
+          eyebrow={inTrial ? 'Trial opportunities' : 'Opportunities this cycle'}
+          actions={
+            <div className="text-right">
+              <div className="text-[13px] font-bold text-brand-dark">
+                {unlimited ? 'Unlimited' : `${remaining} left`}
+              </div>
             </div>
-            <div className="font-outfit text-2xl text-brand-near-black">
-              {used}{' '}
-              <span className="text-brand-near-black/40 text-base">
-                / {unlimited ? '∞' : cap}
-              </span>
+          }
+        >
+          <div className="flex items-baseline gap-2 mb-3">
+            <div className="font-outfit text-[40px] lg:text-[44px] leading-none font-bold text-brand-near-black tabular-nums">
+              {used}
+            </div>
+            <div className="text-[16px] text-brand-near-black/45 tabular-nums">
+              / {unlimited ? '∞' : cap}
             </div>
           </div>
-          <div className="text-sm text-brand-dark font-semibold">
-            {unlimited ? 'Unlimited' : `${remaining} left`}
-          </div>
-        </div>
-        {!unlimited && (
-          <div className="h-2 rounded-full bg-brand-near-black/8 overflow-hidden">
-            <div className="h-full bg-brand-green" style={{ width: `${pct}%` }} />
-          </div>
-        )}
+          {!unlimited && (
+            <div className="h-2 rounded-full bg-brand-near-black/8 overflow-hidden">
+              <div
+                className="h-full bg-brand-green transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          )}
+        </SectionCard>
       </div>
     </div>
   )

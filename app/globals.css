@@ -8,30 +8,36 @@
     --background: 44 26% 88%;            /* #EBE6D9 parchment */
     --foreground: 30 4% 17%;             /* #2D2B2A near-black */
 
-    --card: 0 0% 100%;
+    /* Default card surface is warm cream, not pure white, so primitives
+       like <Card> automatically blend with the parchment background. */
+    --card: 44 40% 97%;                  /* #FAF8F2 cream */
     --card-foreground: 30 4% 17%;
 
-    --popover: 0 0% 100%;
+    --popover: 44 40% 97%;
     --popover-foreground: 30 4% 17%;
 
     /* Brand green as primary */
     --primary: 160 25% 47%;              /* #58937E brand green */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 44 26% 80%;
+    /* Secondary surface = cream-muted so secondary buttons and inset rows
+       sit calmly on the parchment without harsh borders. */
+    --secondary: 44 35% 91%;             /* #F2EEDF cream-muted */
     --secondary-foreground: 30 4% 17%;
 
-    --muted: 44 26% 82%;
-    --muted-foreground: 30 4% 35%;
+    --muted: 44 35% 91%;
+    --muted-foreground: 30 4% 38%;
 
-    --accent: 15 67% 52%;                /* #D85A30 coral */
-    --accent-foreground: 0 0% 100%;
+    --accent: 44 35% 91%;
+    --accent-foreground: 30 4% 17%;
 
-    --destructive: 0 84% 60%;
+    /* Coral is reserved for destructive — match the brand coral. */
+    --destructive: 13 67% 52%;           /* #D85A30 coral */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 44 18% 72%;
-    --input: 44 18% 78%;
+    /* Quiet 8% near-black border by default; inputs get a touch more. */
+    --border: 30 4% 17% / 0.08;
+    --input: 30 4% 17% / 0.12;
     --ring: 160 25% 47%;
 
     --radius: 0.75rem;
@@ -50,19 +56,19 @@
     --secondary-foreground: 44 26% 88%;
     --muted: 30 4% 25%;
     --muted-foreground: 44 10% 65%;
-    --accent: 15 67% 52%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 50%;
+    --accent: 30 4% 25%;
+    --accent-foreground: 44 26% 88%;
+    --destructive: 13 67% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 30 4% 28%;
-    --input: 30 4% 28%;
+    --border: 44 26% 88% / 0.10;
+    --input: 44 26% 88% / 0.16;
     --ring: 160 25% 47%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   html, body {
     @apply bg-background text-foreground;
@@ -76,7 +82,8 @@
   }
 }
 
-/* Fetchi avatar — ツ tile used in the sidebar and landing */
+/* Fetchi avatar — ツ tile. The stamped offset shadow is reserved for THIS
+   element only. Do not reuse `box-shadow: 5px 5px 0 #2D2B2A` on cards. */
 .fetchi-avatar {
   display: inline-flex;
   align-items: center;
@@ -95,4 +102,12 @@
   font-family: var(--font-outfit), system-ui, sans-serif;
   font-weight: 600;
   letter-spacing: -0.045em;
+}
+
+/* Two-line clamp helper used by lead cards and chat surfaces. */
+.fetchi-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

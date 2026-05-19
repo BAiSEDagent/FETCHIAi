@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Menu } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { FetchiAvatar } from './FetchiAvatar'
@@ -15,12 +16,12 @@ export function MobileHeader({ leadsCount, creditsSlot }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="lg:hidden sticky top-0 z-30 bg-brand-near-black border-b border-white/10 flex items-center justify-between px-3 h-14">
+    <header className="lg:hidden sticky top-0 z-30 bg-brand-near-black flex items-center justify-between px-2 h-14 shadow-fetchi-sticky">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <button
             aria-label="Open menu"
-            className="h-11 w-11 flex items-center justify-center text-white/80 hover:text-white"
+            className="h-11 w-11 flex items-center justify-center text-white/75 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -37,10 +38,13 @@ export function MobileHeader({ leadsCount, creditsSlot }: Props) {
         </SheetContent>
       </Sheet>
 
-      <div className="flex items-center gap-2">
+      <Link
+        href="/app/chat"
+        className="flex items-center gap-2 hover:opacity-90 transition-opacity"
+      >
         <FetchiAvatar size={24} />
         <span className="fetchi-wordmark text-[18px] text-white">Fetchi</span>
-      </div>
+      </Link>
 
       <div className="h-11 w-11" aria-hidden />
     </header>

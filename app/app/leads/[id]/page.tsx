@@ -1,9 +1,10 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { and, eq } from 'drizzle-orm'
 import { db, opportunities, contactRoutes, outreachPlays } from '@/db'
 import { requireWorkspaceContext } from '@/lib/workspace'
-import { ChevronLeft } from 'lucide-react'
+import { MobileScreenHeader } from '@/components/app/MobileScreenHeader'
+import { SectionCard } from '@/components/app/SectionCard'
+import { Button } from '@/components/ui/button'
 import { OutcomeForm } from './OutcomeForm'
 
 export const dynamic = 'force-dynamic'
@@ -49,46 +50,43 @@ function ScoreBreakdown({
   ]
 
   return (
-    <div className="bg-white border border-brand-near-black/10 rounded-xl p-4 lg:p-5 mb-5">
-      <div className="text-[10px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-3">
-        Score breakdown
-      </div>
-      <div className="space-y-2.5">
+    <SectionCard eyebrow="Score breakdown">
+      <div className="space-y-3">
         {rows.map(r => (
           <div key={r.label}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[12px] text-brand-near-black/70">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[13px] text-brand-near-black/75">
                 {r.label}
               </span>
-              <span className="text-[11px] font-semibold text-brand-near-black/55 tabular-nums">
+              <span className="text-[12px] font-semibold text-brand-near-black/55 tabular-nums">
                 {r.pct}
               </span>
             </div>
             <div className="h-1.5 rounded-full bg-brand-near-black/8 overflow-hidden">
               <div
-                className="h-full bg-brand-green"
+                className="h-full bg-brand-green transition-all"
                 style={{ width: `${r.pct}%` }}
               />
             </div>
           </div>
         ))}
       </div>
-      <div className="text-[11px] text-brand-near-black/45 mt-3 leading-snug">
+      <p className="text-[12px] text-brand-near-black/45 mt-4 leading-relaxed">
         Live multi-factor scoring ships with the scoring agent in Checkpoint 6.
-      </div>
-    </div>
+      </p>
+    </SectionCard>
   )
 }
 
 function ConfidenceDots({ pct }: { pct: number }) {
   const filled = Math.round((pct / 100) * 5)
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1" aria-label={`Confidence ${pct}%`}>
       {[0, 1, 2, 3, 4].map(i => (
         <span
           key={i}
           className={`w-1.5 h-1.5 rounded-full ${
-            i < filled ? 'bg-brand-green' : 'bg-brand-near-black/10'
+            i < filled ? 'bg-brand-green' : 'bg-brand-near-black/12'
           }`}
         />
       ))}
@@ -146,176 +144,200 @@ export default async function LeadProfilePage({
   ])
 
   return (
-    <div className="px-4 lg:px-7 py-5 lg:py-7 max-w-3xl">
-      <Link
-        href="/app/leads"
-        className="inline-flex items-center gap-1.5 text-[12px] text-brand-near-black/55 hover:text-brand-near-black mb-5 min-h-[44px]"
-      >
-        <ChevronLeft className="h-4 w-4" /> All leads
-      </Link>
-
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div className="min-w-0">
-          <h1 className="font-outfit text-2xl lg:text-[26px] text-brand-near-black break-words">
-            {prospect?.businessName ?? 'Unknown business'}
-          </h1>
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
-            {signal && (
-              <span className="inline-flex items-center gap-1.5 text-[12px] font-medium bg-brand-light text-brand-dark rounded-md px-2.5 py-1 border border-brand-green/20">
-                {signal.signalType.replace(/_/g, ' ')}
-              </span>
-            )}
-            {prospect?.city && (
-              <span className="text-[12px] text-brand-near-black/55">
-                {prospect.city}, {prospect.state}
-              </span>
-            )}
+    <div className="max-w-3xl">
+      <MobileScreenHeader
+        title={prospect?.businessName ?? 'Unknown business'}
+        backHref="/app/leads"
+        backLabel="All leads"
+        actions={
+          <div className="text-right">
+            <div className="font-outfit text-[40px] lg:text-[48px] leading-none font-bold text-brand-green tabular-nums">
+              {opp.score}
+            </div>
+            <div className="text-[11px] uppercase tracking-[1px] text-brand-near-black/45 mt-1 font-semibold">
+              score
+            </div>
           </div>
-        </div>
-        <div className="text-right flex-shrink-0">
-          <div className="font-outfit text-[48px] leading-none text-brand-green">
-            {opp.score}
-          </div>
-          <div className="text-[11px] text-brand-near-black/55 mt-1">score</div>
-        </div>
-      </div>
-
-      <ScoreBreakdown
-        score={opp.score}
-        signalDetectedAt={signal?.detectedAt ?? null}
-        hasWhyNow={Boolean(opp.whyNow)}
-        contactCount={contacts.length}
-        enrichmentStatus={prospect?.enrichmentStatus ?? null}
+        }
       />
 
-      {opp.whyNow && (
-        <div className="bg-brand-light border-[1.5px] border-brand-green/20 rounded-xl p-4 lg:p-5 mb-5">
-          <div className="text-[10px] font-bold uppercase tracking-[1px] text-brand-dark mb-1.5">
-            Why now
-          </div>
-          <p className="text-[13px] text-brand-dark leading-[1.65]">{opp.whyNow}</p>
+      <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
+        <div className="flex items-center gap-2 flex-wrap -mt-1">
+          {signal && (
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold bg-brand-light text-brand-dark rounded-full px-3 py-1 border border-brand-green/25">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-green" />
+              {signal.signalType.replace(/_/g, ' ')}
+            </span>
+          )}
+          {prospect?.city && (
+            <span className="text-[12.5px] text-brand-near-black/55">
+              {prospect.city}, {prospect.state}
+            </span>
+          )}
         </div>
-      )}
 
-      {signal?.whyRelevant && (
-        <div className="bg-white border border-brand-near-black/10 rounded-xl p-4 lg:p-5 mb-5">
-          <div className="text-[10px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-1.5">
-            Signal evidence
-          </div>
-          <p className="text-[13px] text-brand-near-black/75 leading-[1.65]">
-            {signal.whyRelevant}
-          </p>
-        </div>
-      )}
+        {opp.whyNow && (
+          <SectionCard eyebrow="Why now" tone="highlight">
+            <p className="text-[14px] text-brand-dark leading-[1.65]">
+              {opp.whyNow}
+            </p>
+          </SectionCard>
+        )}
 
-      <div className="grid grid-cols-2 gap-2.5 mb-5">
-        <div className="bg-white border border-brand-near-black/10 rounded-xl p-3.5">
-          <div className="text-[10px] font-semibold uppercase tracking-[1px] text-brand-near-black/40 mb-1">
-            Phone
+        {signal?.whyRelevant && (
+          <SectionCard eyebrow="Signal evidence">
+            <p className="text-[14px] text-brand-near-black/75 leading-[1.65]">
+              {signal.whyRelevant}
+            </p>
+          </SectionCard>
+        )}
+
+        <ScoreBreakdown
+          score={opp.score}
+          signalDetectedAt={signal?.detectedAt ?? null}
+          hasWhyNow={Boolean(opp.whyNow)}
+          contactCount={contacts.length}
+          enrichmentStatus={prospect?.enrichmentStatus ?? null}
+        />
+
+        <SectionCard title="Contact routes">
+          <div className="grid grid-cols-2 gap-2.5">
+            <InfoTile label="Phone" value={prospect?.phone ?? '—'} />
+            <InfoTile
+              label="Website"
+              value={
+                prospect?.website ? (
+                  <a
+                    href={`https://${prospect.website}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-brand-green hover:text-brand-dark truncate inline-block max-w-full"
+                  >
+                    {prospect.website}
+                  </a>
+                ) : (
+                  '—'
+                )
+              }
+            />
+            <InfoTile
+              label="Address"
+              value={
+                prospect?.address
+                  ? `${prospect.address}, ${prospect.city}, ${prospect.state}`
+                  : '—'
+              }
+              wide
+            />
           </div>
-          <div className="text-[13px] text-brand-near-black font-medium">
-            {prospect?.phone ?? '—'}
-          </div>
-        </div>
-        <div className="bg-white border border-brand-near-black/10 rounded-xl p-3.5">
-          <div className="text-[10px] font-semibold uppercase tracking-[1px] text-brand-near-black/40 mb-1">
-            Website
-          </div>
-          <div className="text-[13px] text-brand-green font-medium truncate">
-            {prospect?.website ? (
-              <a href={`https://${prospect.website}`} target="_blank" rel="noreferrer">
-                {prospect.website}
-              </a>
+
+          <div className="mt-4 pt-4 border-t border-brand-near-black/8">
+            <div className="text-[11px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-3">
+              Contacts
+            </div>
+            {contacts.length === 0 ? (
+              <div className="text-[13px] text-brand-near-black/55">
+                No contacts enriched yet.
+              </div>
             ) : (
-              '—'
+              <div className="space-y-0">
+                {contacts.map(c => (
+                  <div
+                    key={c.id}
+                    className="flex items-center gap-3 py-2.5 border-b border-brand-near-black/6 last:border-0"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-brand-cream-muted flex items-center justify-center text-[13px] font-semibold text-brand-near-black/60 flex-shrink-0">
+                      {c.contactName?.[0] ?? '?'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13.5px] font-semibold text-brand-near-black truncate">
+                        {c.contactName ?? 'Unknown contact'}
+                      </div>
+                      <div className="text-[12px] text-brand-near-black/55 truncate">
+                        {c.contactTitle ?? '—'}
+                        {c.contactEmail && (
+                          <>
+                            {' · '}
+                            <span className="text-brand-green">
+                              {c.contactEmail}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <ConfidenceDots pct={c.confidence ?? 0} />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </div>
-        <div className="bg-white border border-brand-near-black/10 rounded-xl p-3.5 col-span-2">
-          <div className="text-[10px] font-semibold uppercase tracking-[1px] text-brand-near-black/40 mb-1">
-            Address
-          </div>
-          <div className="text-[13px] text-brand-near-black font-medium">
-            {prospect?.address
-              ? `${prospect.address}, ${prospect.city}, ${prospect.state}`
-              : '—'}
-          </div>
-        </div>
-      </div>
+        </SectionCard>
 
-      <div className="bg-white border border-brand-near-black/10 rounded-xl p-4 lg:p-5 mb-5">
-        <div className="text-[12px] font-semibold text-brand-near-black mb-3">
-          Contacts
-        </div>
-        {contacts.length === 0 && (
-          <div className="text-[12px] text-brand-near-black/55">
-            No contacts enriched yet.
-          </div>
-        )}
-        {contacts.map(c => (
-          <div
-            key={c.id}
-            className="flex items-center gap-3 py-2 border-b border-brand-near-black/6 last:border-0"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#F0EDE4] flex items-center justify-center text-[12px] text-brand-near-black/60 flex-shrink-0">
-              {c.contactName?.[0] ?? '?'}
+        <SectionCard
+          eyebrow={
+            <span className="text-brand-green">✦ Outreach draft</span>
+          }
+        >
+          {drafts.length === 0 ? (
+            <div className="text-[13px] text-brand-near-black/55 leading-relaxed">
+              No draft yet. The outreach agent will write one once it&apos;s live
+              (Checkpoint 6).
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-semibold text-brand-near-black truncate">
-                {c.contactName ?? 'Unknown contact'}
-              </div>
-              <div className="text-[11px] text-brand-near-black/55 truncate">
-                {c.contactTitle ?? '—'}
-                {c.contactEmail && (
-                  <>
-                    {' · '}
-                    <span className="text-brand-green">{c.contactEmail}</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <ConfidenceDots pct={c.confidence ?? 0} />
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-white border border-brand-near-black/10 rounded-xl p-4 lg:p-5 mb-5">
-        <div className="text-[10px] font-bold uppercase tracking-[1px] text-brand-green mb-2.5">
-          ✦ Outreach draft
-        </div>
-        {drafts.length === 0 ? (
-          <div className="text-[12px] text-brand-near-black/55">
-            No draft yet. The outreach agent will write one once it&apos;s live (Checkpoint 6).
-          </div>
-        ) : (
-          drafts.map(d => (
-            <div key={d.id} className="space-y-2">
-              {d.subjectLine && (
-                <div className="text-[12px] font-semibold text-brand-near-black">
-                  {d.subjectLine}
+          ) : (
+            <div className="space-y-4">
+              {drafts.map(d => (
+                <div key={d.id} className="space-y-2.5">
+                  {d.subjectLine && (
+                    <div className="text-[13px] font-semibold text-brand-near-black">
+                      {d.subjectLine}
+                    </div>
+                  )}
+                  <p className="text-[13px] text-brand-near-black/75 leading-[1.65] whitespace-pre-wrap">
+                    {d.body}
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button size="sm">Send to my email</Button>
+                    <Button size="sm" variant="secondary">
+                      Edit
+                    </Button>
+                  </div>
                 </div>
-              )}
-              <p className="text-[12px] text-brand-near-black/70 leading-[1.65] whitespace-pre-wrap">
-                {d.body}
-              </p>
-              <div className="flex gap-2 pt-2">
-                <button className="text-[12px] font-medium px-4 py-2.5 rounded-lg bg-brand-near-black text-white hover:bg-brand-green min-h-[44px] min-w-[44px]">
-                  Send to my email
-                </button>
-                <button className="text-[12px] font-medium px-4 py-2.5 rounded-lg border border-brand-near-black/15 text-brand-near-black/65 hover:border-brand-near-black hover:text-brand-near-black min-h-[44px] min-w-[44px]">
-                  Edit
-                </button>
-              </div>
+              ))}
             </div>
-          ))
-        )}
-      </div>
+          )}
+        </SectionCard>
 
-      <OutcomeForm
-        opportunityId={opp.id}
-        currentStatus={opp.status}
-        currentNotes={opp.outcomeNotes}
-      />
+        <OutcomeForm
+          opportunityId={opp.id}
+          currentStatus={opp.status}
+          currentNotes={opp.outcomeNotes}
+        />
+      </div>
+    </div>
+  )
+}
+
+function InfoTile({
+  label,
+  value,
+  wide,
+}: {
+  label: string
+  value: React.ReactNode
+  wide?: boolean
+}) {
+  return (
+    <div
+      className={`rounded-xl bg-brand-cream-muted px-3.5 py-3 ${
+        wide ? 'col-span-2' : ''
+      }`}
+    >
+      <div className="text-[10.5px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-1">
+        {label}
+      </div>
+      <div className="text-[13.5px] text-brand-near-black font-medium break-words">
+        {value}
+      </div>
     </div>
   )
 }

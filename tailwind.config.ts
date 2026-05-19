@@ -30,6 +30,8 @@ const config: Config = {
         'brand-coral': '#D85A30',
         'brand-parchment': '#EBE6D9',
         'brand-near-black': '#2D2B2A',
+        'brand-cream': '#FAF8F2',
+        'brand-cream-muted': '#F2EEDF',
         // shadcn/ui CSS variable tokens
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -69,6 +71,14 @@ const config: Config = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        'fetchi-soft':
+          '0 1px 2px rgba(45,43,42,0.04), 0 6px 18px -10px rgba(45,43,42,0.10)',
+        'fetchi-card':
+          '0 2px 4px rgba(45,43,42,0.04), 0 12px 30px -12px rgba(45,43,42,0.16)',
+        'fetchi-sticky': '0 -6px 24px -8px rgba(45,43,42,0.10)',
+        'fetchi-stamp': '5px 5px 0 #2D2B2A',
       },
       keyframes: {
         'accordion-down': {

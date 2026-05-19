@@ -59,20 +59,30 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
         href={item.href}
         onClick={onNavigate}
         className={[
-          'flex items-center gap-2.5 px-[18px] py-2.5 text-[13px] transition-colors min-h-[44px]',
+          'group relative flex items-center gap-3 mx-3 px-3 rounded-xl text-[13.5px] transition-colors min-h-[44px]',
           active
-            ? 'text-white bg-[rgba(29,158,117,0.2)]'
-            : 'text-white/55 hover:text-white hover:bg-white/5',
+            ? 'text-white bg-white/[0.08]'
+            : 'text-white/60 hover:text-white hover:bg-white/[0.04]',
         ].join(' ')}
       >
+        {active && (
+          <span
+            aria-hidden
+            className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-brand-green"
+          />
+        )}
         <Icon
-          className={`h-[15px] w-[15px] flex-shrink-0 ${
-            active ? 'text-brand-green opacity-100' : 'opacity-60'
+          className={`h-[16px] w-[16px] flex-shrink-0 transition-colors ${
+            active ? 'text-brand-green' : 'text-white/55 group-hover:text-white/80'
           }`}
         />
-        <span className="flex-1">{item.label}</span>
+        <span className="flex-1 font-medium">{item.label}</span>
         {badgeText !== undefined && (
-          <span className="text-[10px] bg-white/10 text-white/50 rounded-full px-1.5 py-0.5">
+          <span
+            className={`text-[10.5px] font-bold rounded-full px-1.5 py-0.5 ${
+              active ? 'bg-brand-green/30 text-white' : 'bg-white/8 text-white/55'
+            }`}
+          >
             {badgeText}
           </span>
         )}
@@ -82,20 +92,24 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
 
   return (
     <aside className="h-full w-[220px] bg-brand-near-black flex flex-col py-5">
-      <div className="flex items-center gap-2 px-[18px] pb-5 border-b border-white/10 mb-4">
+      <Link
+        href="/app/chat"
+        onClick={onNavigate}
+        className="flex items-center gap-2.5 px-5 pb-5 mb-3 border-b border-white/8 hover:opacity-90 transition-opacity"
+      >
         <FetchiAvatar size={28} />
-        <span className="fetchi-wordmark text-[18px] text-white">Fetchi</span>
-      </div>
+        <span className="fetchi-wordmark text-[19px] text-white">Fetchi</span>
+      </Link>
 
-      <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white/25 px-[18px] mt-3 mb-1.5">
+      <div className="text-[10px] font-bold uppercase tracking-[1.4px] text-white/30 px-5 mt-2 mb-1.5">
         Workspace
       </div>
-      <nav className="flex flex-col">{workspaceNav.map(renderLink)}</nav>
+      <nav className="flex flex-col gap-0.5">{workspaceNav.map(renderLink)}</nav>
 
-      <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white/25 px-[18px] mt-4 mb-1.5">
+      <div className="text-[10px] font-bold uppercase tracking-[1.4px] text-white/30 px-5 mt-5 mb-1.5">
         Settings
       </div>
-      <nav className="flex flex-col">{settingsNav.map(renderLink)}</nav>
+      <nav className="flex flex-col gap-0.5">{settingsNav.map(renderLink)}</nav>
 
       <div className="mt-auto">{creditsSlot}</div>
     </aside>

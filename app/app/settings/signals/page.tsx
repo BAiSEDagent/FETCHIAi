@@ -1,5 +1,7 @@
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { db } from '@/db'
+import { MobileScreenHeader } from '@/components/app/MobileScreenHeader'
+import { SettingsGroup, SettingsRow } from '@/components/app/SettingsGroup'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,62 +11,79 @@ export default async function SignalPreferencesPage() {
     where: (t, { eq }) => eq(t.workspaceId, ctx.workspaceId),
   })
 
-  const rows: Array<{ key: string; label: string; on: boolean }> = [
-    { key: 'permits', label: 'Building permits', on: prefs?.permitsEnabled ?? true },
-    { key: 'storm', label: 'Storm & weather damage', on: prefs?.stormEnabled ?? true },
-    { key: 'listings', label: 'New business listings', on: prefs?.newListingsEnabled ?? true },
-    { key: 'jobs', label: 'Job postings', on: prefs?.jobPostingsEnabled ?? false },
-    { key: 'events', label: 'Local events', on: prefs?.eventsEnabled ?? false },
+  const rows: Array<{ key: string; label: string; hint?: string; on: boolean }> = [
+    { key: 'permits', label: 'Building permits', hint: 'New permits filed in your service area.', on: prefs?.permitsEnabled ?? true },
+    { key: 'storm', label: 'Storm & weather damage', hint: 'NOAA hail, wind, and storm reports.', on: prefs?.stormEnabled ?? true },
+    { key: 'listings', label: 'New business listings', hint: 'Businesses opening near you.', on: prefs?.newListingsEnabled ?? true },
+    { key: 'jobs', label: 'Job postings', hint: 'Hiring signals tied to growth.', on: prefs?.jobPostingsEnabled ?? false },
+    { key: 'events', label: 'Local events', hint: 'Civic events and gatherings.', on: prefs?.eventsEnabled ?? false },
   ]
 
   return (
-    <div className="px-5 lg:px-7 py-6 lg:py-8 max-w-3xl">
-      <h1 className="font-outfit text-2xl text-brand-near-black mb-1">
-        Signal Preferences
-      </h1>
-      <p className="text-sm text-brand-near-black/60 mb-6">
-        Which buying signals should ツ surface for you? Editing these
-        thresholds goes live with the signal-detection wiring in Checkpoint 6.
-      </p>
-      <div className="rounded-2xl border border-brand-near-black/10 bg-white p-5 space-y-3">
-        {rows.map(r => (
-          <div key={r.key} className="flex items-center justify-between text-sm">
-            <span className="text-brand-near-black">{r.label}</span>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${
-                r.on
-                  ? 'bg-brand-light text-brand-dark border-brand-green/20'
-                  : 'bg-brand-near-black/6 text-brand-near-black/55 border-brand-near-black/10'
-              }`}
-            >
-              {r.on ? 'On' : 'Off'}
-            </span>
-          </div>
-        ))}
-        <div className="flex items-center justify-between text-sm pt-2 border-t border-brand-near-black/8">
-          <span className="text-brand-near-black/60">Minimum score</span>
-          <span className="text-brand-near-black font-semibold">
-            {prefs?.minScoreThreshold ?? 70}
-          </span>
-        </div>
+    <div className="max-w-3xl">
+      <MobileScreenHeader
+        title="Signal Preferences"
+        description="Which buying signals should ツ surface for you? Editing these thresholds goes live with the signal-detection wiring in Checkpoint 6."
+      />
+      <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
+        <SettingsGroup
+          title="Signal sources"
+          description="Read-only preview — toggles ship with Checkpoint 6."
+        >
+          {rows.map(r => (
+            <SettingsRow
+              key={r.key}
+              label={r.label}
+              hint={r.hint}
+              value={<TogglePreview on={r.on} />}
+            />
+          ))}
+        </SettingsGroup>
+
+        <SettingsGroup title="Scoring threshold">
+          <SettingsRow
+            label="Minimum score"
+            hint="Signals below this score never reach your inbox."
+            value={
+              <span className="text-[16px] font-bold text-brand-near-black tabular-nums">
+                {prefs?.minScoreThreshold ?? 70}
+              </span>
+            }
+          />
+        </SettingsGroup>
+
         {prefs?.excludedKeywords && prefs.excludedKeywords.length > 0 && (
-          <div className="pt-2 border-t border-brand-near-black/8">
-            <div className="text-xs uppercase tracking-wider text-brand-near-black/55 mb-2">
-              Excluded keywords
-            </div>
+          <SettingsGroup
+            title="Excluded keywords"
+            description="Signals matching any of these are dropped automatically."
+          >
             <ul className="flex flex-wrap gap-2">
               {prefs.excludedKeywords.map(k => (
                 <li
                   key={k}
-                  className="rounded-full bg-brand-near-black/6 border border-brand-near-black/10 px-2.5 py-1 text-[11px] text-brand-near-black/70"
+                  className="rounded-full bg-brand-cream-muted border border-brand-near-black/10 px-3 py-1 text-[12px] text-brand-near-black/70"
                 >
                   {k}
                 </li>
               ))}
             </ul>
-          </div>
+          </SettingsGroup>
         )}
       </div>
     </div>
+  )
+}
+
+function TogglePreview({ on }: { on: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border ${
+        on
+          ? 'bg-brand-light text-brand-dark border-brand-green/30'
+          : 'bg-brand-cream-muted text-brand-near-black/55 border-brand-near-black/10'
+      }`}
+    >
+      {on ? 'On' : 'Off'}
+    </span>
   )
 }

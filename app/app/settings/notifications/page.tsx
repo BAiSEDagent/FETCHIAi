@@ -1,5 +1,7 @@
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { db } from '@/db'
+import { MobileScreenHeader } from '@/components/app/MobileScreenHeader'
+import { SettingsGroup, SettingsRow } from '@/components/app/SettingsGroup'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,51 +11,61 @@ export default async function NotificationsPage() {
     where: (t, { eq }) => eq(t.workspaceId, ctx.workspaceId),
   })
 
+  const rows: Array<{ label: string; hint?: string; on: boolean }> = [
+    { label: 'Daily digest', hint: 'Top picks of the day in one email.', on: prefs?.dailyDigestEnabled ?? true },
+    { label: 'High-score lead alerts', hint: 'Get pinged the moment a strong signal lands.', on: prefs?.pushOnHighScore ?? true },
+    { label: 'Expiring leads', hint: 'Reminder before a hot lead goes cold.', on: prefs?.pushOnExpiringLeads ?? true },
+    { label: 'Weekly summary', hint: 'Sunday recap of the week.', on: prefs?.weeklySummaryEnabled ?? false },
+    { label: 'Usage limit warnings', hint: 'Heads-up before you hit your monthly cap.', on: prefs?.limitWarningEnabled ?? true },
+  ]
+
   return (
-    <div className="px-5 lg:px-7 py-6 lg:py-8 max-w-3xl">
-      <h1 className="font-outfit text-2xl text-brand-near-black mb-1">
-        Notifications
-      </h1>
-      <p className="text-sm text-brand-near-black/60 mb-6">
-        Email-only at launch. Toggle UI for digest cadence and quiet hours
-        lands alongside the notification agent in Checkpoint 6.
-      </p>
-      <div className="rounded-2xl border border-brand-near-black/10 bg-white p-5 space-y-3">
-        <Row label="Daily digest" on={prefs?.dailyDigestEnabled ?? true} />
-        <Row
-          label="High-score lead alerts"
-          on={prefs?.pushOnHighScore ?? true}
-        />
-        <Row label="Expiring leads" on={prefs?.pushOnExpiringLeads ?? true} />
-        <Row label="Weekly summary" on={prefs?.weeklySummaryEnabled ?? false} />
-        <Row
-          label="Usage limit warnings"
-          on={prefs?.limitWarningEnabled ?? true}
-        />
-        <div className="flex items-center justify-between text-sm pt-2 border-t border-brand-near-black/8">
-          <span className="text-brand-near-black/60">Digest delivery time</span>
-          <span className="text-brand-near-black font-mono text-[13px]">
-            {prefs?.dailyDigestTime ?? '07:00'}
-          </span>
-        </div>
+    <div className="max-w-3xl">
+      <MobileScreenHeader
+        title="Notifications"
+        description="Email-only at launch. Toggle UI for digest cadence and quiet hours lands alongside the notification agent in Checkpoint 6."
+      />
+      <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
+        <SettingsGroup
+          title="Email preferences"
+          description="Read-only preview — toggles ship with Checkpoint 6."
+        >
+          {rows.map(r => (
+            <SettingsRow
+              key={r.label}
+              label={r.label}
+              hint={r.hint}
+              value={<TogglePreview on={r.on} />}
+            />
+          ))}
+        </SettingsGroup>
+
+        <SettingsGroup title="Delivery schedule">
+          <SettingsRow
+            label="Digest delivery time"
+            hint="Local time, your time zone."
+            value={
+              <span className="text-[14px] font-bold text-brand-near-black tabular-nums">
+                {prefs?.dailyDigestTime ?? '07:00'}
+              </span>
+            }
+          />
+        </SettingsGroup>
       </div>
     </div>
   )
 }
 
-function Row({ label, on }: { label: string; on: boolean }) {
+function TogglePreview({ on }: { on: boolean }) {
   return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-brand-near-black">{label}</span>
-      <span
-        className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${
-          on
-            ? 'bg-brand-light text-brand-dark border-brand-green/20'
-            : 'bg-brand-near-black/6 text-brand-near-black/55 border-brand-near-black/10'
-        }`}
-      >
-        {on ? 'On' : 'Off'}
-      </span>
-    </div>
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border ${
+        on
+          ? 'bg-brand-light text-brand-dark border-brand-green/30'
+          : 'bg-brand-cream-muted text-brand-near-black/55 border-brand-near-black/10'
+      }`}
+    >
+      {on ? 'On' : 'Off'}
+    </span>
   )
 }

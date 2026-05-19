@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { updateLeadOutcome } from './actions'
+import { SectionCard } from '@/components/app/SectionCard'
+import { Textarea } from '@/components/ui/textarea'
 
 type Status = 'new' | 'saved' | 'contacted' | 'responded' | 'won' | 'lost' | 'skipped'
 
@@ -57,20 +59,19 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
   }
 
   return (
-    <div className="bg-white border border-brand-near-black/10 rounded-xl p-4 lg:p-5">
-      <div className="text-[12px] font-semibold text-brand-near-black mb-3">
-        Outcome
-      </div>
+    <SectionCard title="Outcome" description="What happened? Wins and losses both teach Fetchi who to find next.">
       <div className="flex flex-wrap gap-2 mb-4">
         {OPTIONS.map(o => (
           <button
             key={o.id}
+            type="button"
             onClick={() => save(o.id)}
             disabled={pending}
-            className={`text-[12px] font-medium px-4 py-2.5 rounded-lg border-[1.5px] transition-colors min-h-[44px] min-w-[44px] ${
+            aria-pressed={status === o.id}
+            className={`text-[13px] font-semibold px-4 rounded-xl transition-colors min-h-[44px] border ${
               status === o.id
                 ? 'bg-brand-near-black text-white border-brand-near-black'
-                : 'bg-white text-brand-near-black/65 border-brand-near-black/15 hover:border-brand-near-black hover:text-brand-near-black'
+                : 'bg-white text-brand-near-black/75 border-brand-near-black/10 hover:border-brand-green hover:text-brand-near-black'
             }`}
           >
             {o.label}
@@ -78,19 +79,24 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
         ))}
       </div>
 
-      <label className="block text-[11px] font-semibold uppercase tracking-wider text-brand-near-black/45 mb-1.5">
+      <label
+        htmlFor="outcome-notes"
+        className="block text-[11px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-1.5"
+      >
         Notes (for Outcome Learning)
       </label>
-      <textarea
+      <Textarea
+        id="outcome-notes"
         value={notes}
         onChange={e => setNotes(e.target.value)}
         onBlur={saveNotes}
-        placeholder="What happened? — wins and losses both teach Fetchi who to find next."
-        className="w-full px-3 py-2.5 border-[1.5px] border-brand-near-black/12 rounded-lg text-[13px] outline-none focus:border-brand-green resize-y min-h-[80px]"
+        placeholder="What happened?"
       />
       {saved && (
-        <div className="text-[11px] text-brand-green mt-2">Saved.</div>
+        <div className="text-[12px] text-brand-green mt-2 font-semibold">
+          Saved.
+        </div>
       )}
-    </div>
+    </SectionCard>
   )
 }

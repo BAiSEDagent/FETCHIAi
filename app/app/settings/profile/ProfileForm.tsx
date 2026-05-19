@@ -2,8 +2,11 @@
 
 import { useState, useTransition } from 'react'
 import { saveBusinessProfile } from './actions'
-
 import { errorMessage } from '@/lib/enums'
+import { SettingsGroup } from '@/components/app/SettingsGroup'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 
 type Initial = {
   businessName: string
@@ -14,6 +17,15 @@ type Initial = {
   locationRadiusMiles: number
   idealCustomerDescription: string
 }
+
+const VERTICALS: { id: Initial['vertical']; label: string }[] = [
+  { id: 'roofing', label: 'Roofing' },
+  { id: 'cleaning', label: 'Commercial Cleaning' },
+  { id: 'hvac', label: 'HVAC' },
+  { id: 'landscaping', label: 'Landscaping' },
+  { id: 'events', label: 'Event Services' },
+  { id: 'other', label: 'Other' },
+]
 
 export function ProfileForm({ initial }: { initial: Initial }) {
   const [businessName, setBusinessName] = useState(initial.businessName)
@@ -50,95 +62,72 @@ export function ProfileForm({ initial }: { initial: Initial }) {
   }
 
   return (
-    <form onSubmit={submit} className="divide-y divide-brand-near-black/6">
-      <section className="px-5 lg:px-7 py-5 lg:py-6">
-        <div className="text-[13px] font-semibold text-brand-near-black mb-1">
-          Business details
-        </div>
-        <div className="text-[12px] text-brand-near-black/55 mb-4">
-          The basics Fetchi uses to know who you are.
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <label className="block">
-            <span className="text-[12px] font-semibold text-brand-near-black block mb-1.5">
-              Business name
-            </span>
-            <input
+    <form onSubmit={submit} className="space-y-3 lg:space-y-4">
+      <SettingsGroup
+        title="Business details"
+        description="The basics Fetchi uses to know who you are."
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+          <Field label="Business name" htmlFor="biz">
+            <Input
+              id="biz"
               value={businessName}
               onChange={e => setBusinessName(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 border-[1.5px] border-brand-near-black/12 rounded-lg text-[13px] focus:border-brand-green outline-none min-h-[44px]"
             />
-          </label>
-          <label className="block">
-            <span className="text-[12px] font-semibold text-brand-near-black block mb-1.5">
-              Service vertical
-            </span>
+          </Field>
+          <Field label="Service vertical" htmlFor="vertical">
             <select
+              id="vertical"
               value={vertical}
               onChange={e => setVertical(e.target.value as Initial['vertical'])}
-              className="w-full px-3.5 py-2.5 border-[1.5px] border-brand-near-black/12 rounded-lg text-[13px] focus:border-brand-green outline-none bg-white min-h-[44px]"
+              className="flex h-11 w-full rounded-xl border border-brand-near-black/10 bg-brand-cream-muted px-3.5 text-[14px] text-brand-near-black focus:bg-white focus:border-brand-green focus:ring-2 focus:ring-brand-green/30 focus:outline-none"
             >
-              <option value="roofing">Roofing</option>
-              <option value="cleaning">Commercial Cleaning</option>
-              <option value="hvac">HVAC</option>
-              <option value="landscaping">Landscaping</option>
-              <option value="events">Event Services</option>
-              <option value="other">Other</option>
+              {VERTICALS.map(v => (
+                <option key={v.id} value={v.id}>
+                  {v.label}
+                </option>
+              ))}
             </select>
-          </label>
+          </Field>
         </div>
-        <label className="block mt-4">
-          <span className="text-[12px] font-semibold text-brand-near-black block mb-1.5">
-            Service description
-          </span>
-          <textarea
+        <Field label="Service description" htmlFor="desc">
+          <Textarea
+            id="desc"
             value={serviceDescription}
             onChange={e => setServiceDescription(e.target.value)}
             rows={3}
             placeholder="Commercial and residential roofing — repairs, replacements, storm damage restoration."
-            className="w-full px-3.5 py-2.5 border-[1.5px] border-brand-near-black/12 rounded-lg text-[13px] focus:border-brand-green outline-none resize-y"
           />
-        </label>
-      </section>
+        </Field>
+      </SettingsGroup>
 
-      <section className="px-5 lg:px-7 py-5 lg:py-6">
-        <div className="text-[13px] font-semibold text-brand-near-black mb-1">
-          Service area
-        </div>
-        <div className="text-[12px] text-brand-near-black/55 mb-4">
-          Fetchi scouts signals inside this radius.
-        </div>
+      <SettingsGroup
+        title="Service area"
+        description="Fetchi scouts signals inside this radius."
+      >
         <div className="grid grid-cols-[1fr_120px] gap-3">
-          <label className="block">
-            <span className="text-[12px] font-semibold text-brand-near-black block mb-1.5">
-              City
-            </span>
-            <input
+          <Field label="City" htmlFor="city">
+            <Input
+              id="city"
               value={city}
               onChange={e => setCity(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 border-[1.5px] border-brand-near-black/12 rounded-lg text-[13px] focus:border-brand-green outline-none min-h-[44px]"
             />
-          </label>
-          <label className="block">
-            <span className="text-[12px] font-semibold text-brand-near-black block mb-1.5">
-              State
-            </span>
-            <input
+          </Field>
+          <Field label="State" htmlFor="state">
+            <Input
+              id="state"
               value={stateCode}
               onChange={e => setStateCode(e.target.value)}
               maxLength={4}
               required
-              className="w-full px-3.5 py-2.5 border-[1.5px] border-brand-near-black/12 rounded-lg text-[13px] uppercase focus:border-brand-green outline-none min-h-[44px]"
+              className="uppercase"
             />
-          </label>
+          </Field>
         </div>
-        <label className="block mt-4">
-          <span className="text-[12px] font-semibold text-brand-near-black block mb-1.5">
-            Service radius
-          </span>
-          <div className="flex items-center gap-3">
+        <Field label="Service radius">
+          <div className="flex items-center gap-3 pt-1">
             <input
               type="range"
               min={5}
@@ -146,43 +135,61 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               step={5}
               value={radius}
               onChange={e => setRadius(Number(e.target.value))}
-              className="flex-1 accent-brand-green"
+              className="flex-1 accent-brand-green h-2"
+              aria-label="Service radius in miles"
             />
-            <span className="text-sm font-semibold text-brand-green bg-brand-light rounded-md px-3 py-1 min-w-[64px] text-center">
+            <span className="text-[14px] font-bold text-brand-dark bg-brand-light rounded-lg px-3 py-1.5 min-w-[72px] text-center tabular-nums">
               {radius} mi
             </span>
           </div>
-        </label>
-      </section>
+        </Field>
+      </SettingsGroup>
 
-      <section className="px-5 lg:px-7 py-5 lg:py-6">
-        <div className="text-[13px] font-semibold text-brand-near-black mb-1">
-          Ideal customer
-        </div>
-        <div className="text-[12px] text-brand-near-black/55 mb-4">
-          Fetchi reads this every time it scores a signal.
-        </div>
-        <textarea
+      <SettingsGroup
+        title="Ideal customer"
+        description="Fetchi reads this every time it scores a signal."
+      >
+        <Textarea
           value={ideal}
           onChange={e => setIdeal(e.target.value)}
           rows={4}
           placeholder="Commercial property managers and HOA boards. Buildings 5,000–50,000 sq ft. Minimum job size $5,000."
-          className="w-full px-3.5 py-2.5 border-[1.5px] border-brand-near-black/12 rounded-lg text-[13px] focus:border-brand-green outline-none resize-y"
         />
-      </section>
+      </SettingsGroup>
 
-      <div className="px-5 lg:px-7 py-4 lg:py-5 flex items-center justify-between gap-3 bg-white/40">
-        <div className="text-[12px] text-brand-near-black/55">
-          {msg ? <span className="text-brand-green">{msg}</span> : err ? <span className="text-brand-coral">{err}</span> : 'Changes apply on the next scout run.'}
+      <div className="rounded-2xl bg-brand-cream shadow-fetchi-soft px-5 py-4 lg:px-6 lg:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="text-[13px] text-brand-near-black/60">
+          {msg ? (
+            <span className="text-brand-green font-semibold">{msg}</span>
+          ) : err ? (
+            <span className="text-brand-coral font-semibold">{err}</span>
+          ) : (
+            'Changes apply on the next scout run.'
+          )}
         </div>
-        <button
-          type="submit"
-          disabled={pending}
-          className="px-6 py-2.5 bg-brand-near-black text-white rounded-lg text-[13px] font-semibold hover:bg-brand-green transition-colors disabled:opacity-60 min-h-[44px]"
-        >
-          {pending ? 'Saving…' : 'Save'}
-        </button>
+        <Button type="submit" disabled={pending} size="lg" className="sm:w-auto w-full">
+          {pending ? 'Saving…' : 'Save changes'}
+        </Button>
       </div>
     </form>
+  )
+}
+
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string
+  htmlFor?: string
+  children: React.ReactNode
+}) {
+  return (
+    <label className="block" htmlFor={htmlFor}>
+      <span className="text-[12.5px] font-semibold text-brand-near-black block mb-1.5">
+        {label}
+      </span>
+      {children}
+    </label>
   )
 }
