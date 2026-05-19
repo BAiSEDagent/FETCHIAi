@@ -172,10 +172,12 @@ export async function recordPromoRedemption(
     where: (t, { eq: e }) => e(t.code, promoCode.toUpperCase()),
   })
   if (!promo) return
-  await db
+  const inserted = await db
     .insert(promoRedemptions)
     .values({ promoCodeId: promo.id, workspaceId })
     .onConflictDoNothing()
+    .returning({ id: promoRedemptions.id })
+  if (inserted.length === 0) return
   await db
     .update(promoCodes)
     .set({
