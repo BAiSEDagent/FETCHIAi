@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { saveOnboardingStep, completeOnboarding } from './actions'
 import { errorMessage } from '@/lib/enums'
 
@@ -38,7 +37,6 @@ type Props = {
 }
 
 export function OnboardingClient({ initial }: Props) {
-  const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [showFinding, setShowFinding] = useState(false)
   const [step, setStep] = useState(Math.min(initial.step + 1, 4) || 1)
@@ -95,9 +93,11 @@ export function OnboardingClient({ initial }: Props) {
           if (!scoutMode) return setErr('Pick how often Fetchi should scout.')
           await saveOnboardingStep({ scoutMode })
           setShowFinding(true)
-          setTimeout(async () => {
-            await completeOnboarding()
-            router.push('/app/chat')
+          // `completeOnboarding` performs a server-side redirect to /app/chat,
+          // so no client `router.push` is needed (and chaining one would
+          // race the server response).
+          setTimeout(() => {
+            void completeOnboarding()
           }, 2400)
         }
       } catch (e: unknown) {
