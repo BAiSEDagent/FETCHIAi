@@ -9,6 +9,7 @@ import {
   workspaceSettings,
   serviceProfiles,
   scoutSchedules,
+  workspaceLearning,
 } from '@/db'
 import { requireWorkspaceContext, setOnboardingStep } from '@/lib/workspace'
 
@@ -73,6 +74,40 @@ export async function saveOnboardingStep(input: unknown) {
     await upsertServiceProfile(ws, {
       idealCustomerDescription: data.idealCustomerDescription,
     })
+    // Seed the workspace_learning prompt-injection context from the
+    // onboarding answers. The learning agent will replace this string as
+    // real outcomes accrue (CP6), but having an initial context means every
+    // agent prompt is grounded from day one.
+    const sp = await db.query.serviceProfiles.findFirst({
+      where: (t, { eq: e }) => e(t.workspaceId, ws),
+    })
+    const ws_row = await db.query.workspaceSettings.findFirst({
+      where: (t, { eq: e }) => e(t.workspaceId, ws),
+    })
+    const learningContext = [
+      ws_row?.businessName ? `Business: ${ws_row.businessName}` : null,
+      sp?.vertical ? `Vertical: ${sp.vertical}` : null,
+      sp?.locationCity || sp?.locationState
+        ? `Service area: ${[sp?.locationCity, sp?.locationState].filter(Boolean).join(', ')}${
+            sp?.locationRadiusMiles ? ` (${sp.locationRadiusMiles} mi radius)` : ''
+          }`
+        : null,
+      `Ideal customer: ${data.idealCustomerDescription}`,
+      'Outcomes counted: 0 (onboarding seed)',
+    ]
+      .filter(Boolean)
+      .join('\n')
+    await db
+      .insert(workspaceLearning)
+      .values({
+        workspaceId: ws,
+        learningContext,
+        outcomesCounted: 0,
+      })
+      .onConflictDoUpdate({
+        target: workspaceLearning.workspaceId,
+        set: { learningContext, updatedAt: new Date() },
+      })
     await setOnboardingStep(ws, 3)
   }
 

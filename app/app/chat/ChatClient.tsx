@@ -9,6 +9,8 @@ import type { ChatMessage } from '@/lib/seed-chat'
 type Props = {
   initialMessages: ChatMessage[]
   greetingName: string | null
+  isEmptyRun: boolean
+  sourcesChecked: number
 }
 
 function Bubble({ msg }: { msg: ChatMessage }) {
@@ -63,7 +65,12 @@ function Bubble({ msg }: { msg: ChatMessage }) {
   )
 }
 
-export function ChatClient({ initialMessages, greetingName }: Props) {
+export function ChatClient({
+  initialMessages,
+  greetingName,
+  isEmptyRun,
+  sourcesChecked,
+}: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [input, setInput] = useState('')
   const [pending, startTransition] = useTransition()
@@ -122,6 +129,20 @@ export function ChatClient({ initialMessages, greetingName }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-5 space-y-4 bg-brand-parchment">
+        {isEmptyRun && (
+          <div
+            role="status"
+            className="mx-auto max-w-md rounded-2xl border border-brand-near-black/10 bg-white px-4 py-3 text-center text-[12px] text-brand-near-black/70 shadow-sm"
+          >
+            <div className="font-semibold text-brand-near-black mb-0.5">
+              Fetchi checked {sourcesChecked} sources
+            </div>
+            <div>
+              Nothing strong enough to surface yet — ツ will keep listening and
+              ping you the moment a real signal lands.
+            </div>
+          </div>
+        )}
         {messages.map(m => (
           <Bubble key={m.id} msg={m} />
         ))}

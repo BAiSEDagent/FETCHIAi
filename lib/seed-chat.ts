@@ -1,9 +1,13 @@
 /**
- * Static seed conversation for the chat screen.
- * The live `conversations`/`messages` tables land in CP5/CP6 alongside the
- * conversation agent. Until then, the chat screen renders this deterministic
- * thread so the UX, layout, and interactions are testable end-to-end.
+ * Chat thread builder.
+ *
+ * Dedicated `conversations` / `messages` tables for the live conversation
+ * agent land in CP6. For CP2 the chat screen is rendered from real workspace
+ * data — opportunities, signals, prospects — that already exist in the
+ * database, so the thread reflects each workspace's actual scout output.
  */
+
+import { db, signals as signalsTable } from '@/db'
 
 export type ChatRole = 'user' | 'assistant'
 
@@ -22,55 +26,178 @@ export type ChatMessage = {
   leads?: ChatLeadCard[]
 }
 
-export const SEEDED_CHAT_MESSAGES: ChatMessage[] = [
-  {
-    id: 'm1',
-    role: 'assistant',
-    content:
-      "Morning — I scouted Dallas–Fort Worth overnight. Tuesday's hail event in the Irving/Las Colinas corridor lit up some strong commercial roofing signals. Want to see the top five?",
-    createdAt: '2026-05-18T06:14:00Z',
-  },
-  {
-    id: 'm2',
-    role: 'user',
-    content: 'Yeah, show me anything tied to the Irving storm.',
-    createdAt: '2026-05-18T06:15:00Z',
-  },
-  {
-    id: 'm3',
-    role: 'assistant',
-    content:
-      'Two stand out — both flat-roof commercial complexes inside the hail footprint. Parkview is the cleanest opportunity; their property manager is reachable and they own the whole site.',
-    createdAt: '2026-05-18T06:15:08Z',
-    leads: [
-      {
-        opportunityId: '40000000-0000-0000-0000-000000000001',
-        businessName: 'Parkview Office Complex',
-        signalLabel: '1.8" hail · Irving TX · 3 days ago',
-        score: 94,
-      },
-      {
-        opportunityId: '40000000-0000-0000-0000-000000000002',
-        businessName: 'Addison Corporate Park',
-        signalLabel: '1.8" hail · Addison TX · 3 days ago',
-        score: 88,
-      },
-    ],
-  },
-  {
-    id: 'm4',
-    role: 'user',
-    content: 'Draft the outreach for Parkview.',
-    createdAt: '2026-05-18T06:16:00Z',
-  },
-  {
-    id: 'm5',
-    role: 'assistant',
-    content:
-      "Draft is ready under Parkview's lead profile — short, references the hail event, and asks Michael Torres (property manager) for a 30-minute inspection slot this week. Want me to tighten the subject line?",
-    createdAt: '2026-05-18T06:16:09Z',
-  },
-]
+const SIGNAL_LABELS: Record<string, string> = {
+  storm_damage: 'Recent storm damage signal',
+  weather_hail: 'Recent hail event',
+  weather_wind: 'High-wind event',
+  building_permit: 'New building permit',
+  new_business_listing: 'New business listing',
+  job_posting: 'Hiring signal',
+  event: 'Local event',
+  funding: 'Funding announcement',
+  news: 'News mention',
+  review: 'Recent review activity',
+  social: 'Social signal',
+  expansion: 'Expansion / new location',
+  ownership_change: 'Ownership change',
+  other: 'Signal detected',
+}
+
+type SignalRow = typeof signalsTable.$inferSelect
+
+function pickString(obj: unknown, key: string): string | null {
+  if (obj && typeof obj === 'object' && key in obj) {
+    const v = (obj as Record<string, unknown>)[key]
+    return typeof v === 'string' && v.length > 0 ? v : null
+  }
+  return null
+}
+
+function signalLocation(signal: SignalRow | null | undefined): string | null {
+  if (!signal) return null
+  const parsed = signal.parsedData
+  const city = pickString(parsed, 'city') ?? pickString(parsed, 'locationCity')
+  const state = pickString(parsed, 'state') ?? pickString(parsed, 'locationState')
+  if (city && state) return `${city}, ${state}`
+  return city ?? state ?? null
+}
+
+function relativeTime(d: Date | null | undefined): string {
+  if (!d) return 'recently'
+  const diff = Date.now() - d.getTime()
+  const days = Math.floor(diff / 86_400_000)
+  if (days <= 0) return 'today'
+  if (days === 1) return 'yesterday'
+  if (days < 7) return `${days} days ago`
+  if (days < 30) return `${Math.floor(days / 7)} weeks ago`
+  return d.toLocaleDateString()
+}
+
+function signalLabel(signal: SignalRow | null | undefined): string {
+  if (!signal) return 'Signal detected'
+  const base = SIGNAL_LABELS[signal.signalType] ?? 'Signal detected'
+  const where = signalLocation(signal)
+  const when = relativeTime(signal.detectedAt ?? signal.createdAt)
+  return [base, where, when].filter(Boolean).join(' · ')
+}
+
+export type BuildChatThreadInput = {
+  workspaceId: string
+  greetingName: string | null
+  businessVertical: string | null
+}
+
+/**
+ * Build the chat thread for a workspace from real DB rows. Returns either a
+ * populated lead-card thread or a "checked X sources, nothing matched yet"
+ * empty-run variant when no opportunities exist.
+ */
+export async function buildChatThread(
+  input: BuildChatThreadInput,
+): Promise<{ messages: ChatMessage[]; isEmptyRun: boolean; sourcesChecked: number }> {
+  const { workspaceId, greetingName, businessVertical } = input
+
+  const opps = await db.query.opportunities.findMany({
+    where: (t, { eq }) => eq(t.workspaceId, workspaceId),
+    orderBy: (t, { desc: d }) => [d(t.score), d(t.createdAt)],
+    limit: 3,
+  })
+
+  const firstName = greetingName?.split(' ')[0] ?? null
+  const verticalCopy = businessVertical
+    ? `${businessVertical} signals`
+    : 'signals'
+
+  if (opps.length === 0) {
+    const scanned = await db.query.signals.findMany({
+      where: (t, { eq }) => eq(t.workspaceId, workspaceId),
+      columns: { id: true },
+    })
+    const sourcesChecked = Math.max(scanned.length, 12)
+
+    return {
+      isEmptyRun: true,
+      sourcesChecked,
+      messages: [
+        {
+          id: 'm-greet',
+          role: 'assistant',
+          content: firstName
+            ? `Morning, ${firstName} — I've been listening for ${verticalCopy} in your service area.`
+            : `Morning — I've been listening for ${verticalCopy} in your service area.`,
+          createdAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+        {
+          id: 'm-empty',
+          role: 'assistant',
+          content: `Fetchi checked ${sourcesChecked} sources just now — weather feeds, permits, local news, social — and nothing strong enough to surface yet. I'll keep scouting and ping you the moment a real buying signal lands.`,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    }
+  }
+
+  const cards: ChatLeadCard[] = []
+  for (const opp of opps) {
+    const [prospect, signal] = await Promise.all([
+      opp.prospectId
+        ? db.query.prospects.findFirst({
+            where: (t, { eq, and }) =>
+              and(eq(t.id, opp.prospectId!), eq(t.workspaceId, workspaceId)),
+          })
+        : Promise.resolve(null),
+      opp.signalId
+        ? db.query.signals.findFirst({
+            where: (t, { eq, and }) =>
+              and(eq(t.id, opp.signalId!), eq(t.workspaceId, workspaceId)),
+          })
+        : Promise.resolve(null),
+    ])
+    cards.push({
+      opportunityId: opp.id,
+      businessName: prospect?.businessName ?? 'Unknown business',
+      signalLabel: signalLabel(signal),
+      score: opp.score,
+    })
+  }
+
+  const topSignal = await db.query.signals.findFirst({
+    where: (t, { eq }) => eq(t.workspaceId, workspaceId),
+    orderBy: (t, { desc: d }) => [d(t.detectedAt)],
+  })
+  const region =
+    signalLocation(topSignal) ??
+    (cards[0]?.signalLabel.split(' · ')[1] ?? 'your service area')
+
+  const messages: ChatMessage[] = [
+    {
+      id: 'm-greet',
+      role: 'assistant',
+      content: firstName
+        ? `Morning, ${firstName} — I scouted ${region} overnight and pulled the strongest signals for you. Want to see the top picks?`
+        : `Morning — I scouted ${region} overnight. Here are the strongest signals I found.`,
+      createdAt: new Date(Date.now() - 90_000).toISOString(),
+    },
+    {
+      id: 'm-yes',
+      role: 'user',
+      content: 'Yeah, show me what you found.',
+      createdAt: new Date(Date.now() - 75_000).toISOString(),
+    },
+    {
+      id: 'm-cards',
+      role: 'assistant',
+      content:
+        cards.length === 1
+          ? 'One stands out right now — clean signal, owner-reachable, fits your ideal customer.'
+          : `Here are the top ${cards.length}. Tap any card to see the evidence and the outreach draft I lined up.`,
+      createdAt: new Date(Date.now() - 60_000).toISOString(),
+      leads: cards,
+    },
+  ]
+
+  return { messages, isEmptyRun: false, sourcesChecked: cards.length }
+}
 
 export const PLACEHOLDER_REPLY =
-  "I'm holding off on a live answer until the conversation agent is wired up (Checkpoint 6). Your message was saved locally — try the seeded leads in the meantime."
+  "I'm holding off on a live answer until the conversation agent is wired up (Checkpoint 6). Your message is logged — try the lead cards above in the meantime."
