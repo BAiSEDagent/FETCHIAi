@@ -299,10 +299,10 @@ export default async function LeadProfilePage({
                 {d.body}
               </p>
               <div className="flex gap-2 pt-2">
-                <button className="text-[12px] font-medium px-3.5 py-2 rounded-lg bg-brand-near-black text-white hover:bg-brand-green min-h-[40px]">
+                <button className="text-[12px] font-medium px-4 py-2.5 rounded-lg bg-brand-near-black text-white hover:bg-brand-green min-h-[44px] min-w-[44px]">
                   Send to my email
                 </button>
-                <button className="text-[12px] font-medium px-3.5 py-2 rounded-lg border border-brand-near-black/15 text-brand-near-black/65 hover:border-brand-near-black hover:text-brand-near-black min-h-[40px]">
+                <button className="text-[12px] font-medium px-4 py-2.5 rounded-lg border border-brand-near-black/15 text-brand-near-black/65 hover:border-brand-near-black hover:text-brand-near-black min-h-[44px] min-w-[44px]">
                   Edit
                 </button>
               </div>
