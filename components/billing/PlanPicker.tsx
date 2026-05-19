@@ -19,6 +19,7 @@ export function PlanPicker({ tiers, currentTier, currentInterval }: Props) {
   const [interval, setInterval] = React.useState<'monthly' | 'annual'>(
     currentInterval ?? 'monthly',
   )
+  const [promo, setPromo] = React.useState('')
 
   return (
     <div>
@@ -43,6 +44,21 @@ export function PlanPicker({ tiers, currentTier, currentInterval }: Props) {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+        <label htmlFor="plan-promo" className="text-[12.5px] text-brand-near-black/70">
+          Promo code
+        </label>
+        <input
+          id="plan-promo"
+          type="text"
+          value={promo}
+          onChange={(e) => setPromo(e.target.value)}
+          placeholder="Optional"
+          autoComplete="off"
+          className="h-10 w-44 rounded-xl border border-brand-near-black/15 bg-white px-3 text-[13px] uppercase tracking-wide placeholder:normal-case placeholder:tracking-normal placeholder:text-brand-near-black/40"
+        />
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
@@ -92,6 +108,7 @@ export function PlanPicker({ tiers, currentTier, currentInterval }: Props) {
               <form method="post" action="/api/stripe/checkout" className="mt-4">
                 <input type="hidden" name="tier" value={tier.slug} />
                 <input type="hidden" name="interval" value={interval} />
+                <input type="hidden" name="promo" value={promo} />
                 <Button
                   type="submit"
                   className="w-full"

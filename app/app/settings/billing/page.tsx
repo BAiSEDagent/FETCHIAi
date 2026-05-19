@@ -6,7 +6,13 @@ import { SettingsGroup, SettingsRow } from '@/components/app/SettingsGroup'
 import { Button } from '@/components/ui/button'
 import { PlanPicker } from '@/components/billing/PlanPicker'
 import { UsageBar } from '@/components/billing/UsageBar'
-import { getActiveTiers, getTierBySlug, topupRateForTier } from '@/lib/stripe/config'
+import {
+  getActiveTiers,
+  getTierBySlug,
+  topupRateForTier,
+  parseTierSlug,
+  parseBillingInterval,
+} from '@/lib/stripe/config'
 import { stripeConfigured } from '@/lib/stripe/client'
 
 export const dynamic = 'force-dynamic'
@@ -22,8 +28,9 @@ export default async function BillingPage({ searchParams }: PageProps) {
     where: (t, { eq }) => eq(t.workspaceId, ctx.workspaceId),
   })
   const tiers = await getActiveTiers()
-  const tier = sub ? await getTierBySlug((sub.tier as any) ?? 'starter') : null
-  const interval = (sub?.billingInterval as 'monthly' | 'annual' | null) ?? 'monthly'
+  const tierSlug = parseTierSlug(sub?.tier ?? null) ?? 'starter'
+  const tier = await getTierBySlug(tierSlug)
+  const interval = parseBillingInterval(sub?.billingInterval ?? null) ?? 'monthly'
   const topupRate = tier ? topupRateForTier(tier, interval) : sub?.topupRateCents ?? 80
 
   const status = sub?.status ?? 'trialing'
@@ -90,6 +97,16 @@ export default async function BillingPage({ searchParams }: PageProps) {
               value={
                 <span className="text-[13.5px]">
                   {new Date(sub.trialEndsAt).toLocaleDateString()}
+                </span>
+              }
+            />
+          )}
+          {!isTrial && sub?.opportunitiesResetAt && (
+            <SettingsRow
+              label={status === 'canceled' ? 'Access ends' : 'Renews on'}
+              value={
+                <span className="text-[13.5px]">
+                  {new Date(sub.opportunitiesResetAt).toLocaleDateString()}
                 </span>
               }
             />
