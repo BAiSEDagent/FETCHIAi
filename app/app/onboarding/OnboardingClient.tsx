@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { saveOnboardingStep, completeOnboarding } from './actions'
+import { errorMessage } from '@/lib/enums'
 
 type Vertical = 'roofing' | 'cleaning' | 'hvac' | 'landscaping' | 'events' | 'other'
 type ScoutMode = 'off' | 'once_daily' | 'three_daily' | 'custom'
@@ -99,8 +100,8 @@ export function OnboardingClient({ initial }: Props) {
             router.push('/app/chat')
           }, 2400)
         }
-      } catch (e: any) {
-        setErr(e?.message ?? 'Something went wrong — try again.')
+      } catch (e: unknown) {
+        setErr(errorMessage(e, 'Something went wrong — try again.'))
       }
     })
   }

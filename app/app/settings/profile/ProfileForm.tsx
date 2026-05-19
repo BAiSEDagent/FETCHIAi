@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react'
 import { saveBusinessProfile } from './actions'
 
+import { errorMessage } from '@/lib/enums'
+
 type Initial = {
   businessName: string
   vertical: 'roofing' | 'cleaning' | 'hvac' | 'landscaping' | 'events' | 'other'
@@ -41,8 +43,8 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           idealCustomerDescription: ideal,
         })
         setMsg('Saved.')
-      } catch (e: any) {
-        setErr(e?.message ?? "Couldn't save — check the fields and try again.")
+      } catch (e: unknown) {
+        setErr(errorMessage(e, "Couldn't save — check the fields and try again."))
       }
     })
   }

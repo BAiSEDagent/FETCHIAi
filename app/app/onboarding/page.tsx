@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { db } from '@/db'
+import { parseVertical, parseScoutMode } from '@/lib/enums'
 import { OnboardingClient } from './OnboardingClient'
 
 export const dynamic = 'force-dynamic'
@@ -19,13 +20,13 @@ export default async function OnboardingPage() {
   return (
     <OnboardingClient
       initial={{
-        vertical: (profile?.vertical as any) ?? null,
+        vertical: parseVertical(profile?.vertical),
         businessName: ctx.workspace.businessName ?? null,
         locationCity: profile?.locationCity ?? null,
         locationState: profile?.locationState ?? null,
         locationRadiusMiles: profile?.locationRadiusMiles ?? 50,
         idealCustomerDescription: profile?.idealCustomerDescription ?? null,
-        scoutMode: (schedule?.mode as any) ?? 'once_daily',
+        scoutMode: parseScoutMode(schedule?.mode) ?? 'once_daily',
         step: ctx.workspace.onboardingStep,
       }}
     />

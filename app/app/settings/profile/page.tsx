@@ -1,5 +1,6 @@
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { db } from '@/db'
+import { parseVertical } from '@/lib/enums'
 import { ProfileForm } from './ProfileForm'
 
 export const dynamic = 'force-dynamic'
@@ -24,7 +25,7 @@ export default async function ProfileSettingsPage() {
       <ProfileForm
         initial={{
           businessName: ctx.workspace.businessName ?? '',
-          vertical: ((profile?.vertical as any) ?? 'roofing'),
+          vertical: parseVertical(profile?.vertical) ?? 'roofing',
           serviceDescription: profile?.serviceDescription ?? '',
           locationCity: profile?.locationCity ?? '',
           locationState: profile?.locationState ?? '',

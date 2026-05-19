@@ -43,10 +43,13 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ blocked: true })
         }
 
-        const signupMethod: 'google' | 'email' =
-          data.external_accounts?.some((a: any) => a.provider === 'oauth_google')
-            ? 'google'
-            : 'email'
+        const externals: ReadonlyArray<{ provider?: string }> =
+          (data.external_accounts as ReadonlyArray<{ provider?: string }> | undefined) ?? []
+        const signupMethod: 'google' | 'email' = externals.some(
+          a => a.provider === 'oauth_google',
+        )
+          ? 'google'
+          : 'email'
 
         await ensureWorkspaceForUser(userId, email, signupMethod)
         return NextResponse.json({ ok: true })

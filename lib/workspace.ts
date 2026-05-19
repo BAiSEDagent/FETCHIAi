@@ -38,14 +38,17 @@ async function readSystemNumber(key: string, fallback: number): Promise<number> 
     const row = await db.query.systemSettings.findFirst({
       where: (t, { eq: e }) => e(t.key, key),
     })
-    const v = row?.value as unknown
+    const v: unknown = row?.value
     if (typeof v === 'number') return v
     if (typeof v === 'string' && !isNaN(Number(v))) return Number(v)
-    if (v && typeof v === 'object' && 'value' in (v as any)) {
-      const inner = (v as any).value
+    if (v && typeof v === 'object' && 'value' in v) {
+      const inner = (v as { value: unknown }).value
       if (typeof inner === 'number') return inner
+      if (typeof inner === 'string' && !isNaN(Number(inner))) return Number(inner)
     }
-  } catch {}
+  } catch (err) {
+    console.warn(`[system_settings] could not read "${key}":`, err)
+  }
   return fallback
 }
 
