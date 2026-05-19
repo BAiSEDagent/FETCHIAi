@@ -7,6 +7,7 @@ import { SectionCard } from '@/components/app/SectionCard'
 import { Button } from '@/components/ui/button'
 import { OutcomeForm } from './OutcomeForm'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { GlyphTile, glyphForSignalType, type GlyphKey } from '@/components/app/GlyphTile'
 
 export const dynamic = 'force-dynamic'
 
@@ -239,7 +240,7 @@ export default async function LeadProfilePage({
           <div className="space-y-0 -mx-1">
             {signal?.whyRelevant && (
               <EvidenceRow
-                icon="⛈️"
+                glyph={glyphForSignalType(signal?.signalType ?? null)}
                 tone="coral"
                 title={`${signalTypeLabel.charAt(0).toUpperCase()}${signalTypeLabel.slice(1)} report`}
                 meta={
@@ -251,7 +252,7 @@ export default async function LeadProfilePage({
             )}
             {prospect?.address && (
               <EvidenceRow
-                icon="🏗️"
+                glyph="house"
                 tone="muted"
                 title="Property record"
                 meta={`${prospect.address}, ${prospect.city ?? ''} ${prospect.state ?? ''}`.trim()}
@@ -259,7 +260,7 @@ export default async function LeadProfilePage({
             )}
             {contacts.length > 0 && (
               <EvidenceRow
-                icon="👤"
+                glyph="user"
                 tone="muted"
                 title="Contacts enriched"
                 meta={`${contacts.length} contact${contacts.length === 1 ? '' : 's'} on file`}
@@ -267,7 +268,7 @@ export default async function LeadProfilePage({
             )}
             {drafts.length > 0 && (
               <EvidenceRow
-                icon="✦"
+                glyph="sparkle"
                 tone="muted"
                 title="Outreach draft ready"
                 meta="Reviewable below"
@@ -437,28 +438,19 @@ export default async function LeadProfilePage({
 }
 
 function EvidenceRow({
-  icon,
+  glyph,
   title,
   meta,
   tone = 'muted',
 }: {
-  icon: string
+  glyph: GlyphKey
   title: string
   meta: string
   tone?: 'coral' | 'muted'
 }) {
   return (
     <div className="flex items-center gap-3 py-3 border-b border-brand-near-black/6 last:border-0">
-      <div
-        className={`w-9 h-9 rounded-xl flex items-center justify-center text-[15px] flex-shrink-0 ${
-          tone === 'coral'
-            ? 'bg-brand-coral/12 text-brand-coral'
-            : 'bg-brand-cream-muted text-brand-near-black/65'
-        }`}
-        aria-hidden
-      >
-        {icon}
-      </div>
+      <GlyphTile glyph={glyph} tone={tone} size="md" />
       <div className="flex-1 min-w-0">
         <div className="text-[13.5px] font-semibold text-brand-near-black truncate">
           {title}

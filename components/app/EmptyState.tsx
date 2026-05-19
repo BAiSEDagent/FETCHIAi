@@ -17,14 +17,7 @@ export function EmptyState({ icon, title, body, action, className }: Props) {
         className,
       )}
     >
-      {icon && (
-        <div
-          className="text-[40px] leading-none mb-4 select-none"
-          aria-hidden
-        >
-          {icon}
-        </div>
-      )}
+      {icon && <div className="mb-4 flex items-center justify-center">{icon}</div>}
       <h3 className="font-outfit text-[20px] font-semibold text-brand-near-black">
         {title}
       </h3>

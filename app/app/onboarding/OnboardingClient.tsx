@@ -7,17 +7,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ArrowRight } from 'lucide-react'
+import { GlyphTile, type GlyphKey } from '@/components/app/GlyphTile'
 
 type Vertical = 'roofing' | 'cleaning' | 'hvac' | 'landscaping' | 'events' | 'other'
 type ScoutMode = 'off' | 'once_daily' | 'three_daily' | 'custom'
 
-const VERTICALS: { id: Vertical; icon: string; name: string; desc: string }[] = [
-  { id: 'roofing', icon: '🏠', name: 'Roofing', desc: 'Hail, permits, roof age' },
-  { id: 'hvac', icon: '❄️', name: 'HVAC', desc: 'Heat waves, complaints' },
-  { id: 'cleaning', icon: '✦', name: 'Cleaning', desc: 'New offices, hiring' },
-  { id: 'landscaping', icon: '🌿', name: 'Landscaping', desc: 'Property listings, HOA' },
-  { id: 'events', icon: '🎪', name: 'Event Services', desc: 'Rentals, weddings, staging' },
-  { id: 'other', icon: '+', name: 'Other', desc: 'Tell us in one sentence' },
+const VERTICALS: { id: Vertical; glyph: GlyphKey; name: string; desc: string }[] = [
+  { id: 'roofing', glyph: 'house', name: 'Roofing', desc: 'Hail, permits, roof age' },
+  { id: 'hvac', glyph: 'snowflake', name: 'HVAC', desc: 'Heat waves, complaints' },
+  { id: 'cleaning', glyph: 'sparkle', name: 'Cleaning', desc: 'New offices, hiring' },
+  { id: 'landscaping', glyph: 'flower', name: 'Landscaping', desc: 'Property listings, HOA' },
+  { id: 'events', glyph: 'tent', name: 'Event Services', desc: 'Rentals, weddings, staging' },
+  { id: 'other', glyph: 'plus', name: 'Other', desc: 'Tell us in one sentence' },
 ]
 
 const SCOUT_MODES: { id: ScoutMode; label: string; desc: string }[] = [
@@ -182,16 +183,13 @@ export function OnboardingClient({ initial }: Props) {
                           : 'bg-brand-cream text-brand-near-black shadow-fetchi-soft hover:-translate-y-px hover:shadow-fetchi-card'
                       }`}
                     >
-                      <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-[18px] mb-3 ${
-                          selected
-                            ? 'bg-brand-near-black/40 text-brand-green'
-                            : 'bg-brand-light text-brand-dark'
-                        }`}
-                        aria-hidden
-                      >
-                        {v.icon}
-                      </div>
+                      <GlyphTile
+                        glyph={v.glyph}
+                        size="md"
+                        tone={selected ? 'dark' : 'green'}
+                        className="mb-3"
+                      />
+                      
                       <div className="text-[15px] font-bold leading-tight">
                         {v.name}
                       </div>

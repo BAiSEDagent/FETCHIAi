@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { GlyphTile, glyphForSignalType } from '@/components/app/GlyphTile'
 
 export type LeadCardSignalType =
   | 'storm_damage'
@@ -40,27 +41,6 @@ type Props = {
   contactConfidence?: number | null
   evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' }>
   variant?: Variant
-}
-
-function signalIcon(type: LeadCardSignalType): string {
-  switch (type) {
-    case 'storm_damage':
-    case 'weather_hail':
-    case 'weather_wind':
-      return '⛈️'
-    case 'building_permit':
-      return '🏗️'
-    case 'new_business_listing':
-      return '📍'
-    case 'job_posting':
-      return '💼'
-    case 'event':
-      return '🎪'
-    case 'funding':
-      return '💰'
-    default:
-      return '✦'
-  }
 }
 
 function scoreTier(score: number): string {
@@ -151,10 +131,7 @@ function ListCard({
           >
             {statusLabel(status)}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-brand-near-black/[0.04] border border-brand-near-black/8 px-2 py-0.5 text-[11px] font-semibold text-brand-near-black/65">
-            <span aria-hidden className="text-[11px] leading-none">
-              {signalIcon(signalType)}
-            </span>
+          <span className="inline-flex items-center rounded-full bg-brand-near-black/[0.04] border border-brand-near-black/8 px-2 py-0.5 text-[11px] font-semibold text-brand-near-black/65">
             <span className="truncate max-w-[140px]">{signalLabel}</span>
           </span>
           {ageLabel && (
@@ -351,9 +328,7 @@ function ChatCard({
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-xl bg-brand-light flex items-center justify-center flex-shrink-0 text-base" aria-hidden>
-          {signalIcon(signalType)}
-        </div>
+        <GlyphTile glyph={glyphForSignalType(signalType ?? null)} size="sm" />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">

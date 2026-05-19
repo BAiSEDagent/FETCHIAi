@@ -1,6 +1,7 @@
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { MobileScreenHeader } from '@/components/app/MobileScreenHeader'
 import { EmptyState } from '@/components/app/EmptyState'
+import { GlyphTile } from '@/components/app/GlyphTile'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,7 @@ export default async function MapPage() {
       />
       <div className="px-4 lg:px-7 pb-10">
         <EmptyState
-          icon="🗺️"
+          icon={<GlyphTile glyph="map" size="lg" />}
           title="Map turns on in Checkpoint 10"
           body="The live Mapbox view lights up alongside manual chat searches. Market-coverage gating is already plumbed in the schema."
         />
