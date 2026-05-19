@@ -7,13 +7,18 @@ import { Textarea } from '@/components/ui/textarea'
 
 type Status = 'new' | 'saved' | 'contacted' | 'responded' | 'won' | 'lost' | 'skipped'
 
-const OPTIONS: { id: Status; label: string }[] = [
-  { id: 'saved', label: 'Save for later' },
-  { id: 'contacted', label: 'Contacted' },
-  { id: 'responded', label: 'Responded' },
-  { id: 'won', label: 'Won' },
-  { id: 'lost', label: 'Lost' },
-  { id: 'skipped', label: 'Skip' },
+// Calm CP2.5B-aligned tones: positive outcomes use brand-green, negative
+// outcomes use a near-black wash so the destructive choices still read
+// clearly without screaming.
+type ActiveTone = 'positive' | 'negative'
+
+const OPTIONS: { id: Status; label: string; tone: ActiveTone }[] = [
+  { id: 'saved',     label: 'Save for later', tone: 'positive' },
+  { id: 'contacted', label: 'Contacted',      tone: 'positive' },
+  { id: 'responded', label: 'Responded',      tone: 'positive' },
+  { id: 'won',       label: 'Won',            tone: 'positive' },
+  { id: 'lost',      label: 'Lost',           tone: 'negative' },
+  { id: 'skipped',   label: 'Skip',           tone: 'negative' },
 ]
 
 const VALID_STATUSES: readonly Status[] = [
@@ -61,22 +66,29 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
   return (
     <SectionCard title="Outcome" description="What happened? Wins and losses both teach Fetchi who to find next.">
       <div className="flex flex-wrap gap-2 mb-4">
-        {OPTIONS.map(o => (
-          <button
-            key={o.id}
-            type="button"
-            onClick={() => save(o.id)}
-            disabled={pending}
-            aria-pressed={status === o.id}
-            className={`text-[13px] font-semibold px-4 rounded-xl transition-colors min-h-[44px] border ${
-              status === o.id
-                ? 'bg-brand-near-black text-white border-brand-near-black'
-                : 'bg-white text-brand-near-black/75 border-brand-near-black/10 hover:border-brand-green hover:text-brand-near-black'
-            }`}
-          >
-            {o.label}
-          </button>
-        ))}
+        {OPTIONS.map(o => {
+          const active = status === o.id
+          const activeClass =
+            o.tone === 'positive'
+              ? 'bg-brand-green text-white border-brand-green'
+              : 'bg-brand-near-black text-white border-brand-near-black'
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => save(o.id)}
+              disabled={pending}
+              aria-pressed={active}
+              className={`text-[13px] font-semibold px-4 rounded-xl transition-colors min-h-[44px] border ${
+                active
+                  ? activeClass
+                  : 'bg-white text-brand-near-black/75 border-brand-near-black/10 hover:border-brand-green hover:text-brand-near-black'
+              }`}
+            >
+              {o.label}
+            </button>
+          )
+        })}
       </div>
 
       <label

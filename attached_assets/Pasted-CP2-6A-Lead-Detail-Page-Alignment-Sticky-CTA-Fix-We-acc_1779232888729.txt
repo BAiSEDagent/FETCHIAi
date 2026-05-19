@@ -1,0 +1,207 @@
+CP2.6A — Lead Detail Page Alignment + Sticky CTA Fix
+
+We accepted CP2.5B as the My Leads baseline. Now update ONLY the opened Lead Detail page:
+
+Route:
+- /app/leads/[id]
+
+Goal:
+Make Lead Detail feel like the transaction-detail version of a lead in the same Fetchi design language as My Leads:
+Cash App × Claude × Fetchi
+warm parchment, dark mobile app bar, large score hero, compact signal token, calm evidence cards, clear contact/outreach sections, and a sticky action area that does NOT collide with the bottom nav.
+
+Scope:
+- Lead Detail page only.
+- You may touch shared LeadCard/signal-token helpers only if required.
+- Do not redesign My Leads again.
+- Do not redesign Chat, Today, Map, Settings, onboarding, billing, admin, or agents.
+
+Hard guardrails:
+- Do not modify db/schema.ts
+- Do not modify db/index.ts
+- Do not modify db/seed.ts
+- Do not modify drizzle.config.ts
+- Do not modify design/*.html
+- Do not add dependencies
+- Do not create CP3/CP4/CP5/CP6 artifacts
+- No Stripe
+- No admin
+- No agents/providers
+- No live search/scout execution
+- No schema changes
+- No database writes except the existing outcome/status actions already present
+
+Required fixes:
+
+1. Mobile app shell
+Keep the current mobile dark top app bar:
+- hamburger left
+- centered Fetchi logo
+- sign-out/account icon right
+
+Keep locked mobile bottom nav:
+- Chat / Today / Leads / Map / Settings
+- Leads active
+- no badges/counts
+- no blue focus ring
+
+2. Hero cleanup
+The current page shows “Lead · 3C5BA69E.” Replace this with customer-friendly copy.
+
+Do NOT show raw UUID fragments as the main label.
+
+Use:
+- eyebrow: “Lead detail”
+- optional short readable lead code only if one already exists
+- business name large
+- location and property type below
+
+Hero must include:
+- compact signal token using the existing formatter from CP2.5B:
+  HAIL · 1.8" · 4D
+  PERMIT · ROOF · 13D
+  HAIL · SAME CELL · 3D
+- large Fetchi green score
+- clean one-line summary under score
+
+Fix the broken summary text. Do not show truncated copy like:
+“Tuesday’s hail event dropped 1”
+
+Use a complete sentence like:
+“Fresh storm signal matched to a commercial roof opportunity.”
+
+3. Signal token
+Replace old lowercase signal copy:
+“storm damage · 4 days ago · No claim filed”
+
+with the compact token system:
+“HAIL · 1.8" · 4D”
+plus optional calm secondary chip:
+“No claim filed”
+
+Do not use urgent coral unless the signal is truly warning-level. Keep it calm.
+
+4. Why Now card
+Keep the pale green/blue card style.
+Header: WHY NOW
+Body: full why-now explanation.
+Do not truncate this section.
+Tighten spacing slightly so mobile feels less heavy.
+
+5. Evidence card
+Keep the warm cream evidence card.
+Header:
+- EVIDENCE
+- right side source count, e.g. “5 sources”
+
+Rows:
+- icon block
+- title
+- metadata
+- chevron
+- dividers
+
+Rows can remain non-expanded for now, but must look polished.
+
+6. Score breakdown copy
+Do not show customer-facing checkpoint copy such as:
+“Live multi-factor scoring ships with the scoring agent in Checkpoint 6.”
+
+Replace with calm product copy:
+“Score combines signal strength, recency, fit, and reachability.”
+
+If values are placeholders, do not claim live scoring. Keep labels generic.
+
+7. Contact routes
+Keep the contact routes section.
+Use calm cards/chips for:
+- phone
+- website
+- address
+- contacts
+- role
+- email if available
+
+If a contact is missing, use:
+“Finding best contact”
+
+8. Outreach draft
+Keep the Outreach Draft section.
+If draft exists:
+- show subject
+- show draft preview
+- primary action: “Open draft & contact”
+- secondary action: “Edit”
+
+If no draft exists:
+- show “Draft will appear here once outreach is enabled.”
+Do not build live LLM generation.
+
+9. Outcome controls
+Preserve existing outcome/status behavior.
+Allowed statuses only:
+new, saved, contacted, responded, won, lost, skipped, expired
+
+Use calm segmented buttons:
+- Save for later
+- Contacted
+- Responded
+- Won
+- Lost
+- Skip
+
+Keep notes textarea if already present.
+
+10. Critical sticky CTA fix
+The current sticky “Open draft & contact” button is partially hidden behind the bottom nav and blocks content while scrolling. Fix this.
+
+Requirements:
+- Sticky CTA must sit ABOVE the bottom nav.
+- CTA must be fully visible and tappable at all scroll positions.
+- Mobile bottom nav remains fixed below it.
+- Content must have enough bottom padding so the last section is never hidden behind the CTA/nav.
+- Do not let the CTA cover the Outreach Draft or Outcome sections.
+- Use safe-area padding where needed.
+- On mobile, page content should end with enough breathing room below the Outcome section.
+
+Suggested structure:
+- bottom nav fixed at bottom
+- sticky action bar fixed above bottom nav
+- page content padding-bottom large enough for both
+
+11. Desktop layout
+Desktop should use the same design language:
+- dark sidebar remains
+- readable centered max-width content
+- hero at top
+- cards stacked below
+- no table layout
+- no split-view yet
+- do not overbuild
+
+12. Data behavior
+Use real workspace-scoped opportunity/prospect/signal/contact/outreach data.
+Do not create DB fallback records.
+If data is missing, render calm empty states:
+- “Finding best contact”
+- “No outreach draft yet”
+- “Evidence unavailable”
+
+Acceptance checks:
+1. /app/leads/[id] renders on desktop.
+2. /app/leads/[id] renders at 375px mobile.
+3. Sticky CTA is fully visible.
+4. Sticky CTA does not overlap the bottom nav.
+5. Sticky CTA does not block final content.
+6. Lead Detail visually matches the updated My Leads design language.
+7. Signal token matches the My Leads compact signal-token style.
+8. No raw UUID/internal ID is the main customer-facing label.
+9. No checkpoint copy appears in customer-facing UI.
+10. No protected files touched.
+11. No schema changes.
+12. No admin/billing/Stripe/agent/provider files added.
+13. npm run type-check passes.
+14. npm run build passes.
+15. Return changed files, screenshots/visual notes, and stop.
+
+Do not move to Today’s Run after this. Stop after Lead Detail report.

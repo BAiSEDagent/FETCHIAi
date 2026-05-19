@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { OutcomeForm } from './OutcomeForm'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 import { GlyphTile, glyphForSignalType, type GlyphKey } from '@/components/app/GlyphTile'
+import { formatSignalToken } from '@/lib/signals/token'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,7 +72,7 @@ function ScoreBreakdown({
         ))}
       </div>
       <p className="text-[12px] text-brand-near-black/45 mt-4 leading-relaxed">
-        Live multi-factor scoring ships with the scoring agent in Checkpoint 6.
+        Score combines signal strength, recency, fit, and reachability.
       </p>
     </SectionCard>
   )
@@ -93,13 +94,35 @@ function ConfidenceDots({ pct }: { pct: number }) {
   )
 }
 
-function relativeAge(d: Date | null): string | null {
-  if (!d) return null
-  const days = Math.floor((Date.now() - d.getTime()) / 86_400_000)
-  if (days <= 0) return 'today'
-  if (days === 1) return 'yesterday'
-  if (days < 30) return `${days} days ago`
-  return d.toLocaleDateString()
+// Picks the first complete sentence from a paragraph. Falls back to the full
+// trimmed string when no sentence-end punctuation is present, then to a
+// generic line so the hero never reads as truncated.
+function firstSentence(text: string | null | undefined, fallback: string): string {
+  if (!text) return fallback
+  const trimmed = text.trim()
+  if (!trimmed) return fallback
+  const match = trimmed.match(/^[^.!?]+[.!?]/)
+  if (match) return match[0].trim()
+  // No terminator — return the whole line if it's short, otherwise fallback.
+  if (trimmed.length <= 140) return trimmed
+  return fallback
+}
+
+const SIGNAL_TYPE_LABEL: Record<string, string> = {
+  storm_damage: 'Storm damage',
+  weather_hail: 'Hail event',
+  weather_wind: 'High-wind event',
+  building_permit: 'Building permit',
+  new_business_listing: 'New listing',
+  job_posting: 'Job posting',
+  event: 'Local event',
+  funding: 'Funding',
+  news: 'News',
+  review: 'Review',
+  social: 'Social',
+  expansion: 'Expansion',
+  ownership_change: 'Ownership change',
+  other: 'Signal',
 }
 
 export default async function LeadProfilePage({
@@ -152,19 +175,28 @@ export default async function LeadProfilePage({
   ])
 
   const signalTypeLabel = signal?.signalType
-    ? signal.signalType.replace(/_/g, ' ')
+    ? (SIGNAL_TYPE_LABEL[signal.signalType] ?? signal.signalType.replace(/_/g, ' '))
     : 'Signal'
-  const ageLabel = relativeAge(signal?.detectedAt ?? signal?.createdAt ?? null)
+  const signalToken = signal
+    ? formatSignalToken({
+        signalType: signal.signalType,
+        detectedAt: signal.detectedAt ?? signal.createdAt,
+        parsedData: (signal.parsedData ?? null) as Record<string, unknown> | null,
+      })
+    : null
   const evidenceCount =
     (signal?.whyRelevant ? 1 : 0) +
     contacts.length +
     drafts.length +
     (opp.whyNow ? 1 : 0)
-  const locationLine = [
-    prospect?.city && prospect?.state ? `${prospect.city}, ${prospect.state}` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  const locationLine = prospect?.city
+    ? `${prospect.city}${prospect.state ? `, ${prospect.state}` : ''}`
+    : null
+  const businessName = prospect?.businessName ?? 'Unknown business'
+  const summaryLine = firstSentence(
+    opp.whyNow ?? signal?.whyRelevant,
+    'Fresh signal matched to an opportunity worth a closer look.',
+  )
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -179,10 +211,10 @@ export default async function LeadProfilePage({
         </Link>
         <div className="flex-1 text-center min-w-0 px-4">
           <div className="text-[11px] uppercase tracking-[1px] font-bold text-brand-near-black/45">
-            Today&apos;s stack
+            Lead detail
           </div>
           <div className="text-[14px] font-semibold text-brand-near-black truncate">
-            Lead · {opp.id.slice(0, 8).toUpperCase()}
+            {businessName}
           </div>
         </div>
         <button
@@ -194,25 +226,34 @@ export default async function LeadProfilePage({
         </button>
       </div>
 
-      <div className="px-4 lg:px-7 pb-32 lg:pb-10 space-y-3 lg:space-y-4">
+      {/* Bottom padding leaves room for the fixed CTA (~76px) + bottom nav
+          (~68px + safe-area) on mobile; desktop drops back to a normal pad. */}
+      <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+200px)] lg:pb-12 space-y-3 lg:space-y-4">
         {/* Transaction-card hero */}
         <div className="text-center pt-3 pb-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-coral/12 text-brand-coral px-3 py-1.5 text-[12px] font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-coral" />
-            {signalTypeLabel}
-            {ageLabel ? ` · ${ageLabel}` : ''}
-            {opp.status === 'new' ? ' · No claim filed' : ''}
-          </span>
+          <div className="flex items-center justify-center flex-wrap gap-1.5">
+            <span
+              className="inline-flex items-center rounded-full h-[24px] px-2.5 text-[11px] font-bold tracking-[0.04em] tabular-nums bg-brand-near-black/[0.05] text-brand-near-black/75"
+              aria-label={`Signal ${signalToken ?? signalTypeLabel}`}
+            >
+              {signalToken ?? signalTypeLabel.toUpperCase()}
+            </span>
+            {opp.status === 'new' && (
+              <span className="inline-flex items-center rounded-full h-[24px] px-2.5 text-[11px] font-semibold bg-brand-cream-muted text-brand-near-black/65">
+                No claim filed
+              </span>
+            )}
+          </div>
 
           <div className="font-outfit text-[68px] lg:text-[76px] leading-none font-bold text-brand-green tabular-nums mt-5">
             {opp.score}
           </div>
-          <div className="text-[13px] text-brand-near-black/55 mt-2 font-medium">
-            {opp.whyNow ? opp.whyNow.split('.')[0] : 'Fresh signal worth a look'}
+          <div className="text-[13px] text-brand-near-black/55 mt-2 font-medium px-4">
+            {summaryLine}
           </div>
 
           <h1 className="font-outfit text-[26px] lg:text-[30px] font-bold text-brand-near-black leading-tight mt-5 px-2">
-            {prospect?.businessName ?? 'Unknown business'}
+            {businessName}
           </h1>
           {locationLine && (
             <div className="text-[13px] text-brand-near-black/55 mt-1.5">
@@ -223,7 +264,7 @@ export default async function LeadProfilePage({
 
         {opp.whyNow && (
           <SectionCard eyebrow="Why now" tone="highlight">
-            <p className="text-[14px] text-brand-dark leading-[1.65]">
+            <p className="text-[14px] text-brand-dark leading-[1.6]">
               {opp.whyNow}
             </p>
           </SectionCard>
@@ -241,8 +282,8 @@ export default async function LeadProfilePage({
             {signal?.whyRelevant && (
               <EvidenceRow
                 glyph={glyphForSignalType(signal?.signalType ?? null)}
-                tone="coral"
-                title={`${signalTypeLabel.charAt(0).toUpperCase()}${signalTypeLabel.slice(1)} report`}
+                tone="muted"
+                title={`${signalTypeLabel} report`}
                 meta={
                   signal.detectedAt
                     ? `${signal.detectedAt.toLocaleDateString()} · ${signal.detectedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
@@ -276,7 +317,7 @@ export default async function LeadProfilePage({
             )}
             {evidenceCount === 0 && (
               <div className="text-[13px] text-brand-near-black/55 py-2">
-                Evidence enrichment lands with the enrichment agent (Checkpoint 6).
+                Evidence unavailable for this lead yet.
               </div>
             )}
           </div>
@@ -284,7 +325,7 @@ export default async function LeadProfilePage({
 
         {signal?.whyRelevant && (
           <SectionCard eyebrow="Signal evidence">
-            <p className="text-[14px] text-brand-near-black/75 leading-[1.65]">
+            <p className="text-[14px] text-brand-near-black/75 leading-[1.6]">
               {signal.whyRelevant}
             </p>
           </SectionCard>
@@ -334,8 +375,9 @@ export default async function LeadProfilePage({
               Contacts
             </div>
             {contacts.length === 0 ? (
-              <div className="text-[13px] text-brand-near-black/55">
-                No contacts enriched yet.
+              <div className="flex items-center gap-1.5 text-[12.5px] text-brand-near-black/55">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-near-black/20" />
+                Finding best contact
               </div>
             ) : (
               <div className="space-y-0">
@@ -378,8 +420,7 @@ export default async function LeadProfilePage({
         >
           {drafts.length === 0 ? (
             <div className="text-[13px] text-brand-near-black/55 leading-relaxed">
-              No draft yet. The outreach agent will write one once it&apos;s live
-              (Checkpoint 6).
+              Draft will appear here once outreach is enabled.
             </div>
           ) : (
             <div className="space-y-4">
@@ -394,7 +435,8 @@ export default async function LeadProfilePage({
                     {d.body}
                   </p>
                   <div className="flex flex-wrap gap-2 pt-1">
-                    <Button size="sm">Send to my email</Button>
+                    {/* TODO follow-up #13 — wire to real outreach send flow */}
+                    <Button size="sm">Open draft &amp; contact</Button>
                     <Button size="sm" variant="secondary">
                       Edit
                     </Button>
@@ -412,18 +454,22 @@ export default async function LeadProfilePage({
         />
       </div>
 
-      {/* Sticky primary action — single decision */}
+      {/* Sticky primary action — sits ABOVE the MobileBottomNav (z-30, ~68px
+          high + safe-area). CTA uses z-40 so the two bars stack cleanly:
+          nav at the absolute bottom, action bar one row up. Desktop hides
+          the entire bar — actions live in the page body there. */}
       <div
-        className="lg:hidden sticky bottom-0 left-0 right-0 bg-brand-parchment/95 backdrop-blur px-4 pt-3"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
+        className="lg:hidden fixed inset-x-0 z-40 bg-brand-parchment/95 backdrop-blur-md border-t border-brand-near-black/8 px-4 pt-3 pb-3"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 68px)' }}
       >
         <button
           type="button"
           className="w-full h-14 rounded-full bg-brand-green text-white text-[16px] font-semibold hover:bg-brand-dark transition-colors shadow-fetchi-card"
         >
-          Open draft &amp; contact
+          {drafts.length > 0 ? 'Open draft & contact' : 'Save for later'}
         </button>
         <div className="flex items-center justify-center gap-6 mt-2.5 text-[13px] text-brand-near-black/55">
+          {/* TODO follow-up #13 — wire Save / Pass to updateLeadOutcome */}
           <button type="button" className="font-medium hover:text-brand-near-black">
             Save for later
           </button>
