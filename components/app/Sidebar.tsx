@@ -59,7 +59,7 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
         href={item.href}
         onClick={onNavigate}
         className={[
-          'flex items-center gap-2.5 px-[18px] py-2 text-[13px] transition-colors min-h-[40px]',
+          'flex items-center gap-2.5 px-[18px] py-2.5 text-[13px] transition-colors min-h-[44px]',
           active
             ? 'text-white bg-[rgba(29,158,117,0.2)]'
             : 'text-white/55 hover:text-white hover:bg-white/5',

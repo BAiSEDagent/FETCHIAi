@@ -14,6 +14,19 @@ const OPTIONS: { id: Status; label: string }[] = [
   { id: 'skipped', label: 'Skip' },
 ]
 
+const VALID_STATUSES: readonly Status[] = [
+  'new', 'saved', 'contacted', 'responded', 'won', 'lost', 'skipped',
+] as const
+
+function parseStatus(input: string | null | undefined): Status {
+  if (input && (VALID_STATUSES as readonly string[]).includes(input)) {
+    return input as Status
+  }
+  // Anything we don't recognize (e.g. legacy `expired`) lands on `new` so the
+  // outcome buttons stay valid and the next save won't fail zod validation.
+  return 'new'
+}
+
 type Props = {
   opportunityId: string
   currentStatus: string
@@ -21,7 +34,7 @@ type Props = {
 }
 
 export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Props) {
-  const [status, setStatus] = useState<Status>(currentStatus as Status)
+  const [status, setStatus] = useState<Status>(parseStatus(currentStatus))
   const [notes, setNotes] = useState(currentNotes ?? '')
   const [pending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
@@ -54,7 +67,7 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
             key={o.id}
             onClick={() => save(o.id)}
             disabled={pending}
-            className={`text-[12px] font-medium px-4 py-2 rounded-lg border-[1.5px] transition-colors min-h-[40px] ${
+            className={`text-[12px] font-medium px-4 py-2.5 rounded-lg border-[1.5px] transition-colors min-h-[44px] min-w-[44px] ${
               status === o.id
                 ? 'bg-brand-near-black text-white border-brand-near-black'
                 : 'bg-white text-brand-near-black/65 border-brand-near-black/15 hover:border-brand-near-black hover:text-brand-near-black'
