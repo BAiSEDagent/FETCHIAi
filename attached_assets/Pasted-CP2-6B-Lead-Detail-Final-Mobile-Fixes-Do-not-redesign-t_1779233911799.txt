@@ -1,0 +1,90 @@
+CP2.6B — Lead Detail Final Mobile Fixes
+
+Do not redesign the page. Patch only the remaining Lead Detail issues visible after CP2.6A.
+
+Route:
+- /app/leads/[id]
+
+Scope:
+- Lead Detail page only
+- Sticky lead-detail action dock only if needed
+- No My Leads changes
+- No Chat/Today/Map/Settings/onboarding changes
+- No schema changes
+- No protected file edits
+- No new deps
+- No admin/billing/agents/providers/SearchProvider work
+
+Issues to fix:
+
+1. Broken hero summary
+The mobile hero still shows broken copy:
+
+“Tuesday’s hail event dropped 1.”
+
+Replace it with a complete customer-facing sentence.
+
+Use either the opportunity reason/summary if it is complete, or a safe fallback:
+
+“Fresh storm signal matched to a commercial roof opportunity.”
+
+Never render incomplete parsed snippets in the hero summary.
+
+Acceptance:
+- No hero text ends with a dangling number or partial sentence.
+- No “dropped 1.” copy appears anywhere.
+
+2. Sticky CTA is still too intrusive
+The sticky CTA technically sits above the bottom nav now, but it still covers page content while scrolling. It makes the page feel blocked.
+
+Revise the mobile action dock:
+
+- Keep bottom nav fixed.
+- If using a sticky action dock, make it compact and clearly separated above bottom nav.
+- It must not obscure readable content.
+- It must not sit on top of Outreach Draft, Outcome, Contact Routes, or Score Breakdown while the user is trying to read them.
+- Add enough bottom padding after the final Outcome card so users can scroll all content fully above the sticky dock.
+- Prefer a smaller dock height.
+- Avoid a large translucent sheet effect.
+- The primary button should be fully visible.
+- Secondary actions should not create extra vertical bulk.
+
+Recommended mobile dock:
+- one compact primary button: “Open draft & contact”
+- optional smaller text links below ONLY if they fit without crowding
+- or move “Save for later” / “Pass” into the Outcome section and remove them from the sticky dock
+
+3. CTA duplication
+The Outreach Draft card already has an “Open draft & contact” action. If the sticky dock remains, make sure duplication feels intentional:
+- Sticky dock = quick persistent primary action
+- Outreach Draft card = contextual action inside the draft section
+
+Do not show two competing oversized CTAs at the same time in the same viewport if it creates clutter.
+
+4. Header/hero hierarchy
+Current hero repeats Parkview Office Complex twice:
+- small name under “Lead detail”
+- large name lower in the hero
+
+Keep this if visually needed, but reduce repetition if possible:
+- Eyebrow: “Lead detail”
+- Large primary business name
+- Location below
+- Do not make the small duplicated business name feel like a second title.
+
+5. Mobile screenshots required
+After patching, verify these scroll positions at 375px:
+- top hero
+- evidence/score middle
+- contact routes/outreach draft
+- outcome bottom
+
+Acceptance:
+- hero summary complete
+- sticky CTA not blocking readable content
+- outcome card fully reachable
+- bottom nav unchanged and Leads active
+- npm run type-check passes
+- npm run build passes
+
+Stop after report. Do not start another checkpoint.

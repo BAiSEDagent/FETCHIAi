@@ -97,13 +97,20 @@ function ConfidenceDots({ pct }: { pct: number }) {
 // Picks the first complete sentence from a paragraph. Falls back to the full
 // trimmed string when no sentence-end punctuation is present, then to a
 // generic line so the hero never reads as truncated.
+// Picks the first complete sentence. The terminator must be followed by
+// whitespace or end-of-string so decimal numbers like "1.5" do not get
+// truncated to "dropped 1." mid-summary.
 function firstSentence(text: string | null | undefined, fallback: string): string {
   if (!text) return fallback
   const trimmed = text.trim()
   if (!trimmed) return fallback
-  const match = trimmed.match(/^[^.!?]+[.!?]/)
-  if (match) return match[0].trim()
-  // No terminator — return the whole line if it's short, otherwise fallback.
+  const match = trimmed.match(/^[^.!?]+?[.!?](?=\s|$)/)
+  if (match) {
+    const sentence = match[0].trim()
+    // Guard: never return a sentence that ends with "<digit>." — that's a
+    // decimal we wrongly cut. Fall through to the short-line / fallback path.
+    if (!/\d[.!?]$/.test(sentence)) return sentence
+  }
   if (trimmed.length <= 140) return trimmed
   return fallback
 }
@@ -193,9 +200,16 @@ export default async function LeadProfilePage({
     ? `${prospect.city}${prospect.state ? `, ${prospect.state}` : ''}`
     : null
   const businessName = prospect?.businessName ?? 'Unknown business'
+  const isStormSignal =
+    signal?.signalType === 'storm_damage' ||
+    signal?.signalType === 'weather_hail' ||
+    signal?.signalType === 'weather_wind'
+  const summaryFallback = isStormSignal
+    ? 'Fresh storm signal matched to a commercial roof opportunity.'
+    : 'Fresh signal matched to an opportunity worth a closer look.'
   const summaryLine = firstSentence(
     opp.whyNow ?? signal?.whyRelevant,
-    'Fresh signal matched to an opportunity worth a closer look.',
+    summaryFallback,
   )
 
   return (
@@ -213,9 +227,6 @@ export default async function LeadProfilePage({
           <div className="text-[11px] uppercase tracking-[1px] font-bold text-brand-near-black/45">
             Lead detail
           </div>
-          <div className="text-[14px] font-semibold text-brand-near-black truncate">
-            {businessName}
-          </div>
         </div>
         <button
           type="button"
@@ -226,9 +237,10 @@ export default async function LeadProfilePage({
         </button>
       </div>
 
-      {/* Bottom padding leaves room for the fixed CTA (~76px) + bottom nav
-          (~68px + safe-area) on mobile; desktop drops back to a normal pad. */}
-      <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+200px)] lg:pb-12 space-y-3 lg:space-y-4">
+      {/* Bottom padding leaves room for the compact fixed dock (~60px) +
+          bottom nav (~68px + safe-area) on mobile; desktop drops back to
+          a normal pad. */}
+      <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+160px)] lg:pb-12 space-y-3 lg:space-y-4">
         {/* Transaction-card hero */}
         <div className="text-center pt-3 pb-2">
           <div className="flex items-center justify-center flex-wrap gap-1.5">
@@ -454,30 +466,21 @@ export default async function LeadProfilePage({
         />
       </div>
 
-      {/* Sticky primary action — sits ABOVE the MobileBottomNav (z-30, ~68px
-          high + safe-area). CTA uses z-40 so the two bars stack cleanly:
-          nav at the absolute bottom, action bar one row up. Desktop hides
-          the entire bar — actions live in the page body there. */}
+      {/* Compact sticky primary action — sits ABOVE the MobileBottomNav
+          (z-30, ~68px + safe-area). Slim, opaque, single button so it
+          never sheets over readable content. Save/Pass live in the
+          Outcome card instead. Desktop hides the dock entirely. */}
       <div
-        className="lg:hidden fixed inset-x-0 z-40 bg-brand-parchment/95 backdrop-blur-md border-t border-brand-near-black/8 px-4 pt-3 pb-3"
+        className="lg:hidden fixed inset-x-0 z-40 bg-brand-parchment border-t border-brand-near-black/8 px-4 py-2"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 68px)' }}
       >
+        {/* TODO follow-up #13 — wire Open draft & contact to real outreach send */}
         <button
           type="button"
-          className="w-full h-14 rounded-full bg-brand-green text-white text-[16px] font-semibold hover:bg-brand-dark transition-colors shadow-fetchi-card"
+          className="w-full h-11 rounded-full bg-brand-green text-white text-[14px] font-semibold hover:bg-brand-dark transition-colors"
         >
           {drafts.length > 0 ? 'Open draft & contact' : 'Save for later'}
         </button>
-        <div className="flex items-center justify-center gap-6 mt-2.5 text-[13px] text-brand-near-black/55">
-          {/* TODO follow-up #13 — wire Save / Pass to updateLeadOutcome */}
-          <button type="button" className="font-medium hover:text-brand-near-black">
-            Save for later
-          </button>
-          <span aria-hidden>·</span>
-          <button type="button" className="font-medium hover:text-brand-near-black">
-            Pass
-          </button>
-        </div>
       </div>
     </div>
   )
