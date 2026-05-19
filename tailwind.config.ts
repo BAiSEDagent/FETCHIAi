@@ -32,6 +32,7 @@ const config: Config = {
         'brand-near-black': '#2D2B2A',
         'brand-cream': '#FAF8F2',
         'brand-cream-muted': '#F2EEDF',
+        'ml-card': '#FBF8EF',
         // shadcn/ui CSS variable tokens
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

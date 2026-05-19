@@ -2,9 +2,7 @@ import { and, eq, desc, inArray } from 'drizzle-orm'
 import { formatDistanceToNow } from 'date-fns'
 import { db, opportunities, prospects, signals } from '@/db'
 import { requireWorkspaceContext } from '@/lib/workspace'
-import { MobileScreenHeader } from '@/components/app/MobileScreenHeader'
-import { LeadCard } from '@/components/app/LeadCard'
-import { EmptyState } from '@/components/app/EmptyState'
+import { MyLeadsView, type LeadRow } from '@/components/app/MyLeadsView'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +23,79 @@ const SIGNAL_LABELS: Record<string, string> = {
   other: 'Signal detected',
 }
 
+// Dev-only UI fallback so the redesign can be visually QA'd in workspaces
+// that haven't ingested any real opportunities yet. Never shipped to prod
+// and never written to the database — purely a client-side render aid.
+function devDemoLeads(): LeadRow[] {
+  const now = Date.now()
+  const m = (mins: number) => now - mins * 60 * 1000
+  return [
+    {
+      id: 'demo-1', href: '/app/leads', businessName: 'Pine & Co. Construction',
+      signalLabel: 'Building permit', signalType: 'building_permit', score: 92,
+      whyNow: 'New roofing permit filed last Thursday for a 4,200 sqft single-family rebuild in Plano — your service zone, your trade.',
+      status: 'new', location: 'Plano, TX', ageLabel: '4h ago', createdAtMs: m(240),
+      contactName: 'Marcus Pine', contactConfidence: 3,
+    },
+    {
+      id: 'demo-2', href: '/app/leads', businessName: 'Hillside Storage LLC',
+      signalLabel: 'Hail event', signalType: 'weather_hail', score: 88,
+      whyNow: '1.25" hail confirmed within 2 miles of their address two nights ago — likely roof inspection request inbound.',
+      status: 'new', location: 'Frisco, TX', ageLabel: '11h ago', createdAtMs: m(660),
+      contactName: 'Dana Reyes', contactConfidence: 2,
+    },
+    {
+      id: 'demo-3', href: '/app/leads', businessName: 'North Loop Dental',
+      signalLabel: 'New listing', signalType: 'new_business_listing', score: 81,
+      whyNow: 'Just opened a second location last week — typically need signage, HVAC commissioning, and exterior cleanup in the first 30 days.',
+      status: 'saved', location: 'Allen, TX', ageLabel: '1d ago', createdAtMs: m(1500),
+      contactName: 'Office Manager', contactConfidence: 1,
+    },
+    {
+      id: 'demo-4', href: '/app/leads', businessName: 'Maple Ridge HOA',
+      signalLabel: 'High-wind event', signalType: 'weather_wind', score: 76,
+      whyNow: '62 mph wind gusts logged over the community Saturday. HOAs in this zone historically request fence and roof inspections within the week.',
+      status: 'saved', location: 'McKinney, TX', ageLabel: '2d ago', createdAtMs: m(2880),
+      contactName: 'Karen Walsh', contactConfidence: 2,
+    },
+    {
+      id: 'demo-5', href: '/app/leads', businessName: 'Brewhouse 12',
+      signalLabel: 'Local event', signalType: 'event', score: 74,
+      whyNow: 'Hosting a 400-person taproom anniversary event in 16 days — likely needs signage, light retrofit, and patio prep.',
+      status: 'contacted', location: 'Dallas, TX', ageLabel: '3d ago', createdAtMs: m(4320),
+      contactName: 'Sam Whitlow', contactConfidence: 3,
+    },
+    {
+      id: 'demo-6', href: '/app/leads', businessName: 'Vega Boutique Hotel',
+      signalLabel: 'Funding announcement', signalType: 'funding', score: 69,
+      whyNow: 'Closed a $2.4M renovation round — historically expand spend across construction trades in first 60 days.',
+      status: 'responded', location: 'Fort Worth, TX', ageLabel: '5d ago', createdAtMs: m(7200),
+      contactName: 'Priya Devan', contactConfidence: 2,
+    },
+    {
+      id: 'demo-7', href: '/app/leads', businessName: 'Ridgepoint Properties',
+      signalLabel: 'Building permit', signalType: 'building_permit', score: 64,
+      whyNow: 'Filed a tenant-improvement permit for a strip-mall remodel — typical timeline for trade subs starts in ~10 days.',
+      status: 'won', location: 'Garland, TX', ageLabel: '1w ago', createdAtMs: m(10080),
+      contactName: 'Jeff Ridge', contactConfidence: 3,
+    },
+    {
+      id: 'demo-8', href: '/app/leads', businessName: 'Ortega & Sons Auto',
+      signalLabel: 'Storm damage', signalType: 'storm_damage', score: 58,
+      whyNow: 'Reported lot flooding after Tuesday\u2019s storm — possible drainage, signage, and asphalt patch scope.',
+      status: 'skipped', location: 'Arlington, TX', ageLabel: '1w ago', createdAtMs: m(10500),
+      contactName: null, contactConfidence: null,
+    },
+    {
+      id: 'demo-9', href: '/app/leads', businessName: 'Westgate Athletic Club',
+      signalLabel: 'Expansion', signalType: 'expansion', score: 52,
+      whyNow: 'Announced a 12,000 sqft fitness annex — slated to break ground in Q3 per their LinkedIn.',
+      status: 'expired', location: 'Irving, TX', ageLabel: '2w ago', createdAtMs: m(21600),
+      contactName: 'Connor Hayes', contactConfidence: 1,
+    },
+  ]
+}
+
 export default async function LeadsPage() {
   const ctx = await requireWorkspaceContext()
 
@@ -34,9 +105,6 @@ export default async function LeadsPage() {
     .where(eq(opportunities.workspaceId, ctx.workspaceId))
     .orderBy(desc(opportunities.score), desc(opportunities.createdAt))
 
-  // Two batched workspace-scoped lookups instead of N+1. The explicit
-  // workspaceId predicate is kept so any future FK drift can't leak a row
-  // from another tenant through this query.
   const prospectIds = Array.from(
     new Set(rows.map(r => r.prospectId).filter((v): v is string => Boolean(v))),
   )
@@ -70,48 +138,49 @@ export default async function LeadsPage() {
   const prospectById = new Map(prospectRows.map(p => [p.id, p]))
   const signalById = new Map(signalRows.map(s => [s.id, s]))
 
+  const realLeads: LeadRow[] = rows.map(opp => {
+    const prospect = opp.prospectId ? prospectById.get(opp.prospectId) ?? null : null
+    const signal = opp.signalId ? signalById.get(opp.signalId) ?? null : null
+    const createdAt = new Date(opp.createdAt)
+    return {
+      id: opp.id,
+      href: `/app/leads/${opp.id}`,
+      businessName: prospect?.businessName ?? 'Unknown business',
+      signalLabel: SIGNAL_LABELS[signal?.signalType ?? ''] ?? 'Signal',
+      signalType: signal?.signalType ?? null,
+      score: opp.score,
+      whyNow: opp.whyNow ?? signal?.whyRelevant ?? null,
+      status: opp.status ?? 'new',
+      location: prospect?.city ? `${prospect.city}${prospect.state ? `, ${prospect.state}` : ''}` : null,
+      ageLabel: formatDistanceToNow(createdAt, { addSuffix: true }),
+      createdAtMs: createdAt.getTime(),
+      contactName: null,
+      contactConfidence: null,
+    }
+  })
+
+  const isDev = process.env.NODE_ENV !== 'production'
+  const useDemo = isDev && realLeads.length === 0
+  const leads = useDemo ? devDemoLeads() : realLeads
+
+  const dayMs = 24 * 60 * 60 * 1000
+  const since = Date.now() - dayMs
+  const newTodayCount = leads.filter(l => l.createdAtMs >= since && l.status === 'new').length
+
+  // Today's Run is a session view; for the CTA count we surface unreviewed
+  // 'new' leads scored high enough to be considered queued — schema for the
+  // formal Today's Run session is out of scope for CP2.5A.
+  const todaysRunCount = Math.min(
+    leads.filter(l => l.status === 'new' && l.score >= 70).length,
+    3,
+  )
+
   return (
-    <div className="flex flex-col">
-      <MobileScreenHeader
-        title="My Leads"
-        description={`Every signal Fetchi surfaced for ${
-          ctx.workspace.businessName ?? 'your workspace'
-        }.`}
-      />
-
-      <div className="px-4 lg:px-7 pb-8 flex flex-col gap-3">
-        {rows.length === 0 && (
-          <EmptyState
-            icon="✦"
-            title="No leads yet"
-            body="ツ is still listening for the first signal in your area. New leads land here automatically as scouting runs."
-          />
-        )}
-
-        {rows.map(opp => {
-          const prospect = opp.prospectId ? prospectById.get(opp.prospectId) ?? null : null
-          const signal = opp.signalId ? signalById.get(opp.signalId) ?? null : null
-          return (
-            <LeadCard
-              key={opp.id}
-              href={`/app/leads/${opp.id}`}
-              businessName={prospect?.businessName ?? 'Unknown business'}
-              signalLabel={SIGNAL_LABELS[signal?.signalType ?? ''] ?? 'Signal'}
-              signalType={signal?.signalType}
-              score={opp.score}
-              whyNow={opp.whyNow ?? signal?.whyRelevant ?? null}
-              status={opp.status}
-              location={
-                prospect?.city ? `${prospect.city}, ${prospect.state}` : null
-              }
-              ageLabel={formatDistanceToNow(new Date(opp.createdAt), {
-                addSuffix: true,
-              })}
-              variant="list"
-            />
-          )
-        })}
-      </div>
-    </div>
+    <MyLeadsView
+      leads={leads}
+      newTodayCount={newTodayCount}
+      todaysRunCount={todaysRunCount}
+      isDemoData={useDemo}
+    />
   )
 }
