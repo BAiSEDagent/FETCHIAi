@@ -14,9 +14,14 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Clerk v6 verifyWebhook() defaults to reading CLERK_WEBHOOK_SIGNING_SECRET
+  // from the environment. We pass our existing CLERK_WEBHOOK_SECRET value
+  // explicitly as `signingSecret` so we don't need to rename the env var.
   let evt
   try {
-    evt = await verifyWebhook(req)
+    evt = await verifyWebhook(req, {
+      signingSecret: process.env.CLERK_WEBHOOK_SECRET,
+    })
   } catch (err) {
     console.error('[clerk webhook] signature verification failed', err)
     return NextResponse.json({ error: 'invalid signature' }, { status: 400 })
