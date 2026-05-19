@@ -54,7 +54,10 @@ export async function POST(req: Request) {
         results.push({ workspaceId: row.workspaceId, ok: false, reason: 'no_price' })
         continue
       }
-      const trialEnd = row.trialEndsAt ? Math.floor(row.trialEndsAt.getTime() / 1000) : undefined
+      const now = Date.now()
+      const trialEndMs = row.trialEndsAt?.getTime() ?? 0
+      const trialEnd: number | 'now' =
+        trialEndMs > now ? Math.floor(trialEndMs / 1000) : 'now'
       const sub = await stripe.subscriptions.create({
         customer: row.stripeCustomerId!,
         items: [{ price: priceId }],

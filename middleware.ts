@@ -9,7 +9,7 @@ const isPublicRoute = createRouteMatcher([
   '/verify-email',
   '/api/clerk/webhook',
   '/api/stripe/webhook',
-  '/api/cron/(.*)',
+  '/api/cron/trial-expiry',
 ])
 
 export default clerkMiddleware(async (auth, req) => {

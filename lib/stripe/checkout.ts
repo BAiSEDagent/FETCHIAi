@@ -43,6 +43,14 @@ async function resolvePromoCode(
     }
   }
 
+  const needsStripeCoupon =
+    row.type === 'percent_off_first' ||
+    row.type === 'dollar_off_first' ||
+    row.type === 'free_month'
+  if (needsStripeCoupon && !row.stripeCouponId) {
+    throw new Error('That promo code is not available right now. Please try another.')
+  }
+
   let promotionCodeId: string | null = null
   if (row.stripeCouponId) {
     const promos = await stripe.promotionCodes.list({
