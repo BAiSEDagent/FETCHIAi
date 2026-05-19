@@ -142,7 +142,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
               max={1000}
               className="h-11 w-24 rounded-xl border border-brand-near-black/15 bg-white px-3 text-[14px]"
             />
-            <Button type="submit" disabled={!sub?.stripeCustomerId && !stripeConfigured()}>
+            <Button type="submit" disabled={!stripeConfigured() || !sub?.stripeCustomerId}>
               Buy top-up
             </Button>
             {!sub?.stripeCustomerId && (

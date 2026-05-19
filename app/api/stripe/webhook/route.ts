@@ -103,8 +103,34 @@ export async function POST(req: Request) {
 
       case 'invoice.payment_failed': {
         const inv = event.data.object as Stripe.Invoice
-        const workspaceId = workspaceIdFromMetadata(inv.subscription_details?.metadata ?? null)
-          ?? workspaceIdFromMetadata(inv.metadata)
+        let workspaceId =
+          workspaceIdFromMetadata(inv.subscription_details?.metadata ?? null) ??
+          workspaceIdFromMetadata(inv.metadata)
+        if (!workspaceId) {
+          const rawSub = (inv as unknown as {
+            subscription?: string | Stripe.Subscription | null
+          }).subscription
+          const subId =
+            typeof rawSub === 'string'
+              ? rawSub
+              : rawSub && typeof rawSub === 'object'
+              ? rawSub.id
+              : null
+          if (subId) {
+            const sub = await stripe.subscriptions.retrieve(subId)
+            workspaceId = workspaceIdFromMetadata(sub.metadata)
+          }
+        }
+        if (!workspaceId) {
+          const customerId =
+            typeof inv.customer === 'string' ? inv.customer : inv.customer?.id ?? null
+          if (customerId) {
+            const customer = await stripe.customers.retrieve(customerId)
+            if (!customer.deleted) {
+              workspaceId = workspaceIdFromMetadata(customer.metadata)
+            }
+          }
+        }
         if (workspaceId) await markPaymentFailed(workspaceId)
         break
       }
