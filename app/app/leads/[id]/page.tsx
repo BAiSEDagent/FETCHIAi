@@ -94,25 +94,31 @@ function ConfidenceDots({ pct }: { pct: number }) {
   )
 }
 
-// Picks the first complete sentence from a paragraph. Falls back to the full
-// trimmed string when no sentence-end punctuation is present, then to a
-// generic line so the hero never reads as truncated.
-// Picks the first complete sentence. The terminator must be followed by
-// whitespace or end-of-string so decimal numbers like "1.5" do not get
-// truncated to "dropped 1." mid-summary.
-function firstSentence(text: string | null | undefined, fallback: string): string {
-  if (!text) return fallback
-  const trimmed = text.trim()
-  if (!trimmed) return fallback
-  const match = trimmed.match(/^[^.!?]+?[.!?](?=\s|$)/)
-  if (match) {
-    const sentence = match[0].trim()
-    // Guard: never return a sentence that ends with "<digit>." — that's a
-    // decimal we wrongly cut. Fall through to the short-line / fallback path.
-    if (!/\d[.!?]$/.test(sentence)) return sentence
+// Deterministic, signal-type-keyed hero summary. We intentionally do NOT
+// parse freeform `whyNow` / `whyRelevant` copy for the hero — measurements
+// like `1.8"` and abbreviations break sentence detection and leak strings
+// like "Tuesday's hail event dropped 1." into the hero. Freeform copy
+// still renders in full inside the Why Now / Signal Evidence cards.
+function summaryForSignalType(signalType: string | null | undefined): string {
+  switch (signalType) {
+    case 'storm_damage':
+    case 'weather_hail':
+    case 'weather_wind':
+      return 'Fresh storm signal matched to a commercial roof opportunity.'
+    case 'building_permit':
+    case 'permit':
+      return 'Recent permit activity suggests upcoming vendor need.'
+    case 'new_business':
+    case 'new_business_listing':
+    case 'expansion':
+    case 'ownership_change':
+      return 'New business activity suggests a timely outreach opportunity.'
+    case 'job_posting':
+    case 'hiring':
+      return 'Hiring activity suggests active growth and vendor demand.'
+    default:
+      return 'Fetchi found a timely signal worth reviewing.'
   }
-  if (trimmed.length <= 140) return trimmed
-  return fallback
 }
 
 const SIGNAL_TYPE_LABEL: Record<string, string> = {
@@ -200,17 +206,7 @@ export default async function LeadProfilePage({
     ? `${prospect.city}${prospect.state ? `, ${prospect.state}` : ''}`
     : null
   const businessName = prospect?.businessName ?? 'Unknown business'
-  const isStormSignal =
-    signal?.signalType === 'storm_damage' ||
-    signal?.signalType === 'weather_hail' ||
-    signal?.signalType === 'weather_wind'
-  const summaryFallback = isStormSignal
-    ? 'Fresh storm signal matched to a commercial roof opportunity.'
-    : 'Fresh signal matched to an opportunity worth a closer look.'
-  const summaryLine = firstSentence(
-    opp.whyNow ?? signal?.whyRelevant,
-    summaryFallback,
-  )
+  const summaryLine = summaryForSignalType(signal?.signalType)
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -237,10 +233,10 @@ export default async function LeadProfilePage({
         </button>
       </div>
 
-      {/* Bottom padding leaves room for the compact fixed dock (~60px) +
-          bottom nav (~68px + safe-area) on mobile; desktop drops back to
-          a normal pad. */}
-      <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+160px)] lg:pb-12 space-y-3 lg:space-y-4">
+      {/* Sticky CTA dock was removed in CP2.6C — the Outreach Draft card
+          carries the primary action. Bottom padding only needs to clear
+          MobileBottomNav (~68px + safe-area) plus a small breathing gap. */}
+      <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+96px)] lg:pb-12 space-y-3 lg:space-y-4">
         {/* Transaction-card hero */}
         <div className="text-center pt-3 pb-2">
           <div className="flex items-center justify-center flex-wrap gap-1.5">
@@ -466,22 +462,9 @@ export default async function LeadProfilePage({
         />
       </div>
 
-      {/* Compact sticky primary action — sits ABOVE the MobileBottomNav
-          (z-30, ~68px + safe-area). Slim, opaque, single button so it
-          never sheets over readable content. Save/Pass live in the
-          Outcome card instead. Desktop hides the dock entirely. */}
-      <div
-        className="lg:hidden fixed inset-x-0 z-40 bg-brand-parchment border-t border-brand-near-black/8 px-4 py-2"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 68px)' }}
-      >
-        {/* TODO follow-up #13 — wire Open draft & contact to real outreach send */}
-        <button
-          type="button"
-          className="w-full h-11 rounded-full bg-brand-green text-white text-[14px] font-semibold hover:bg-brand-dark transition-colors"
-        >
-          {drafts.length > 0 ? 'Open draft & contact' : 'Save for later'}
-        </button>
-      </div>
+      {/* CP2.6C: sticky CTA dock removed. The Outreach Draft card holds
+          the primary "Open draft & contact" + "Edit" actions. A persistent
+          sticky action can be reintroduced in a later checkpoint if needed. */}
     </div>
   )
 }
