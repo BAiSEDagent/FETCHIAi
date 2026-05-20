@@ -65,6 +65,43 @@ function locationFor(p: { city: string | null; state: string | null } | null): s
   return p.state ? `${p.city}, ${p.state}` : p.city
 }
 
+// Humanize raw business-type enums like `commercial_office` or `retail_strip`
+// so they never leak into the UI as snake_case.
+function humanizeCategory(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const cleaned = raw.replace(/[_-]+/g, ' ').trim()
+  if (!cleaned) return null
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase()
+}
+
+const MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+
+function shortDateLabel(at: Date | string | null | undefined): string | null {
+  if (!at) return null
+  const d = typeof at === 'string' ? new Date(at) : at
+  if (Number.isNaN(d.getTime())) return null
+  return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()}`
+}
+
+function chipSuffixFor(
+  kind: EvidenceKind,
+  detectedAt: Date | string | null | undefined,
+  parsed: unknown,
+): string | null {
+  if (kind === 'permit') {
+    // Try to pull a year from parsed data; fall back to date.
+    const year = readNum(parsed, 'permit_year') ?? readNum(parsed, 'year')
+    if (year && year > 1900 && year < 2200) return String(Math.round(year))
+    return shortDateLabel(detectedAt)
+  }
+  if (kind === 'ownership') {
+    const src = readStr(parsed, 'source') ?? readStr(parsed, 'agency')
+    if (src && src.length <= 8) return src.toUpperCase()
+    return 'SOS'
+  }
+  return shortDateLabel(detectedAt)
+}
+
 function ageLabel(at: Date | string | null | undefined): string | null {
   if (!at) return null
   const ms = typeof at === 'string' ? new Date(at).getTime() : at.getTime()
@@ -119,58 +156,101 @@ function firstLines(text: string | null | undefined, max = 3, charLimit = 220): 
 }
 
 function demoQueue(): TodayRunCardData[] {
-  const baseDate = Date.now() - 2 * 86_400_000
   return [
     {
       opportunityId: 'demo-1',
-      score: 92,
+      score: 94,
       signalType: 'weather_hail',
       signalLabel: 'Hail event',
-      signalToken: 'HAIL · 1.8" · 2D',
-      signalAgeLabel: '2d ago',
+      signalToken: 'HAIL \u00b7 1.8" \u00b7 4D',
+      signalAgeLabel: '4d ago',
       status: 'new',
       outcomeNotesSnapshot: null,
       businessName: 'Parkview Office Complex',
-      cityState: 'Dallas, TX',
+      cityState: 'Irving, TX',
       vertical: 'Commercial',
-      squareFootageLabel: '86.4k sqft',
+      squareFootageLabel: '86,400 sqft',
       claimStatusLabel: 'No claim filed',
-      reason:
-        'Tuesday\u2019s hail event dropped 1.8" stones across the Parkview corridor. Roof age and policy renewal window line up.',
+      reason: '94 \u2014 Fresh storm + commercial roof',
       evidence: [
         {
           id: 'd1-e1',
           kind: 'storm',
-          title: 'NOAA hail report — 1.8" stones, Parkview cell',
+          title: 'NOAA event 8772-DFW',
+          chipSuffix: 'MAY 14',
           sourceDomain: 'noaa.gov',
-          recencyLabel: ageLabel(new Date(baseDate)),
+          recencyLabel: 'May 14, 4:17pm',
+          detailLine: 'Hail 1.75\u20132.0" corridor across Irving',
+          confidence: 100,
           accent: 'coral',
         },
         {
           id: 'd1-e2',
           kind: 'property',
-          title: 'County property record — Class A office, 1998 roof',
-          sourceDomain: 'dallascad.org',
-          recencyLabel: '3d ago',
+          title: '2200 W Airport Fwy \u00b7 86.4k sqft',
+          chipSuffix: 'CLASS A',
+          sourceDomain: 'Dallas County records',
+          recencyLabel: null,
+          detailLine: '4-building commercial complex \u00b7 18-yr roof age',
+          confidence: 100,
           accent: 'green',
         },
         {
           id: 'd1-e3',
           kind: 'permit',
-          title: 'No active roofing permit on file',
-          sourceDomain: 'dallaspermits.gov',
-          recencyLabel: '1d ago',
+          title: '2007 re-roof on file',
+          chipSuffix: '2007',
+          sourceDomain: 'Irving permits',
+          recencyLabel: '3 Sep 2007',
+          detailLine: 'Original installer no longer trading',
+          confidence: 80,
+          accent: 'green',
+        },
+        {
+          id: 'd1-e4',
+          kind: 'ownership',
+          title: 'Parkview Holdings LLC',
+          chipSuffix: 'SOS',
+          sourceDomain: 'Texas SOS',
+          recencyLabel: 'active filing',
+          detailLine: 'Agent on 7 commercial properties',
+          confidence: 100,
+          accent: 'green',
+        },
+        {
+          id: 'd1-e5',
+          kind: 'market',
+          title: 'Adjacent block damage photo',
+          chipSuffix: 'MAY 15',
+          sourceDomain: 'local news',
+          recencyLabel: 'May 15, 8am',
+          detailLine: 'Visible roof-AC dents \u00b7 same hail cell',
+          confidence: 75,
           accent: 'green',
         },
       ],
       contacts: [
-        { name: 'Tom Avery', title: 'Facilities Manager', email: null, phone: null, confidence: 92, isBest: true },
-        { name: 'Morgan Reyes', title: 'Property Director', email: null, phone: null, confidence: 70, isBest: false },
+        {
+          name: 'Tom Avery',
+          title: 'Facilities Manager \u00b7 Parkview Holdings',
+          email: 'tom.avery@parkview.example',
+          phone: '+1 214 555 0118',
+          confidence: 100,
+          isBest: true,
+        },
+        {
+          name: 'Marisol Vega',
+          title: 'Property Management Agent \u00b7 CBRE',
+          email: 'mvega@cbre.example',
+          phone: null,
+          confidence: 80,
+          isBest: false,
+        },
       ],
       draftPreview: {
         subjectLine: 'About the storm cell that hit Parkview Tuesday',
         bodyFirstLines:
-          'Hi Tom — Tuesday\u2019s cell dropped 1.8" stones on your block. I\u2019m local and pull free inspection reports for buildings of your size.\nWould a 20-minute walk-through next week help?',
+          'Hi Tom \u2014 Tuesday\u2019s cell dropped 1.8" stones on your block. I pull free inspection reports for buildings your size.\nWould a 20-minute walk-through next week help?',
       },
     },
     {
@@ -178,7 +258,7 @@ function demoQueue(): TodayRunCardData[] {
       score: 81,
       signalType: 'building_permit',
       signalLabel: 'Building permit',
-      signalToken: 'PERMIT · COMMERCIAL · 6D',
+      signalToken: 'PERMIT \u00b7 KITCHEN \u00b7 6D',
       signalAgeLabel: '6d ago',
       status: 'new',
       outcomeNotesSnapshot: null,
@@ -187,13 +267,41 @@ function demoQueue(): TodayRunCardData[] {
       vertical: 'Restaurant',
       squareFootageLabel: '4.2k sqft',
       claimStatusLabel: null,
-      reason:
-        'New commercial kitchen permit filed last week — typically signals a vendor refresh on HVAC and equipment service.',
+      reason: '81 \u2014 Permit filed + equipment refresh window',
       evidence: [
-        { id: 'd2-e1', kind: 'permit', title: 'Commercial kitchen permit — equipment refresh', sourceDomain: 'planopermits.gov', recencyLabel: '6d ago', accent: 'green' },
-        { id: 'd2-e2', kind: 'market', title: 'New menu launch press release', sourceDomain: 'planostar.com', recencyLabel: '2w ago', accent: 'green' },
+        {
+          id: 'd2-e1',
+          kind: 'permit',
+          title: 'Commercial kitchen permit \u2014 equipment refresh',
+          chipSuffix: 'MAY 12',
+          sourceDomain: 'planopermits.gov',
+          recencyLabel: '6d ago',
+          detailLine: 'HVAC + line refurb scope',
+          confidence: 90,
+          accent: 'green',
+        },
+        {
+          id: 'd2-e2',
+          kind: 'market',
+          title: 'New menu launch press release',
+          chipSuffix: 'APR 28',
+          sourceDomain: 'planostar.com',
+          recencyLabel: '2w ago',
+          detailLine: null,
+          confidence: 60,
+          accent: 'green',
+        },
       ],
-      contacts: [],
+      contacts: [
+        {
+          name: 'Alex Kim',
+          title: 'Owner / GM',
+          email: 'alex@cedarbistro.example',
+          phone: null,
+          confidence: 70,
+          isBest: true,
+        },
+      ],
       draftPreview: null,
     },
     {
@@ -201,7 +309,7 @@ function demoQueue(): TodayRunCardData[] {
       score: 76,
       signalType: 'job_posting',
       signalLabel: 'Job posting',
-      signalToken: 'JOB · 3 ROLES · 4D',
+      signalToken: 'JOB \u00b7 3 ROLES \u00b7 4D',
       signalAgeLabel: '4d ago',
       status: 'saved',
       outcomeNotesSnapshot: null,
@@ -210,13 +318,29 @@ function demoQueue(): TodayRunCardData[] {
       vertical: 'Auto service',
       squareFootageLabel: null,
       claimStatusLabel: null,
-      reason:
-        'Just posted three service tech roles in the last 14 days — active growth tends to precede vendor expansion.',
+      reason: '76 \u2014 Active hiring + vendor refresh window',
       evidence: [
-        { id: 'd3-e1', kind: 'market', title: 'Indeed — 3 service tech postings in 14 days', sourceDomain: 'indeed.com', recencyLabel: '4d ago', accent: 'green' },
+        {
+          id: 'd3-e1',
+          kind: 'market',
+          title: 'Indeed \u2014 3 service tech postings in 14 days',
+          chipSuffix: 'MAY 16',
+          sourceDomain: 'indeed.com',
+          recencyLabel: '4d ago',
+          detailLine: 'Roles indicate bay expansion',
+          confidence: 70,
+          accent: 'green',
+        },
       ],
       contacts: [
-        { name: 'A. Patel', title: 'General Manager', email: null, phone: null, confidence: 55, isBest: true },
+        {
+          name: 'A. Patel',
+          title: 'General Manager',
+          email: null,
+          phone: '+1 469 555 0142',
+          confidence: 55,
+          isBest: true,
+        },
       ],
       draftPreview: null,
     },
@@ -332,12 +456,19 @@ export default async function TodayPage() {
     const evidence: EvidenceItem[] = []
     if (s) {
       const kind = SIGNAL_TYPE_TO_EVIDENCE_KIND[s.signalType] ?? 'other'
+      const detectedAt = s.detectedAt ?? s.createdAt
       evidence.push({
         id: `${o.id}-sig`,
         kind,
         title: s.whyRelevant ?? labelForSignalType(s.signalType),
+        chipSuffix: chipSuffixFor(kind, detectedAt, s.parsedData),
         sourceDomain: sourceDomainFor(s.parsedData),
-        recencyLabel: ageLabel(s.detectedAt ?? s.createdAt),
+        recencyLabel: ageLabel(detectedAt),
+        detailLine:
+          readStr(s.parsedData, 'detail') ??
+          readStr(s.parsedData, 'summary') ??
+          null,
+        confidence: 75,
         accent: kind === 'storm' ? 'coral' : 'green',
       })
     }
@@ -366,7 +497,7 @@ export default async function TodayPage() {
       outcomeNotesSnapshot: o.outcomeNotes ?? null,
       businessName: p?.businessName ?? 'Unknown business',
       cityState: locationFor(p),
-      vertical: p?.businessType ?? null,
+      vertical: humanizeCategory(p?.businessType),
       squareFootageLabel: squareFootageLabelFor(s?.parsedData),
       claimStatusLabel: null,
       reason: o.whyNow,

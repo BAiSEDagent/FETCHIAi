@@ -5,16 +5,7 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, opportunities } from '@/db'
 import { requireWorkspaceContext } from '@/lib/workspace'
-
-export const TODAYS_RUN_PASS_REASONS = [
-  'wrong_contact',
-  'already_has_vendor',
-  'too_small',
-  'out_of_area',
-  'bad_signal',
-] as const
-
-export type TodaysRunPassReason = (typeof TODAYS_RUN_PASS_REASONS)[number]
+import { TODAYS_RUN_PASS_REASONS } from '@/lib/today/pass-reasons'
 
 const passFeedbackSchema = z.object({
   reasons: z.array(z.enum(TODAYS_RUN_PASS_REASONS)).min(1),

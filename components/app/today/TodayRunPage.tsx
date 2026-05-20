@@ -3,7 +3,8 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { updateLeadOutcome, type TodaysRunPassReason } from '@/app/app/leads/[id]/actions'
+import { updateLeadOutcome } from '@/app/app/leads/[id]/actions'
+import type { TodaysRunPassReason } from '@/lib/today/pass-reasons'
 import { RunProgress } from './RunProgress'
 import { RunActionBar } from './RunActionBar'
 import { TodayRunCard } from './TodayRunCard'
@@ -41,6 +42,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
   const [exitDirection, setExitDirection] = React.useState<'left' | 'right' | null>(null)
   const [savedCount, setSavedCount] = React.useState(0)
   const [skippedCount, setSkippedCount] = React.useState(0)
+  const [draftsPreparedCount, setDraftsPreparedCount] = React.useState(0)
   const [pending, startTransition] = React.useTransition()
   const startedAtRef = React.useRef<number>(Date.now())
 
@@ -75,6 +77,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
     const snapshot = { status: card.status, outcomeNotes: card.outcomeNotesSnapshot }
     setExitDirection('right')
     setSavedCount(c => c + 1)
+    if (card.draftPreview) setDraftsPreparedCount(c => c + 1)
     // Optimistic move into after-add confirmation after the exit animation.
     window.setTimeout(() => {
       setPhase({ kind: 'after-add', snapshot, cardId: card.opportunityId })
@@ -143,7 +146,9 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
     if (phase.kind !== 'after-add' || !phase.snapshot) return
     const snap = phase.snapshot
     const cardId = phase.cardId
+    const card = queue.find(c => c.opportunityId === cardId)
     setSavedCount(c => Math.max(0, c - 1))
+    if (card?.draftPreview) setDraftsPreparedCount(c => Math.max(0, c - 1))
     if (!isDemo) {
       startTransition(async () => {
         try {
@@ -162,7 +167,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
     setExitDirection(null)
     setDragX(0)
     setFlipped(false)
-  }, [isDemo, phase, router])
+  }, [isDemo, phase, queue, router])
 
   const stopRun = React.useCallback(() => {
     router.push('/app/leads')
@@ -239,7 +244,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
   if (total === 0) {
     return (
       <div className="mt-2">
-        <RunCompletion saved={0} skipped={0} elapsedSeconds={0} />
+        <RunCompletion saved={0} skipped={0} draftsPrepared={0} elapsedSeconds={0} />
       </div>
     )
   }
@@ -254,7 +259,12 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
           savedCount={savedCount}
           skippedCount={skippedCount}
         />
-        <RunCompletion saved={savedCount} skipped={skippedCount} elapsedSeconds={elapsed} />
+        <RunCompletion
+          saved={savedCount}
+          skipped={skippedCount}
+          draftsPrepared={draftsPreparedCount}
+          elapsedSeconds={elapsed}
+        />
       </div>
     )
   }
@@ -326,7 +336,11 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
           dragX={dragX}
           exitDirection={exitDirection}
           flipped={flipped}
-          front={current ? <TodayRunCard card={current} /> : null}
+          front={
+            current ? (
+              <TodayRunCard card={current} onFlip={() => setFlipped(true)} />
+            ) : null
+          }
           back={
             current ? (
               <EvidenceCardBack card={current} onBack={() => setFlipped(false)} />
@@ -341,6 +355,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
         onAdd={commitAdd}
         disabled={pending || exitDirection !== null}
         flipped={flipped}
+        hasDraft={!!current?.draftPreview}
       />
 
       <p

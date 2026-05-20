@@ -1,0 +1,98 @@
+#22 — CP2.7C — Today’s Run Premium Deck Visual Pass
+
+What & Why
+The current Today’s Run implementation is functional but lacks the Claude Design 09 “premium morning ritual” feeling. It reads like a flat review panel instead of an addictive daily swipe stack. Rebuild the Today’s Run presentation layer to match the Claude Design 09 artifacts much more closely while preserving the existing CP2.7/CP2.7B architecture and actions.
+
+Use the Claude Design 09 screenshots as the visual source of truth:
+- Front of card reference: premium stacked deck, circular fit score, signal chips, reason ribbon, why-now block, evidence chips, best contact row, layered ghost card underneath.
+- Back of card reference: “Evidence · Parkview” proof view with verified badge, evidence rows, confidence dots, contact route, and “tap/back to flip” language.
+- Added/pass states: brief satisfying visual feedback, not a plain immediate jump.
+
+Current Replit result is the anti-reference:
+- Too flat
+- Too much whitespace
+- Score in wrong place
+- Header is too admin-like
+- Evidence back feels empty
+- `commercial_office` raw enum leaks into UI
+- Missing stacked-card depth and morning ritual progress language
+
+Done looks like
+/app/today feels like a premium morning ritual:
+- Header uses “Today’s Run” with small eyebrow like “Morning review”
+- Progress module says approximately “~2 min to clear today’s stack”
+- Shows reviewed/left count, not admin copy like “CARD 1 OF 3 · SAVED 0 · SKIPPED 0”
+- A segmented progress bar shows current progress through the stack
+- The active card has visible stacked ghost layers underneath
+- Card surface uses the premium parchment / ml-card language, stronger layered shadow, rounded 22px+ corners
+- Score appears as a circular “FIT” badge on the right side of the card
+- Top chip row includes compact signal token, e.g. `HAIL · 1.8" · 4D`, plus optional `No claim filed`
+- Business title is large and emotionally centered
+- Location/category row is humanized: no raw enum values like `commercial_office`
+- Reason ribbon appears: `94 — Fresh storm + commercial roof`
+- Why Now section is short and readable
+- Evidence section shows category chips such as Storm, Permit, Ownership, Market when available or safely derived
+- “Tap to flip” / Evidence CTA flips to the back-of-card view
+- Best contact row looks premium: initials avatar, name, role, BEST badge, confidence dots
+- Bottom actions are large tactile cards:
+  - Pass / Tag why
+  - Evidence / Flip card
+  - Add to My Leads / Draft prepared
+- On Add or Pass, show a short visual transition state before advancing:
+  - card tilts/slides slightly
+  - ADD or PASS stamp overlay appears
+  - next card ghost layer becomes visible
+  - then advance to next card
+- Respect prefers-reduced-motion: no heavy animation if reduced motion is enabled
+- Completion state feels rewarding: “Stack cleared / You reviewed N opportunities / X drafts prepared”
+- Mobile bottom nav remains locked and unchanged; Today tab active
+- Desktop version also gets the premium centered deck, not just the old flat card
+
+Architecture guardrails
+- Do not create new schema fields.
+- Do not create a queued status.
+- Do not use workspace_run_state.
+- Today’s Run remains a session view over opportunities where status IN ('new','saved').
+- Add to My Leads sets status='saved'.
+- Pass sets status='skipped' and preserves CP2.7B outcome_notes JSON behavior if already implemented.
+- Evidence flip is UI-only.
+- Draft prepared is UI/copy only; do not send outreach.
+- No new npm dependencies.
+- Do not touch db/schema.ts, db/index.ts, db/seed.ts, drizzle.config.ts, package.json, design/*.html, admin, billing, Stripe, agents, providers, or SearchProvider.
+- Do not modify My Leads visuals except if a shared type requires compatibility.
+- Do not modify MobileBottomNav or Sidebar.
+
+Implementation notes
+1. Update components/app/LeadCard.tsx run variant only.
+   - Preserve list, chat, chat-hero variants.
+   - The run variant should support front and back presentation if needed through props or composition.
+   - Use existing signalToken helper from lib/signals/token.ts.
+   - Add a local humanizeCategory/helper so raw enum strings never render.
+
+2. Update components/app/TodaysRunView.tsx.
+   - Replace flat header/progress with morning ritual progress card.
+   - Manage local `isEvidenceOpen`, `lastAction`, and short transition state.
+   - For Add/Pass, show a short action overlay/stamp and then advance.
+   - Do not block the user with long animations.
+   - Keep all current server action behavior.
+
+3. Evidence back view.
+   - Build a premium back-of-card panel.
+   - Use real available evidence only.
+   - If only one signal exists, still present it cleanly as a proof row and avoid fake production evidence.
+   - Dev-only fallback can show richer sample evidence when NODE_ENV !== 'production', but never write it to DB.
+
+4. Completion screen.
+   - Replace plain complete state with premium “Stack cleared” card.
+   - Include reviewed count, saved count, skipped count, drafts prepared count.
+   - CTA back to My Leads.
+   - Optional secondary link to saved leads.
+
+5. Verify
+   - npm run type-check
+   - npm run build
+   - Architect review with includeGitDiff:true
+   - Fix High/Critical only
+   - Report and stop
+
+Stop after report. Do not start another checkpoint.

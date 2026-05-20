@@ -1,12 +1,15 @@
 'use client'
 
 import * as React from 'react'
+import { ArrowUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CARD_RADIUS, CARD_SHADOW, CARD_SURFACE } from './tokens'
-import type { TodayRunCardData } from './types'
+import type { EvidenceItem, TodayRunCardData } from './types'
 
 type Props = {
   card: TodayRunCardData
+  /** Called when the user wants to flip to the evidence side. */
+  onFlip?: () => void
 }
 
 function initialsFor(name: string): string {
@@ -14,7 +17,7 @@ function initialsFor(name: string): string {
   return parts.map(p => p[0]?.toUpperCase() ?? '').join('') || '?'
 }
 
-const EVIDENCE_KIND_LABEL: Record<string, string> = {
+const EVIDENCE_KIND_LABEL: Record<EvidenceItem['kind'], string> = {
   storm: 'Storm',
   property: 'Property',
   permit: 'Permit',
@@ -23,76 +26,118 @@ const EVIDENCE_KIND_LABEL: Record<string, string> = {
   other: 'Source',
 }
 
-export function TodayRunCard({ card }: Props) {
+export function TodayRunCard({ card, onFlip }: Props) {
   const bestContact = card.contacts.find(c => c.isBest) ?? card.contacts[0] ?? null
-  const otherContacts = card.contacts.filter(c => c !== bestContact).slice(0, 2)
+  const otherContactsCount = Math.max(0, card.contacts.length - 1)
 
   // Build the contextual subline beneath business name.
   const sublineParts: string[] = []
   if (card.vertical) sublineParts.push(card.vertical)
   if (card.squareFootageLabel) sublineParts.push(card.squareFootageLabel)
-  if (card.claimStatusLabel) sublineParts.push(card.claimStatusLabel)
-  const subline = sublineParts.join(' · ')
+  const subline = sublineParts.join(' \u00b7 ')
+
+  const evidenceCount = card.evidence.length
 
   return (
     <article
       className={cn(
-        'relative p-6 lg:p-7 text-brand-near-black',
+        'relative p-5 lg:p-7 text-brand-near-black',
         CARD_SURFACE,
         CARD_RADIUS,
         CARD_SHADOW,
       )}
     >
-      {/* Top row: score chip + status pill + age */}
-      <div className="flex items-start justify-between gap-3">
-        <ScoreChip score={card.score} />
-        <div className="flex flex-col items-end gap-1.5">
-          <span className="inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold bg-brand-light text-brand-dark">
-            {card.status === 'saved' ? 'Saved' : 'New'}
+      {/* Top chip row: signal token + optional claim status */}
+      <div className="flex flex-wrap items-center gap-2">
+        {card.signalToken && (
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full pl-2 pr-2.5 h-[26px]',
+              'text-[11px] font-mono font-semibold tracking-wide',
+              'bg-brand-coral/10 text-brand-coral',
+            )}
+            title={card.signalLabel}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-coral" />
+            {card.signalToken}
           </span>
-          {card.signalAgeLabel && (
-            <span className="text-[11.5px] text-brand-near-black/55 tabular-nums">
-              {card.signalAgeLabel}
-            </span>
-          )}
-        </div>
+        )}
+        {card.claimStatusLabel && (
+          <span
+            className={cn(
+              'inline-flex items-center rounded-full px-2.5 h-[26px]',
+              'text-[11px] font-semibold text-brand-near-black/65',
+              'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.12)]',
+            )}
+          >
+            {card.claimStatusLabel}
+          </span>
+        )}
       </div>
 
-      {/* Business name */}
-      <h2 className="font-outfit text-[24px] lg:text-[28px] font-bold leading-tight mt-5">
-        {card.businessName}
-      </h2>
-      {(card.cityState || subline) && (
-        <div className="mt-1.5 text-[13px] text-brand-near-black/60 leading-snug">
-          {card.cityState}
-          {card.cityState && subline ? ' · ' : ''}
-          {subline}
+      {/* Title + score row */}
+      <div className="mt-4 flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-outfit text-[22px] lg:text-[26px] font-bold leading-[1.15]">
+            {card.businessName}
+          </h2>
+          {(card.cityState || subline) && (
+            <p className="mt-1.5 text-[12.5px] lg:text-[13px] text-brand-near-black/60 leading-snug">
+              {card.cityState}
+              {card.cityState && subline ? ' \u00b7 ' : ''}
+              {subline}
+            </p>
+          )}
         </div>
-      )}
+        <FitBadge score={card.score} />
+      </div>
 
       {/* Reason ribbon */}
       {card.reason && (
-        <div className="mt-5 rounded-2xl bg-brand-light/70 px-4 py-3 text-[14px] leading-[1.55] text-brand-dark">
+        <div className="mt-4 rounded-2xl bg-brand-light/75 px-3.5 py-2.5 text-[13px] lg:text-[13.5px] leading-[1.5] text-brand-dark font-medium">
           {card.reason}
         </div>
       )}
 
-      {/* Evidence chips */}
+      {/* Why now */}
+      {card.reason && card.reason.length < 110 ? null : null}
+
+      {/* Evidence section */}
       <div className="mt-5">
-        <div className="text-[10.5px] uppercase tracking-[0.1em] font-bold text-brand-near-black/45 mb-2">
-          Evidence
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/50">
+            Evidence
+            {evidenceCount > 0 && (
+              <span className="ml-1.5 text-brand-near-black/35 normal-case tracking-normal font-medium">
+                · {evidenceCount} source{evidenceCount === 1 ? '' : 's'}
+              </span>
+            )}
+          </div>
+          {onFlip && evidenceCount > 0 && (
+            <button
+              type="button"
+              onClick={onFlip}
+              className={cn(
+                'inline-flex items-center gap-1 text-[11px] font-semibold text-brand-green hover:text-brand-dark',
+                'rounded-md px-1 -mr-1 min-h-[28px]',
+              )}
+            >
+              <ArrowUp className="h-3 w-3" />
+              Tap to flip
+            </button>
+          )}
         </div>
-        {card.evidence.length === 0 ? (
-          <p className="text-[12.5px] text-brand-near-black/55 italic">
+        {evidenceCount === 0 ? (
+          <p className="mt-2 text-[12.5px] text-brand-near-black/55 italic">
             We&rsquo;re still gathering evidence for this lead.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {card.evidence.slice(0, 5).map(ev => (
               <span
                 key={ev.id}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-2.5 h-[24px] text-[11.5px] font-mono font-semibold',
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 h-[24px] text-[11px] font-mono font-semibold tracking-wide',
                   ev.accent === 'coral'
                     ? 'bg-brand-coral/10 text-brand-coral'
                     : 'bg-brand-green/12 text-brand-dark',
@@ -105,60 +150,51 @@ export function TodayRunCard({ card }: Props) {
                     ev.accent === 'coral' ? 'bg-brand-coral' : 'bg-brand-green',
                   )}
                 />
-                {EVIDENCE_KIND_LABEL[ev.kind] ?? 'Source'}
+                <span className="uppercase">{EVIDENCE_KIND_LABEL[ev.kind]}</span>
+                {ev.chipSuffix && (
+                  <>
+                    <span className="text-brand-near-black/30">·</span>
+                    <span className="uppercase">{ev.chipSuffix}</span>
+                  </>
+                )}
               </span>
             ))}
           </div>
         )}
       </div>
 
-      {/* Contact block */}
-      <div className="mt-6 pt-5 border-t border-brand-near-black/8">
-        <div className="text-[10.5px] uppercase tracking-[0.1em] font-bold text-brand-near-black/45 mb-2.5">
-          Best contact
-        </div>
+      {/* Best-contact card */}
+      <div className="mt-5 rounded-2xl bg-white/85 px-3.5 py-3 shadow-[inset_0_0_0_1px_rgba(45,43,42,0.08)]">
         {bestContact ? (
-          <>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-brand-light text-brand-dark text-[13px] font-bold flex items-center justify-center flex-shrink-0">
-                {initialsFor(bestContact.name)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[14px] font-semibold text-brand-near-black truncate">
-                    {bestContact.name}
-                  </span>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-brand-green/15 text-brand-dark text-[12.5px] font-bold flex items-center justify-center flex-shrink-0">
+              {initialsFor(bestContact.name)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[13.5px] font-semibold text-brand-near-black truncate">
+                  {bestContact.name}
+                </span>
+                {bestContact.isBest && (
                   <span className="inline-flex items-center rounded-full bg-brand-green px-1.5 h-[16px] text-[9.5px] font-bold tracking-wide text-white">
                     BEST
                   </span>
-                </div>
-                {bestContact.title && (
-                  <div className="text-[12.5px] text-brand-near-black/60 truncate">
-                    {bestContact.title}
-                  </div>
                 )}
               </div>
-              <ConfidenceDots confidence={bestContact.confidence} />
+              <div className="text-[11.5px] text-brand-near-black/55 truncate">
+                {bestContact.title ?? 'Contact'}
+                {otherContactsCount > 0 && (
+                  <>
+                    <span className="mx-1 text-brand-near-black/30">·</span>
+                    <span>+{otherContactsCount} more</span>
+                  </>
+                )}
+              </div>
             </div>
-            {otherContacts.length > 0 && (
-              <ul className="mt-3 space-y-1.5">
-                {otherContacts.map(c => (
-                  <li
-                    key={`${c.name}-${c.email ?? c.phone ?? c.title ?? ''}`}
-                    className="flex items-center gap-2 text-[12.5px] text-brand-near-black/65"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand-near-black/20" />
-                    <span className="truncate">
-                      {c.name}
-                      {c.title ? ` · ${c.title}` : ''}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
+            <ConfidenceDots confidence={bestContact.confidence} />
+          </div>
         ) : (
-          <div className="flex items-center gap-2 text-[12.5px] text-brand-near-black/55">
+          <div className="flex items-center gap-2 text-[12.5px] text-brand-near-black/55 py-1">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-near-black/20" />
             Finding best contact
           </div>
@@ -168,36 +204,40 @@ export function TodayRunCard({ card }: Props) {
   )
 }
 
-function ScoreChip({ score }: { score: number }) {
+function FitBadge({ score }: { score: number }) {
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center w-[68px] h-[68px] rounded-full bg-brand-cream text-brand-dark',
-        'shadow-[inset_0_0_0_2px_rgba(88,147,126,0.35),inset_0_-3px_6px_rgba(45,43,42,0.05),0_1px_2px_rgba(45,43,42,0.05)]',
+        'flex flex-col items-center justify-center rounded-full flex-shrink-0',
+        'w-[68px] h-[68px] lg:w-[72px] lg:h-[72px]',
+        'bg-brand-light/70',
+        'shadow-[inset_0_0_0_2px_rgba(88,147,126,0.45),0_2px_4px_rgba(45,43,42,0.06)]',
       )}
+      aria-label={`Fit score ${score} out of 100`}
     >
-      <div className="font-outfit text-[26px] font-bold leading-none tabular-nums text-brand-green">
+      <div className="font-outfit text-[26px] lg:text-[28px] font-bold leading-none tabular-nums text-brand-dark">
         {score}
       </div>
-      <div className="text-[8.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45 mt-0.5">
-        score
+      <div className="text-[8.5px] uppercase tracking-[0.18em] font-bold text-brand-near-black/55 mt-0.5">
+        Fit
       </div>
     </div>
   )
 }
 
 function ConfidenceDots({ confidence }: { confidence: number }) {
-  const filled = Math.max(0, Math.min(3, Math.round((confidence / 100) * 3)))
+  // 4-dot scale per Claude Design 09 reference.
+  const filled = Math.max(0, Math.min(4, Math.round((confidence / 100) * 4)))
   return (
     <div
-      className="flex items-center gap-1"
-      aria-label={`Contact confidence ${filled} of 3`}
+      className="flex items-center gap-1 flex-shrink-0"
+      aria-label={`Contact confidence ${filled} of 4`}
     >
-      {[0, 1, 2].map(i => (
+      {[0, 1, 2, 3].map(i => (
         <span
           key={i}
           className={cn(
-            'w-2 h-2 rounded-full',
+            'w-[7px] h-[7px] rounded-full',
             i < filled ? 'bg-brand-green' : 'bg-brand-near-black/15',
           )}
         />

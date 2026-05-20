@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import {
   TODAYS_RUN_PASS_REASONS,
   type TodaysRunPassReason,
-} from '@/app/app/leads/[id]/actions'
+} from '@/lib/today/pass-reasons'
 import {
   ACTION_BUTTON_HEIGHT,
   CARD_RADIUS,

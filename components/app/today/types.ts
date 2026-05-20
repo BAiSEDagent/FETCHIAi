@@ -9,9 +9,17 @@ export type EvidenceKind =
 export type EvidenceItem = {
   id: string
   kind: EvidenceKind
+  /** Bold one-liner shown on the back of card. */
   title: string
+  /** Short suffix shown after the kind label on the front chip,
+   *  e.g. "MAY 14", "2007", "SOS". Null = render kind label only. */
+  chipSuffix: string | null
   sourceDomain: string | null
   recencyLabel: string | null
+  /** Detail line shown on the back of card under the title. */
+  detailLine: string | null
+  /** 0-100. Drives the confidence dots on the back evidence row. */
+  confidence: number
   accent: 'coral' | 'green'
 }
 

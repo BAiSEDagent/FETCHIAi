@@ -16,6 +16,7 @@ import {
 type Props = {
   saved: number
   skipped: number
+  draftsPrepared: number
   /** Wall-clock seconds spent on this run. */
   elapsedSeconds: number
 }
@@ -27,7 +28,13 @@ function formatElapsed(seconds: number): string {
   return s > 0 ? `${m}m ${s}s` : `${m}m`
 }
 
-export function RunCompletion({ saved, skipped, elapsedSeconds }: Props) {
+export function RunCompletion({
+  saved,
+  skipped,
+  draftsPrepared,
+  elapsedSeconds,
+}: Props) {
+  const reviewed = saved + skipped
   return (
     <section
       className={cn(
@@ -42,23 +49,22 @@ export function RunCompletion({ saved, skipped, elapsedSeconds }: Props) {
       </div>
 
       <h2 className="font-outfit text-[26px] lg:text-[30px] font-bold mt-4 leading-tight">
-        That&rsquo;s today&rsquo;s run.
+        Stack cleared.
       </h2>
       <p className="text-[14px] text-brand-near-black/65 mt-2 leading-relaxed max-w-md mx-auto">
-        Quick, decisive review keeps your stack sharp. Fetchi will queue the next
+        You reviewed {reviewed} opportunit{reviewed === 1 ? 'y' : 'ies'} in{' '}
+        {formatElapsed(Math.max(1, elapsedSeconds))}. Fetchi will queue the next
         batch as fresh signals come in.
       </p>
 
-      {/* Stat row */}
       <dl className="mt-6 grid grid-cols-3 gap-2 max-w-md mx-auto">
         <Stat label="Saved" value={saved} tone="green" />
-        <Stat label="Skipped" value={skipped} tone="muted" />
-        <Stat label="Time" value={formatElapsed(elapsedSeconds)} tone="muted" />
+        <Stat label="Passed" value={skipped} tone="muted" />
+        <Stat label="Drafts" value={draftsPrepared} tone="muted" />
       </dl>
 
-      {/* Streak — UI demo only */}
       <p className="text-[12.5px] text-brand-near-black/55 mt-5">
-        🔥 Streak: ritual logged today
+        {'\u{1F525}'} Streak: ritual logged today
       </p>
 
       <div className="mt-6 grid gap-2.5 sm:grid-cols-2 max-w-md mx-auto">
