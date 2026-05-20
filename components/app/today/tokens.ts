@@ -18,7 +18,7 @@ export const GHOST_2_TRANSFORM = 'translate-y-[18px] scale-[0.94]'
 // Mobile uses svh so it adapts when the browser chrome resizes; capped so
 // it never grows past one comfortable "morning ritual" card size.
 export const DECK_VIEWPORT_FRAME =
-  'relative overflow-hidden h-[min(540px,calc(100svh-390px))] min-h-[460px] lg:h-[600px] lg:min-h-[560px]'
+  'relative overflow-hidden rounded-[22px] h-[min(540px,calc(100svh-390px))] min-h-[460px] lg:h-[600px] lg:min-h-[560px]'
 
 // Button heights from spec.
 export const ACTION_BUTTON_HEIGHT = 'h-[60px]'
