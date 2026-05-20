@@ -11,20 +11,14 @@ type Props = {
   skippedCount: number
 }
 
-// Roughly 10s of dwell per card feels honest for a morning skim ritual.
-const SECONDS_PER_CARD = 10
-
-function timeLabel(remaining: number): string {
-  const secs = Math.max(0, remaining * SECONDS_PER_CARD)
-  if (secs <= 0) return 'Done'
-  if (secs < 90) return `~${Math.max(1, Math.round(secs / 10) * 10)}s`
-  return `~${Math.max(1, Math.round(secs / 60))}m`
-}
-
 export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
   const reviewed = Math.min(index, total)
   const left = Math.max(0, total - reviewed)
   const isDone = left === 0
+
+  const headline = isDone
+    ? 'Stack cleared for today.'
+    : `${total} high-fit ${total === 1 ? 'lead' : 'leads'} ready`
 
   return (
     <div
@@ -33,24 +27,25 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
         'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.06),0_1px_2px_rgba(45,43,42,0.04)]',
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45">
+            Morning stack
+          </p>
+          <p className="mt-0.5 text-[14px] lg:text-[14.5px] font-semibold text-brand-near-black/85 leading-snug">
+            {headline}
+          </p>
+        </div>
         <span
           className={cn(
-            'inline-flex items-center justify-center rounded-full px-2.5 h-[28px] min-w-[44px]',
-            'text-[12px] font-bold tabular-nums',
+            'inline-flex items-center justify-center rounded-full px-2.5 h-[26px] min-w-[44px]',
+            'text-[11px] uppercase tracking-[0.1em] font-bold tabular-nums',
             'bg-brand-green/15 text-brand-dark',
           )}
           aria-hidden
         >
-          {timeLabel(left)}
+          {reviewed}/{total}
         </span>
-        <p className="text-[13.5px] lg:text-[14px] font-semibold text-brand-near-black/85 leading-snug">
-          {isDone
-            ? 'Stack cleared for today.'
-            : 'min to clear today\u2019s stack'.length === 0
-              ? ''
-              : `~${Math.max(1, Math.round((left * SECONDS_PER_CARD) / 60))} min to clear today\u2019s stack`}
-        </p>
       </div>
 
       {/* Segmented progress bar */}
@@ -80,7 +75,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
       {/* Reviewed / left footer */}
       <div className="mt-2 flex items-center justify-between text-[11px] uppercase tracking-[0.1em] font-bold tabular-nums">
         <span className="text-brand-near-black/55">
-          {reviewed}/{total} reviewed
+          {reviewed} reviewed
           {savedCount > 0 || skippedCount > 0 ? (
             <span className="ml-2 text-brand-near-black/35 normal-case tracking-normal font-medium">
               <span className="text-brand-green">{savedCount} saved</span>

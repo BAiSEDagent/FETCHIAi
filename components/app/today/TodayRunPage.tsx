@@ -44,7 +44,6 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
   const [skippedCount, setSkippedCount] = React.useState(0)
   const [draftsPreparedCount, setDraftsPreparedCount] = React.useState(0)
   const [pending, startTransition] = React.useTransition()
-  const startedAtRef = React.useRef<number>(Date.now())
 
   const total = queue.length
   const current = queue[index] ?? null
@@ -244,13 +243,12 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
   if (total === 0) {
     return (
       <div className="mt-2">
-        <RunCompletion saved={0} skipped={0} draftsPrepared={0} elapsedSeconds={0} />
+        <RunCompletion saved={0} skipped={0} draftsPrepared={0} />
       </div>
     )
   }
 
   if (completed) {
-    const elapsed = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000))
     return (
       <div className="space-y-4">
         <RunProgress
@@ -263,7 +261,6 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
           saved={savedCount}
           skipped={skippedCount}
           draftsPrepared={draftsPreparedCount}
-          elapsedSeconds={elapsed}
         />
       </div>
     )

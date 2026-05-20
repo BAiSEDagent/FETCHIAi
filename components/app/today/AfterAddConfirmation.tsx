@@ -71,7 +71,7 @@ export function AfterAddConfirmation({
             {businessName}
           </h3>
           <p className="text-[13px] text-brand-near-black/65 mt-1.5">
-            Tagged. Fetchi will use this feedback to improve future stacks.
+            Saved to My Leads. Draft is ready to review when you are.
           </p>
         </div>
         <span
@@ -86,7 +86,7 @@ export function AfterAddConfirmation({
       {/* Draft preview (read-only) */}
       <div className="mt-5 rounded-2xl bg-brand-cream/70 p-4">
         <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45">
-          Draft prepared · not sent
+          Draft prepared, not sent
         </div>
         {draft ? (
           <>

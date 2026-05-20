@@ -17,24 +17,18 @@ type Props = {
   saved: number
   skipped: number
   draftsPrepared: number
-  /** Wall-clock seconds spent on this run. */
-  elapsedSeconds: number
-}
-
-function formatElapsed(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return s > 0 ? `${m}m ${s}s` : `${m}m`
 }
 
 export function RunCompletion({
   saved,
   skipped,
   draftsPrepared,
-  elapsedSeconds,
 }: Props) {
   const reviewed = saved + skipped
+  const draftsLine =
+    draftsPrepared > 0
+      ? `${draftsPrepared} ${draftsPrepared === 1 ? 'draft' : 'drafts'} prepared \u2014 review before sending`
+      : null
   return (
     <section
       className={cn(
@@ -49,12 +43,16 @@ export function RunCompletion({
       </div>
 
       <h2 className="font-outfit text-[26px] lg:text-[30px] font-bold mt-4 leading-tight">
-        Stack cleared.
+        Stack cleared
       </h2>
       <p className="text-[14px] text-brand-near-black/65 mt-2 leading-relaxed max-w-md mx-auto">
-        You reviewed {reviewed} opportunit{reviewed === 1 ? 'y' : 'ies'} in{' '}
-        {formatElapsed(Math.max(1, elapsedSeconds))}. Fetchi will queue the next
-        batch as fresh signals come in.
+        You reviewed {reviewed} opportunit{reviewed === 1 ? 'y' : 'ies'}.
+        {draftsLine ? (
+          <>
+            <br />
+            <span className="text-brand-near-black/75">{draftsLine}</span>
+          </>
+        ) : null}
       </p>
 
       <dl className="mt-6 grid grid-cols-3 gap-2 max-w-md mx-auto">
@@ -64,7 +62,7 @@ export function RunCompletion({
       </dl>
 
       <p className="text-[12.5px] text-brand-near-black/55 mt-5">
-        {'\u{1F525}'} Streak: ritual logged today
+        Fetchi will queue the next batch as fresh signals come in.
       </p>
 
       <div className="mt-6 grid gap-2.5 sm:grid-cols-2 max-w-md mx-auto">

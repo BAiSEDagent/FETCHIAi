@@ -1,0 +1,71 @@
+#23 — CP2.7D — Remove Timed Pressure From Today’s Run
+
+What & Why
+Today’s Run is visually improving, but the timer language makes the experience feel rushed and chore-like. Fetchi should feel like a premium morning opportunity ritual, not a stopwatch task. Remove all “clear in X minutes / 30s / seconds per lead” language and replace it with calm value/progress language.
+
+This is a copy + small layout patch only. Do not redesign the deck architecture.
+
+Done looks like
+- No user-facing timed copy appears on /app/today.
+- Remove examples like:
+  - “~30s”
+  - “~1 min to clear today’s stack”
+  - “~2 min to clear today’s stack”
+  - “≈12s per lead”
+  - “clear today’s stack”
+- Progress module instead says something like:
+  - “3 high-fit leads ready”
+  - “Review today’s best opportunities”
+  - “0 reviewed · 3 left”
+- Keep the segmented progress bar.
+- Keep reviewed/left progress.
+- Keep the premium deck, ghost stack, front/back evidence flip, and action cards.
+- Completion state should say:
+  - “Stack cleared”
+  - “You reviewed 3 opportunities”
+  - “2 drafts prepared — review before sending”
+- Do not imply outreach was sent.
+- Do not imply Fetchi is forcing urgency or a timed task.
+- Today tab stays active in MobileBottomNav.
+- npm run type-check ✓ and npm run build ✓.
+
+Suggested copy
+Header:
+Today’s Run
+3 leads queued for review
+
+Progress card:
+Morning stack
+3 high-fit leads ready
+
+Progress footer:
+0 reviewed · 3 left
+
+After action:
+Added to My Leads.
+Draft prepared, not sent.
+
+Pass feedback:
+Tagged. Fetchi will use this feedback to improve future stacks.
+
+Completion:
+Stack cleared
+You reviewed 3 opportunities
+2 drafts prepared — review before sending
+
+Out of scope
+- Do not change schema.
+- Do not add new status.
+- Do not add workspace_run_state.
+- Do not modify My Leads.
+- Do not modify Lead Detail.
+- Do not modify MobileBottomNav.
+- Do not modify Sidebar.
+- Do not touch db/schema.ts, db/index.ts, db/seed.ts, drizzle.config.ts, package.json, design/*.html, admin, billing, Stripe, agents, providers, or SearchProvider.
+- No new dependencies.
+
+Likely files
+components/app/TodaysRunView.tsx
+components/app/LeadCard.tsx only if the run variant contains timed copy
+
+Verify and report. Stop after report.
