@@ -27,7 +27,7 @@ export function MobileScreenHeader({
   return (
     <header
       className={cn(
-        'px-5 lg:px-7 pt-5 lg:pt-7 pb-4 lg:pb-5',
+        'px-5 lg:px-7 pt-[max(env(safe-area-inset-top),1.25rem)] lg:pt-7 pb-4 lg:pb-5',
         className,
       )}
     >

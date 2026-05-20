@@ -1,0 +1,79 @@
+Small correction/addendum before Build mode for CP2.7B.
+
+Do NOT create a separate structured-feedback checkpoint. Fold feedback capture into CP2.7B.
+
+Corrections:
+
+1. Fix the DB invariant language.
+The opportunities.status enum remains exactly:
+new | saved | contacted | responded | won | lost | skipped | expired
+
+There is NO status="queued".
+"Queued" only means the Today’s Run session query:
+status IN ('new', 'saved')
+ordered by score desc.
+
+Acceptance check should say:
+No rows have status outside the existing 8 statuses. Today’s Run queue is a session view only.
+
+2. Pass feedback should use existing outcomeNotes, but make it future-proof.
+The existing schema has opportunities.outcomeNotes / outcome_notes. Use that field.
+Do not add schema fields or tables.
+
+Prefer JSON string payload inside outcomeNotes over the compact pass:<reason>|note:<text> format, because we may want multiple reasons later.
+
+Use this shape:
+
+{
+  "v": 1,
+  "source": "todays_run",
+  "action": "pass",
+  "reasons": ["already_has_vendor"],
+  "note": "We've serviced their parent property since 2019.",
+  "timestamp": "...",
+  "opportunityId": "...",
+  "signalType": "...",
+  "businessName": "..."
+}
+
+If you think JSON is too much for this pass, at minimum support multiple reasons:
+pass:already_has_vendor,wrong_contact|note:<freeform>
+
+3. PassReasonPanel should allow one or more reasons.
+Reason options:
+- wrong_contact
+- already_has_vendor
+- too_small
+- out_of_area
+- bad_signal
+
+UI labels:
+- Wrong contact
+- Already has vendor
+- Too small
+- Out of area
+- Bad signal
+
+4. Copy must not overpromise training.
+Allowed copy:
+“Tagged. Fetchi will use this feedback to improve future stacks.”
+
+Do NOT say:
+“I’ll exclude this company…”
+“I’ll suppress this pattern…”
+“I’ll weight this lower…”
+unless that logic actually exists.
+
+5. Verify workspace_run_state exists before using it.
+If workspace_run_state is not in the current schema, do not create it and do not reference it.
+Use local client session state for CP2.7B progress.
+No schema changes.
+
+6. Undo behavior:
+Undo should restore the previous opportunity status and previous outcomeNotes if available.
+If previous values are not available, show a TODO/fallback and do not fake reversal.
+
+Everything else in CP2.7B remains:
+premium morning ritual deck, ghost card layers, Evidence flip UI-only, Add confirmation, Pass reason panel, completion screen, no Snooze, no draft sending, no new deps, no schema changes, no protected files touched.
+
+Proceed only after confirming these corrections are understood.

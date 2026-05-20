@@ -98,11 +98,10 @@ export function LeadCard(props: Props) {
 }
 
 // ─────────────────────────────────────────────
-// RUN VARIANT — CP2.7 Today's Run focused card
-// One large centered card. Calmer + more decisive than the list card:
-// bigger score, bigger business name, why-now in full, contact preview,
-// evidence count chip. Action buttons live OUTSIDE the card (in
-// TodaysRunView) so the card itself stays a pure presentational unit.
+// RUN VARIANT — legacy CP2.7 Today's Run focused card.
+// CP2.7B replaces Today's Run with the dedicated components under
+// components/app/today/*. This variant is kept for backward-compatibility
+// in case other surfaces request `variant="run"`.
 // ─────────────────────────────────────────────
 function RunCard({
   href,

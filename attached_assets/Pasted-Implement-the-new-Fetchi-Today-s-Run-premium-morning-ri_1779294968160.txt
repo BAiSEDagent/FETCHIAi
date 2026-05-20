@@ -1,0 +1,108 @@
+Implement the new Fetchi “Today’s Run” premium morning ritual design using the Claude Design 09 artifacts as the visual source of truth.
+
+Primary files/design references:
+- 1 _ Front of card
+- 2 _ Mid-action _ Add to My Leads
+- 3 _ After Add confirmation
+- 4 _ Pass _ tag why
+- 5 _ Back of card _ evidence
+- 6 _ Completion state
+- Desktop reference _ centered deck _ keyboard hints
+- Interaction map _ architecture guardrails
+
+Goal:
+Replace the current flat Today view with a premium swipe-review deck experience. This should feel like a daily morning lead ritual, not a CRM list.
+
+Architecture guardrails:
+- Today’s Run is a session view over existing opportunities. Do not create a new database status.
+- Valid statuses remain: new, saved, contacted, responded, won, lost, skipped, expired.
+- Add to My Leads sets opportunity status to saved.
+- Pass sets opportunity status to skipped and stores the selected reason/note in outcome_notes or the existing notes/outcome field.
+- Evidence flip is UI-only. It should not mutate the database.
+- Drafts are prepared, never sent.
+- Do not add Snooze in this checkpoint.
+- Undo within 10s should revert the last Add/Pass status change if simple to implement; otherwise include the UI copy but leave undo as a TODO.
+
+Visual direction:
+Use the Claude Design 09 style:
+- warm cream/parchment page background
+- near-black text
+- Fetchi green primary actions
+- soft rounded cards
+- tactile stacked-card depth
+- subtle shadows
+- evidence chips
+- premium score badge
+- calm Cash App × Claude × Fetchi feel
+
+Important responsive requirement:
+Fix the mobile safe-area issue from the design mockups. The title/header must not collide with the iPhone dynamic island/status bar. Use safe-area top padding and keep the page title visibly below the top chrome.
+
+Mobile Today’s Run screens/states to implement:
+1. Front card
+2. Mid-action Add state if feasible
+3. After Add confirmation
+4. Pass / tag why screen
+5. Evidence back-of-card
+6. Completion state
+
+Navigation:
+Use the locked Fetchi bottom nav:
+Chat / Today / Leads / Map / Settings
+Today is active throughout the Today’s Run flow.
+
+Desktop:
+Use the desktop reference: centered deck experience with dark left sidebar and keyboard hints.
+Keyboard hints:
+- left arrow = Pass
+- up arrow = Evidence
+- right arrow = Add to My Leads
+- Esc = Stop
+
+Functional behavior:
+- Load today’s available opportunities from existing opportunity data.
+- Show progress: reviewed count, total count, remaining count.
+- Show “~2 min to clear today’s stack.”
+- Add to My Leads:
+  - update opportunity status to saved
+  - show After Add confirmation
+  - show draft preview copy
+  - show Review draft and Open lead buttons
+  - Next lead advances deck index
+- Pass:
+  - show Pass reason screen
+  - allow one or more reason selections:
+    - Wrong contact
+    - Already has vendor
+    - Too small
+    - Out of area
+    - Bad signal
+  - optional note field
+  - Save tags & next updates status to skipped and stores reason/note
+- Evidence:
+  - flip to evidence side
+  - show evidence rows from existing signal/evidence data where available
+  - if data is missing, use graceful fallback text, not fake external claims
+- Completion:
+  - show reviewed count
+  - added count
+  - passed count
+  - sent count must be 0 / drafts only
+  - CTA: Back to My Leads
+  - CTA: View saved leads
+
+Implementation quality:
+- Reuse existing components where possible, but do not preserve the current flat Today card if it fights the new design.
+- Keep code clean and componentized:
+  - TodayRunPage
+  - TodayRunCard
+  - EvidenceCardBack
+  - RunProgress
+  - RunActionBar
+  - AfterAddConfirmation
+  - PassReasonPanel
+  - RunCompletion
+- Use existing API/data patterns.
+- Do not break existing Lead Detail, My Leads, Map, Chat, or Settings routes.
+- Run typecheck/build after changes.
+- Provide a short report of changed files and any TODOs.
