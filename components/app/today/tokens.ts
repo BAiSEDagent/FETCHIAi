@@ -13,6 +13,11 @@ export const CARD_SHADOW =
 export const GHOST_1_TRANSFORM = 'translate-y-[9px] scale-[0.97]'
 export const GHOST_2_TRANSFORM = 'translate-y-[18px] scale-[0.94]'
 
+// Locked outer height for the deck card shell. Front and back faces share
+// this minimum so flipping never resizes the card. The back face can
+// scroll internally when evidence/contact content exceeds this height.
+export const DECK_CARD_MIN_HEIGHT = 'min-h-[560px] lg:min-h-[620px]'
+
 // Button heights from spec.
 export const ACTION_BUTTON_HEIGHT = 'h-[60px]'
 

@@ -1,0 +1,79 @@
+#24 — CP2.7E — Today’s Run Card Flip Height Lock + Scrollable Evidence Back
+
+What & Why
+The Today’s Run premium card is improving, but the flip interaction still feels wrong because the back/evidence side becomes shorter than the front side. A card flip should feel like the same physical card turning over, not a new shorter component replacing it.
+
+Fix the visual/interaction only: keep the front and back of the Today’s Run card the exact same outer height, and make the back side internally scrollable when evidence/contact content exceeds the available space.
+
+Done looks like
+- When tapping Evidence / Back, the card keeps the same outer width, height, radius, shadow, and stacked-card depth.
+- The card does NOT shrink or grow between front and back.
+- The front and back share one locked “deck card shell.”
+- The back of the card can scroll internally if there is more evidence/contact info.
+- The internal scroll should feel smooth on mobile:
+  - overflow-y-auto
+  - -webkit-overflow-scrolling: touch
+  - subtle bottom fade if useful
+- The action buttons stay visible below the card.
+- MobileBottomNav stays fixed and unchanged.
+- No full-page jump when flipping.
+- The back side still shows:
+  - Evidence · {business short name}
+  - source count / verified pill
+  - evidence rows
+  - ranked contact route
+  - Back to card affordance
+- If there are many evidence rows, the user scrolls inside the back card, not the whole page.
+- Keep the premium Cash App × Claude × Fetchi visual direction.
+- npm run type-check ✓ and npm run build ✓.
+
+Implementation guidance
+- Create or adjust a shared card wrapper for the Today’s Run deck, something like:
+  - same className for both front and back
+  - fixed/min height on mobile and desktop
+  - example mobile height: min-h-[560px] or h-[min(640px,calc(100vh-330px))]
+  - avoid content-driven height changes
+- Outer card:
+  - overflow-hidden
+  - same rounded corners
+  - same shadow
+  - same stacked ghost layers
+- Inner front:
+  - normal layout
+- Inner back:
+  - h-full
+  - overflow-y-auto
+  - pb spacing so “Back to card” is reachable
+- Do not use a different card component size for the evidence back.
+- Do not change DB logic.
+- Do not change opportunity statuses.
+- Do not add schema fields.
+- Do not add new dependencies.
+
+Also remove timed-pressure copy if still present
+The progress card should not say:
+- “~30s”
+- “~1 min to clear today’s stack”
+- “clear today’s stack”
+
+Use calmer copy:
+- “Morning stack”
+- “3 high-fit leads ready”
+- “0 reviewed · 3 left”
+
+Out of scope
+- No real drag/swipe gesture yet.
+- No schema changes.
+- No new run state table.
+- No My Leads changes.
+- No Lead Detail changes.
+- No MobileBottomNav changes.
+- No Sidebar changes.
+- No billing, admin, agents, providers, Stripe, SearchProvider.
+- No package.json changes.
+
+Likely files
+components/app/TodaysRunView.tsx
+components/app/LeadCard.tsx only if the run/front/back card lives there
+
+Verify and report. Stop after report.

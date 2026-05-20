@@ -41,7 +41,7 @@ export function TodayRunCard({ card, onFlip }: Props) {
   return (
     <article
       className={cn(
-        'relative p-5 lg:p-7 text-brand-near-black',
+        'relative h-full p-5 lg:p-7 text-brand-near-black',
         CARD_SURFACE,
         CARD_RADIUS,
         CARD_SHADOW,

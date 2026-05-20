@@ -48,14 +48,14 @@ export function EvidenceCardBack({ card, onBack }: Props) {
   return (
     <article
       className={cn(
-        'relative p-5 lg:p-7 text-brand-near-black',
+        'relative h-full flex flex-col text-brand-near-black overflow-hidden',
         CARD_SURFACE,
         CARD_RADIUS,
         CARD_SHADOW,
       )}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
+      {/* Header — fixed at top, doesn't scroll */}
+      <div className="flex items-start justify-between gap-3 px-5 lg:px-7 pt-5 lg:pt-7 pb-3 flex-shrink-0">
         <div className="min-w-0 flex-1">
           <h3 className="font-outfit text-[18px] lg:text-[20px] font-bold leading-tight">
             Evidence <span className="text-brand-near-black/45">·</span>{' '}
@@ -84,8 +84,13 @@ export function EvidenceCardBack({ card, onBack }: Props) {
         )}
       </div>
 
+      {/* Scrollable region — evidence + contact route. Bottom fade hints at more. */}
+      <div
+        className="relative flex-1 min-h-0 overflow-y-auto px-5 lg:px-7 pb-5 lg:pb-7"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
       {/* Evidence rows */}
-      <ul className="mt-4 space-y-2">
+      <ul className="mt-1 space-y-2">
         {evidence.length === 0 ? (
           <li className="text-[13px] text-brand-near-black/60 italic px-1">
             We&rsquo;re still gathering evidence for this lead. Add it to My Leads
@@ -210,8 +215,8 @@ export function EvidenceCardBack({ card, onBack }: Props) {
         </div>
       )}
 
-      {/* Back button */}
-      <div className="mt-5 flex justify-center">
+      {/* Back button — last item in scroll region, with padding so it's always reachable */}
+      <div className="mt-5 flex justify-center pb-2">
         <button
           type="button"
           onClick={onBack}
@@ -221,6 +226,12 @@ export function EvidenceCardBack({ card, onBack }: Props) {
           Back to card
         </button>
       </div>
+      </div>
+      {/* Subtle bottom fade — hints at scrollable overflow. Pinned to card bottom. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#FBF8EF] to-transparent"
+      />
     </article>
   )
 }

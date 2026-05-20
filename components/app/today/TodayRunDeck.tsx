@@ -6,6 +6,7 @@ import {
   CARD_RADIUS,
   CARD_SHADOW,
   CARD_SURFACE,
+  DECK_CARD_MIN_HEIGHT,
   GHOST_1_TRANSFORM,
   GHOST_2_TRANSFORM,
 } from './tokens'
@@ -114,7 +115,7 @@ export function TodayRunDeck({
         }}
       >
         <div
-          className="relative"
+          className={cn('relative', DECK_CARD_MIN_HEIGHT)}
           style={{
             transformStyle: 'preserve-3d',
             transition: reduceMotion
@@ -124,6 +125,7 @@ export function TodayRunDeck({
           }}
         >
           <div
+            className={cn('h-full', DECK_CARD_MIN_HEIGHT)}
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
