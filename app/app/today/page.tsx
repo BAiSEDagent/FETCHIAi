@@ -522,7 +522,7 @@ export default async function TodayPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <MobileScreenHeader title="Today's Run" description={queuedLabel} />
-      <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+96px)] lg:pb-12">
+      <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+200px)] lg:pb-12">
         <TodayRunPage queue={renderQueue} isDemo={useDemo} />
       </div>
     </div>

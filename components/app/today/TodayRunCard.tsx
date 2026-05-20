@@ -41,10 +41,9 @@ export function TodayRunCard({ card, onFlip }: Props) {
   return (
     <article
       className={cn(
-        'relative h-full p-5 lg:p-7 text-brand-near-black',
+        'relative h-full w-full flex flex-col p-5 lg:p-6 text-brand-near-black overflow-hidden',
         CARD_SURFACE,
         CARD_RADIUS,
-        CARD_SHADOW,
       )}
     >
       {/* Top chip row: signal token + optional claim status */}
@@ -163,8 +162,10 @@ export function TodayRunCard({ card, onFlip }: Props) {
         )}
       </div>
 
-      {/* Best-contact card */}
-      <div className="mt-5 rounded-2xl bg-white/85 px-3.5 py-3 shadow-[inset_0_0_0_1px_rgba(45,43,42,0.08)]">
+      {/* Best-contact card — pinned to bottom of the card via mt-auto so
+          short content never leaves a blank lower half. */}
+      <div className="mt-auto pt-5 rounded-2xl bg-transparent">
+      <div className="rounded-2xl bg-white/85 px-3.5 py-3 shadow-[inset_0_0_0_1px_rgba(45,43,42,0.08)]">
         {bestContact ? (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-brand-green/15 text-brand-dark text-[12.5px] font-bold flex items-center justify-center flex-shrink-0">
@@ -199,6 +200,7 @@ export function TodayRunCard({ card, onFlip }: Props) {
             Finding best contact
           </div>
         )}
+      </div>
       </div>
     </article>
   )

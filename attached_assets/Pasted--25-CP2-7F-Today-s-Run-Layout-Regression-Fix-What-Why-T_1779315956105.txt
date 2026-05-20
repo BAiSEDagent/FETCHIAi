@@ -1,0 +1,155 @@
+#25 — CP2.7F — Today’s Run Layout Regression Fix
+
+What & Why
+The CP2.7E flip-height fix introduced a layout regression on /app/today. The Today’s Run card now has a huge empty lower section, the ghost/background cards are visibly leaking as large white blocks, and the action buttons are being pushed under the locked MobileBottomNav.
+
+This is not a redesign. This is a surgical layout fix to restore the premium morning ritual frame:
+- static header/progress
+- one active focused card
+- fixed action bar above bottom nav
+- same physical card height on front/back
+- evidence back scrolls internally
+- ghost stack layers are visual-only and clipped
+
+Done looks like
+- /app/today mobile shows:
+  - dark Fetchi app header unchanged
+  - Today’s Run title
+  - Morning Stack progress card
+  - one premium active card
+  - three action buttons fully visible above MobileBottomNav
+  - MobileBottomNav fixed at bottom with Today active
+- The action buttons are NEVER hidden behind the bottom nav.
+- The active card does NOT have a huge blank white bottom.
+- The ghost/stack cards are NOT visible as large empty cards behind/below the active card.
+- The front and back card faces keep the same outer size when flipping.
+- The evidence/back face scrolls internally when content exceeds the card height.
+- Page should not jump when flipping.
+- Static elements should stay static:
+  - Morning Stack progress does not move during flip
+  - action bar does not move during flip
+  - bottom nav does not move
+- Keep the current Cash App × Claude × Fetchi visual direction.
+
+Core correction
+Do NOT solve same-height flip by making the card/deck huge.
+
+Instead:
+1. Create a fixed deck viewport area.
+2. Put exactly one active card inside it.
+3. Put ghost layers as absolutely-positioned decorative layers inside the deck viewport.
+4. Clip ghost layers with overflow-hidden.
+5. Keep action buttons outside the deck viewport.
+
+Implementation guidance
+
+Mobile layout should be structured like:
+
+<page>
+  <MobileHeader />
+  <main className="...">
+    <header title/subtitle />
+    <RunProgress />
+    <section className="today-run-deck-viewport">
+      <decorative ghost layers />
+      <active card shell>
+        front or back face
+      </active card shell>
+    </section>
+  </main>
+
+  <RunActionBar />
+  <MobileBottomNav />
+</page>
+
+Important layout rules:
+- RunActionBar must be fixed or sticky above MobileBottomNav.
+- Suggested mobile action bar positioning:
+  fixed bottom-[88px] inset-x-0 z-40
+  px-4 pb-2
+- MobileBottomNav remains fixed bottom-0 inset-x-0 z-30 unchanged.
+- Main content needs bottom padding enough to avoid being covered:
+  pb-[calc(env(safe-area-inset-bottom)+190px)]
+- Deck viewport should not own the action buttons.
+- Deck viewport should not expand based on ghost layers.
+
+Card/deck sizing
+Use a responsive height, not a huge min-height.
+
+Suggested mobile:
+- deck viewport: relative overflow-hidden h-[min(540px,calc(100svh-390px))] min-h-[470px]
+- active card shell: absolute inset-x-0 top-0 h-full
+- card face: h-full overflow-hidden rounded-[28px]
+- front content: h-full flex flex-col justify-between
+- back content: h-full overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]
+
+If the front content needs room:
+- reduce vertical padding slightly
+- tighten gaps
+- do NOT add blank bottom space
+
+Ghost layers
+Ghost cards must be visual only:
+- absolute
+- pointer-events-none
+- inset-x-3
+- top-3 or bottom-0
+- h-full
+- scale-[0.97] / scale-[0.94]
+- translate-y only 10–18px
+- opacity 0.35 or less
+- z-index below active card
+- clipped by deck viewport overflow-hidden
+They must not participate in normal document flow.
+
+Back/evidence side
+- Back face uses the same active card shell height as front.
+- Evidence rows scroll inside the card, not the page.
+- “Back to card” should remain reachable.
+- Add subtle internal bottom padding.
+- Do not shorten the back side.
+
+Action bar
+The three buttons must remain fully visible:
+- Pass
+- Evidence / Back
+- Add to My Leads
+They should sit above the bottom nav, not inside the card, not inside the deck.
+The current buttons are being clipped/covered — fix z-index and fixed/sticky positioning.
+
+Do not change
+- MobileBottomNav component
+- Sidebar
+- My Leads
+- Lead Detail
+- DB/schema/statuses
+- updateLeadOutcome logic except if absolutely required for existing actions
+- package.json
+- design/*.html
+- protected files
+
+Out of scope
+- Real drag gesture
+- New run state table
+- New opportunity statuses
+- New dependencies
+- Training intelligence backend
+- Map, Chat, Settings, Billing, Admin, Agents, Providers, Stripe, SearchProvider
+
+Likely files
+components/app/TodaysRunView.tsx
+components/app/LeadCard.tsx only if Today run card face lives there
+app/app/today/page.tsx only if padding/layout wrapper is there
+
+Verification
+- npm run type-check
+- npm run build
+- Confirm mobile /app/today at 390–430px width:
+  1. front card has no giant blank lower half
+  2. evidence/back card same outer height as front
+  3. back content scrolls internally
+  4. action buttons are fully visible above bottom nav
+  5. ghost cards do not leak as big white cards
+  6. no static header/progress/action bar jump on flip
+
+Report and stop.

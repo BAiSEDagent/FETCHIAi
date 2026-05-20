@@ -6,7 +6,7 @@ import {
   CARD_RADIUS,
   CARD_SHADOW,
   CARD_SURFACE,
-  DECK_CARD_MIN_HEIGHT,
+  DECK_VIEWPORT_FRAME,
   GHOST_1_TRANSFORM,
   GHOST_2_TRANSFORM,
 } from './tokens'
@@ -75,18 +75,20 @@ export function TodayRunDeck({
   }
 
   return (
-    <div className="relative">
-      {/* Ghost layers — only shown if there are cards behind the front one. */}
+    // Fixed-height deck viewport. Ghost layers and active card are all
+    // absolutely positioned inside; the frame clips anything that overflows
+    // so ghosts never bleed into the page below.
+    <div className={cn(DECK_VIEWPORT_FRAME)}>
+      {/* Ghost layers — decorative only, clipped by the viewport. */}
       {remaining >= 3 && (
         <div
           aria-hidden
           className={cn(
-            'absolute inset-0 mx-auto',
+            'pointer-events-none absolute inset-x-3 top-3 h-full z-0',
             CARD_SURFACE,
             CARD_RADIUS,
-            CARD_SHADOW,
+            'opacity-30',
             GHOST_2_TRANSFORM,
-            'opacity-70',
           )}
         />
       )}
@@ -94,19 +96,18 @@ export function TodayRunDeck({
         <div
           aria-hidden
           className={cn(
-            'absolute inset-0 mx-auto',
+            'pointer-events-none absolute inset-x-2 top-2 h-full z-[1]',
             CARD_SURFACE,
             CARD_RADIUS,
-            CARD_SHADOW,
+            'opacity-50',
             GHOST_1_TRANSFORM,
-            'opacity-90',
           )}
         />
       )}
 
-      {/* Front card with flip + drag transform */}
+      {/* Active card shell — absolute, fills the viewport exactly. */}
       <div
-        className="relative"
+        className="absolute inset-0 z-10"
         style={{
           transform: `translate3d(${translateX}px, 0, 0) rotate(${rotate}deg)`,
           transition,
@@ -115,7 +116,7 @@ export function TodayRunDeck({
         }}
       >
         <div
-          className={cn('relative', DECK_CARD_MIN_HEIGHT)}
+          className="relative h-full w-full"
           style={{
             transformStyle: 'preserve-3d',
             transition: reduceMotion
@@ -125,7 +126,7 @@ export function TodayRunDeck({
           }}
         >
           <div
-            className={cn('h-full', DECK_CARD_MIN_HEIGHT)}
+            className="absolute inset-0"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
@@ -158,6 +159,17 @@ export function TodayRunDeck({
           intensity={Math.min(1, Math.abs(dragX) / 110)}
         />
       )}
+
+      {/* Shadow under the active card — drawn as a separate element inside
+          the viewport so the flip transform doesn't strip it. */}
+      <div
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute inset-0 z-[5]',
+          CARD_RADIUS,
+          CARD_SHADOW,
+        )}
+      />
     </div>
   )
 }
@@ -174,7 +186,7 @@ function Stamp({
     <div
       aria-hidden
       className={cn(
-        'pointer-events-none absolute top-8 inline-flex items-center justify-center',
+        'pointer-events-none absolute top-8 inline-flex items-center justify-center z-20',
         'rounded-[14px] px-4 h-[44px] text-[16px] font-extrabold uppercase tracking-[0.15em]',
         'shadow-[0_4px_12px_-2px_rgba(45,43,42,0.25)]',
         isAdd
@@ -211,7 +223,7 @@ function SwipeHint({
     <div
       aria-hidden
       className={cn(
-        'pointer-events-none absolute top-6 inline-flex items-center rounded-full px-3 h-[28px]',
+        'pointer-events-none absolute top-6 inline-flex items-center rounded-full px-3 h-[28px] z-20',
         'text-[12px] font-bold uppercase tracking-[0.1em]',
         direction === 'right'
           ? 'right-6 bg-brand-green text-white -rotate-[8deg]'

@@ -13,10 +13,12 @@ export const CARD_SHADOW =
 export const GHOST_1_TRANSFORM = 'translate-y-[9px] scale-[0.97]'
 export const GHOST_2_TRANSFORM = 'translate-y-[18px] scale-[0.94]'
 
-// Locked outer height for the deck card shell. Front and back faces share
-// this minimum so flipping never resizes the card. The back face can
-// scroll internally when evidence/contact content exceeds this height.
-export const DECK_CARD_MIN_HEIGHT = 'min-h-[560px] lg:min-h-[620px]'
+// Deck viewport is a fixed-height clipped frame. The active card fills it
+// absolutely; ghost layers are decorative-only and clipped at the edges.
+// Mobile uses svh so it adapts when the browser chrome resizes; capped so
+// it never grows past one comfortable "morning ritual" card size.
+export const DECK_VIEWPORT_FRAME =
+  'relative overflow-hidden h-[min(540px,calc(100svh-390px))] min-h-[460px] lg:h-[600px] lg:min-h-[560px]'
 
 // Button heights from spec.
 export const ACTION_BUTTON_HEIGHT = 'h-[60px]'

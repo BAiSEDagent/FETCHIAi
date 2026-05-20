@@ -22,7 +22,15 @@ export function RunActionBar({
   hasDraft,
 }: Props) {
   return (
-    <div className="grid grid-cols-3 gap-2.5">
+    // Mobile: fixed above MobileBottomNav (which sits at bottom-0 z-30 h~88px).
+    // Desktop: static, flows with the deck.
+    <div
+      className={cn(
+        'grid grid-cols-3 gap-2.5',
+        'lg:static lg:px-0 lg:pb-0 lg:z-auto',
+        'fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+88px)] z-40 px-4 pb-2',
+      )}
+    >
       <ActionCard
         onClick={onPass}
         disabled={disabled}
