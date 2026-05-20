@@ -90,10 +90,139 @@ export function LeadCard(props: Props) {
 
   if (variant === 'chat-hero') return <ChatHeroCard {...props} />
   if (variant === 'chat') return <ChatCard {...props} />
+  if (variant === 'run') return <RunCard {...props} />
 
-  // Default + future variants (run / map / related) currently render via the
-  // canonical list layout — CP2.5B locks the `list` visuals.
+  // Remaining variants (map / related) currently render via the canonical
+  // list layout — CP2.5B locks the `list` visuals.
   return <ListCard {...props} />
+}
+
+// ─────────────────────────────────────────────
+// RUN VARIANT — CP2.7 Today's Run focused card
+// One large centered card. Calmer + more decisive than the list card:
+// bigger score, bigger business name, why-now in full, contact preview,
+// evidence count chip. Action buttons live OUTSIDE the card (in
+// TodaysRunView) so the card itself stays a pure presentational unit.
+// ─────────────────────────────────────────────
+function RunCard({
+  href,
+  businessName,
+  signalLabel,
+  signalToken,
+  score,
+  whyNow,
+  status,
+  location,
+  contactName,
+  contactConfidence,
+  evidenceChips,
+}: Props) {
+  const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
+  const tokenText = signalToken ?? signalLabel
+  const evidenceCount = evidenceChips?.length ?? 0
+
+  return (
+    <Link
+      href={href}
+      tabIndex={-1}
+      aria-hidden
+      className={cn(
+        'block rounded-3xl bg-ml-card p-6 lg:p-8',
+        'shadow-[0_1px_2px_rgba(45,43,42,0.04)]',
+        'focus-visible:outline-none',
+      )}
+    >
+      {/* Status + signal token */}
+      <div className="flex items-center flex-wrap gap-1.5">
+        <span
+          className={cn(
+            'inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold',
+            statusTone(status),
+          )}
+        >
+          {statusLabel(status)}
+        </span>
+        <span
+          className={cn(
+            'inline-flex items-center rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums',
+            'bg-brand-near-black/[0.05] text-brand-near-black/70',
+          )}
+        >
+          <span className="truncate max-w-[200px]">{tokenText}</span>
+        </span>
+      </div>
+
+      {/* Big score */}
+      <div className="font-outfit text-[64px] lg:text-[76px] leading-none font-bold text-brand-green tabular-nums mt-5">
+        {score}
+      </div>
+      <div className="mt-1 text-[10px] uppercase tracking-[0.08em] font-bold text-brand-near-black/40">
+        score
+      </div>
+
+      {/* Business name + location */}
+      <h2 className="font-outfit text-[22px] lg:text-[26px] font-bold text-brand-near-black leading-tight mt-5">
+        {businessName}
+      </h2>
+      {location && (
+        <div className="mt-1 text-[13px] text-brand-near-black/55">
+          {location}
+        </div>
+      )}
+
+      {/* Why-now reason — full, not clamped */}
+      {whyNow && (
+        <p className="mt-4 text-[14px] text-brand-near-black/75 leading-[1.6]">
+          {whyNow}
+        </p>
+      )}
+
+      {/* Contact + evidence count footer */}
+      <div className="mt-5 pt-4 border-t border-brand-near-black/8 flex items-center justify-between gap-3">
+        {contactName ? (
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-brand-light text-brand-dark text-[12px] font-bold flex items-center justify-center flex-shrink-0">
+              {initialsFor(contactName)}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold text-brand-near-black truncate">
+                {contactName}
+              </div>
+              {confidence > 0 && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <div className="flex gap-0.5" aria-label={`Contact confidence ${confidence} of 3`}>
+                    {[0, 1, 2].map(i => (
+                      <span
+                        key={i}
+                        className={cn(
+                          'w-1.5 h-1.5 rounded-full',
+                          i < confidence ? 'bg-brand-green' : 'bg-brand-near-black/15',
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-brand-near-black/45 uppercase tracking-wide font-semibold">
+                    confidence
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 text-[12px] text-brand-near-black/50">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-near-black/20" />
+            Finding best contact
+          </div>
+        )}
+
+        {evidenceCount > 0 && (
+          <span className="inline-flex items-center rounded-full bg-brand-cream-muted px-2.5 h-[22px] text-[11px] font-semibold text-brand-near-black/65 flex-shrink-0">
+            {evidenceCount} source{evidenceCount === 1 ? '' : 's'}
+          </span>
+        )}
+      </div>
+    </Link>
+  )
 }
 
 // ─────────────────────────────────────────────
