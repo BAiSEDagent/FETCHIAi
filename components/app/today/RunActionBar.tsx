@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { ArrowRight, ArrowUp, X } from 'lucide-react'
+import { ArrowLeft, Plus, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -19,120 +19,111 @@ export function RunActionBar({
   onAdd,
   disabled,
   flipped,
-  hasDraft,
 }: Props) {
   return (
-    // Mobile: fixed above MobileBottomNav (which sits at bottom-0 z-30 h~88px).
-    // Desktop: static, flows with the deck.
+    // Mobile: fixed rail above MobileBottomNav (which is bottom-0 z-30, ~88px tall).
+    // Desktop: static, flows under the deck.
     <div
       className={cn(
-        'grid grid-cols-3 gap-2.5',
+        'flex items-center gap-2.5',
         'lg:static lg:px-0 lg:pb-0 lg:z-auto',
-        'fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+88px)] z-40 px-4 pb-2',
+        'fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+96px)] z-40 px-4',
       )}
     >
-      <ActionCard
+      <Pill
         onClick={onPass}
         disabled={disabled}
-        tone="secondary"
-        icon={<X className="h-[18px] w-[18px]" />}
-        label="Pass"
-        sublabel="TAG WHY"
-        ariaKey="Pass — left arrow"
-      />
-      <ActionCard
+        tone="ghost"
+        flex={0.9}
+        ariaLabel="Pass — left arrow"
+      >
+        Pass
+      </Pill>
+      <Pill
         onClick={onEvidence}
         disabled={disabled}
         tone="secondary"
-        icon={<ArrowUp className="h-[18px] w-[18px]" />}
-        label={flipped ? 'Back' : 'Evidence'}
-        sublabel={flipped ? 'TAP TO RETURN' : 'FLIP CARD'}
-        ariaKey="Evidence — up arrow"
-      />
-      <ActionCard
+        flex={1}
+        icon={flipped ? <ArrowLeft className="h-4 w-4" /> : <RotateCcw className="h-[15px] w-[15px]" />}
+        ariaLabel={flipped ? 'Back to lead — up arrow' : 'See evidence — up arrow'}
+      >
+        {flipped ? 'Back' : 'Evidence'}
+      </Pill>
+      <Pill
         onClick={onAdd}
         disabled={disabled}
         tone="primary"
-        icon={<ArrowRight className="h-[18px] w-[18px]" />}
-        label="Add to My Leads"
-        sublabel={hasDraft ? 'DRAFT PREPARED' : 'READY TO QUEUE'}
-        ariaKey="Add to My Leads — right arrow"
+        flex={1.3}
+        icon={<Plus className="h-4 w-4" />}
+        ariaLabel="Add to My Leads — right arrow"
+        responsiveLabel={{ short: 'Add', long: 'Add to My Leads' }}
       />
     </div>
   )
 }
 
-function ActionCard({
+type PillTone = 'primary' | 'secondary' | 'ghost'
+
+function Pill({
   onClick,
   disabled,
   tone,
+  flex,
   icon,
-  label,
-  sublabel,
-  ariaKey,
+  ariaLabel,
+  children,
+  responsiveLabel,
 }: {
   onClick: () => void
   disabled?: boolean
-  tone: 'primary' | 'secondary'
-  icon: React.ReactNode
-  label: string
-  sublabel: string
-  ariaKey: string
+  tone: PillTone
+  flex: number
+  icon?: React.ReactNode
+  ariaLabel: string
+  children?: React.ReactNode
+  /** When provided, switches between a short and long label by viewport width. */
+  responsiveLabel?: { short: string; long: string }
 }) {
-  const isPrimary = tone === 'primary'
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={ariaKey}
+      aria-label={ariaLabel}
+      style={{ flex: `${flex} 1 0` }}
       className={cn(
-        'group relative flex flex-col items-center justify-center gap-1 rounded-[20px]',
-        'min-h-[82px] px-2 py-3 text-center transition-all',
+        'group inline-flex items-center justify-center gap-1.5 rounded-full',
+        'h-[54px] lg:h-[56px] px-4 text-[14px] lg:text-[14.5px] font-semibold transition-all',
+        'min-w-0 whitespace-nowrap',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/40 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-parchment',
-        'disabled:opacity-60 disabled:cursor-not-allowed',
+        'disabled:opacity-55 disabled:cursor-not-allowed',
         'motion-safe:active:translate-y-[1px]',
-        isPrimary
-          ? [
-              'bg-brand-green text-white',
-              'shadow-[0_14px_28px_-14px_rgba(88,147,126,0.7),0_2px_4px_rgba(45,43,42,0.08),inset_0_1px_0_rgba(255,255,255,0.18)]',
-              'hover:bg-brand-dark',
-            ]
-          : [
-              'bg-white text-brand-near-black/85',
-              'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.08),0_2px_6px_-2px_rgba(45,43,42,0.06)]',
-              'hover:shadow-[inset_0_0_0_1px_rgba(45,43,42,0.18),0_2px_6px_-2px_rgba(45,43,42,0.08)]',
-            ],
+        tone === 'primary' && [
+          'bg-brand-green text-white',
+          'shadow-[0_10px_22px_-14px_rgba(88,147,126,0.7),inset_0_1px_0_rgba(255,255,255,0.18)]',
+          'hover:bg-brand-dark',
+        ],
+        tone === 'secondary' && [
+          'bg-white text-brand-near-black/85',
+          'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.08),0_1px_3px_rgba(45,43,42,0.05)]',
+          'hover:text-brand-near-black hover:shadow-[inset_0_0_0_1px_rgba(45,43,42,0.16),0_1px_3px_rgba(45,43,42,0.06)]',
+        ],
+        tone === 'ghost' && [
+          'bg-transparent text-brand-near-black/70',
+          'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.12)]',
+          'hover:bg-white/60 hover:text-brand-near-black',
+        ],
       )}
     >
-      <span
-        className={cn(
-          'inline-flex items-center justify-center w-7 h-7 rounded-full',
-          isPrimary
-            ? 'bg-white/15 text-white'
-            : 'bg-brand-light text-brand-dark',
-        )}
-        aria-hidden
-      >
-        {icon}
-      </span>
-      <span
-        className={cn(
-          'font-semibold leading-tight',
-          'text-[13px] lg:text-[13.5px]',
-          isPrimary ? 'text-white' : 'text-brand-near-black',
-        )}
-      >
-        {label}
-      </span>
-      <span
-        className={cn(
-          'text-[9.5px] uppercase tracking-[0.12em] font-bold leading-none',
-          isPrimary ? 'text-white/75' : 'text-brand-near-black/45',
-        )}
-      >
-        {sublabel}
-      </span>
+      {icon ? <span aria-hidden className="inline-flex">{icon}</span> : null}
+      {responsiveLabel ? (
+        <>
+          <span className="sm:hidden">{responsiveLabel.short}</span>
+          <span className="hidden sm:inline">{responsiveLabel.long}</span>
+        </>
+      ) : (
+        children
+      )}
     </button>
   )
 }
