@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { updateLeadOutcome } from '@/app/app/leads/[id]/actions'
 import type { TodaysRunPassReason } from '@/lib/today/pass-reasons'
@@ -9,9 +10,7 @@ import { RunProgress } from './RunProgress'
 import { RunActionBar } from './RunActionBar'
 import { TodayRunCard } from './TodayRunCard'
 import { TodayRunDeck } from './TodayRunDeck'
-import { EvidenceCardBack } from './EvidenceCardBack'
 import { PassReasonPanel } from './PassReasonPanel'
-import { AfterAddConfirmation } from './AfterAddConfirmation'
 import { RunCompletion } from './RunCompletion'
 import type { TodayRunCardData } from './types'
 
@@ -23,34 +22,29 @@ type Props = {
 type Phase =
   | { kind: 'card' }
   | { kind: 'pass-reason' }
-  | {
-      kind: 'after-add'
-      // Snapshot of prior values for undo. Null when capture wasn't possible.
-      snapshot: { status: 'new' | 'saved'; outcomeNotes: string | null } | null
-      cardId: string
-    }
   | { kind: 'completion' }
 
 const SWIPE_COMMIT_PX = 80
+const TOAST_MS = 1600
 
 export function TodayRunPage({ queue, isDemo = false }: Props) {
   const router = useRouter()
   const [index, setIndex] = React.useState(0)
   const [phase, setPhase] = React.useState<Phase>({ kind: 'card' })
-  const [flipped, setFlipped] = React.useState(false)
   const [dragX, setDragX] = React.useState(0)
   const [exitDirection, setExitDirection] = React.useState<'left' | 'right' | null>(null)
   const [savedCount, setSavedCount] = React.useState(0)
   const [skippedCount, setSkippedCount] = React.useState(0)
   const [draftsPreparedCount, setDraftsPreparedCount] = React.useState(0)
+  const [toast, setToast] = React.useState<string | null>(null)
   const [pending, startTransition] = React.useTransition()
 
   const total = queue.length
   const current = queue[index] ?? null
   const completed = !current || phase.kind === 'completion'
 
-  // Track per-pointer drag state.
   const pointerStartRef = React.useRef<{ x: number; y: number } | null>(null)
+  const draggingRef = React.useRef(false)
 
   // ─────────────────────────────────────────
   // Commit helpers
@@ -58,7 +52,6 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
   const advance = React.useCallback(() => {
     setExitDirection(null)
     setDragX(0)
-    setFlipped(false)
     setIndex(i => {
       const next = i + 1
       if (next >= total) {
@@ -70,19 +63,23 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
     })
   }, [total])
 
+  const showToast = React.useCallback((message: string) => {
+    setToast(message)
+    window.setTimeout(() => setToast(null), TOAST_MS)
+  }, [])
+
   const commitAdd = React.useCallback(() => {
-    if (!current || pending) return
+    if (!current || pending || exitDirection) return
     const card = current
-    const snapshot = { status: card.status, outcomeNotes: card.outcomeNotesSnapshot }
     setExitDirection('right')
     setSavedCount(c => c + 1)
     if (card.draftPreview) setDraftsPreparedCount(c => c + 1)
-    // Optimistic move into after-add confirmation after the exit animation.
-    window.setTimeout(() => {
-      setPhase({ kind: 'after-add', snapshot, cardId: card.opportunityId })
-      setExitDirection(null)
-      setDragX(0)
-    }, 280)
+    showToast(
+      card.draftPreview
+        ? 'Added to My Leads. Draft prepared, not sent.'
+        : 'Added to My Leads.',
+    )
+    window.setTimeout(() => advance(), 300)
     if (isDemo) return
     startTransition(async () => {
       try {
@@ -96,23 +93,24 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
         console.error('[todays-run] add failed', err)
       }
     })
-  }, [current, isDemo, pending, router])
+  }, [advance, current, exitDirection, isDemo, pending, router, showToast])
 
   const beginPass = React.useCallback(() => {
-    if (!current || pending) return
+    if (!current || pending || exitDirection) return
     setExitDirection('left')
     window.setTimeout(() => {
       setPhase({ kind: 'pass-reason' })
       setExitDirection(null)
       setDragX(0)
     }, 280)
-  }, [current, pending])
+  }, [current, exitDirection, pending])
 
   const submitPass = React.useCallback(
     (input: { reasons: TodaysRunPassReason[]; note: string | null }) => {
       if (!current) return
       const card = current
       setSkippedCount(c => c + 1)
+      showToast('Tagged. Fetchi will use this feedback to improve future stacks.')
       if (!isDemo) {
         startTransition(async () => {
           try {
@@ -134,53 +132,25 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
       }
       advance()
     },
-    [advance, current, isDemo, router],
+    [advance, current, isDemo, router, showToast],
   )
 
   const cancelPass = React.useCallback(() => {
     setPhase({ kind: 'card' })
   }, [])
 
-  const undoAdd = React.useCallback(() => {
-    if (phase.kind !== 'after-add' || !phase.snapshot) return
-    const snap = phase.snapshot
-    const cardId = phase.cardId
-    const card = queue.find(c => c.opportunityId === cardId)
-    setSavedCount(c => Math.max(0, c - 1))
-    if (card?.draftPreview) setDraftsPreparedCount(c => Math.max(0, c - 1))
-    if (!isDemo) {
-      startTransition(async () => {
-        try {
-          await updateLeadOutcome({
-            opportunityId: cardId,
-            status: snap.status,
-            outcomeNotes: snap.outcomeNotes ?? null,
-          })
-          router.refresh()
-        } catch (err) {
-          console.error('[todays-run] undo failed', err)
-        }
-      })
-    }
-    setPhase({ kind: 'card' })
-    setExitDirection(null)
-    setDragX(0)
-    setFlipped(false)
-  }, [isDemo, phase, queue, router])
-
   const stopRun = React.useCallback(() => {
     router.push('/app/leads')
   }, [router])
 
   // ─────────────────────────────────────────
-  // Keyboard shortcuts
+  // Keyboard shortcuts (desktop)
   // ─────────────────────────────────────────
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const tag = (e.target as HTMLElement | null)?.tagName ?? ''
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement | null)?.isContentEditable) {
-        return
-      }
+      const t = e.target as HTMLElement | null
+      const tag = t?.tagName ?? ''
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || t?.isContentEditable) return
       if (phase.kind === 'card') {
         if (e.key === 'ArrowLeft') {
           e.preventDefault()
@@ -188,46 +158,54 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
         } else if (e.key === 'ArrowRight') {
           e.preventDefault()
           commitAdd()
-        } else if (e.key === 'ArrowUp') {
+        } else if (e.key === 'Enter' && current) {
           e.preventDefault()
-          setFlipped(f => !f)
+          router.push(`/app/leads/${current.opportunityId}`)
         } else if (e.key === 'Escape') {
           e.preventDefault()
           stopRun()
         }
-      } else if (phase.kind === 'pass-reason' || phase.kind === 'after-add') {
+      } else if (phase.kind === 'pass-reason') {
         if (e.key === 'Escape') {
           e.preventDefault()
-          if (phase.kind === 'pass-reason') cancelPass()
-          else stopRun()
+          cancelPass()
         }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [beginPass, cancelPass, commitAdd, phase, stopRun])
+  }, [beginPass, cancelPass, commitAdd, current, phase, router, stopRun])
 
   // ─────────────────────────────────────────
-  // Pointer / swipe handlers (mobile)
+  // Pointer / swipe — horizontal only, lets vertical pass through to internal scroll
   // ─────────────────────────────────────────
   const onPointerDown = (e: React.PointerEvent) => {
-    if (phase.kind !== 'card' || flipped) return
+    if (phase.kind !== 'card' || exitDirection) return
     pointerStartRef.current = { x: e.clientX, y: e.clientY }
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+    draggingRef.current = false
   }
   const onPointerMove = (e: React.PointerEvent) => {
     const start = pointerStartRef.current
     if (!start) return
     const dx = e.clientX - start.x
     const dy = e.clientY - start.y
-    // Only treat as horizontal drag when intent is clearly sideways.
-    if (Math.abs(dx) > Math.abs(dy)) {
-      setDragX(dx)
+    if (!draggingRef.current) {
+      // Lock direction only once intent is clearly horizontal.
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+        draggingRef.current = true
+        ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
+      } else {
+        return
+      }
     }
+    setDragX(dx)
   }
   const onPointerUp = () => {
     const dx = dragX
     pointerStartRef.current = null
+    const wasDragging = draggingRef.current
+    draggingRef.current = false
+    if (!wasDragging) return
     if (Math.abs(dx) < SWIPE_COMMIT_PX) {
       setDragX(0)
       return
@@ -266,30 +244,6 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
     )
   }
 
-  // After-Add confirmation owns its own card surface — no deck.
-  if (phase.kind === 'after-add' && current) {
-    return (
-      <div className="space-y-4">
-        <RunProgress
-          index={index}
-          total={total}
-          savedCount={savedCount}
-          skippedCount={skippedCount}
-        />
-        <AfterAddConfirmation
-          businessName={current.businessName}
-          draft={current.draftPreview}
-          canUndo={phase.snapshot !== null}
-          pending={pending}
-          onUndo={undoAdd}
-          onNext={advance}
-          onStop={stopRun}
-        />
-      </div>
-    )
-  }
-
-  // Pass reason panel — full-card replacement.
   if (phase.kind === 'pass-reason' && current) {
     return (
       <div className="space-y-4">
@@ -309,11 +263,10 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
     )
   }
 
-  // Default: deck + action bar
   const remaining = total - index
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <RunProgress
         index={index}
         total={total}
@@ -332,27 +285,15 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
           remaining={remaining}
           dragX={dragX}
           exitDirection={exitDirection}
-          flipped={flipped}
-          front={
-            current ? (
-              <TodayRunCard card={current} onFlip={() => setFlipped(true)} />
-            ) : null
-          }
-          back={
-            current ? (
-              <EvidenceCardBack card={current} onBack={() => setFlipped(false)} />
-            ) : null
-          }
-        />
+        >
+          {current && <TodayRunCard card={current} />}
+        </TodayRunDeck>
       </div>
 
       <RunActionBar
         onPass={beginPass}
-        onEvidence={() => setFlipped(f => !f)}
         onAdd={commitAdd}
         disabled={pending || exitDirection !== null}
-        flipped={flipped}
-        hasDraft={!!current?.draftPreview}
       />
 
       <p
@@ -360,7 +301,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
           'hidden lg:block text-center text-[11.5px] uppercase tracking-[0.15em] font-semibold text-brand-near-black/40',
         )}
       >
-        ← Pass · ↑ Evidence · → Add · Esc Stop
+        ← Pass · → Add · Enter Open lead · Esc Stop
       </p>
 
       {isDemo && (
@@ -368,6 +309,23 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
           Showing a sample queue — your real Today&rsquo;s Run will appear here once
           Fetchi finds fresh signals for this workspace.
         </p>
+      )}
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={cn(
+            'fixed left-1/2 -translate-x-1/2 z-50',
+            'bottom-[calc(env(safe-area-inset-bottom)+168px)] lg:bottom-10',
+            'inline-flex items-center gap-2 rounded-full px-4 h-[40px]',
+            'bg-brand-near-black text-white text-[13px] font-semibold',
+            'shadow-[0_12px_28px_-12px_rgba(45,43,42,0.45)]',
+          )}
+        >
+          <Check className="h-3.5 w-3.5 text-brand-green" />
+          {toast}
+        </div>
       )}
     </div>
   )

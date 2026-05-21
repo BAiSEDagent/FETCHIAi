@@ -18,9 +18,8 @@ type Props = {
   dragX: number
   /** Programmatic exit animation direction; null while resting. */
   exitDirection: 'left' | 'right' | null
-  flipped: boolean
-  front: React.ReactNode
-  back: React.ReactNode
+  /** Single rich card content. The card itself owns its internal scroll. */
+  children: React.ReactNode
 }
 
 const EXIT_DISTANCE = 480
@@ -43,9 +42,7 @@ export function TodayRunDeck({
   remaining,
   dragX,
   exitDirection,
-  flipped,
-  front,
-  back,
+  children,
 }: Props) {
   const reduceMotion = usePrefersReducedMotion()
 
@@ -112,39 +109,9 @@ export function TodayRunDeck({
           transform: `translate3d(${translateX}px, 0, 0) rotate(${rotate}deg)`,
           transition,
           opacity,
-          perspective: '1200px',
         }}
       >
-        <div
-          className="relative h-full w-full"
-          style={{
-            transformStyle: 'preserve-3d',
-            transition: reduceMotion
-              ? 'none'
-              : 'transform 460ms cubic-bezier(0.2,0.8,0.2,1)',
-            transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-          }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-            }}
-          >
-            {front}
-          </div>
-          <div
-            className="absolute inset-0"
-            style={{
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-              transform: 'rotateY(180deg)',
-            }}
-          >
-            {back}
-          </div>
-        </div>
+        {children}
 
         {/* Stamp overlay on programmatic exit */}
         {exitDirection && (
@@ -161,7 +128,7 @@ export function TodayRunDeck({
       )}
 
       {/* Shadow under the active card — drawn as a separate element inside
-          the viewport so the flip transform doesn't strip it. */}
+          the viewport so transforms don't strip it. */}
       <div
         aria-hidden
         className={cn(

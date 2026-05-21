@@ -1,25 +1,16 @@
 'use client'
 
 import * as React from 'react'
-import { ArrowLeft, Plus, RotateCcw } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Props = {
   onPass: () => void
-  onEvidence: () => void
   onAdd: () => void
   disabled?: boolean
-  flipped?: boolean
-  hasDraft?: boolean
 }
 
-export function RunActionBar({
-  onPass,
-  onEvidence,
-  onAdd,
-  disabled,
-  flipped,
-}: Props) {
+export function RunActionBar({ onPass, onAdd, disabled }: Props) {
   return (
     // Mobile: fixed rail above MobileBottomNav (which is bottom-0 z-30, ~88px tall).
     // Desktop: static, flows under the deck.
@@ -34,26 +25,17 @@ export function RunActionBar({
         onClick={onPass}
         disabled={disabled}
         tone="ghost"
-        flex={0.9}
+        flex={1}
+        icon={<X className="h-4 w-4" />}
         ariaLabel="Pass — left arrow"
       >
         Pass
       </Pill>
       <Pill
-        onClick={onEvidence}
-        disabled={disabled}
-        tone="secondary"
-        flex={1}
-        icon={flipped ? <ArrowLeft className="h-4 w-4" /> : <RotateCcw className="h-[15px] w-[15px]" />}
-        ariaLabel={flipped ? 'Back to lead — up arrow' : 'See evidence — up arrow'}
-      >
-        {flipped ? 'Back' : 'Evidence'}
-      </Pill>
-      <Pill
         onClick={onAdd}
         disabled={disabled}
         tone="primary"
-        flex={1.3}
+        flex={1.35}
         icon={<Plus className="h-4 w-4" />}
         ariaLabel="Add to My Leads — right arrow"
         responsiveLabel={{ short: 'Add', long: 'Add to My Leads' }}
@@ -62,7 +44,7 @@ export function RunActionBar({
   )
 }
 
-type PillTone = 'primary' | 'secondary' | 'ghost'
+type PillTone = 'primary' | 'ghost'
 
 function Pill({
   onClick,
@@ -81,7 +63,6 @@ function Pill({
   icon?: React.ReactNode
   ariaLabel: string
   children?: React.ReactNode
-  /** When provided, switches between a short and long label by viewport width. */
   responsiveLabel?: { short: string; long: string }
 }) {
   return (
@@ -103,15 +84,10 @@ function Pill({
           'shadow-[0_10px_22px_-14px_rgba(88,147,126,0.7),inset_0_1px_0_rgba(255,255,255,0.18)]',
           'hover:bg-brand-dark',
         ],
-        tone === 'secondary' && [
-          'bg-white text-brand-near-black/85',
-          'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.08),0_1px_3px_rgba(45,43,42,0.05)]',
-          'hover:text-brand-near-black hover:shadow-[inset_0_0_0_1px_rgba(45,43,42,0.16),0_1px_3px_rgba(45,43,42,0.06)]',
-        ],
         tone === 'ghost' && [
-          'bg-transparent text-brand-near-black/70',
-          'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.12)]',
-          'hover:bg-white/60 hover:text-brand-near-black',
+          'bg-white/80 text-brand-near-black/75',
+          'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.10),0_1px_2px_rgba(45,43,42,0.04)]',
+          'hover:bg-white hover:text-brand-near-black',
         ],
       )}
     >
