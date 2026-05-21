@@ -8,7 +8,6 @@ import {
   outreachPlays,
 } from '@/db'
 import { requireWorkspaceContext } from '@/lib/workspace'
-import { MobileScreenHeader } from '@/components/app/MobileScreenHeader'
 import { formatSignalToken } from '@/lib/signals/token'
 import { TodayRunPage } from '@/components/app/today/TodayRunPage'
 import type {
@@ -517,8 +516,7 @@ export default async function TodayPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <MobileScreenHeader title="Today's Run" />
-      <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+200px)] lg:pb-12">
+      <div className="px-4 lg:px-7 pt-[max(env(safe-area-inset-top),1.25rem)] lg:pt-7 pb-[calc(env(safe-area-inset-bottom)+200px)] lg:pb-12">
         <TodayRunPage queue={renderQueue} isDemo={useDemo} />
       </div>
     </div>
