@@ -17,7 +17,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
   const isDone = left === 0
 
   const headline = isDone
-    ? 'Stack cleared for today.'
+    ? 'Stack cleared'
     : `${total} high-fit ${total === 1 ? 'lead' : 'leads'} ready`
 
   return (
@@ -30,7 +30,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
       <div className="flex items-baseline justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45">
-            Morning stack
+            Morning review
           </p>
           <p className="mt-0.5 text-[14px] lg:text-[14.5px] font-semibold text-brand-near-black/85 leading-snug">
             {headline}
@@ -72,19 +72,20 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
         ))}
       </div>
 
-      {/* Reviewed / left footer */}
-      <div className="mt-2 flex items-center justify-between text-[11px] uppercase tracking-[0.1em] font-bold tabular-nums">
+      {/* Reviewed · left footer (single line, no time language) */}
+      <div className="mt-2 flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.1em] font-bold tabular-nums">
         <span className="text-brand-near-black/55">
           {reviewed} reviewed
-          {savedCount > 0 || skippedCount > 0 ? (
-            <span className="ml-2 text-brand-near-black/35 normal-case tracking-normal font-medium">
-              <span className="text-brand-green">{savedCount} saved</span>
-              <span className="mx-1.5">·</span>
-              <span>{skippedCount} passed</span>
-            </span>
-          ) : null}
+          <span className="mx-1.5 text-brand-near-black/35">·</span>
+          {left} left
         </span>
-        <span className="text-brand-near-black/55">{left} left</span>
+        {savedCount > 0 || skippedCount > 0 ? (
+          <span className="text-brand-near-black/45 normal-case tracking-normal font-medium">
+            <span className="text-brand-green">{savedCount} saved</span>
+            <span className="mx-1.5">·</span>
+            <span>{skippedCount} passed</span>
+          </span>
+        ) : null}
       </div>
     </div>
   )
