@@ -514,14 +514,10 @@ export default async function TodayPage() {
 
   const useDemo = queue.length === 0 && process.env.NODE_ENV !== 'production'
   const renderQueue = useDemo ? demoQueue() : queue
-  const queuedLabel =
-    renderQueue.length > 0
-      ? `${renderQueue.length} ${renderQueue.length === 1 ? 'lead' : 'leads'} queued for review`
-      : 'No leads queued right now.'
 
   return (
     <div className="max-w-2xl mx-auto">
-      <MobileScreenHeader title="Today's Run" description={queuedLabel} />
+      <MobileScreenHeader title="Today's Run" />
       <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+200px)] lg:pb-12">
         <TodayRunPage queue={renderQueue} isDemo={useDemo} />
       </div>
