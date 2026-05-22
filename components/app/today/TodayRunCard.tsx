@@ -168,9 +168,20 @@ export function TodayRunCard({ card }: Props) {
                   {KIND_GLYPH[ev.kind]}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45 leading-none">
-                    {EVIDENCE_KIND_LABEL[ev.kind]}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45 leading-none">
+                      {EVIDENCE_KIND_LABEL[ev.kind]}
+                    </p>
+                    {ev.confidence >= 75 ? (
+                      <span
+                        className="inline-flex items-center gap-0.5 text-[9px] uppercase tracking-wide font-bold text-brand-dark"
+                        title={`Confidence ${ev.confidence}%`}
+                      >
+                        <Check className="h-2.5 w-2.5" />
+                        Verified
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="mt-1 text-[13px] font-semibold text-brand-near-black leading-snug">
                     {ev.title}
                   </p>

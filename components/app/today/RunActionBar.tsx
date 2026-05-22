@@ -74,19 +74,19 @@ function Pill({
       style={{ flex: `${flex} 1 0` }}
       className={cn(
         'group inline-flex items-center justify-center gap-1.5 rounded-full',
-        'h-[54px] lg:h-[56px] px-4 text-[14px] lg:text-[14.5px] font-semibold transition-all',
+        'h-[44px] lg:h-[46px] px-4 text-[13.5px] lg:text-[14px] font-semibold transition-all',
         'min-w-0 whitespace-nowrap',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/40 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-parchment',
         'disabled:opacity-55 disabled:cursor-not-allowed',
         'motion-safe:active:translate-y-[1px]',
         tone === 'primary' && [
           'bg-brand-green text-white',
-          'shadow-[0_10px_22px_-14px_rgba(88,147,126,0.7),inset_0_1px_0_rgba(255,255,255,0.18)]',
+          'shadow-[0_4px_10px_-6px_rgba(88,147,126,0.55),inset_0_1px_0_rgba(255,255,255,0.15)]',
           'hover:bg-brand-dark',
         ],
         tone === 'ghost' && [
-          'bg-white/80 text-brand-near-black/75',
-          'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.10),0_1px_2px_rgba(45,43,42,0.04)]',
+          'bg-white/70 text-brand-near-black/70',
+          'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.08)]',
           'hover:bg-white hover:text-brand-near-black',
         ],
       )}

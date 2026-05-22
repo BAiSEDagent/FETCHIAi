@@ -290,6 +290,16 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
         </TodayRunDeck>
       </div>
 
+      {/* Mobile swipe hint — sits just above the fixed action rail */}
+      <p
+        className={cn(
+          'lg:hidden fixed inset-x-0 z-30 text-center text-[10.5px] uppercase tracking-[0.14em] font-semibold text-brand-near-black/40 pointer-events-none',
+          'bottom-[calc(env(safe-area-inset-bottom)+150px)]',
+        )}
+      >
+        Swipe left to pass · right to add
+      </p>
+
       <RunActionBar
         onPass={beginPass}
         onAdd={commitAdd}

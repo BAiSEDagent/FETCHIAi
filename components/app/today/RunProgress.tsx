@@ -62,11 +62,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
             key={i}
             className={cn(
               'h-1.5 flex-1 rounded-full transition-colors',
-              i < reviewed
-                ? 'bg-brand-green'
-                : i === reviewed
-                  ? 'bg-brand-green/55'
-                  : 'bg-brand-near-black/10',
+              i < reviewed ? 'bg-brand-green' : 'bg-brand-near-black/10',
             )}
           />
         ))}
