@@ -76,18 +76,18 @@ function Pill({
         'group inline-flex items-center justify-center gap-1.5 rounded-full',
         'h-[44px] lg:h-[46px] px-4 text-[13.5px] lg:text-[14px] font-semibold transition-all',
         'min-w-0 whitespace-nowrap',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/40 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-parchment',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
         'disabled:opacity-55 disabled:cursor-not-allowed',
         'motion-safe:active:translate-y-[1px]',
         tone === 'primary' && [
-          'bg-brand-green text-white',
+          'bg-ok text-white',
           'shadow-[0_4px_10px_-6px_rgba(88,147,126,0.55),inset_0_1px_0_rgba(255,255,255,0.15)]',
-          'hover:bg-brand-dark',
+          'hover:bg-coralDeep',
         ],
         tone === 'ghost' && [
-          'bg-white/70 text-brand-near-black/70',
+          'bg-white/70 text-text/70',
           'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.08)]',
-          'hover:bg-white hover:text-brand-near-black',
+          'hover:bg-white hover:text-text',
         ],
       )}
     >

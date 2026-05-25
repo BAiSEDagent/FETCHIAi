@@ -47,9 +47,9 @@ export function SettingsRow({
   return (
     <div className="flex items-center justify-between gap-3 py-1.5">
       <div className="min-w-0">
-        <div className="text-[13.5px] text-brand-near-black">{label}</div>
+        <div className="text-[13.5px] text-text">{label}</div>
         {hint && (
-          <div className="text-[12px] text-brand-near-black/55 mt-0.5">
+          <div className="text-[12px] text-text/55 mt-0.5">
             {hint}
           </div>
         )}

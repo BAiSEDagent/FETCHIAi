@@ -74,9 +74,9 @@ export function ChatClient({
   const greetFirst = greetingName ? greetingName.split(' ')[0] : null
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] lg:h-screen bg-brand-parchment">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] lg:h-screen bg-bg">
       <div className="px-5 lg:px-7 pt-6 lg:pt-7 pb-5">
-        <h1 className="font-outfit text-[28px] lg:text-[32px] font-bold text-brand-near-black leading-tight">
+        <h1 className="font-outfit text-[28px] lg:text-[32px] font-bold text-text leading-tight">
           {greetFirst ? `Hey, ${greetFirst}` : 'Fetchi'}
         </h1>
       </div>
@@ -84,20 +84,20 @@ export function ChatClient({
       <div className="flex-1 overflow-y-auto px-4 lg:px-7 pb-6 space-y-5">
         <div className="flex items-center gap-3">
           <div
-            className="w-9 h-9 rounded-full bg-brand-green text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0"
+            className="w-9 h-9 rounded-full bg-ok text-text text-[12px] font-bold flex items-center justify-center flex-shrink-0"
             aria-hidden
           >
             ツ
           </div>
           <div className="min-w-0">
-            <div className="text-[14px] font-bold text-brand-near-black leading-tight">
+            <div className="text-[14px] font-bold text-text leading-tight">
               Fetchi
             </div>
-            <div className="text-[12.5px] text-brand-near-black/60 mt-0.5 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-green" />
+            <div className="text-[12.5px] text-text/60 mt-0.5 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-ok" />
               {scoutingLocation ? `Scouting ${scoutingLocation}` : 'Listening for signals'}
               {leadsReady > 0 && (
-                <span className="text-brand-near-black/45">
+                <span className="text-text/45">
                   · {leadsReady} lead{leadsReady === 1 ? '' : 's'} ready
                 </span>
               )}
@@ -108,12 +108,12 @@ export function ChatClient({
         {isEmptyRun && (
           <div
             role="status"
-            className="rounded-2xl bg-brand-cream shadow-fetchi-soft px-5 py-4"
+            className="rounded-2xl bg-surface shadow-fetchi-soft px-5 py-4"
           >
-            <div className="text-[14px] font-semibold text-brand-near-black mb-1">
+            <div className="text-[14px] font-semibold text-text mb-1">
               Fetchi checked {sourcesChecked} sources
             </div>
-            <div className="text-[12.5px] text-brand-near-black/65 leading-relaxed">
+            <div className="text-[12.5px] text-text/65 leading-relaxed">
               Nothing strong enough to surface yet — ツ will keep listening and
               ping you the moment a real signal lands.
             </div>
@@ -155,7 +155,7 @@ export function ChatClient({
       </div>
 
       <div
-        className="sticky bottom-0 bg-brand-cream shadow-fetchi-sticky px-3 lg:px-5 pt-3"
+        className="sticky bottom-0 bg-surface shadow-fetchi-sticky px-3 lg:px-5 pt-3"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
       >
         <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export function ChatClient({
             type="button"
             aria-label="Voice input (coming soon)"
             title="Voice input lands in Checkpoint 10"
-            className="h-11 w-11 rounded-full bg-white border border-brand-near-black/10 flex items-center justify-center text-brand-near-black/45 cursor-not-allowed flex-shrink-0"
+            className="h-11 w-11 rounded-full bg-white border border-text/10 flex items-center justify-center text-text/45 cursor-not-allowed flex-shrink-0"
             disabled
           >
             <Mic className="h-[18px] w-[18px]" />
@@ -172,8 +172,8 @@ export function ChatClient({
           <div
             className={`flex-1 flex items-center bg-white rounded-full border transition-colors ${
               hasInput
-                ? 'border-brand-green/60'
-                : 'border-brand-near-black/10 focus-within:border-brand-green'
+                ? 'border-ok/60'
+                : 'border-text/10 focus-within:border-ok'
             }`}
           >
             <input
@@ -186,7 +186,7 @@ export function ChatClient({
                 }
               }}
               placeholder="Ask ツ something…"
-              className="flex-1 px-5 py-2.5 bg-transparent text-[14.5px] text-brand-near-black placeholder:text-brand-near-black/40 outline-none min-h-[44px]"
+              className="flex-1 px-5 py-2.5 bg-transparent text-[14.5px] text-text placeholder:text-text/40 outline-none min-h-[44px]"
               aria-label="Message Fetchi"
             />
           </div>
@@ -196,10 +196,10 @@ export function ChatClient({
             aria-label="Send message"
             onClick={send}
             disabled={pending || !hasInput}
-            className={`h-11 w-11 rounded-full text-white flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-50 ${
+            className={`h-11 w-11 rounded-full text-text flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-50 ${
               hasInput
-                ? 'bg-brand-green hover:bg-brand-dark'
-                : 'bg-brand-near-black hover:bg-brand-green'
+                ? 'bg-ok hover:bg-coralDeep'
+                : 'bg-text/10 hover:bg-ok'
             }`}
           >
             <Send className="h-[18px] w-[18px]" />

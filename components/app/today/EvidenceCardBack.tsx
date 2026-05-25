@@ -16,12 +16,12 @@ const EVIDENCE_KIND_LABEL: Record<EvidenceItem['kind'], string> = {
 }
 
 const KIND_ACCENT_BG: Record<EvidenceItem['kind'], string> = {
-  storm: 'bg-brand-coral/14 text-brand-coral',
-  property: 'bg-brand-green/14 text-brand-dark',
+  storm: 'bg-coral/14 text-coral',
+  property: 'bg-ok/14 text-text2',
   permit: 'bg-amber-100 text-amber-800',
-  ownership: 'bg-brand-near-black/8 text-brand-near-black/75',
-  market: 'bg-brand-green/10 text-brand-dark',
-  other: 'bg-brand-near-black/8 text-brand-near-black/65',
+  ownership: 'bg-text/8 text-text/75',
+  market: 'bg-ok/10 text-text2',
+  other: 'bg-text/8 text-text/65',
 }
 
 type Props = {
@@ -48,7 +48,7 @@ export function EvidenceCardBack({ card, onBack }: Props) {
   return (
     <article
       className={cn(
-        'relative h-full w-full flex flex-col text-brand-near-black overflow-hidden',
+        'relative h-full w-full flex flex-col text-text overflow-hidden',
         CARD_SURFACE,
         CARD_RADIUS,
       )}
@@ -57,12 +57,12 @@ export function EvidenceCardBack({ card, onBack }: Props) {
       <div className="flex items-start justify-between gap-3 px-5 lg:px-7 pt-5 lg:pt-7 pb-3 flex-shrink-0">
         <div className="min-w-0 flex-1">
           <h3 className="font-outfit text-[18px] lg:text-[20px] font-bold leading-tight">
-            Evidence <span className="text-brand-near-black/45">·</span>{' '}
+            Evidence <span className="text-text/45">·</span>{' '}
             {shortName(card.businessName)}
           </h3>
-          <p className="mt-1 text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45">
+          <p className="mt-1 text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45">
             Showing back of card{' '}
-            <span className="text-brand-near-black/25">·</span> tap to flip back
+            <span className="text-text/25">·</span> tap to flip back
           </p>
         </div>
         {verified ? (
@@ -70,14 +70,14 @@ export function EvidenceCardBack({ card, onBack }: Props) {
             className={cn(
               'inline-flex items-center gap-1 rounded-full px-2 h-[24px]',
               'text-[10.5px] font-bold uppercase tracking-wide',
-              'text-brand-dark shadow-[inset_0_0_0_1px_rgba(88,147,126,0.5)] bg-brand-green/8',
+              'text-text2 shadow-[inset_0_0_0_1px_rgba(88,147,126,0.5)] bg-ok/8',
             )}
           >
             <Check className="h-3 w-3" />
             Verified
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full px-2 h-[24px] text-[10.5px] font-bold uppercase tracking-wide text-brand-near-black/55 shadow-[inset_0_0_0_1px_rgba(45,43,42,0.12)]">
+          <span className="inline-flex items-center rounded-full px-2 h-[24px] text-[10.5px] font-bold uppercase tracking-wide text-text/55 shadow-[inset_0_0_0_1px_rgba(45,43,42,0.12)]">
             {evidence.length} source
           </span>
         )}
@@ -91,7 +91,7 @@ export function EvidenceCardBack({ card, onBack }: Props) {
       {/* Evidence rows */}
       <ul className="mt-1 space-y-2">
         {evidence.length === 0 ? (
-          <li className="text-[13px] text-brand-near-black/60 italic px-1">
+          <li className="text-[13px] text-text/60 italic px-1">
             We&rsquo;re still gathering evidence for this lead. Add it to My Leads
             to keep watching.
           </li>
@@ -124,26 +124,26 @@ export function EvidenceCardBack({ card, onBack }: Props) {
                           : '\u25CB'}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45 leading-none">
+                <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-text/45 leading-none">
                   {EVIDENCE_KIND_LABEL[ev.kind]}
                 </p>
-                <p className="mt-1 text-[13.5px] font-semibold text-brand-near-black leading-snug">
+                <p className="mt-1 text-[13.5px] font-semibold text-text leading-snug">
                   {ev.title}
                 </p>
-                <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-brand-near-black/55">
+                <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-text/55">
                   {ev.sourceDomain && <span className="truncate">{ev.sourceDomain}</span>}
                   {ev.sourceDomain && ev.recencyLabel && <span>·</span>}
                   {ev.recencyLabel && <span className="tabular-nums">{ev.recencyLabel}</span>}
                 </p>
                 {ev.detailLine && (
-                  <p className="mt-1 text-[12px] text-brand-near-black/65 leading-snug">
+                  <p className="mt-1 text-[12px] text-text/65 leading-snug">
                     {ev.detailLine}
                   </p>
                 )}
               </div>
               <div className="flex flex-col items-end gap-1 flex-shrink-0">
                 <ConfidenceDotsRow confidence={ev.confidence} />
-                <span className="inline-flex items-center gap-0.5 text-[10.5px] font-semibold text-brand-near-black/55">
+                <span className="inline-flex items-center gap-0.5 text-[10.5px] font-semibold text-text/55">
                   View
                   <ArrowUpRight className="h-3 w-3" />
                 </span>
@@ -156,8 +156,8 @@ export function EvidenceCardBack({ card, onBack }: Props) {
       {/* Contact route — ranked */}
       {contacts.length > 0 && (
         <div className="mt-5">
-          <p className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45 mb-2">
-            Contact route <span className="text-brand-near-black/25">·</span> ranked
+          <p className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45 mb-2">
+            Contact route <span className="text-text/25">·</span> ranked
           </p>
           <ul className="space-y-1.5">
             {contacts.slice(0, 4).map((c, i) => {
@@ -179,28 +179,28 @@ export function EvidenceCardBack({ card, onBack }: Props) {
                     className={cn(
                       'w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0',
                       c.isBest
-                        ? 'bg-brand-green text-white'
-                        : 'bg-brand-near-black/8 text-brand-near-black/65',
+                        ? 'bg-ok text-white'
+                        : 'bg-text/8 text-text/65',
                     )}
                   >
                     {initialsFor(c.name)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[13px] font-semibold text-brand-near-black truncate">
+                      <span className="text-[13px] font-semibold text-text truncate">
                         {c.name}
                       </span>
                       {c.isBest && (
-                        <span className="inline-flex items-center rounded-full bg-brand-green px-1.5 h-[15px] text-[9px] font-bold tracking-wide text-white">
+                        <span className="inline-flex items-center rounded-full bg-ok px-1.5 h-[15px] text-[9px] font-bold tracking-wide text-white">
                           BEST
                         </span>
                       )}
                     </div>
-                    <p className="text-[11.5px] text-brand-near-black/55 truncate">
+                    <p className="text-[11.5px] text-text/55 truncate">
                       {c.title ?? 'Contact'}
                       {channelLine && (
                         <>
-                          <span className="mx-1 text-brand-near-black/30">·</span>
+                          <span className="mx-1 text-text/30">·</span>
                           {channelLine}
                         </>
                       )}
@@ -219,7 +219,7 @@ export function EvidenceCardBack({ card, onBack }: Props) {
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-near-black/60 hover:text-brand-near-black min-h-[36px] px-2 rounded-md"
+          className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-text/60 hover:text-text min-h-[36px] px-2 rounded-md"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to card
@@ -247,7 +247,7 @@ function ConfidenceDotsRow({ confidence }: { confidence: number }) {
           key={i}
           className={cn(
             'w-[6px] h-[6px] rounded-full',
-            i < filled ? 'bg-brand-green' : 'bg-brand-near-black/15',
+            i < filled ? 'bg-ok' : 'bg-text/15',
           )}
         />
       ))}

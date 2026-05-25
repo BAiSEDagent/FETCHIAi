@@ -101,7 +101,6 @@ export function MyLeadsView({
   const sortTriggerRef = useRef<HTMLButtonElement | null>(null)
   const searchTriggerRef = useRef<HTMLButtonElement | null>(null)
 
-  // Escape to close sort sheet on mobile
   useEffect(() => {
     if (!sortOpen) return
     const onKey = (e: KeyboardEvent) => {
@@ -116,7 +115,6 @@ export function MyLeadsView({
 
   function closeSort() {
     setSortOpen(false)
-    // Restore focus to the trigger that opened the sheet
     requestAnimationFrame(() => sortTriggerRef.current?.focus())
   }
 
@@ -176,13 +174,13 @@ export function MyLeadsView({
           <button
             type="button"
             onClick={closeMobileSearch}
-            className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-brand-near-black/[0.04]"
+            className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-text/[0.06]"
             aria-label="Close search"
           >
-            <ArrowLeft className="h-5 w-5 text-brand-near-black" />
+            <ArrowLeft className="h-5 w-5 text-text" />
           </button>
-          <div className="flex-1 flex items-center gap-2 rounded-full bg-brand-cream border border-brand-near-black/10 px-4 h-10">
-            <Search className="h-4 w-4 text-brand-near-black/45" />
+          <div className="flex-1 flex items-center gap-2 rounded-full bg-surface border border-text/10 px-4 h-10">
+            <Search className="h-4 w-4 text-text/45" />
             <input
               autoFocus
               value={search}
@@ -195,18 +193,18 @@ export function MyLeadsView({
               }}
               placeholder="Search leads"
               aria-label="Search leads"
-              className="flex-1 bg-transparent outline-none text-[14px] text-brand-near-black placeholder:text-brand-near-black/40"
+              className="flex-1 bg-transparent outline-none text-[14px] text-text placeholder:text-text/40"
             />
             {search && (
               <button type="button" onClick={() => setSearch('')} aria-label="Clear search">
-                <X className="h-4 w-4 text-brand-near-black/45" />
+                <X className="h-4 w-4 text-text/45" />
               </button>
             )}
           </div>
           <button
             type="button"
             onClick={closeMobileSearch}
-            className="text-[13px] font-semibold text-brand-green px-1"
+            className="text-[13px] font-semibold text-text/70 hover:text-text px-1"
           >
             Cancel
           </button>
@@ -214,9 +212,9 @@ export function MyLeadsView({
 
         <div className="px-4 pb-6 flex flex-col gap-3">
           {showingSearchResults && (
-            <div className="text-[12px] text-brand-near-black/55">
+            <div className="text-[12px] text-text/55">
               {filtered.length} result{filtered.length === 1 ? '' : 's'} matching{' '}
-              <span className="font-semibold text-brand-near-black/75">
+              <span className="font-semibold text-text/75">
                 &ldquo;{search.trim()}&rdquo;
               </span>
             </div>
@@ -240,9 +238,9 @@ export function MyLeadsView({
             />
           ))}
           {showingSearchResults && filtered.length === 0 && (
-            <div className="rounded-2xl bg-ml-card p-6 text-center mt-4">
-              <div className="text-[14px] font-semibold text-brand-near-black">No matches</div>
-              <div className="text-[12.5px] text-brand-near-black/60 mt-1">
+            <div className="rounded-2xl bg-surface p-6 text-center mt-4">
+              <div className="text-[14px] font-semibold text-text">No matches</div>
+              <div className="text-[12.5px] text-text/60 mt-1">
                 Try a different business name, city, or signal.
               </div>
             </div>
@@ -255,7 +253,7 @@ export function MyLeadsView({
   return (
     <div className="flex flex-col">
       {isDemoData && (
-        <div className="mx-4 lg:mx-7 mt-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[12px] px-3 py-2">
+        <div className="mx-4 lg:mx-7 mt-3 rounded-xl bg-mustard/10 border border-mustard/30 text-mustard text-[12px] px-3 py-2">
           Development preview — showing sample leads because this workspace
           has no opportunities yet. Real data appears here automatically.
         </div>
@@ -264,38 +262,38 @@ export function MyLeadsView({
       {/* Header */}
       <div className="px-4 lg:px-7 pt-5 lg:pt-8 pb-4 lg:pb-6 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="font-outfit text-[28px] lg:text-[34px] font-extrabold text-brand-near-black leading-tight">
+          <h1 className="font-outfit text-[28px] lg:text-[34px] font-extrabold text-text leading-tight">
             My Leads
           </h1>
-          <div className="mt-1 text-[12.5px] lg:text-[13.5px] text-brand-near-black/55">
+          <div className="mt-1 text-[12.5px] lg:text-[13.5px] text-text/55">
             {headerSubtitle}
           </div>
         </div>
         {/* Desktop search + sort */}
         <div className="hidden lg:flex items-center gap-2">
-          <div className="flex items-center gap-2 rounded-full bg-brand-cream border border-brand-near-black/10 px-3.5 h-10 w-[280px]">
-            <Search className="h-4 w-4 text-brand-near-black/45" />
+          <div className="flex items-center gap-2 rounded-full bg-surface border border-text/10 px-3.5 h-10 w-[280px]">
+            <Search className="h-4 w-4 text-text/45" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search leads"
-              className="flex-1 bg-transparent outline-none text-[13.5px] text-brand-near-black placeholder:text-brand-near-black/40"
+              className="flex-1 bg-transparent outline-none text-[13.5px] text-text placeholder:text-text/40"
             />
             {search && (
               <button type="button" onClick={() => setSearch('')} aria-label="Clear search">
-                <X className="h-4 w-4 text-brand-near-black/45" />
+                <X className="h-4 w-4 text-text/45" />
               </button>
             )}
           </div>
           <SortControl sort={sort} onChange={setSort} open={sortOpen} setOpen={setSortOpen} />
         </div>
-        {/* Mobile icons — soft circular tap targets */}
+        {/* Mobile icons */}
         <div className="flex lg:hidden items-center gap-2">
           <button
             ref={searchTriggerRef}
             type="button"
             onClick={() => setMobileSearch(true)}
-            className="h-10 w-10 rounded-full bg-brand-cream border border-brand-near-black/8 flex items-center justify-center text-brand-near-black/70 hover:bg-white hover:text-brand-near-black transition-colors active:scale-95"
+            className="h-10 w-10 rounded-full bg-surface border border-text/8 flex items-center justify-center text-text/70 hover:bg-raised hover:text-text transition-colors active:scale-95"
             aria-label="Search leads"
           >
             <Search className="h-[18px] w-[18px]" />
@@ -306,7 +304,7 @@ export function MyLeadsView({
             onClick={() => setSortOpen(true)}
             aria-haspopup="dialog"
             aria-expanded={sortOpen}
-            className="h-10 w-10 rounded-full bg-brand-cream border border-brand-near-black/8 flex items-center justify-center text-brand-near-black/70 hover:bg-white hover:text-brand-near-black transition-colors active:scale-95"
+            className="h-10 w-10 rounded-full bg-surface border border-text/8 flex items-center justify-center text-text/70 hover:bg-raised hover:text-text transition-colors active:scale-95"
             aria-label="Sort leads"
           >
             <ArrowUpDown className="h-[18px] w-[18px]" />
@@ -314,25 +312,25 @@ export function MyLeadsView({
         </div>
       </div>
 
-      {/* Today's Run CTA */}
+      {/* Today's Run CTA — neutral raised surface with coral mono digit (v2.1 spec) */}
       {todaysRunCount > 0 && (
         <div className="px-4 lg:px-7 mb-4">
           <Link
             href="/app/today"
-            className="group flex items-center gap-3 rounded-2xl bg-brand-near-black text-white p-3.5 lg:p-4 hover:bg-[#1f1d1c] transition-colors"
+            className="group flex items-center gap-3 rounded-2xl bg-raised text-text p-3.5 lg:p-4 border border-text/8 hover:bg-surface transition-colors"
           >
-            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-brand-green text-white font-outfit text-[18px] font-extrabold flex items-center justify-center tabular-nums">
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-coral/15 text-coral font-outfit text-[18px] font-extrabold flex items-center justify-center tabular-nums">
               {todaysRunCount}
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[13.5px] lg:text-[14px] font-bold leading-tight">
                 Today&rsquo;s Run · {todaysRunCount} leads queued
               </div>
-              <div className="text-[12px] text-white/65 mt-0.5">
+              <div className="text-[12px] text-text/60 mt-0.5">
                 Review today&rsquo;s best opportunities
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-white/55 group-hover:text-white transition-colors flex-shrink-0" />
+            <ChevronRight className="h-5 w-5 text-text/55 group-hover:text-text transition-colors flex-shrink-0" />
           </Link>
         </div>
       )}
@@ -355,17 +353,17 @@ export function MyLeadsView({
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-full px-3.5 h-9 text-[12.5px] font-semibold whitespace-nowrap transition-colors flex-shrink-0',
                   active
-                    ? 'bg-brand-near-black text-white'
+                    ? 'bg-text text-bg'
                     : dim
-                      ? 'bg-brand-cream/60 text-brand-near-black/40 hover:text-brand-near-black/60'
-                      : 'bg-brand-cream text-brand-near-black/70 hover:text-brand-near-black border border-brand-near-black/8',
+                      ? 'bg-surface/60 text-text/40 hover:text-text/60'
+                      : 'bg-surface text-text/70 hover:text-text border border-text/8',
                 )}
               >
                 <span>{tab.label}</span>
                 <span
                   className={cn(
                     'text-[11px] tabular-nums',
-                    active ? 'text-white/70' : 'text-brand-near-black/45',
+                    active ? 'text-bg/70' : 'text-text/45',
                   )}
                 >
                   {count}
@@ -374,10 +372,9 @@ export function MyLeadsView({
             )
           })}
         </div>
-        {/* Right-edge fade so the last chip never feels sheared on mobile */}
         <div
           aria-hidden
-          className="lg:hidden pointer-events-none absolute top-0 bottom-0 right-0 w-10 bg-gradient-to-l from-brand-parchment via-brand-parchment/85 to-transparent"
+          className="lg:hidden pointer-events-none absolute top-0 bottom-0 right-0 w-10 bg-gradient-to-l from-bg via-bg/85 to-transparent"
         />
       </div>
 
@@ -422,24 +419,24 @@ export function MyLeadsView({
           <button
             type="button"
             aria-label="Close sort"
-            className="absolute inset-0 bg-brand-near-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={closeSort}
           />
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby={sortTitleId}
-            className="absolute inset-x-0 bottom-0 bg-brand-cream rounded-t-3xl pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] px-5 shadow-[0_-12px_30px_-12px_rgba(45,43,42,0.3)]"
+            className="absolute inset-x-0 bottom-0 bg-surface rounded-t-3xl pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] px-5 shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.5)]"
           >
-            <div className="mx-auto w-10 h-1 rounded-full bg-brand-near-black/20 mb-4" />
+            <div className="mx-auto w-10 h-1 rounded-full bg-text/20 mb-4" />
             <div className="flex items-center justify-between mb-3">
-              <h3 id={sortTitleId} className="font-outfit text-[18px] font-bold text-brand-near-black">
+              <h3 id={sortTitleId} className="font-outfit text-[18px] font-bold text-text">
                 Sort leads
               </h3>
               <button
                 type="button"
                 onClick={() => setSort('score')}
-                className="text-[13px] font-semibold text-brand-green"
+                className="text-[13px] font-semibold text-text/70 hover:text-text"
               >
                 Reset
               </button>
@@ -454,22 +451,22 @@ export function MyLeadsView({
                     onClick={() => setSort(option.key)}
                     className={cn(
                       'flex items-start gap-3 py-3 text-left rounded-xl px-3 -mx-3 transition-colors',
-                      selected ? 'bg-white' : 'hover:bg-white/60',
+                      selected ? 'bg-raised' : 'hover:bg-raised/60',
                     )}
                   >
                     <span
                       className={cn(
                         'mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                        selected ? 'border-brand-green' : 'border-brand-near-black/25',
+                        selected ? 'border-ok' : 'border-text/25',
                       )}
                     >
-                      {selected && <span className="h-2 w-2 rounded-full bg-brand-green" />}
+                      {selected && <span className="h-2 w-2 rounded-full bg-ok" />}
                     </span>
                     <div className="min-w-0">
-                      <div className="text-[14px] font-semibold text-brand-near-black">
+                      <div className="text-[14px] font-semibold text-text">
                         {option.title}
                       </div>
-                      <div className="text-[12px] text-brand-near-black/55">{option.sub}</div>
+                      <div className="text-[12px] text-text/55">{option.sub}</div>
                     </div>
                   </button>
                 )
@@ -479,7 +476,7 @@ export function MyLeadsView({
               type="button"
               autoFocus
               onClick={closeSort}
-              className="mt-4 w-full h-12 rounded-full bg-brand-green text-white text-[14px] font-bold hover:bg-brand-dark transition-colors"
+              className="mt-4 w-full h-12 rounded-full bg-coral text-white text-[14px] font-bold hover:bg-coralDeep transition-colors"
             >
               Apply sort
             </button>
@@ -507,10 +504,10 @@ function SortControl({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-2 h-10 rounded-full bg-brand-cream border border-brand-near-black/10 px-4 text-[13px] font-semibold text-brand-near-black hover:bg-white transition-colors"
+        className="inline-flex items-center gap-2 h-10 rounded-full bg-surface border border-text/10 px-4 text-[13px] font-semibold text-text hover:bg-raised transition-colors"
       >
-        <ArrowUpDown className="h-4 w-4 text-brand-near-black/55" />
-        <span className="text-brand-near-black/55">Sort:</span>
+        <ArrowUpDown className="h-4 w-4 text-text/55" />
+        <span className="text-text/55">Sort:</span>
         <span>{current.title}</span>
       </button>
       {open && (
@@ -520,7 +517,7 @@ function SortControl({
             className="fixed inset-0 z-10"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 top-12 z-20 w-[280px] rounded-2xl bg-white border border-brand-near-black/8 shadow-[0_12px_36px_-12px_rgba(45,43,42,0.25)] p-2">
+          <div className="absolute right-0 top-12 z-20 w-[280px] rounded-2xl bg-surface border border-text/8 shadow-[0_12px_36px_-12px_rgba(0,0,0,0.5)] p-2">
             {SORT_OPTIONS.map(option => {
               const selected = option.key === sort
               return (
@@ -533,22 +530,22 @@ function SortControl({
                   }}
                   className={cn(
                     'w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-xl transition-colors',
-                    selected ? 'bg-brand-light' : 'hover:bg-brand-cream',
+                    selected ? 'bg-raised' : 'hover:bg-raised/60',
                   )}
                 >
                   <span
                     className={cn(
                       'mt-1 h-3.5 w-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                      selected ? 'border-brand-green' : 'border-brand-near-black/25',
+                      selected ? 'border-ok' : 'border-text/25',
                     )}
                   >
-                    {selected && <span className="h-1.5 w-1.5 rounded-full bg-brand-green" />}
+                    {selected && <span className="h-1.5 w-1.5 rounded-full bg-ok" />}
                   </span>
                   <div className="min-w-0">
-                    <div className="text-[13px] font-semibold text-brand-near-black">
+                    <div className="text-[13px] font-semibold text-text">
                       {option.title}
                     </div>
-                    <div className="text-[11.5px] text-brand-near-black/55">{option.sub}</div>
+                    <div className="text-[11.5px] text-text/55">{option.sub}</div>
                   </div>
                 </button>
               )
@@ -582,27 +579,27 @@ function EmptyFilterState({
         })
 
   return (
-    <div className="rounded-2xl bg-ml-card p-8 lg:p-10 flex flex-col items-center text-center">
-      <div className="w-12 h-12 rounded-full bg-brand-near-black/[0.06] flex items-center justify-center text-brand-near-black/40 text-[18px] font-bold">
+    <div className="rounded-2xl bg-surface p-8 lg:p-10 flex flex-col items-center text-center">
+      <div className="w-12 h-12 rounded-full bg-text/[0.06] flex items-center justify-center text-text/40 text-[18px] font-bold">
         —
       </div>
-      <h3 className="mt-4 font-outfit text-[18px] lg:text-[20px] font-bold text-brand-near-black">
+      <h3 className="mt-4 font-outfit text-[18px] lg:text-[20px] font-bold text-text">
         {copy.title}
       </h3>
-      <p className="mt-1.5 max-w-[32ch] text-[13px] text-brand-near-black/60 leading-relaxed">
+      <p className="mt-1.5 max-w-[32ch] text-[13px] text-text/60 leading-relaxed">
         {copy.body}
       </p>
       <button
         type="button"
         onClick={onReset}
-        className="mt-5 inline-flex items-center gap-1.5 h-10 px-5 rounded-full bg-brand-near-black text-white text-[13px] font-semibold hover:bg-[#1f1d1c] transition-colors lg:hidden"
+        className="mt-5 inline-flex items-center gap-1.5 h-10 px-5 rounded-full bg-coral text-white text-[13px] font-semibold hover:bg-coralDeep transition-colors lg:hidden"
       >
         Browse All <ChevronRight className="h-3.5 w-3.5" />
       </button>
       <button
         type="button"
         onClick={onReset}
-        className="mt-5 hidden lg:inline-flex items-center gap-1.5 h-10 px-5 rounded-full bg-brand-near-black text-white text-[13px] font-semibold hover:bg-[#1f1d1c] transition-colors"
+        className="mt-5 hidden lg:inline-flex items-center gap-1.5 h-10 px-5 rounded-full bg-coral text-white text-[13px] font-semibold hover:bg-coralDeep transition-colors"
       >
         Browse All Leads <ChevronRight className="h-3.5 w-3.5" />
       </button>

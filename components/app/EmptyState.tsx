@@ -13,16 +13,16 @@ export function EmptyState({ icon, title, body, action, className }: Props) {
   return (
     <div
       className={cn(
-        'rounded-2xl bg-brand-cream shadow-fetchi-soft px-6 py-10 lg:py-14 flex flex-col items-center text-center',
+        'rounded-2xl bg-surface shadow-fetchi-soft px-6 py-10 lg:py-14 flex flex-col items-center text-center',
         className,
       )}
     >
       {icon && <div className="mb-4 flex items-center justify-center">{icon}</div>}
-      <h3 className="font-outfit text-[20px] font-semibold text-brand-near-black">
+      <h3 className="font-outfit text-[20px] font-semibold text-text">
         {title}
       </h3>
       {body && (
-        <p className="text-[14px] text-brand-near-black/65 mt-2 max-w-sm leading-relaxed">
+        <p className="text-[14px] text-text/65 mt-2 max-w-sm leading-relaxed">
           {body}
         </p>
       )}

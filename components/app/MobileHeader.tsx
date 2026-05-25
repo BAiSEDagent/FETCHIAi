@@ -17,7 +17,7 @@ export function MobileHeader({ leadsCount, creditsSlot }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="lg:hidden sticky top-0 z-30 bg-brand-near-black flex items-center justify-between px-2 h-14 shadow-fetchi-sticky">
+    <header className="lg:hidden sticky top-0 z-30 bg-surface flex items-center justify-between px-2 h-14 shadow-fetchi-sticky">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <button
@@ -29,7 +29,7 @@ export function MobileHeader({ leadsCount, creditsSlot }: Props) {
         </SheetTrigger>
         <SheetContent
           side="left"
-          className="w-[220px] p-0 bg-brand-near-black border-0"
+          className="w-[220px] p-0 bg-surface border-0"
         >
           <Sidebar
             leadsCount={leadsCount}

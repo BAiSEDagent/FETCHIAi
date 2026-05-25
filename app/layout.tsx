@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Outfit, DM_Sans } from 'next/font/google'
+import { Outfit, DM_Sans, DM_Serif_Display } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
@@ -17,10 +17,18 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
+const dmSerif = DM_Serif_Display({
+  subsets: ['latin'],
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  variable: '--font-dm-serif',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
-  title: 'Fetchi.ai — Signal-based lead generation',
+  title: 'Fetchi.ai — Find local buyers before your competitors do.',
   description:
-    "Tell us what your business sells — we'll find the buyers who need it this week.",
+    "Signal-based lead generation for service businesses. Tell us what your business sells — we'll find the buyers who need it this week.",
 }
 
 export default function RootLayout({
@@ -32,52 +40,52 @@ export default function RootLayout({
     <ClerkProvider
       appearance={{
         variables: {
-          colorPrimary: '#2D2B2A',
-          colorText: '#2D2B2A',
-          colorTextSecondary: '#5A5856',
-          colorBackground: '#FAF8F2',
-          colorInputBackground: '#F2EEDF',
-          colorInputText: '#2D2B2A',
-          colorDanger: '#D85A30',
+          /* Clerk forms live on cream/light marketing surfaces — sign-in,
+             sign-up, verify-email. Tokens here mirror the v2.3 light scale. */
+          colorPrimary: '#F45B3B',
+          colorText: '#0A0A0A',
+          colorTextSecondary: '#4B453C',
+          colorBackground: '#F3EEDC',
+          colorInputBackground: '#FAF6E8',
+          colorInputText: '#0A0A0A',
+          colorDanger: '#D94E45',
           fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
           fontFamilyButtons: 'var(--font-dm-sans), system-ui, sans-serif',
           borderRadius: '12px',
         },
         elements: {
           rootBox: 'w-full max-w-[400px] mx-auto',
-          card:
-            'bg-brand-cream shadow-fetchi-card rounded-[20px] border-0 p-6 lg:p-7',
-          headerTitle:
-            'font-outfit text-[22px] font-semibold text-brand-near-black',
-          headerSubtitle: 'text-[14px] text-brand-near-black/60',
+          card: 'bg-surface shadow-fetchi-card rounded-[20px] border border-border p-6 lg:p-7',
+          headerTitle: 'font-outfit text-[22px] font-semibold text-text',
+          headerSubtitle: 'text-[14px] text-text2',
           formButtonPrimary:
-            'bg-brand-near-black hover:bg-brand-green text-white rounded-xl h-11 text-[14px] font-semibold normal-case shadow-none',
+            'bg-coral hover:bg-coralDeep text-white rounded-xl h-11 text-[14px] font-semibold normal-case shadow-none',
           socialButtonsBlockButton:
-            'bg-white hover:bg-brand-cream-muted border border-brand-near-black/10 text-brand-near-black rounded-xl h-11 text-[14px] font-medium normal-case',
-          socialButtonsBlockButtonText: 'text-brand-near-black font-medium',
-          dividerLine: 'bg-brand-near-black/10',
-          dividerText: 'text-brand-near-black/55 text-[12px]',
-          formFieldLabel:
-            'text-[12.5px] font-semibold text-brand-near-black',
+            'bg-bg hover:bg-raised border border-border text-text rounded-xl h-11 text-[14px] font-medium normal-case',
+          socialButtonsBlockButtonText: 'text-text font-medium',
+          dividerLine: 'bg-border',
+          dividerText: 'text-textMuted text-[12px]',
+          formFieldLabel: 'text-[12.5px] font-semibold text-text',
           formFieldInput:
-            'bg-brand-cream-muted border border-brand-near-black/10 rounded-xl h-11 text-[14px] text-brand-near-black focus:bg-white focus:border-brand-green focus:ring-2 focus:ring-brand-green/30',
-          identityPreviewEditButton: 'text-brand-green hover:text-brand-dark',
-          formFieldAction: 'text-brand-green hover:text-brand-dark',
+            'bg-bg border border-border rounded-xl h-11 text-[14px] text-text focus:border-coral focus:ring-2 focus:ring-coral/30',
+          identityPreviewEditButton: 'text-coral hover:text-coralDeep',
+          formFieldAction: 'text-blue hover:text-coral',
           footer: 'bg-transparent',
-          footerActionText: 'text-brand-near-black/65 text-[13px]',
-          footerActionLink:
-            'text-brand-green hover:text-brand-dark font-semibold',
-          alert:
-            'bg-brand-coral/8 border border-brand-coral/20 text-brand-near-black rounded-xl',
-          alertText: 'text-brand-near-black text-[13px]',
+          footerActionText: 'text-text2 text-[13px]',
+          footerActionLink: 'text-coral hover:text-coralDeep font-semibold',
+          alert: 'bg-coral/8 border border-coral/20 text-text rounded-xl',
+          alertText: 'text-text text-[13px]',
           otpCodeFieldInput:
-            'bg-brand-cream-muted border border-brand-near-black/10 rounded-xl text-brand-near-black focus:bg-white focus:border-brand-green',
-          badge: 'bg-brand-light text-brand-dark border border-brand-green/25',
+            'bg-bg border border-border rounded-xl text-text focus:border-coral',
+          badge: 'bg-raised text-text2 border border-border',
         },
       }}
     >
-      <html lang="en" className={`${outfit.variable} ${dmSans.variable}`}>
-        <body className="min-h-screen bg-brand-parchment text-brand-near-black antialiased">
+      <html
+        lang="en"
+        className={`theme-light ${outfit.variable} ${dmSans.variable} ${dmSerif.variable}`}
+      >
+        <body className="min-h-screen bg-bg text-text antialiased">
           {children}
         </body>
       </html>

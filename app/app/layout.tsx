@@ -10,6 +10,18 @@ import { CreditsWidget } from '@/components/app/CreditsWidget'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * v2.3 boundary: authenticated product is dark/operator by default.
+ * The `theme-dark` class on the wrapper flips every CSS var to the
+ * dark scale, which cascades through Sidebar, headers, lead cards,
+ * Today's Run deck, settings, etc.
+ *
+ * Onboarding is the one exception inside `/app/**`. It carries its
+ * own `theme-light` override on the page wrapper until the final
+ * "first-run reveal" step does the cream-to-dark bridge into Today's
+ * Run. Do not assume the dark wrapper here applies to onboarding —
+ * the inner page overrides it.
+ */
 export default async function AppLayout({
   children,
 }: {
@@ -37,8 +49,15 @@ export default async function AppLayout({
 
   const credits = <CreditsWidget subscription={ctx.subscription} />
 
+  // Onboarding owns its own theme + chrome — no sidebar/header/nav.
+  if (onOnboarding) {
+    return (
+      <div className="theme-light min-h-screen bg-bg text-text">{children}</div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-brand-parchment text-brand-near-black flex flex-col">
+    <div className="theme-dark min-h-screen bg-bg text-text flex flex-col">
       <MobileHeader leadsCount={leadsCount} creditsSlot={credits} />
       <div className="flex flex-1 min-h-0">
         <div className="hidden lg:flex flex-shrink-0">

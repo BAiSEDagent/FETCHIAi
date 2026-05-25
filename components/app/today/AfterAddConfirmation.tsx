@@ -55,7 +55,7 @@ export function AfterAddConfirmation({
     <section
       aria-live="polite"
       className={cn(
-        'relative p-6 lg:p-7 text-brand-near-black',
+        'relative p-6 lg:p-7 text-text',
         CARD_SURFACE,
         CARD_RADIUS,
         CARD_SHADOW,
@@ -64,18 +64,18 @@ export function AfterAddConfirmation({
       {/* Brand-green "Added" stamp */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-green">
+          <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-ok">
             Added to My Leads
           </div>
           <h3 className="font-outfit text-[22px] lg:text-[24px] font-bold mt-1 leading-tight">
             {businessName}
           </h3>
-          <p className="text-[13px] text-brand-near-black/65 mt-1.5">
+          <p className="text-[13px] text-text/65 mt-1.5">
             Saved to My Leads. Draft is ready to review when you are.
           </p>
         </div>
         <span
-          className="flex items-center gap-1.5 rounded-full bg-brand-green px-3 h-[34px] text-[12px] font-bold uppercase tracking-[0.08em] text-white -rotate-[9deg] shadow-[0_8px_18px_-10px_rgba(88,147,126,0.7)] flex-shrink-0"
+          className="flex items-center gap-1.5 rounded-full bg-ok px-3 h-[34px] text-[12px] font-bold uppercase tracking-[0.08em] text-white -rotate-[9deg] shadow-[0_8px_18px_-10px_rgba(88,147,126,0.7)] flex-shrink-0"
           aria-hidden
         >
           <Check className="h-3.5 w-3.5" />
@@ -84,23 +84,23 @@ export function AfterAddConfirmation({
       </div>
 
       {/* Draft preview (read-only) */}
-      <div className="mt-5 rounded-2xl bg-brand-cream/70 p-4">
-        <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45">
+      <div className="mt-5 rounded-2xl bg-surface/70 p-4">
+        <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45">
           Draft prepared, not sent
         </div>
         {draft ? (
           <>
             {draft.subjectLine && (
-              <div className="mt-2 text-[13.5px] font-semibold text-brand-near-black leading-snug">
+              <div className="mt-2 text-[13.5px] font-semibold text-text leading-snug">
                 {draft.subjectLine}
               </div>
             )}
-            <p className="mt-1.5 text-[13px] text-brand-near-black/70 leading-relaxed whitespace-pre-line">
+            <p className="mt-1.5 text-[13px] text-text/70 leading-relaxed whitespace-pre-line">
               {draft.bodyFirstLines}
             </p>
           </>
         ) : (
-          <p className="mt-2 text-[13px] text-brand-near-black/60 italic leading-relaxed">
+          <p className="mt-2 text-[13px] text-text/60 italic leading-relaxed">
             Draft will be ready when you open this lead.
           </p>
         )}

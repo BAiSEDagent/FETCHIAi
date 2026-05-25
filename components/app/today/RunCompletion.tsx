@@ -32,25 +32,25 @@ export function RunCompletion({
   return (
     <section
       className={cn(
-        'p-7 lg:p-8 text-center text-brand-near-black',
+        'p-7 lg:p-8 text-center text-text',
         CARD_SURFACE,
         CARD_RADIUS,
         CARD_SHADOW,
       )}
     >
-      <div className="mx-auto w-14 h-14 rounded-2xl bg-brand-green/15 text-brand-dark flex items-center justify-center">
+      <div className="mx-auto w-14 h-14 rounded-2xl bg-ok/15 text-text2 flex items-center justify-center">
         <Sparkles className="h-6 w-6" />
       </div>
 
       <h2 className="font-outfit text-[26px] lg:text-[30px] font-bold mt-4 leading-tight">
         Stack cleared
       </h2>
-      <p className="text-[14px] text-brand-near-black/65 mt-2 leading-relaxed max-w-md mx-auto">
+      <p className="text-[14px] text-text/65 mt-2 leading-relaxed max-w-md mx-auto">
         You reviewed {reviewed} opportunit{reviewed === 1 ? 'y' : 'ies'}.
         {draftsLine ? (
           <>
             <br />
-            <span className="text-brand-near-black/75">{draftsLine}</span>
+            <span className="text-text/75">{draftsLine}</span>
           </>
         ) : null}
       </p>
@@ -61,7 +61,7 @@ export function RunCompletion({
         <Stat label="Drafts" value={draftsPrepared} tone="muted" />
       </dl>
 
-      <p className="text-[12.5px] text-brand-near-black/55 mt-5">
+      <p className="text-[12.5px] text-text/55 mt-5">
         Fetchi will queue the next batch as fresh signals come in.
       </p>
 
@@ -103,14 +103,14 @@ function Stat({
   tone: 'green' | 'muted'
 }) {
   return (
-    <div className="rounded-2xl bg-brand-cream/60 px-3 py-3">
-      <dt className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45">
+    <div className="rounded-2xl bg-surface/60 px-3 py-3">
+      <dt className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45">
         {label}
       </dt>
       <dd
         className={cn(
           'font-outfit text-[24px] lg:text-[26px] font-bold tabular-nums mt-0.5',
-          tone === 'green' ? 'text-brand-green' : 'text-brand-near-black',
+          tone === 'green' ? 'text-ok' : 'text-text',
         )}
       >
         {value}

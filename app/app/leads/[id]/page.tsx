@@ -55,23 +55,23 @@ function ScoreBreakdown({
         {rows.map(r => (
           <div key={r.label}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[13px] text-brand-near-black/75">
+              <span className="text-[13px] text-text/75">
                 {r.label}
               </span>
-              <span className="text-[12px] font-semibold text-brand-near-black/55 tabular-nums">
+              <span className="text-[12px] font-semibold text-text/55 tabular-nums">
                 {r.pct}
               </span>
             </div>
-            <div className="h-1.5 rounded-full bg-brand-near-black/8 overflow-hidden">
+            <div className="h-1.5 rounded-full bg-text/8 overflow-hidden">
               <div
-                className="h-full bg-brand-green transition-all"
+                className="h-full bg-ok transition-all"
                 style={{ width: `${r.pct}%` }}
               />
             </div>
           </div>
         ))}
       </div>
-      <p className="text-[12px] text-brand-near-black/45 mt-4 leading-relaxed">
+      <p className="text-[12px] text-text/45 mt-4 leading-relaxed">
         Score combines signal strength, recency, fit, and reachability.
       </p>
     </SectionCard>
@@ -86,7 +86,7 @@ function ConfidenceDots({ pct }: { pct: number }) {
         <span
           key={i}
           className={`w-1.5 h-1.5 rounded-full ${
-            i < filled ? 'bg-brand-green' : 'bg-brand-near-black/12'
+            i < filled ? 'bg-ok' : 'bg-text/12'
           }`}
         />
       ))}
@@ -214,19 +214,19 @@ export default async function LeadProfilePage({
       <div className="flex items-center justify-between px-4 lg:px-7 pt-5 lg:pt-7 pb-2">
         <Link
           href="/app/leads"
-          className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-brand-cream shadow-fetchi-soft text-brand-near-black/75 hover:text-brand-near-black"
+          className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-surface shadow-fetchi-soft text-text/75 hover:text-text"
           aria-label="Back to leads"
         >
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1 text-center min-w-0 px-4">
-          <div className="text-[11px] uppercase tracking-[1px] font-bold text-brand-near-black/45">
+          <div className="text-[11px] uppercase tracking-[1px] font-bold text-text/45">
             Lead detail
           </div>
         </div>
         <button
           type="button"
-          className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-brand-cream shadow-fetchi-soft text-brand-near-black/75 hover:text-brand-near-black"
+          className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-surface shadow-fetchi-soft text-text/75 hover:text-text"
           aria-label="More options"
         >
           <MoreHorizontal className="h-5 w-5" />
@@ -241,30 +241,30 @@ export default async function LeadProfilePage({
         <div className="text-center pt-3 pb-2">
           <div className="flex items-center justify-center flex-wrap gap-1.5">
             <span
-              className="inline-flex items-center rounded-full h-[24px] px-2.5 text-[11px] font-bold tracking-[0.04em] tabular-nums bg-brand-near-black/[0.05] text-brand-near-black/75"
+              className="inline-flex items-center rounded-full h-[24px] px-2.5 text-[11px] font-bold tracking-[0.04em] tabular-nums bg-text/[0.05] text-text/75"
               aria-label={`Signal ${signalToken ?? signalTypeLabel}`}
             >
               {signalToken ?? signalTypeLabel.toUpperCase()}
             </span>
             {opp.status === 'new' && (
-              <span className="inline-flex items-center rounded-full h-[24px] px-2.5 text-[11px] font-semibold bg-brand-cream-muted text-brand-near-black/65">
+              <span className="inline-flex items-center rounded-full h-[24px] px-2.5 text-[11px] font-semibold bg-raised text-text/65">
                 No claim filed
               </span>
             )}
           </div>
 
-          <div className="font-outfit text-[68px] lg:text-[76px] leading-none font-bold text-brand-green tabular-nums mt-5">
+          <div className="font-outfit text-[68px] lg:text-[76px] leading-none font-bold text-ok tabular-nums mt-5">
             {opp.score}
           </div>
-          <div className="text-[13px] text-brand-near-black/55 mt-2 font-medium px-4">
+          <div className="text-[13px] text-text/55 mt-2 font-medium px-4">
             {summaryLine}
           </div>
 
-          <h1 className="font-outfit text-[26px] lg:text-[30px] font-bold text-brand-near-black leading-tight mt-5 px-2">
+          <h1 className="font-outfit text-[26px] lg:text-[30px] font-bold text-text leading-tight mt-5 px-2">
             {businessName}
           </h1>
           {locationLine && (
-            <div className="text-[13px] text-brand-near-black/55 mt-1.5">
+            <div className="text-[13px] text-text/55 mt-1.5">
               {locationLine}
             </div>
           )}
@@ -272,7 +272,7 @@ export default async function LeadProfilePage({
 
         {opp.whyNow && (
           <SectionCard eyebrow="Why now" tone="highlight">
-            <p className="text-[14px] text-brand-dark leading-[1.6]">
+            <p className="text-[14px] text-text2 leading-[1.6]">
               {opp.whyNow}
             </p>
           </SectionCard>
@@ -281,7 +281,7 @@ export default async function LeadProfilePage({
         <SectionCard
           eyebrow="Evidence"
           actions={
-            <span className="text-[12px] font-semibold text-brand-green">
+            <span className="text-[12px] font-semibold text-ok">
               {evidenceCount} source{evidenceCount === 1 ? '' : 's'}
             </span>
           }
@@ -324,7 +324,7 @@ export default async function LeadProfilePage({
               />
             )}
             {evidenceCount === 0 && (
-              <div className="text-[13px] text-brand-near-black/55 py-2">
+              <div className="text-[13px] text-text/55 py-2">
                 Evidence unavailable for this lead yet.
               </div>
             )}
@@ -333,7 +333,7 @@ export default async function LeadProfilePage({
 
         {signal?.whyRelevant && (
           <SectionCard eyebrow="Signal evidence">
-            <p className="text-[14px] text-brand-near-black/75 leading-[1.6]">
+            <p className="text-[14px] text-text/75 leading-[1.6]">
               {signal.whyRelevant}
             </p>
           </SectionCard>
@@ -358,7 +358,7 @@ export default async function LeadProfilePage({
                     href={`https://${prospect.website}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-brand-green hover:text-brand-dark truncate inline-block max-w-full"
+                    className="text-ok hover:text-text2 truncate inline-block max-w-full"
                   >
                     {prospect.website}
                   </a>
@@ -378,13 +378,13 @@ export default async function LeadProfilePage({
             />
           </div>
 
-          <div className="mt-4 pt-4 border-t border-brand-near-black/8">
-            <div className="text-[11px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-3">
+          <div className="mt-4 pt-4 border-t border-text/8">
+            <div className="text-[11px] font-bold uppercase tracking-[1px] text-text/45 mb-3">
               Contacts
             </div>
             {contacts.length === 0 ? (
-              <div className="flex items-center gap-1.5 text-[12.5px] text-brand-near-black/55">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-near-black/20" />
+              <div className="flex items-center gap-1.5 text-[12.5px] text-text/55">
+                <span className="w-1.5 h-1.5 rounded-full bg-text/20" />
                 Finding best contact
               </div>
             ) : (
@@ -392,21 +392,21 @@ export default async function LeadProfilePage({
                 {contacts.map(c => (
                   <div
                     key={c.id}
-                    className="flex items-center gap-3 py-2.5 border-b border-brand-near-black/6 last:border-0"
+                    className="flex items-center gap-3 py-2.5 border-b border-text/6 last:border-0"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-brand-cream-muted flex items-center justify-center text-[13px] font-semibold text-brand-near-black/60 flex-shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-raised flex items-center justify-center text-[13px] font-semibold text-text/60 flex-shrink-0">
                       {c.contactName?.[0] ?? '?'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[13.5px] font-semibold text-brand-near-black truncate">
+                      <div className="text-[13.5px] font-semibold text-text truncate">
                         {c.contactName ?? 'Unknown contact'}
                       </div>
-                      <div className="text-[12px] text-brand-near-black/55 truncate">
+                      <div className="text-[12px] text-text/55 truncate">
                         {c.contactTitle ?? '—'}
                         {c.contactEmail && (
                           <>
                             {' · '}
-                            <span className="text-brand-green">
+                            <span className="text-ok">
                               {c.contactEmail}
                             </span>
                           </>
@@ -423,11 +423,11 @@ export default async function LeadProfilePage({
 
         <SectionCard
           eyebrow={
-            <span className="text-brand-green">✦ Outreach draft</span>
+            <span className="text-ok">✦ Outreach draft</span>
           }
         >
           {drafts.length === 0 ? (
-            <div className="text-[13px] text-brand-near-black/55 leading-relaxed">
+            <div className="text-[13px] text-text/55 leading-relaxed">
               Draft will appear here once outreach is enabled.
             </div>
           ) : (
@@ -435,11 +435,11 @@ export default async function LeadProfilePage({
               {drafts.map(d => (
                 <div key={d.id} className="space-y-2.5">
                   {d.subjectLine && (
-                    <div className="text-[13px] font-semibold text-brand-near-black">
+                    <div className="text-[13px] font-semibold text-text">
                       {d.subjectLine}
                     </div>
                   )}
-                  <p className="text-[13px] text-brand-near-black/75 leading-[1.65] whitespace-pre-wrap">
+                  <p className="text-[13px] text-text/75 leading-[1.65] whitespace-pre-wrap">
                     {d.body}
                   </p>
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -481,17 +481,17 @@ function EvidenceRow({
   tone?: 'coral' | 'muted'
 }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-brand-near-black/6 last:border-0">
+    <div className="flex items-center gap-3 py-3 border-b border-text/6 last:border-0">
       <GlyphTile glyph={glyph} tone={tone} size="md" />
       <div className="flex-1 min-w-0">
-        <div className="text-[13.5px] font-semibold text-brand-near-black truncate">
+        <div className="text-[13.5px] font-semibold text-text truncate">
           {title}
         </div>
-        <div className="text-[12px] text-brand-near-black/55 truncate">
+        <div className="text-[12px] text-text/55 truncate">
           {meta}
         </div>
       </div>
-      <ChevronRight className="h-4 w-4 text-brand-near-black/30 flex-shrink-0" />
+      <ChevronRight className="h-4 w-4 text-text/30 flex-shrink-0" />
     </div>
   )
 }
@@ -507,14 +507,14 @@ function InfoTile({
 }) {
   return (
     <div
-      className={`rounded-xl bg-brand-cream-muted px-3.5 py-3 ${
+      className={`rounded-xl bg-raised px-3.5 py-3 ${
         wide ? 'col-span-2' : ''
       }`}
     >
-      <div className="text-[10.5px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-1">
+      <div className="text-[10.5px] font-bold uppercase tracking-[1px] text-text/45 mb-1">
         {label}
       </div>
-      <div className="text-[13.5px] text-brand-near-black font-medium break-words">
+      <div className="text-[13.5px] text-text font-medium break-words">
         {value}
       </div>
     </div>

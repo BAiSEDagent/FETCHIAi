@@ -34,7 +34,7 @@ export function MobileScreenHeader({
       {backHref && (
         <Link
           href={backHref}
-          className="inline-flex items-center gap-1 text-[12.5px] text-brand-near-black/55 hover:text-brand-near-black mb-3 min-h-[44px]"
+          className="inline-flex items-center gap-1 text-[12.5px] text-text/55 hover:text-text mb-3 min-h-[44px]"
         >
           <ChevronLeft className="h-4 w-4" />
           {backLabel}
@@ -42,11 +42,11 @@ export function MobileScreenHeader({
       )}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="font-outfit text-[26px] lg:text-[28px] font-semibold text-brand-near-black leading-tight">
+          <h1 className="font-outfit text-[26px] lg:text-[28px] font-semibold text-text leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[14px] text-brand-near-black/60 mt-1.5 leading-relaxed max-w-2xl">
+            <p className="text-[14px] text-text/60 mt-1.5 leading-relaxed max-w-2xl">
               {description}
             </p>
           )}

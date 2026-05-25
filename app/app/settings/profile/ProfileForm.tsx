@@ -81,7 +81,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               id="vertical"
               value={vertical}
               onChange={e => setVertical(e.target.value as Initial['vertical'])}
-              className="flex h-11 w-full rounded-xl border border-brand-near-black/10 bg-brand-cream-muted px-3.5 text-[14px] text-brand-near-black focus:bg-white focus:border-brand-green focus:ring-2 focus:ring-brand-green/30 focus:outline-none"
+              className="flex h-11 w-full rounded-xl border border-text/10 bg-raised px-3.5 text-[14px] text-text focus:bg-white focus:border-ok focus:ring-2 focus:ring-ok/30 focus:outline-none"
             >
               {VERTICALS.map(v => (
                 <option key={v.id} value={v.id}>
@@ -135,10 +135,10 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               step={5}
               value={radius}
               onChange={e => setRadius(Number(e.target.value))}
-              className="flex-1 accent-brand-green h-2"
+              className="flex-1 accent-coral h-2"
               aria-label="Service radius in miles"
             />
-            <span className="text-[14px] font-bold text-brand-dark bg-brand-light rounded-lg px-3 py-1.5 min-w-[72px] text-center tabular-nums">
+            <span className="text-[14px] font-bold text-text2 bg-ok/15 rounded-lg px-3 py-1.5 min-w-[72px] text-center tabular-nums">
               {radius} mi
             </span>
           </div>
@@ -157,12 +157,12 @@ export function ProfileForm({ initial }: { initial: Initial }) {
         />
       </SettingsGroup>
 
-      <div className="rounded-2xl bg-brand-cream shadow-fetchi-soft px-5 py-4 lg:px-6 lg:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="text-[13px] text-brand-near-black/60">
+      <div className="rounded-2xl bg-surface shadow-fetchi-soft px-5 py-4 lg:px-6 lg:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="text-[13px] text-text/60">
           {msg ? (
-            <span className="text-brand-green font-semibold">{msg}</span>
+            <span className="text-ok font-semibold">{msg}</span>
           ) : err ? (
-            <span className="text-brand-coral font-semibold">{err}</span>
+            <span className="text-coral font-semibold">{err}</span>
           ) : (
             'Changes apply on the next scout run.'
           )}
@@ -186,7 +186,7 @@ function Field({
 }) {
   return (
     <label className="block" htmlFor={htmlFor}>
-      <span className="text-[12.5px] font-semibold text-brand-near-black block mb-1.5">
+      <span className="text-[12.5px] font-semibold text-text block mb-1.5">
         {label}
       </span>
       {children}

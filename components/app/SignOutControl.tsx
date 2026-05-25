@@ -36,7 +36,7 @@ export function SignOutControl({ variant = 'sidebar' }: { variant?: Variant }) {
   return (
     <div className="mx-3 mt-3 rounded-xl bg-white/[0.04] px-3 py-2.5 flex items-center gap-2.5 min-h-[52px]">
       <div
-        className="w-8 h-8 rounded-full bg-brand-green text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0"
+        className="w-8 h-8 rounded-full bg-ok text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0"
         aria-hidden
       >
         {initial}

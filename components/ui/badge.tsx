@@ -9,13 +9,13 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-brand-light text-brand-dark border border-brand-green/25",
+          "bg-ok/15 text-text2 border border-ok/25",
         secondary:
-          "bg-brand-cream-muted text-brand-near-black/70 border border-brand-near-black/10",
+          "bg-raised text-text/70 border border-text/10",
         destructive:
-          "bg-brand-coral/10 text-brand-coral border border-brand-coral/25",
+          "bg-coral/10 text-coral border border-coral/25",
         outline:
-          "border border-brand-near-black/15 text-brand-near-black/70",
+          "border border-text/15 text-text/70",
       },
     },
     defaultVariants: {

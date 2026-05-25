@@ -7,7 +7,7 @@ export default async function Home() {
   if (userId) redirect('/app/chat')
 
   return (
-    <main className="min-h-screen bg-brand-parchment flex flex-col items-center justify-center px-5 py-12">
+    <main className="min-h-screen bg-bg flex flex-col items-center justify-center px-5 py-12">
       <div className="max-w-md w-full text-center">
         <div className="flex justify-center mb-8">
           <span
@@ -19,14 +19,15 @@ export default async function Home() {
           </span>
         </div>
 
-        <h1 className="fetchi-wordmark text-[44px] lg:text-[52px] leading-none text-brand-near-black">
+        <h1 className="fetchi-wordmark text-[44px] lg:text-[52px] leading-none text-text">
           Fetchi
         </h1>
-        <div className="text-[12px] font-bold uppercase tracking-[1.5px] text-brand-dark mt-3">
-          Signal-based lead generation
+        {/* Marketing italic kicker — one of the five sanctioned coral places. */}
+        <div className="kicker-serif text-[15px] lg:text-[16px] italic text-coral mt-3">
+          Signal-based lead generation.
         </div>
 
-        <p className="text-[16px] text-brand-near-black/75 leading-relaxed mt-6 mx-auto max-w-sm">
+        <p className="text-[16px] text-text/75 leading-relaxed mt-6 mx-auto max-w-sm">
           Tell ツ what your business sells. We&apos;ll find the buyers who need
           it this week — before your competition even sees them.
         </p>
@@ -34,19 +35,19 @@ export default async function Home() {
         <div className="flex flex-col gap-3 mt-9">
           <Link
             href="/sign-up"
-            className="inline-flex items-center justify-center h-12 px-7 rounded-xl bg-brand-near-black text-white font-semibold text-[15px] hover:bg-brand-green transition-colors"
+            className="inline-flex items-center justify-center h-12 px-7 rounded-xl bg-coral text-white font-semibold text-[15px] hover:bg-coralDeep transition-colors"
           >
             Start your free trial
           </Link>
           <Link
             href="/sign-in"
-            className="inline-flex items-center justify-center h-11 px-6 text-brand-near-black/70 hover:text-brand-near-black font-medium text-[14px]"
+            className="inline-flex items-center justify-center h-11 px-6 text-text/70 hover:text-text font-medium text-[14px]"
           >
             I already have an account
           </Link>
         </div>
 
-        <div className="text-[12px] text-brand-near-black/45 mt-8">
+        <div className="text-[12px] text-text/45 mt-8">
           10 free leads. No card required.
         </div>
       </div>

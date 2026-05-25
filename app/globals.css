@@ -2,76 +2,169 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────
+   Fetchi v2.3 — dual-surface brand token system.
+
+   v2.3 is the master theme-boundary spec (cream/light marketing +
+   onboarding ↔ dark/operator product). v2.1 is the dark-product
+   usage-discipline sub-spec (coral discipline, Apollo restraint,
+   lead-card variants).
+
+   Tokens are stored as space-separated RGB triples so Tailwind's
+   `rgb(var(--x) / <alpha-value>)` opacity syntax keeps working.
+
+   Coral is RARE — five places only:
+     1. hot/urgent lead-card surface
+     2. primary product CTA
+     3. score on the hot card
+     4. trial-gate / upgrade moment
+     5. one italic kicker per marketing section
+
+   Evidence Blue is SEMANTIC — source/audit/proof affordances only.
+   Sage-green-as-brand is GONE; green is success only (--ok).
+   ───────────────────────────────────────────────────────────────── */
+
 @layer base {
   :root {
-    /* Fetchi parchment background, near-black foreground */
-    --background: 44 26% 88%;            /* #EBE6D9 parchment */
-    --foreground: 30 4% 17%;             /* #2D2B2A near-black */
+    /* Shared brand — same in every theme */
+    --coral: 244 91 59;           /* #F45B3B */
+    --coralDeep: 217 78 50;       /* #D94E32 */
+    --warn: 227 169 54;           /* #E3A936 */
 
-    /* Default card surface is warm cream, not pure white, so primitives
-       like <Card> automatically blend with the parchment background. */
-    --card: 44 40% 97%;                  /* #FAF8F2 cream */
-    --card-foreground: 30 4% 17%;
-
-    --popover: 44 40% 97%;
-    --popover-foreground: 30 4% 17%;
-
-    /* Brand green as primary */
-    --primary: 160 25% 47%;              /* #58937E brand green */
-    --primary-foreground: 0 0% 100%;
-
-    /* Secondary surface = cream-muted so secondary buttons and inset rows
-       sit calmly on the parchment without harsh borders. */
-    --secondary: 44 35% 91%;             /* #F2EEDF cream-muted */
-    --secondary-foreground: 30 4% 17%;
-
-    --muted: 44 35% 91%;
-    --muted-foreground: 30 4% 38%;
-
-    --accent: 44 35% 91%;
-    --accent-foreground: 30 4% 17%;
-
-    /* Coral is reserved for destructive — match the brand coral. */
-    --destructive: 13 67% 52%;           /* #D85A30 coral */
-    --destructive-foreground: 0 0% 100%;
-
-    /* Quiet 8% near-black border by default; inputs get a touch more. */
-    --border: 30 4% 17% / 0.08;
-    --input: 30 4% 17% / 0.12;
-    --ring: 160 25% 47%;
-
+    /* Radius + shadow tokens kept stable across themes */
     --radius: 0.75rem;
   }
 
-  .dark {
-    --background: 30 4% 17%;
-    --foreground: 44 26% 88%;
-    --card: 30 4% 20%;
-    --card-foreground: 44 26% 88%;
-    --popover: 30 4% 20%;
-    --popover-foreground: 44 26% 88%;
-    --primary: 160 25% 47%;
+  /* ── theme-light · cream/light marketing + onboarding ───────── */
+  .theme-light {
+    --bg: 250 246 232;            /* #FAF6E8 cream */
+    --surface: 243 238 220;       /* #F3EEDC */
+    --raised: 232 224 204;        /* #E8E0CC */
+    --border: 216 207 186;        /* #D8CFBA */
+    --text: 10 10 10;             /* #0A0A0A */
+    --text2: 75 69 60;            /* #4B453C */
+    --textMuted: 122 113 101;     /* #7A7165 */
+    --coralSoft: 247 198 184;     /* #F7C6B8 */
+    --blue: 78 134 200;           /* #4E86C8 evidence blue */
+    --ok: 47 159 112;             /* #2F9F70 */
+    --bad: 217 78 69;             /* #D94E45 */
+    --parch: 239 231 211;         /* #EFE7D3 */
+    --parchMute: 211 191 177;     /* #D3BFB1 */
+    --mustard: 247 232 178;       /* #F7E8B2 */
+    --darkSlab: 16 18 17;         /* #101211 — used for marketing dark slabs */
+
+    /* shadcn HSL aliases re-pointed at v2.3 light scale so existing
+       ui/* primitives (Button, Card, Input, Sheet, etc.) auto-adopt. */
+    --background: 50 56% 95%;
+    --foreground: 0 0% 4%;
+    --card: 47 50% 91%;
+    --card-foreground: 0 0% 4%;
+    --popover: 47 50% 91%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 13 90% 59%;        /* coral primary */
     --primary-foreground: 0 0% 100%;
-    --secondary: 30 4% 25%;
-    --secondary-foreground: 44 26% 88%;
-    --muted: 30 4% 25%;
-    --muted-foreground: 44 10% 65%;
-    --accent: 30 4% 25%;
-    --accent-foreground: 44 26% 88%;
-    --destructive: 13 67% 52%;
+    --secondary: 44 35% 86%;
+    --secondary-foreground: 0 0% 4%;
+    --muted: 44 35% 86%;
+    --muted-foreground: 30 11% 44%;
+    --accent: 44 35% 86%;
+    --accent-foreground: 0 0% 4%;
+    --destructive: 4 67% 56%;
     --destructive-foreground: 0 0% 100%;
-    --border: 44 26% 88% / 0.10;
-    --input: 44 26% 88% / 0.16;
-    --ring: 160 25% 47%;
+    --border-hsl: 38 30% 79%;
+    --input: 38 30% 79%;
+    --ring: 13 90% 59%;
+  }
+
+  /* ── theme-dark · authenticated product (v2.1 discipline) ──── */
+  .theme-dark {
+    --bg: 16 18 17;               /* #101211 */
+    --surface: 23 26 24;          /* #171A18 */
+    --raised: 32 36 31;           /* #20241F */
+    --border: 45 51 46;           /* #2D332E */
+    --text: 247 243 232;          /* #F7F3E8 */
+    --text2: 184 176 162;         /* #B8B0A2 */
+    --textMuted: 126 120 109;     /* #7E786D */
+    --coralSoft: 58 29 23;        /* #3A1D17 */
+    --blue: 111 159 216;          /* #6F9FD8 */
+    --ok: 69 192 138;             /* #45C08A */
+    --bad: 239 90 78;             /* #EF5A4E */
+    --parch: 239 231 211;         /* #EFE7D3 */
+    --parchMute: 211 191 177;     /* #D3BFB1 */
+    --mustard: 247 232 178;       /* #F7E8B2 (rare in dark) */
+    --darkSlab: 16 18 17;
+
+    /* shadcn HSL aliases re-pointed at v2.3 dark scale. */
+    --background: 130 6% 6%;
+    --foreground: 44 56% 94%;
+    --card: 132 6% 10%;
+    --card-foreground: 44 56% 94%;
+    --popover: 132 6% 10%;
+    --popover-foreground: 44 56% 94%;
+    --primary: 13 90% 59%;        /* coral primary, still rare */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 120 7% 14%;
+    --secondary-foreground: 44 56% 94%;
+    --muted: 120 7% 14%;
+    --muted-foreground: 38 13% 71%;
+    --accent: 120 7% 14%;
+    --accent-foreground: 44 56% 94%;
+    --destructive: 4 84% 62%;
+    --destructive-foreground: 0 0% 100%;
+    --border-hsl: 132 8% 19%;
+    --input: 132 8% 19%;
+    --ring: 213 56% 64%;          /* evidence blue ring */
+  }
+
+  /* Default any unwrapped surface to theme-light. The root <html>
+     also carries .theme-light in app/layout.tsx so this is a belt-
+     and-braces fallback for portals (sheets, dialogs) that render
+     outside the layout tree. */
+  :root:not(.theme-dark):not(.theme-light) {
+    --bg: 250 246 232;
+    --surface: 243 238 220;
+    --raised: 232 224 204;
+    --border: 216 207 186;
+    --text: 10 10 10;
+    --text2: 75 69 60;
+    --textMuted: 122 113 101;
+    --coralSoft: 247 198 184;
+    --blue: 78 134 200;
+    --ok: 47 159 112;
+    --bad: 217 78 69;
+    --parch: 239 231 211;
+    --parchMute: 211 191 177;
+    --mustard: 247 232 178;
+    --darkSlab: 16 18 17;
+    --background: 50 56% 95%;
+    --foreground: 0 0% 4%;
+    --card: 47 50% 91%;
+    --card-foreground: 0 0% 4%;
+    --popover: 47 50% 91%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 13 90% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 44 35% 86%;
+    --secondary-foreground: 0 0% 4%;
+    --muted: 44 35% 86%;
+    --muted-foreground: 30 11% 44%;
+    --accent: 44 35% 86%;
+    --accent-foreground: 0 0% 4%;
+    --destructive: 4 67% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border-hsl: 38 30% 79%;
+    --input: 38 30% 79%;
+    --ring: 13 90% 59%;
   }
 }
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    border-color: hsl(var(--border-hsl));
   }
   html, body {
-    @apply bg-background text-foreground;
+    background: rgb(var(--bg));
+    color: rgb(var(--text));
     font-family: var(--font-dm-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -83,7 +176,9 @@
 }
 
 /* Fetchi avatar — ツ tile. The stamped offset shadow is reserved for THIS
-   element only. Do not reuse `box-shadow: 5px 5px 0 #2D2B2A` on cards. */
+   element only. Do not reuse on cards. The avatar belongs on cream
+   marketing surfaces; it should not appear as decoration inside the
+   dark product chrome. */
 .fetchi-avatar {
   display: inline-flex;
   align-items: center;
@@ -110,4 +205,14 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Marketing serif kicker — DM Serif Display italic, used SPARINGLY
+   on cream marketing/onboarding surfaces. One per major section.
+   Never use inside product screens. */
+.kicker-serif {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }

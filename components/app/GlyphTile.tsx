@@ -56,10 +56,10 @@ const SIZE: Record<Size, { tile: string; icon: number }> = {
 }
 
 const TONE: Record<Tone, string> = {
-  green: 'bg-brand-light text-brand-dark',
-  coral: 'bg-brand-coral/12 text-brand-coral',
-  muted: 'bg-brand-cream-muted text-brand-near-black/70',
-  dark: 'bg-brand-near-black/40 text-brand-green',
+  green: 'bg-ok/15 text-text2',
+  coral: 'bg-coral/12 text-coral',
+  muted: 'bg-raised text-text/70',
+  dark: 'bg-text/40 text-ok',
 }
 
 const GLYPHS: Record<GlyphKey, LucideIcon> = {

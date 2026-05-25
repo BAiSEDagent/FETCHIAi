@@ -57,7 +57,7 @@ export function CreditsWidget({ subscription }: { subscription: Sub }) {
       </div>
       <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
         <div
-          className="h-full bg-brand-green rounded-full transition-all"
+          className="h-full bg-ok rounded-full transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>

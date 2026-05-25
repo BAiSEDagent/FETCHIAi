@@ -13,9 +13,9 @@ type Props = {
 }
 
 const TONE: Record<NonNullable<Props['tone']>, string> = {
-  default: 'bg-brand-cream',
-  highlight: 'bg-brand-light',
-  muted: 'bg-brand-cream-muted',
+  default: 'bg-surface',
+  highlight: 'bg-ok/15',
+  muted: 'bg-raised',
 }
 
 export function SectionCard({
@@ -41,17 +41,17 @@ export function SectionCard({
         <div className="flex items-start justify-between gap-4 px-5 lg:px-6 pt-5 lg:pt-6 pb-3">
           <div className="min-w-0 flex-1">
             {eyebrow && (
-              <div className="text-[11px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-1.5">
+              <div className="text-[11px] font-bold uppercase tracking-[1px] text-text/45 mb-1.5">
                 {eyebrow}
               </div>
             )}
             {title && (
-              <h2 className="font-outfit text-[17px] font-semibold text-brand-near-black leading-tight">
+              <h2 className="font-outfit text-[17px] font-semibold text-text leading-tight">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-[13px] text-brand-near-black/60 mt-1 leading-relaxed">
+              <p className="text-[13px] text-text/60 mt-1 leading-relaxed">
                 {description}
               </p>
             )}

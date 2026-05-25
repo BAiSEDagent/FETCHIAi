@@ -45,19 +45,19 @@ export function PassReasonPanel({ businessName, pending, onCancel, onSubmit }: P
       role="dialog"
       aria-label="Why are you passing on this lead?"
       className={cn(
-        'p-6 lg:p-7 text-brand-near-black',
+        'p-6 lg:p-7 text-text',
         CARD_SURFACE,
         CARD_RADIUS,
         CARD_SHADOW,
       )}
     >
-      <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45">
+      <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45">
         Tell Fetchi why
       </div>
       <h3 className="font-outfit text-[20px] lg:text-[22px] font-bold mt-1.5 leading-tight">
         Pass on {businessName}
       </h3>
-      <p className="text-[13px] text-brand-near-black/60 mt-1.5 leading-relaxed">
+      <p className="text-[13px] text-text/60 mt-1.5 leading-relaxed">
         Pick one or more reasons. Fetchi will use this feedback to improve future
         stacks.
       </p>
@@ -74,8 +74,8 @@ export function PassReasonPanel({ businessName, pending, onCancel, onSubmit }: P
               className={cn(
                 'inline-flex items-center rounded-full px-3.5 h-[36px] text-[13px] font-semibold transition-colors min-h-[44px] sm:min-h-0',
                 active
-                  ? 'bg-brand-near-black text-white'
-                  : 'bg-white text-brand-near-black/75 shadow-[inset_0_0_0_1px_rgba(45,43,42,0.12)] hover:text-brand-near-black',
+                  ? 'bg-text/10 text-text'
+                  : 'bg-white text-text/75 shadow-[inset_0_0_0_1px_rgba(45,43,42,0.12)] hover:text-text',
               )}
             >
               {REASON_LABEL[r]}
@@ -85,7 +85,7 @@ export function PassReasonPanel({ businessName, pending, onCancel, onSubmit }: P
       </div>
 
       <label className="block mt-5">
-        <span className="text-[11.5px] font-semibold uppercase tracking-wide text-brand-near-black/50">
+        <span className="text-[11.5px] font-semibold uppercase tracking-wide text-text/50">
           Anything else? (optional)
         </span>
         <textarea
@@ -94,9 +94,9 @@ export function PassReasonPanel({ businessName, pending, onCancel, onSubmit }: P
           maxLength={240}
           rows={3}
           placeholder="Add context — Fetchi&rsquo;s feedback loop reads this."
-          className="mt-1.5 w-full rounded-xl bg-white px-3.5 py-2.5 text-[13.5px] leading-relaxed text-brand-near-black shadow-[inset_0_0_0_1px_rgba(45,43,42,0.10)] placeholder:text-brand-near-black/35 focus:outline-none focus:shadow-[inset_0_0_0_2px_rgba(88,147,126,0.5)]"
+          className="mt-1.5 w-full rounded-xl bg-white px-3.5 py-2.5 text-[13.5px] leading-relaxed text-text shadow-[inset_0_0_0_1px_rgba(45,43,42,0.10)] placeholder:text-text/35 focus:outline-none focus:shadow-[inset_0_0_0_2px_rgba(88,147,126,0.5)]"
         />
-        <div className="text-right text-[11px] text-brand-near-black/40 mt-1 tabular-nums">
+        <div className="text-right text-[11px] text-text/40 mt-1 tabular-nums">
           {note.length}/240
         </div>
       </label>

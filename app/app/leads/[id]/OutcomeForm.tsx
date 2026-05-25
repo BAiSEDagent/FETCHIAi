@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 type Status = 'new' | 'saved' | 'contacted' | 'responded' | 'won' | 'lost' | 'skipped'
 
-// Calm CP2.5B-aligned tones: positive outcomes use brand-green, negative
+// Calm CP2.5B-aligned tones: positive outcomes use ok (success), negative
 // outcomes use a near-black wash so the destructive choices still read
 // clearly without screaming.
 type ActiveTone = 'positive' | 'negative'
@@ -70,8 +70,8 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
           const active = status === o.id
           const activeClass =
             o.tone === 'positive'
-              ? 'bg-brand-green text-white border-brand-green'
-              : 'bg-brand-near-black text-white border-brand-near-black'
+              ? 'bg-ok text-text border-ok'
+              : 'bg-text/10 text-text border-text'
           return (
             <button
               key={o.id}
@@ -82,7 +82,7 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
               className={`text-[13px] font-semibold px-4 rounded-xl transition-colors min-h-[44px] border ${
                 active
                   ? activeClass
-                  : 'bg-white text-brand-near-black/75 border-brand-near-black/10 hover:border-brand-green hover:text-brand-near-black'
+                  : 'bg-white text-text/75 border-text/10 hover:border-ok hover:text-text'
               }`}
             >
               {o.label}
@@ -93,7 +93,7 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
 
       <label
         htmlFor="outcome-notes"
-        className="block text-[11px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-1.5"
+        className="block text-[11px] font-bold uppercase tracking-[1px] text-text/45 mb-1.5"
       >
         Notes (for Outcome Learning)
       </label>
@@ -105,7 +105,7 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
         placeholder="What happened?"
       />
       {saved && (
-        <div className="text-[12px] text-brand-green mt-2 font-semibold">
+        <div className="text-[12px] text-ok mt-2 font-semibold">
           Saved.
         </div>
       )}

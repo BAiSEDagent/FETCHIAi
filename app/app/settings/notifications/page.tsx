@@ -45,7 +45,7 @@ export default async function NotificationsPage() {
             label="Digest delivery time"
             hint="Local time, your time zone."
             value={
-              <span className="text-[14px] font-bold text-brand-near-black tabular-nums">
+              <span className="text-[14px] font-bold text-text tabular-nums">
                 {prefs?.dailyDigestTime ?? '07:00'}
               </span>
             }
@@ -61,8 +61,8 @@ function TogglePreview({ on }: { on: boolean }) {
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border ${
         on
-          ? 'bg-brand-light text-brand-dark border-brand-green/30'
-          : 'bg-brand-cream-muted text-brand-near-black/55 border-brand-near-black/10'
+          ? 'bg-ok/15 text-text2 border-ok/30'
+          : 'bg-raised text-text/55 border-text/10'
       }`}
     >
       {on ? 'On' : 'Off'}

@@ -293,7 +293,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
       {/* Mobile swipe hint — sits just above the fixed action rail */}
       <p
         className={cn(
-          'lg:hidden fixed inset-x-0 z-30 text-center text-[10.5px] uppercase tracking-[0.14em] font-semibold text-brand-near-black/40 pointer-events-none',
+          'lg:hidden fixed inset-x-0 z-30 text-center text-[10.5px] uppercase tracking-[0.14em] font-semibold text-text/40 pointer-events-none',
           'bottom-[calc(env(safe-area-inset-bottom)+150px)]',
         )}
       >
@@ -308,14 +308,14 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
 
       <p
         className={cn(
-          'hidden lg:block text-center text-[11.5px] uppercase tracking-[0.15em] font-semibold text-brand-near-black/40',
+          'hidden lg:block text-center text-[11.5px] uppercase tracking-[0.15em] font-semibold text-text/40',
         )}
       >
         ← Pass · → Add · Enter Open lead · Esc Stop
       </p>
 
       {isDemo && (
-        <p className="text-[11px] text-brand-near-black/45 text-center">
+        <p className="text-[11px] text-text/45 text-center">
           Showing a sample queue — your real Today&rsquo;s Run will appear here once
           Fetchi finds fresh signals for this workspace.
         </p>
@@ -329,11 +329,11 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
             'fixed left-1/2 -translate-x-1/2 z-50',
             'bottom-[calc(env(safe-area-inset-bottom)+168px)] lg:bottom-10',
             'inline-flex items-center gap-2 rounded-full px-4 h-[40px]',
-            'bg-brand-near-black text-white text-[13px] font-semibold',
+            'bg-text/10 text-text text-[13px] font-semibold',
             'shadow-[0_12px_28px_-12px_rgba(45,43,42,0.45)]',
           )}
         >
-          <Check className="h-3.5 w-3.5 text-brand-green" />
+          <Check className="h-3.5 w-3.5 text-ok" />
           {toast}
         </div>
       )}

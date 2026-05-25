@@ -36,24 +36,24 @@ export default async function UsagePage() {
           eyebrow={inTrial ? 'Trial opportunities' : 'Opportunities this cycle'}
           actions={
             <div className="text-right">
-              <div className="text-[13px] font-bold text-brand-dark">
+              <div className="text-[13px] font-bold text-text2">
                 {unlimited ? 'Unlimited' : `${remaining} left`}
               </div>
             </div>
           }
         >
           <div className="flex items-baseline gap-2 mb-3">
-            <div className="font-outfit text-[40px] lg:text-[44px] leading-none font-bold text-brand-near-black tabular-nums">
+            <div className="font-outfit text-[40px] lg:text-[44px] leading-none font-bold text-text tabular-nums">
               {used}
             </div>
-            <div className="text-[16px] text-brand-near-black/45 tabular-nums">
+            <div className="text-[16px] text-text/45 tabular-nums">
               / {unlimited ? '∞' : cap}
             </div>
           </div>
           {!unlimited && (
-            <div className="h-2 rounded-full bg-brand-near-black/8 overflow-hidden">
+            <div className="h-2 rounded-full bg-text/8 overflow-hidden">
               <div
-                className="h-full bg-brand-green transition-all"
+                className="h-full bg-ok transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>

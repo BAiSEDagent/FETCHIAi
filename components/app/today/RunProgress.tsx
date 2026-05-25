@@ -29,10 +29,10 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-brand-near-black/45">
+          <p className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45">
             Morning review
           </p>
-          <p className="mt-0.5 text-[14px] lg:text-[14.5px] font-semibold text-brand-near-black/85 leading-snug">
+          <p className="mt-0.5 text-[14px] lg:text-[14.5px] font-semibold text-text/85 leading-snug">
             {headline}
           </p>
         </div>
@@ -40,7 +40,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
           className={cn(
             'inline-flex items-center justify-center rounded-full px-2.5 h-[26px] min-w-[44px]',
             'text-[11px] uppercase tracking-[0.1em] font-bold tabular-nums',
-            'bg-brand-green/15 text-brand-dark',
+            'bg-ok/15 text-text2',
           )}
           aria-hidden
         >
@@ -62,7 +62,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
             key={i}
             className={cn(
               'h-1.5 flex-1 rounded-full transition-colors',
-              i < reviewed ? 'bg-brand-green' : 'bg-brand-near-black/10',
+              i < reviewed ? 'bg-ok' : 'bg-text/10',
             )}
           />
         ))}
@@ -70,14 +70,14 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
 
       {/* Reviewed · left footer (single line, no time language) */}
       <div className="mt-2 flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.1em] font-bold tabular-nums">
-        <span className="text-brand-near-black/55">
+        <span className="text-text/55">
           {reviewed} reviewed
-          <span className="mx-1.5 text-brand-near-black/35">·</span>
+          <span className="mx-1.5 text-text/35">·</span>
           {left} left
         </span>
         {savedCount > 0 || skippedCount > 0 ? (
-          <span className="text-brand-near-black/45 normal-case tracking-normal font-medium">
-            <span className="text-brand-green">{savedCount} saved</span>
+          <span className="text-text/45 normal-case tracking-normal font-medium">
+            <span className="text-ok">{savedCount} saved</span>
             <span className="mx-1.5">·</span>
             <span>{skippedCount} passed</span>
           </span>

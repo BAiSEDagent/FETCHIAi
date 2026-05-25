@@ -157,8 +157,8 @@ function Stamp({
         'rounded-[14px] px-4 h-[44px] text-[16px] font-extrabold uppercase tracking-[0.15em]',
         'shadow-[0_4px_12px_-2px_rgba(45,43,42,0.25)]',
         isAdd
-          ? 'right-6 bg-brand-green text-white border-2 border-white/40 -rotate-[10deg]'
-          : 'left-6 bg-brand-near-black text-white border-2 border-white/30 rotate-[10deg]',
+          ? 'right-6 bg-ok text-text border-2 border-white/40 -rotate-[10deg]'
+          : 'left-6 bg-text/10 text-text border-2 border-white/30 rotate-[10deg]',
       )}
       style={{
         animation: reduceMotion
@@ -193,8 +193,8 @@ function SwipeHint({
         'pointer-events-none absolute top-6 inline-flex items-center rounded-full px-3 h-[28px] z-20',
         'text-[12px] font-bold uppercase tracking-[0.1em]',
         direction === 'right'
-          ? 'right-6 bg-brand-green text-white -rotate-[8deg]'
-          : 'left-6 bg-brand-near-black text-white rotate-[8deg]',
+          ? 'right-6 bg-ok text-text -rotate-[8deg]'
+          : 'left-6 bg-text/10 text-text rotate-[8deg]',
       )}
       style={{ opacity: intensity }}
     >

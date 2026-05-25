@@ -104,34 +104,34 @@ export default async function SignalSensitivityPage() {
                 tabIndex={-1}
                 className={`text-left rounded-2xl p-4 lg:p-5 transition-all min-h-[88px] flex items-start gap-3.5 ${
                   selected
-                    ? 'bg-brand-near-black text-white shadow-fetchi-card'
-                    : 'bg-brand-cream text-brand-near-black shadow-fetchi-soft'
+                    ? 'bg-text/10 text-text shadow-fetchi-card'
+                    : 'bg-surface text-text shadow-fetchi-soft'
                 }`}
               >
                 <span
                   className={`mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full border-2 flex-shrink-0 ${
                     selected
-                      ? 'border-brand-green'
-                      : 'border-brand-near-black/20'
+                      ? 'border-ok'
+                      : 'border-text/20'
                   }`}
                   aria-hidden
                 >
                   {selected && (
-                    <span className="w-3 h-3 rounded-full bg-brand-green" />
+                    <span className="w-3 h-3 rounded-full bg-ok" />
                   )}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[16px] font-bold">{s.label}</span>
                     {s.recommended && (
-                      <span className="inline-flex items-center rounded-full bg-brand-light text-brand-dark px-2 py-0.5 text-[10px] font-bold tracking-[0.5px] uppercase border border-brand-green/30">
+                      <span className="inline-flex items-center rounded-full bg-ok/15 text-text2 px-2 py-0.5 text-[10px] font-bold tracking-[0.5px] uppercase border border-ok/30">
                         Recommended
                       </span>
                     )}
                   </div>
                   <p
                     className={`text-[13px] mt-1 leading-relaxed ${
-                      selected ? 'text-white/70' : 'text-brand-near-black/60'
+                      selected ? 'text-text/70' : 'text-text/60'
                     }`}
                   >
                     {s.desc}
@@ -140,8 +140,8 @@ export default async function SignalSensitivityPage() {
                 <span
                   className={`inline-flex items-center rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0 ${
                     selected
-                      ? 'bg-brand-green/25 text-brand-green'
-                      : 'bg-brand-light text-brand-dark border border-brand-green/30'
+                      ? 'bg-ok/25 text-ok'
+                      : 'bg-ok/15 text-text2 border border-ok/30'
                   }`}
                 >
                   {s.volume}
@@ -149,7 +149,7 @@ export default async function SignalSensitivityPage() {
               </div>
             )
           })}
-          <p className="text-[12px] text-brand-near-black/45 px-1 leading-relaxed">
+          <p className="text-[12px] text-text/45 px-1 leading-relaxed">
             Live tuning of these thresholds ships with the signal-detection
             agent (Checkpoint 6).
           </p>
@@ -157,22 +157,22 @@ export default async function SignalSensitivityPage() {
 
         {/* Secondary group — which signals to watch */}
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-brand-near-black/45 px-1 mb-2.5">
+          <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-text/45 px-1 mb-2.5">
             Which signals to watch
           </div>
-          <div className="rounded-2xl bg-brand-cream shadow-fetchi-soft overflow-hidden">
+          <div className="rounded-2xl bg-surface shadow-fetchi-soft overflow-hidden">
             {signals.map((s, i) => (
               <div
                 key={s.key}
                 className={`flex items-center gap-3 px-4 lg:px-5 py-3.5 min-h-[64px] ${
-                  i < signals.length - 1 ? 'border-b border-brand-near-black/6' : ''
+                  i < signals.length - 1 ? 'border-b border-text/6' : ''
                 }`}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-[14.5px] font-bold text-brand-near-black leading-tight">
+                  <div className="text-[14.5px] font-bold text-text leading-tight">
                     {s.label}
                   </div>
-                  <div className="text-[12.5px] text-brand-near-black/55 mt-0.5">
+                  <div className="text-[12.5px] text-text/55 mt-0.5">
                     {s.hint}
                   </div>
                 </div>
@@ -190,7 +190,7 @@ function TogglePreview({ on }: { on: boolean }) {
   return (
     <span
       className={`relative inline-flex items-center w-12 h-7 rounded-full transition-colors flex-shrink-0 ${
-        on ? 'bg-brand-green' : 'bg-brand-near-black/15'
+        on ? 'bg-ok' : 'bg-text/15'
       }`}
       aria-label={on ? 'On' : 'Off'}
       role="img"
