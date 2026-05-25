@@ -163,17 +163,17 @@ export function ChatClient({
             type="button"
             aria-label="Voice input (coming soon)"
             title="Voice input lands in Checkpoint 10"
-            className="h-11 w-11 rounded-full bg-white border border-text/10 flex items-center justify-center text-text/45 cursor-not-allowed flex-shrink-0"
+            className="h-11 w-11 rounded-full bg-raised border border-text/10 flex items-center justify-center text-text/45 cursor-not-allowed flex-shrink-0"
             disabled
           >
             <Mic className="h-[18px] w-[18px]" />
           </button>
 
           <div
-            className={`flex-1 flex items-center bg-white rounded-full border transition-colors ${
+            className={`flex-1 flex items-center bg-raised rounded-full border transition-colors ${
               hasInput
                 ? 'border-ok/60'
-                : 'border-text/10 focus-within:border-ok'
+                : 'border-text/10 focus-within:border-blue'
             }`}
           >
             <input
