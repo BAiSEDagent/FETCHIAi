@@ -29,7 +29,7 @@ export function MobileHeader({ leadsCount, creditsSlot }: Props) {
         </SheetTrigger>
         <SheetContent
           side="left"
-          className="w-[220px] p-0 bg-surface border-0"
+          className="theme-dark w-[220px] p-0 bg-surface text-text border-0"
         >
           <Sidebar
             leadsCount={leadsCount}
