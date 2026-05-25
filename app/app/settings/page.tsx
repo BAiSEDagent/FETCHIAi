@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic'
 type Row = {
   href: string
   icon: React.ComponentType<{ className?: string }>
-  iconTone: 'green' | 'coral' | 'neutral' | 'dark'
+  iconTone: 'green' | 'neutral' | 'dark'
   label: string
   hint: string
   value: string
@@ -81,7 +81,7 @@ export default async function SettingsHomePage() {
     {
       href: '/app/settings/notifications',
       icon: Megaphone,
-      iconTone: 'coral',
+      iconTone: 'green',
       label: 'Outreach voice',
       hint: 'How drafts sound',
       value: 'Warm',
@@ -146,27 +146,26 @@ export default async function SettingsHomePage() {
       <MobileScreenHeader title="Settings" />
 
       <div className="px-4 lg:px-7 pb-10 space-y-5 lg:space-y-6">
-        {/* Workspace summary */}
-        <div className="rounded-2xl bg-surface shadow-fetchi-soft p-4 lg:p-5">
+        <div className="rounded-2xl bg-brand-cream shadow-fetchi-soft p-4 lg:p-5">
           <div className="flex items-center gap-3.5">
             <div
-              className="w-12 h-12 rounded-full bg-coral/15 text-coral text-[15px] font-bold flex items-center justify-center flex-shrink-0"
+              className="w-12 h-12 rounded-full bg-brand-light text-brand-dark text-[15px] font-bold flex items-center justify-center flex-shrink-0"
               aria-hidden
             >
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-outfit text-[17px] font-bold text-text leading-tight truncate">
+              <div className="font-outfit text-[17px] font-bold text-brand-near-black leading-tight truncate">
                 {ctx.workspace.businessName ?? 'Your workspace'}
               </div>
-              <div className="text-[12.5px] text-text/55 mt-0.5 truncate">
+              <div className="text-[12.5px] text-brand-near-black/55 mt-0.5 truncate">
                 {locationLine}
               </div>
               <div className="flex items-center gap-2 mt-2">
-                <span className="inline-flex items-center rounded-full bg-ok/15 text-text2 px-2.5 py-0.5 text-[11px] font-bold border border-ok/25 capitalize">
+                <span className="inline-flex items-center rounded-full bg-brand-light text-brand-dark px-2.5 py-0.5 text-[11px] font-bold border border-brand-green/25 capitalize">
                   {tier} plan
                 </span>
-                <span className="inline-flex items-center rounded-full bg-raised text-text/65 px-2.5 py-0.5 text-[11px] font-semibold border border-text/10">
+                <span className="inline-flex items-center rounded-full bg-brand-cream-muted text-brand-near-black/65 px-2.5 py-0.5 text-[11px] font-semibold border border-brand-near-black/10">
                   {usageLabel}
                 </span>
               </div>
@@ -184,10 +183,10 @@ export default async function SettingsHomePage() {
 function SettingsCardGroup({ eyebrow, rows }: { eyebrow: string; rows: Row[] }) {
   return (
     <div>
-      <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-text/45 px-1 mb-2.5">
+      <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-brand-near-black/45 px-1 mb-2.5">
         {eyebrow}
       </div>
-      <div className="rounded-2xl bg-surface shadow-fetchi-soft overflow-hidden">
+      <div className="rounded-2xl bg-brand-cream shadow-fetchi-soft overflow-hidden">
         {rows.map((r, i) => (
           <SettingsCardRow key={r.label + i} row={r} divider={i < rows.length - 1} />
         ))}
@@ -200,17 +199,15 @@ function SettingsCardRow({ row, divider }: { row: Row; divider: boolean }) {
   const Icon = row.icon
   const toneClass =
     row.iconTone === 'green'
-      ? 'bg-ok/15 text-text2'
-      : row.iconTone === 'coral'
-        ? 'bg-coral/12 text-coral'
-        : row.iconTone === 'dark'
-          ? 'bg-text/10 text-text'
-          : 'bg-raised text-text/60'
+      ? 'bg-brand-light text-brand-dark'
+      : row.iconTone === 'dark'
+        ? 'bg-brand-near-black/10 text-brand-near-black'
+        : 'bg-brand-cream-muted text-brand-near-black/60'
   return (
     <Link
       href={row.href}
-      className={`flex items-center gap-3.5 px-4 lg:px-5 py-3.5 min-h-[68px] hover:bg-raised/60 transition-colors ${
-        divider ? 'border-b border-text/6' : ''
+      className={`flex items-center gap-3.5 px-4 lg:px-5 py-3.5 min-h-[68px] hover:bg-brand-cream-muted transition-colors ${
+        divider ? 'border-b border-brand-near-black/8' : ''
       }`}
     >
       <div
@@ -220,18 +217,18 @@ function SettingsCardRow({ row, divider }: { row: Row; divider: boolean }) {
         <Icon className="h-[18px] w-[18px]" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[14.5px] font-bold text-text leading-tight truncate">
+        <div className="text-[14.5px] font-bold text-brand-near-black leading-tight truncate">
           {row.label}
         </div>
-        <div className="text-[12.5px] text-text/55 mt-0.5 truncate">
+        <div className="text-[12.5px] text-brand-near-black/55 mt-0.5 truncate">
           {row.hint}
         </div>
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-[13px] font-semibold text-text/75 truncate max-w-[120px]">
+        <span className="text-[13px] font-semibold text-brand-near-black/75 truncate max-w-[120px]">
           {row.value}
         </span>
-        <ChevronRight className="h-4 w-4 text-text/30" />
+        <ChevronRight className="h-4 w-4 text-brand-near-black/30" />
       </div>
     </Link>
   )
