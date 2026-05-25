@@ -168,6 +168,25 @@
     font-family: var(--font-dm-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+  /* Kill Chrome/Safari autofill's pale yellow paint so inputs keep their
+     themed background. Uses an inset shadow trick because background-color
+     can't be overridden directly on :-webkit-autofill. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px rgb(var(--raised)) inset !important;
+    box-shadow: 0 0 0 1000px rgb(var(--raised)) inset !important;
+    -webkit-text-fill-color: rgb(var(--text)) !important;
+    caret-color: rgb(var(--text)) !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-outfit), system-ui, sans-serif;
     font-weight: 600;
