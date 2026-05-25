@@ -81,7 +81,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               id="vertical"
               value={vertical}
               onChange={e => setVertical(e.target.value as Initial['vertical'])}
-              className="flex h-11 w-full rounded-xl border border-text/10 bg-raised px-3.5 text-[14px] text-text focus:bg-white focus:border-ok focus:ring-2 focus:ring-ok/30 focus:outline-none"
+              className="flex h-11 w-full rounded-xl border border-text/10 bg-raised px-3.5 text-[14px] text-text focus:border-blue focus:ring-2 focus:ring-blue/30 focus:outline-none"
             >
               {VERTICALS.map(v => (
                 <option key={v.id} value={v.id}>

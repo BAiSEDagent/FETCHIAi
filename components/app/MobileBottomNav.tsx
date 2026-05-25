@@ -31,7 +31,7 @@ export function MobileBottomNav() {
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'group relative flex-1 flex flex-col items-center justify-center gap-1 min-h-[56px] rounded-xl outline-none transition-colors',
-                'focus-visible:ring-2 focus-visible:ring-coral/40',
+                'focus-visible:ring-2 focus-visible:ring-blue/40',
               )}
             >
               {active && (

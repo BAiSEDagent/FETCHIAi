@@ -76,7 +76,7 @@ function Pill({
         'group inline-flex items-center justify-center gap-1.5 rounded-full',
         'h-[44px] lg:h-[46px] px-4 text-[13.5px] lg:text-[14px] font-semibold transition-all',
         'min-w-0 whitespace-nowrap',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
         'disabled:opacity-55 disabled:cursor-not-allowed',
         'motion-safe:active:translate-y-[1px]',
         tone === 'primary' && [
