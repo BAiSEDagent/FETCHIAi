@@ -8,6 +8,7 @@ These rules apply to every coding agent working in this repository: Replit Agent
 - Work from the current `main` branch unless an issue or PR says otherwise.
 - Prefer one task per branch and one PR per task.
 - Do not make broad unrelated edits while solving a narrow task.
+- If the repo contains an open PR for the same area of code, inspect it before starting a new branch.
 
 ## Product context
 
@@ -27,14 +28,19 @@ The three product laws:
 
 ## Design rules
 
-- Customer surfaces must follow `DESIGN_SYSTEM_V2.md`.
-- The current design north star is: **Calmer. One decision per step. Big tap targets. No SaaS clutter.**
-- The five attached asset screenshots referenced in `DESIGN_SYSTEM_V2.md` are the visual ground truth for customer surfaces.
-- Do not treat the older HTML files in `design/` as the final visual target when they conflict with `DESIGN_SYSTEM_V2.md`.
+- Customer surfaces must follow `DESIGN_SYSTEM.md`.
+- `DESIGN_SYSTEM.md` is the canonical current source of truth.
+- `DESIGN_SYSTEM_V2.md`, old HTML mockups, screenshots, and archived handoffs are historical/supporting references only unless the active issue explicitly says otherwise.
+- The design north star is: **Calmer. One decision per step. Big tap targets. No SaaS clutter.**
+- Authenticated lead-review surfaces use the dark/operator cockpit boundary when appropriate.
+- Public/auth/onboarding/light contexts use the cream/SMB surface boundary when appropriate.
+- Coral is rare: high-value/action/hot-signal accent or danger/destructive, not generic decoration.
+- Green means verified/saved/won/healthy/OK/selected success, not universal primary.
+- Blue means evidence/source/audit/trust.
 - Admin surfaces are intentionally separate from the customer app design language.
 - Design at 375px mobile width first, then scale up.
 - Minimum touch target is 44×44px.
-- Never use pure white cards directly on parchment customer surfaces; use the cream/brand surface tokens from `DESIGN_SYSTEM_V2.md`.
+- Never use pure white cards directly on parchment customer surfaces.
 - The stamp/shadow treatment is reserved for the ツ avatar only.
 
 ## Protected files
@@ -74,6 +80,7 @@ These files define the database contract and billing/trial gate primitives. Do n
 - Do not enable Replit AI Integrations for Anthropic/OpenAI/Google unless the issue explicitly asks for it.
 - Do not set `DATABASE_URL` manually. Replit injects it.
 - Do not add secrets to source files.
+- Replit preview can hold stale orphaned Next processes on port 5000. If preview is blank but `curl http://localhost:5000` returns HTML, diagnose Replit/process state before changing app code.
 
 ## Change discipline
 
@@ -81,8 +88,9 @@ Before implementation:
 
 1. Read the issue.
 2. Identify the exact files needed.
-3. Check `DESIGN_SYSTEM_V2.md` for customer UI tasks.
+3. Check `DESIGN_SYSTEM.md` for customer UI tasks.
 4. Check existing components before creating new primitives.
+5. Check open PRs touching the same files.
 
 During implementation:
 
@@ -91,6 +99,7 @@ During implementation:
 - Avoid arbitrary colors, spacing, shadows, and custom status palettes.
 - Do not delete working features to simplify the task.
 - Do not replace real logic with mocks unless the issue explicitly calls for fixtures.
+- Do not mix repo-hygiene/doc cleanup into feature or visual implementation PRs.
 
 Before reporting done:
 
@@ -120,7 +129,7 @@ When assigned a GitHub issue or PR, Codex should:
 
 1. Read this file first.
 2. Read the linked issue in full.
-3. For customer UI work, read `DESIGN_SYSTEM_V2.md` before opening implementation files.
+3. For customer UI work, read `DESIGN_SYSTEM.md` before opening implementation files.
 4. Inspect existing components/routes before creating new files.
 5. Produce the smallest safe diff that satisfies the acceptance criteria.
 6. Prefer component primitives and token fixes over one-off styling.
@@ -128,14 +137,12 @@ When assigned a GitHub issue or PR, Codex should:
 8. Run the repo checks requested by the issue and report exact results.
 9. If screenshots are required but the environment cannot capture them, say so clearly in the PR notes and explain what was verified instead.
 
-For the first task, Codex should focus on Issue #1 only: `Design System Lock Pass`.
-
 ## Review guidelines
 
 Codex code review should prioritize serious issues over style nits. Flag P0/P1 issues for:
 
 - Any change to protected database/billing files that was not explicitly requested.
-- Any customer UI change that violates `DESIGN_SYSTEM_V2.md` in a material way.
+- Any customer UI change that violates `DESIGN_SYSTEM.md` in a material way.
 - Any hardcoded pricing, limits, score thresholds, schedules, provider/model choices, prompts, or email copy.
 - Any unscoped database query that can leak data across workspaces.
 - Any direct LLM/provider/search API call that bypasses the provider abstraction layer.
