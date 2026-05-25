@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss'
 
-/** Fetchi Design System v2 customer token map. */
+/** Fetchi v2.3 dual-surface Tailwind theme map. */
 const config: Config = {
   darkMode: ['class'],
   content: [
@@ -41,18 +41,17 @@ const config: Config = {
         text: 'rgb(var(--text) / <alpha-value>)',
         text2: 'rgb(var(--text2) / <alpha-value>)',
         textMuted: 'rgb(var(--textMuted) / <alpha-value>)',
-        ok: 'rgb(var(--ok) / <alpha-value>)',
         coral: 'rgb(var(--coral) / <alpha-value>)',
         coralDeep: 'rgb(var(--coralDeep) / <alpha-value>)',
         coralSoft: 'rgb(var(--coralSoft) / <alpha-value>)',
         blue: 'rgb(var(--blue) / <alpha-value>)',
+        ok: 'rgb(var(--ok) / <alpha-value>)',
         warn: 'rgb(var(--warn) / <alpha-value>)',
         bad: 'rgb(var(--bad) / <alpha-value>)',
         parch: 'rgb(var(--parch) / <alpha-value>)',
         parchMute: 'rgb(var(--parchMute) / <alpha-value>)',
         mustard: 'rgb(var(--mustard) / <alpha-value>)',
         darkSlab: 'rgb(var(--darkSlab) / <alpha-value>)',
-
         border: 'hsl(var(--border-hsl))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -86,16 +85,15 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-
-        'brand-parchment': '#EBE6D9',
-        'brand-cream': '#FAF8F2',
-        'brand-cream-muted': '#F2EEDF',
-        'brand-green': '#58937E',
-        'brand-dark': '#3D6B5A',
-        'brand-light': '#EAF3EF',
-        'brand-coral': '#D85A30',
-        'brand-near-black': '#2D2B2A',
-        'ml-card': '#FAF8F2',
+        'brand-parchment': 'rgb(var(--bg) / <alpha-value>)',
+        'brand-cream': 'rgb(var(--surface) / <alpha-value>)',
+        'brand-cream-muted': 'rgb(var(--raised) / <alpha-value>)',
+        'brand-near-black': '#101211',
+        'brand-green': 'rgb(var(--ok) / <alpha-value>)',
+        'brand-dark': 'rgb(var(--text2) / <alpha-value>)',
+        'brand-light': 'rgb(var(--surface) / <alpha-value>)',
+        'brand-coral': 'rgb(var(--coral) / <alpha-value>)',
+        'ml-card': 'rgb(var(--surface) / <alpha-value>)',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -104,10 +102,10 @@ const config: Config = {
       },
       boxShadow: {
         'fetchi-soft':
-          '0 1px 2px rgba(45,43,42,0.04), 0 6px 18px -10px rgba(45,43,42,0.10)',
+          '0 1px 2px rgba(0,0,0,0.04), 0 6px 18px -10px rgba(0,0,0,0.10)',
         'fetchi-card':
-          '0 2px 4px rgba(45,43,42,0.04), 0 12px 30px -12px rgba(45,43,42,0.16)',
-        'fetchi-sticky': '0 -6px 24px -8px rgba(45,43,42,0.10)',
+          '0 2px 4px rgba(0,0,0,0.04), 0 12px 30px -12px rgba(0,0,0,0.16)',
+        'fetchi-sticky': '0 -6px 24px -8px rgba(0,0,0,0.10)',
         'fetchi-stamp': '5px 5px 0 #2D2B2A',
       },
       keyframes: {
