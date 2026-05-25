@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 import { updateLeadOutcome } from '@/app/app/leads/[id]/actions'
 import type { TodaysRunPassReason } from '@/lib/today/pass-reasons'
 import { RunProgress } from './RunProgress'
-import { RunActionBar } from './RunActionBar'
 import { TodayRunCard } from './TodayRunCard'
 import { TodayRunDeck } from './TodayRunDeck'
 import { PassReasonPanel } from './PassReasonPanel'
@@ -290,21 +289,15 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
         </TodayRunDeck>
       </div>
 
-      {/* Mobile swipe hint — sits just above the fixed action rail */}
+      {/* Mobile swipe hint — sits just above the bottom nav */}
       <p
         className={cn(
           'lg:hidden fixed inset-x-0 z-30 text-center text-[10.5px] uppercase tracking-[0.14em] font-semibold text-text/40 pointer-events-none',
-          'bottom-[calc(env(safe-area-inset-bottom)+150px)]',
+          'bottom-[calc(env(safe-area-inset-bottom)+100px)]',
         )}
       >
         Swipe left to pass · right to add
       </p>
-
-      <RunActionBar
-        onPass={beginPass}
-        onAdd={commitAdd}
-        disabled={pending || exitDirection !== null}
-      />
 
       <p
         className={cn(
@@ -327,7 +320,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
           aria-live="polite"
           className={cn(
             'fixed left-1/2 -translate-x-1/2 z-50',
-            'bottom-[calc(env(safe-area-inset-bottom)+168px)] lg:bottom-10',
+            'bottom-[calc(env(safe-area-inset-bottom)+130px)] lg:bottom-10',
             'inline-flex items-center gap-2 rounded-full px-4 h-[40px]',
             'bg-text/10 text-text text-[13px] font-semibold',
             'shadow-[0_12px_28px_-12px_rgba(45,43,42,0.45)]',
