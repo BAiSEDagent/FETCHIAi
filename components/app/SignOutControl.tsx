@@ -25,7 +25,7 @@ export function SignOutControl({ variant = 'sidebar' }: { variant?: Variant }) {
         <button
           type="button"
           aria-label="Sign out"
-          className="h-11 w-11 flex items-center justify-center text-brand-near-black/75 hover:text-brand-near-black rounded-xl hover:bg-brand-near-black/5 transition-colors"
+          className="h-11 w-11 flex items-center justify-center text-text/75 hover:text-text rounded-xl hover:bg-text/5 transition-colors"
         >
           <LogOut className="h-[18px] w-[18px]" />
         </button>
@@ -34,21 +34,21 @@ export function SignOutControl({ variant = 'sidebar' }: { variant?: Variant }) {
   }
 
   return (
-    <div className="mx-3 mt-3 rounded-xl bg-brand-cream-muted px-3 py-2.5 flex items-center gap-2.5 min-h-[52px]">
+    <div className="mx-3 mt-3 rounded-xl bg-text/[0.04] px-3 py-2.5 flex items-center gap-2.5 min-h-[52px]">
       <div
-        className="w-8 h-8 rounded-full bg-brand-green text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0"
+        className="w-8 h-8 rounded-full bg-ok text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0"
         aria-hidden
       >
         {initial}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[12.5px] font-semibold text-brand-near-black truncate">
+        <div className="text-[12.5px] font-semibold text-text truncate">
           {label}
         </div>
         <SignOutButton>
           <button
             type="button"
-            className="text-[11.5px] text-brand-near-black/55 hover:text-brand-near-black inline-flex items-center gap-1 mt-0.5 min-h-[24px]"
+            className="text-[11.5px] text-text/55 hover:text-text inline-flex items-center gap-1 mt-0.5 min-h-[24px]"
           >
             <LogOut className="h-3 w-3" />
             Sign out
