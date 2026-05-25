@@ -39,12 +39,12 @@ export default async function AppLayout({
 
   if (onOnboarding) {
     return (
-      <div className="theme-light min-h-screen bg-brand-parchment text-brand-near-black">{children}</div>
+      <div className="theme-light min-h-screen bg-bg text-text">{children}</div>
     )
   }
 
   return (
-    <div className="theme-light min-h-screen bg-brand-parchment text-brand-near-black flex flex-col">
+    <div className="theme-dark min-h-screen bg-bg text-text flex flex-col">
       <MobileHeader leadsCount={leadsCount} creditsSlot={credits} />
       <div className="flex flex-1 min-h-0">
         <div className="hidden lg:flex flex-shrink-0">
