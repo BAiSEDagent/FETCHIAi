@@ -40,17 +40,70 @@ type Props = {
   currentNotes: string | null
 }
 
+// outcome_notes is shared with the Outcome Learning pipeline, which writes
+// JSON envelopes like `{"v":1,"source":"todays_run","action":"pass",…,"note":"…"}`.
+// We don't want that raw JSON leaking into the user-facing notes textarea —
+// extract just the human `note` field for display, and re-wrap on save so
+// the learning metadata survives a manual edit.
+type OutcomeEnvelope = {
+  v?: number
+  source?: string
+  action?: string
+  reasons?: string[]
+  note?: string | null
+  timestamp?: string
+  [k: string]: unknown
+}
+
+function looksLikeEnvelope(raw: string): OutcomeEnvelope | null {
+  const t = raw.trim()
+  if (!t.startsWith('{')) return null
+  try {
+    const parsed = JSON.parse(t) as unknown
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const obj = parsed as OutcomeEnvelope
+      if ('v' in obj || 'source' in obj || 'action' in obj || 'reasons' in obj) {
+        return obj
+      }
+    }
+  } catch {
+    // Plain prose — return null so we treat it as a normal note.
+  }
+  return null
+}
+
+function extractDisplayNote(raw: string | null): string {
+  if (!raw) return ''
+  const env = looksLikeEnvelope(raw)
+  if (env) return typeof env.note === 'string' ? env.note : ''
+  return raw
+}
+
 export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Props) {
   const [status, setStatus] = useState<Status>(parseStatus(currentStatus))
-  const [notes, setNotes] = useState(currentNotes ?? '')
+  const [notes, setNotes] = useState(extractDisplayNote(currentNotes))
   const [pending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
+
+  // If the existing row was a learning envelope, preserve the sibling fields
+  // and only rewrite `note` when the user types. Otherwise persist plain text.
+  function buildPayload(nextNote: string): string {
+    const env = looksLikeEnvelope(currentNotes ?? '')
+    if (env) {
+      return JSON.stringify({ ...env, note: nextNote.trim() ? nextNote : null })
+    }
+    return nextNote
+  }
 
   function save(next: Status) {
     setStatus(next)
     setSaved(false)
     startTransition(async () => {
-      await updateLeadOutcome({ opportunityId, status: next, outcomeNotes: notes })
+      await updateLeadOutcome({
+        opportunityId,
+        status: next,
+        outcomeNotes: buildPayload(notes),
+      })
       setSaved(true)
     })
   }
@@ -58,7 +111,11 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
   function saveNotes() {
     setSaved(false)
     startTransition(async () => {
-      await updateLeadOutcome({ opportunityId, status, outcomeNotes: notes })
+      await updateLeadOutcome({
+        opportunityId,
+        status,
+        outcomeNotes: buildPayload(notes),
+      })
       setSaved(true)
     })
   }
