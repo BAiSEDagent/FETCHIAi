@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -32,6 +32,39 @@ type Props = {
 }
 
 type Appearance = 'dark' | 'light' | 'system'
+type ResolvedTheme = 'dark' | 'light'
+
+const APPEARANCE_STORAGE_KEY = 'fetchi-appearance'
+const THEME_ROOT_SELECTOR = '[data-fetchi-theme-root]'
+
+function isAppearance(value: string | null): value is Appearance {
+  return value === 'dark' || value === 'light' || value === 'system'
+}
+
+function systemTheme(): ResolvedTheme {
+  if (typeof window === 'undefined') return 'dark'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+function resolveAppearanceTheme(appearance: Appearance): ResolvedTheme {
+  return appearance === 'system' ? systemTheme() : appearance
+}
+
+function applyAppearanceTheme(appearance: Appearance) {
+  if (typeof document === 'undefined') return
+
+  const theme = resolveAppearanceTheme(appearance)
+  document.documentElement.dataset.fetchiAppearance = appearance
+  document.documentElement.dataset.fetchiResolvedTheme = theme
+  document.documentElement.classList.toggle('theme-dark', theme === 'dark')
+  document.documentElement.classList.toggle('theme-light', theme === 'light')
+  document.documentElement.classList.toggle('dark', theme === 'dark')
+
+  document.querySelectorAll<HTMLElement>(THEME_ROOT_SELECTOR).forEach(root => {
+    root.classList.toggle('theme-dark', theme === 'dark')
+    root.classList.toggle('theme-light', theme === 'light')
+  })
+}
 
 const workspaceNav: NavItem[] = [
   { href: '/app/chat', label: 'Chat', icon: MessageSquare },
@@ -51,6 +84,35 @@ const settingsNav: NavItem[] = [
 export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
   const pathname = usePathname()
   const [appearance, setAppearance] = useState<Appearance>('dark')
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(APPEARANCE_STORAGE_KEY)
+    const initialAppearance = isAppearance(saved) ? saved : 'dark'
+    setAppearance(initialAppearance)
+    applyAppearanceTheme(initialAppearance)
+    setHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!hydrated) return
+
+    window.localStorage.setItem(APPEARANCE_STORAGE_KEY, appearance)
+    applyAppearanceTheme(appearance)
+
+    if (appearance !== 'system') return
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleSystemThemeChange = () => applyAppearanceTheme('system')
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleSystemThemeChange)
+      return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
+    }
+
+    mediaQuery.addListener(handleSystemThemeChange)
+    return () => mediaQuery.removeListener(handleSystemThemeChange)
+  }, [appearance, hydrated])
 
   const renderLink = (item: NavItem) => {
     const active =
