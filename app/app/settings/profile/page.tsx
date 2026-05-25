@@ -28,6 +28,7 @@ export default async function ProfilePage() {
             locationState: profile?.locationState ?? '',
             locationRadiusMiles: profile?.locationRadiusMiles ?? 50,
             idealCustomerDescription: profile?.idealCustomerDescription ?? '',
+            website: profile?.website ?? '',
           }}
         />
       </div>

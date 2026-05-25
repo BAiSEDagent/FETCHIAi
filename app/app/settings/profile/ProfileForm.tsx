@@ -16,6 +16,7 @@ type Initial = {
   locationState: string
   locationRadiusMiles: number
   idealCustomerDescription: string
+  website: string
 }
 
 const VERTICALS: { id: Initial['vertical']; label: string }[] = [
@@ -35,6 +36,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
   const [stateCode, setStateCode] = useState(initial.locationState)
   const [radius, setRadius] = useState(initial.locationRadiusMiles)
   const [ideal, setIdeal] = useState(initial.idealCustomerDescription)
+  const [website, setWebsite] = useState(initial.website)
   const [pending, startTransition] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -53,6 +55,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           locationState: stateCode,
           locationRadiusMiles: radius,
           idealCustomerDescription: ideal,
+          website: website.trim() || null,
         })
         setMsg('Saved.')
       } catch (e: unknown) {
@@ -100,6 +103,29 @@ export function ProfileForm({ initial }: { initial: Initial }) {
             placeholder="Commercial and residential roofing — repairs, replacements, storm damage restoration."
           />
         </Field>
+        <Field
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              Website
+              <span className="text-text/45 font-normal">(optional)</span>
+            </span>
+          }
+          htmlFor="website"
+        >
+          <Input
+            id="website"
+            type="url"
+            inputMode="url"
+            autoComplete="url"
+            value={website}
+            onChange={e => setWebsite(e.target.value)}
+            placeholder="example.com"
+          />
+          <p className="text-[12px] text-text/50 mt-1.5 leading-snug">
+            If you have one, Fetchi reads it for extra context when scoring
+            signals.
+          </p>
+        </Field>
       </SettingsGroup>
 
       <SettingsGroup
@@ -135,7 +161,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               step={5}
               value={radius}
               onChange={e => setRadius(Number(e.target.value))}
-              className="flex-1 accent-coral h-2"
+              className="flex-1 accent-ok h-2"
               aria-label="Service radius in miles"
             />
             <span className="text-[14px] font-bold text-text2 bg-ok/15 rounded-lg px-3 py-1.5 min-w-[72px] text-center tabular-nums">
@@ -180,7 +206,7 @@ function Field({
   htmlFor,
   children,
 }: {
-  label: string
+  label: React.ReactNode
   htmlFor?: string
   children: React.ReactNode
 }) {

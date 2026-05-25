@@ -102,6 +102,9 @@ export const serviceProfiles = pgTable('service_profiles', {
   locationState:            text('location_state'),
   locationRadiusMiles:      integer('location_radius_miles').default(50),
   idealCustomerDescription: text('ideal_customer_description'),
+  // Optional — many service businesses don't have a website. When present,
+  // Fetchi's enrichment + scoring agents can pull additional brand context.
+  website:                  text('website'),
   createdAt:                timestamp('created_at').defaultNow().notNull(),
   updatedAt:                timestamp('updated_at').defaultNow().notNull(),
 })
