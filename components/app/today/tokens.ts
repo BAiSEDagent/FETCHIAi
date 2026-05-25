@@ -18,7 +18,7 @@ export const GHOST_2_TRANSFORM = 'translate-y-[18px] scale-[0.94]'
 
 // Deck viewport — fixed-height clipped frame.
 export const DECK_VIEWPORT_FRAME =
-  'relative overflow-hidden rounded-[22px] h-[min(540px,calc(100svh-390px))] min-h-[460px] lg:h-[600px] lg:min-h-[560px]'
+  'relative overflow-hidden rounded-[22px] h-[min(620px,calc(100svh-300px))] min-h-[520px] lg:h-[640px] lg:min-h-[580px]'
 
 // Button heights from spec.
 export const ACTION_BUTTON_HEIGHT = 'h-[60px]'
