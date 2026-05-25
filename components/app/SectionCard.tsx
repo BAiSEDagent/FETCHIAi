@@ -12,13 +12,10 @@ type Props = {
   tone?: 'default' | 'highlight' | 'muted'
 }
 
-// v2.1 — `highlight` is no longer green. Green is reserved for
-// saved/won/responded/verified/success only. Why Now / callouts use
-// the raised dark surface so the card label carries the emphasis.
 const TONE: Record<NonNullable<Props['tone']>, string> = {
-  default: 'bg-surface',
-  highlight: 'bg-raised',
-  muted: 'bg-raised',
+  default: 'bg-brand-cream',
+  highlight: 'bg-brand-light',
+  muted: 'bg-brand-cream-muted',
 }
 
 export function SectionCard({
@@ -44,17 +41,17 @@ export function SectionCard({
         <div className="flex items-start justify-between gap-4 px-5 lg:px-6 pt-5 lg:pt-6 pb-3">
           <div className="min-w-0 flex-1">
             {eyebrow && (
-              <div className="text-[11px] font-bold uppercase tracking-[1px] text-text/45 mb-1.5">
+              <div className="text-[11px] font-bold uppercase tracking-[1px] text-brand-near-black/45 mb-1.5">
                 {eyebrow}
               </div>
             )}
             {title && (
-              <h2 className="font-outfit text-[17px] font-semibold text-text leading-tight">
+              <h2 className="font-outfit text-h3 text-brand-near-black">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-[13px] text-text/60 mt-1 leading-relaxed">
+              <p className="text-[13px] text-brand-near-black/60 mt-1 leading-relaxed">
                 {description}
               </p>
             )}
