@@ -64,7 +64,7 @@ function ScoreBreakdown({
             </div>
             <div className="h-1.5 rounded-full bg-text/8 overflow-hidden">
               <div
-                className="h-full bg-ok transition-all"
+                className="h-full bg-blue transition-all"
                 style={{ width: `${r.pct}%` }}
               />
             </div>
@@ -86,7 +86,7 @@ function ConfidenceDots({ pct }: { pct: number }) {
         <span
           key={i}
           className={`w-1.5 h-1.5 rounded-full ${
-            i < filled ? 'bg-ok' : 'bg-text/12'
+            i < filled ? 'bg-blue' : 'bg-text/12'
           }`}
         />
       ))}
@@ -253,7 +253,11 @@ export default async function LeadProfilePage({
             )}
           </div>
 
-          <div className="font-outfit text-[68px] lg:text-[76px] leading-none font-bold text-ok tabular-nums mt-5">
+          <div
+            className={`font-outfit text-[68px] lg:text-[76px] leading-none font-bold tabular-nums mt-5 ${
+              opp.score >= 85 ? 'text-coral' : 'text-text'
+            }`}
+          >
             {opp.score}
           </div>
           <div className="text-[13px] text-text/55 mt-2 font-medium px-4">
@@ -281,7 +285,7 @@ export default async function LeadProfilePage({
         <SectionCard
           eyebrow="Evidence"
           actions={
-            <span className="text-[12px] font-semibold text-ok">
+            <span className="text-[12px] font-semibold text-blue">
               {evidenceCount} source{evidenceCount === 1 ? '' : 's'}
             </span>
           }
@@ -358,7 +362,7 @@ export default async function LeadProfilePage({
                     href={`https://${prospect.website}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-ok hover:text-text2 truncate inline-block max-w-full"
+                    className="text-blue hover:underline truncate inline-block max-w-full"
                   >
                     {prospect.website}
                   </a>
@@ -406,7 +410,7 @@ export default async function LeadProfilePage({
                         {c.contactEmail && (
                           <>
                             {' · '}
-                            <span className="text-ok">
+                            <span className="text-blue">
                               {c.contactEmail}
                             </span>
                           </>
@@ -423,7 +427,7 @@ export default async function LeadProfilePage({
 
         <SectionCard
           eyebrow={
-            <span className="text-ok">✦ Outreach draft</span>
+            <span className="text-text/65">✦ Outreach draft</span>
           }
         >
           {drafts.length === 0 ? (

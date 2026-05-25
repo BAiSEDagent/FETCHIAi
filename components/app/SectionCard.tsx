@@ -12,9 +12,12 @@ type Props = {
   tone?: 'default' | 'highlight' | 'muted'
 }
 
+// v2.1 — `highlight` is no longer green. Green is reserved for
+// saved/won/responded/verified/success only. Why Now / callouts use
+// the raised dark surface so the card label carries the emphasis.
 const TONE: Record<NonNullable<Props['tone']>, string> = {
   default: 'bg-surface',
-  highlight: 'bg-ok/15',
+  highlight: 'bg-raised',
   muted: 'bg-raised',
 }
 

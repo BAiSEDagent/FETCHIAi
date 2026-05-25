@@ -60,7 +60,9 @@ function statusTone(status: string | null | undefined): string {
     case 'contacted':
       return 'bg-text/[0.08] text-text/75'
     case 'responded':
-      return 'bg-mustard/15 text-mustard'
+      // v2.1 — responded is a success state (they replied). Green semantic,
+      // matches the `won` card-tone ring derived in deriveCardTone().
+      return 'bg-ok/15 text-text2'
     case 'won':
       return 'bg-ok text-white'
     case 'lost':
@@ -88,6 +90,35 @@ function initialsFor(name: string): string {
 // places). Everything else is neutral on the dark operator surface.
 function isHotScore(score: number): boolean {
   return score >= 85
+}
+
+// v2.1 LEAD CARD VARIANTS — the 6 tones from the token board.
+//   storm    — coral surface (hot storm/hail/wind lead, one of the 5 coral places)
+//   permit   — parchment surface (permit signal, restrained accent)
+//   won      — neutral dark + ok ring (won / responded)
+//   saved    — neutral dark + ok left-stripe
+//   expiring — neutral dark + warn left-stripe (expired/expiring leads)
+//   default  — neutral dark (new business listing, news, generic)
+type CardTone = 'storm' | 'permit' | 'won' | 'saved' | 'expiring' | 'default'
+
+function deriveCardTone(
+  status: string | null | undefined,
+  signalType: LeadCardSignalType,
+  score: number,
+): CardTone {
+  if (status === 'won' || status === 'responded') return 'won'
+  if (status === 'saved') return 'saved'
+  if (status === 'expired') return 'expiring'
+  if (
+    isHotScore(score) &&
+    (signalType === 'storm_damage' ||
+      signalType === 'weather_hail' ||
+      signalType === 'weather_wind')
+  ) {
+    return 'storm'
+  }
+  if (signalType === 'building_permit') return 'permit'
+  return 'default'
 }
 
 export function LeadCard(props: Props) {
@@ -197,7 +228,7 @@ function RunCard({
                         key={i}
                         className={cn(
                           'w-1.5 h-1.5 rounded-full',
-                          i < confidence ? 'bg-ok' : 'bg-text/15',
+                          i < confidence ? 'bg-blue' : 'bg-text/15',
                         )}
                       />
                     ))}
@@ -236,6 +267,7 @@ function ListCard({
   href,
   businessName,
   signalLabel,
+  signalType,
   signalToken,
   score,
   whyNow,
@@ -248,25 +280,123 @@ function ListCard({
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
   const tokenText = signalToken ?? signalLabel
   const hot = isHotScore(score)
+  const tone = deriveCardTone(status, signalType, score)
+
+  // v2.1 tone palettes. storm/permit invert the surface (coral / parch) so
+  // every text + chip + accent on the card has to flip with it. The other
+  // tones keep the dark raised surface and only add a stripe or ring.
+  const isCoralSurface = tone === 'storm'
+  const isParchSurface = tone === 'permit'
+  const isInverted = isCoralSurface || isParchSurface
+
+  const surface = cn(
+    'group relative block rounded-2xl transition-all p-3.5 lg:p-5',
+    'hover:-translate-y-0.5',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+    tone === 'storm' &&
+      'bg-coral text-white shadow-[0_2px_4px_rgba(0,0,0,0.20),0_12px_28px_-14px_rgba(244,91,59,0.55)] hover:shadow-[0_4px_8px_rgba(0,0,0,0.22),0_16px_36px_-14px_rgba(244,91,59,0.65)]',
+    tone === 'permit' &&
+      // Parch is a fixed cream surface in both themes, so the ink must be
+      // a fixed dark colour (brand dark #2D2B2A) — `text-text2` flips light
+      // in dark mode and would fail contrast on parch.
+      'bg-parch text-[#2D2B2A] shadow-[0_1px_2px_rgba(0,0,0,0.25)] hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.40)]',
+    tone === 'won' &&
+      'bg-raised text-text shadow-[0_1px_2px_rgba(0,0,0,0.30)] ring-1 ring-inset ring-ok/40 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.55)]',
+    tone === 'saved' &&
+      'bg-raised text-text shadow-[0_1px_2px_rgba(0,0,0,0.30)] border-l-[3px] border-l-ok hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.55)]',
+    tone === 'expiring' &&
+      'bg-raised text-text shadow-[0_1px_2px_rgba(0,0,0,0.30)] border-l-[3px] border-l-warn hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.55)]',
+    tone === 'default' &&
+      'bg-raised text-text shadow-[0_1px_2px_rgba(0,0,0,0.30)] hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.55)]',
+    // hot score on a default-tone card keeps the subtle coral ring it had
+    // pre-v2.1 (only when we didn't already promote it to a full coral surface)
+    tone === 'default' &&
+      hot &&
+      'shadow-[inset_0_0_0_1px_rgba(244,91,59,0.30),0_1px_2px_rgba(0,0,0,0.30)]',
+  )
+
+  // tone-aware sub-styles
+  // Parch ink: fixed brand-dark hex so contrast holds in both themes.
+  // Bumped coral-surface secondary alphas above WCAG-AA tight points.
+  const secondaryText = isCoralSurface
+    ? 'text-white/85'
+    : isParchSurface
+      ? 'text-[#2D2B2A]/75'
+      : 'text-text/55'
+  const bodyText = isCoralSurface
+    ? 'text-white/95'
+    : isParchSurface
+      ? 'text-[#2D2B2A]/90'
+      : 'text-text/75'
+  const faintText = isCoralSurface
+    ? 'text-white/75'
+    : isParchSurface
+      ? 'text-[#2D2B2A]/65'
+      : 'text-text/45'
+  const tokenChip = isCoralSurface
+    ? 'bg-white/25 text-white'
+    : isParchSurface
+      ? 'bg-[#2D2B2A]/10 text-[#2D2B2A]'
+      : hot
+        ? 'bg-coral/15 text-coral'
+        : 'bg-text/[0.06] text-text/70'
+  const avatarChip = isCoralSurface
+    ? 'bg-white/20 text-white'
+    : isParchSurface
+      ? 'bg-[#2D2B2A]/10 text-[#2D2B2A]'
+      : 'bg-text/[0.08] text-text/75'
+  // status pill — when surface is inverted, neutralise its bright bg
+  const statusPillTone = isCoralSurface
+    ? 'bg-white/20 text-white'
+    : isParchSurface
+      ? 'bg-[#2D2B2A]/12 text-[#2D2B2A]'
+      : statusTone(status)
+  const scoreColor = isCoralSurface
+    ? 'text-white'
+    : isParchSurface
+      ? 'text-[#2D2B2A]'
+      : hot
+        ? 'text-coral'
+        : 'text-text'
+  const titleColor = isCoralSurface
+    ? 'text-white'
+    : isParchSurface
+      ? 'text-[#2D2B2A]'
+      : 'text-text'
+  const contactTextColor = isCoralSurface
+    ? 'text-white'
+    : isParchSurface
+      ? 'text-[#2D2B2A]'
+      : 'text-text'
+  const confidenceDot = isCoralSurface
+    ? 'bg-white'
+    : isParchSurface
+      ? 'bg-[#2D2B2A]'
+      : 'bg-blue'
+  const confidenceDotOff = isInverted
+    ? isCoralSurface
+      ? 'bg-white/30'
+      : 'bg-[#2D2B2A]/20'
+    : 'bg-text/15'
+  const openPill = isCoralSurface
+    ? 'bg-white text-coralDeep'
+    : isParchSurface
+      ? 'bg-[#2D2B2A] text-parch'
+      : 'bg-text text-bg'
+  const chevColor = isCoralSurface
+    ? 'text-white/70 group-hover:text-white'
+    : isParchSurface
+      ? 'text-[#2D2B2A]/55 group-hover:text-[#2D2B2A]'
+      : 'text-text/30 group-hover:text-text/60'
 
   return (
-    <Link
-      href={href}
-      className={cn(
-        'group relative block rounded-2xl bg-raised transition-all',
-        'shadow-[0_1px_2px_rgba(0,0,0,0.30)]',
-        'hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.55)]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
-        'p-3.5 lg:p-5',
-        hot && 'shadow-[inset_0_0_0_1px_rgba(244,91,59,0.30),0_1px_2px_rgba(0,0,0,0.30)]',
-      )}
-    >
+    <Link href={href} className={surface}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex flex-wrap items-center gap-1.5">
           <span
             className={cn(
               'inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold',
-              statusTone(status),
+              statusPillTone,
             )}
           >
             {statusLabel(status)}
@@ -274,15 +404,13 @@ function ListCard({
           <span
             className={cn(
               'inline-flex items-center rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums',
-              hot
-                ? 'bg-coral/15 text-coral'
-                : 'bg-text/[0.06] text-text/70',
+              tokenChip,
             )}
           >
             <span className="truncate max-w-[180px]">{tokenText}</span>
           </span>
           {ageLabel && !signalToken && (
-            <span className="text-[11px] text-text/45">· {ageLabel}</span>
+            <span className={cn('text-[11px]', faintText)}>· {ageLabel}</span>
           )}
         </div>
 
@@ -290,30 +418,45 @@ function ListCard({
           <div
             className={cn(
               'font-outfit text-[24px] lg:text-[28px] font-extrabold tabular-nums',
-              hot ? 'text-coral' : 'text-text',
+              scoreColor,
             )}
           >
             {score}
           </div>
-          <div className="mt-0.5 text-[9px] uppercase tracking-[0.08em] font-bold text-text/40">
+          <div
+            className={cn(
+              'mt-0.5 text-[9px] uppercase tracking-[0.08em] font-bold',
+              faintText,
+            )}
+          >
             score
           </div>
         </div>
       </div>
 
       <div className="mt-2.5 min-w-0">
-        <h3 className="font-outfit text-[16.5px] lg:text-[18px] font-bold text-text leading-tight truncate">
+        <h3
+          className={cn(
+            'font-outfit text-[16.5px] lg:text-[18px] font-bold leading-tight truncate',
+            titleColor,
+          )}
+        >
           {businessName}
         </h3>
         {location && (
-          <div className="mt-0.5 text-[12px] text-text/55 truncate">
+          <div className={cn('mt-0.5 text-[12px] truncate', secondaryText)}>
             {location}
           </div>
         )}
       </div>
 
       {whyNow && (
-        <p className="fetchi-clamp-2 mt-2.5 text-[12.5px] lg:text-[13px] text-text/75 leading-[1.5]">
+        <p
+          className={cn(
+            'fetchi-clamp-2 mt-2.5 text-[12.5px] lg:text-[13px] leading-[1.5]',
+            bodyText,
+          )}
+        >
           {whyNow}
         </p>
       )}
@@ -321,27 +464,45 @@ function ListCard({
       <div className="mt-3 lg:mt-4 flex items-center justify-between gap-3">
         {contactName ? (
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-full bg-text/[0.08] text-text/75 text-[11px] font-bold flex items-center justify-center flex-shrink-0">
+            <div
+              className={cn(
+                'w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center flex-shrink-0',
+                avatarChip,
+              )}
+            >
               {initialsFor(contactName)}
             </div>
             <div className="min-w-0">
-              <div className="text-[12.5px] font-semibold text-text truncate">
+              <div
+                className={cn(
+                  'text-[12.5px] font-semibold truncate',
+                  contactTextColor,
+                )}
+              >
                 {contactName}
               </div>
               {confidence > 0 && (
                 <div className="flex items-center gap-1 mt-0.5">
-                  <div className="flex gap-0.5" aria-label={`Contact confidence ${confidence} of 3`}>
+                  <div
+                    className="flex gap-0.5"
+                    aria-label={`Contact confidence ${confidence} of 3`}
+                  >
                     {[0, 1, 2].map(i => (
                       <span
                         key={i}
                         className={cn(
                           'w-1.5 h-1.5 rounded-full',
-                          i < confidence ? 'bg-ok' : 'bg-text/15',
+                          i < confidence ? confidenceDot : confidenceDotOff,
                         )}
                       />
                     ))}
                   </div>
-                  <span className="text-[10.5px] text-text/45 uppercase tracking-wide font-semibold">
+                  <span
+                    className={cn(
+                      'text-[10.5px] uppercase tracking-wide font-semibold',
+                      faintText,
+                    )}
+                  >
                     confidence
                   </span>
                 </div>
@@ -349,21 +510,37 @@ function ListCard({
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-[11.5px] text-text/50">
-            <span className="w-1.5 h-1.5 rounded-full bg-text/20" />
+          <div
+            className={cn(
+              'flex items-center gap-1.5 text-[11.5px]',
+              secondaryText,
+            )}
+          >
+            <span
+              className={cn(
+                'w-1.5 h-1.5 rounded-full',
+                isInverted ? 'bg-white/30' : 'bg-text/20',
+              )}
+            />
             Finding best contact
           </div>
         )}
 
         <span
           aria-hidden
-          className="hidden lg:inline-flex opacity-0 group-hover:opacity-100 transition-opacity items-center gap-1 rounded-full bg-text text-bg px-3 py-1 text-[11.5px] font-semibold"
+          className={cn(
+            'hidden lg:inline-flex opacity-0 group-hover:opacity-100 transition-opacity items-center gap-1 rounded-full px-3 py-1 text-[11.5px] font-semibold',
+            openPill,
+          )}
         >
           Open <ChevronRight className="h-3 w-3" />
         </span>
         <ChevronRight
           aria-hidden
-          className="h-5 w-5 text-text/30 group-hover:text-text/60 transition-colors lg:group-hover:hidden flex-shrink-0"
+          className={cn(
+            'h-5 w-5 transition-colors lg:group-hover:hidden flex-shrink-0',
+            chevColor,
+          )}
         />
       </div>
     </Link>
@@ -499,7 +676,7 @@ function ChatCard({
                 {businessName}
               </div>
               <div className="flex items-center gap-1.5 mt-0.5 text-[12.5px] text-text/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-ok flex-shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-text/30 flex-shrink-0" />
                 <span className="truncate">
                   {signalLabel}
                   {location ? ` · ${location}` : ''}

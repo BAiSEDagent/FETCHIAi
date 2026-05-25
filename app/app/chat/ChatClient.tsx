@@ -84,7 +84,7 @@ export function ChatClient({
       <div className="flex-1 overflow-y-auto px-4 lg:px-7 pb-6 space-y-5">
         <div className="flex items-center gap-3">
           <div
-            className="w-9 h-9 rounded-full bg-ok text-text text-[12px] font-bold flex items-center justify-center flex-shrink-0"
+            className="w-9 h-9 rounded-full bg-raised text-text/80 text-[12px] font-bold flex items-center justify-center flex-shrink-0 border border-text/10"
             aria-hidden
           >
             ツ
@@ -94,7 +94,7 @@ export function ChatClient({
               Fetchi
             </div>
             <div className="text-[12.5px] text-text/60 mt-0.5 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-ok" />
+              <span className="w-1.5 h-1.5 rounded-full bg-ok" aria-label="active" />
               {scoutingLocation ? `Scouting ${scoutingLocation}` : 'Listening for signals'}
               {leadsReady > 0 && (
                 <span className="text-text/45">

@@ -17,10 +17,12 @@ const EVIDENCE_KIND_LABEL: Record<EvidenceItem['kind'], string> = {
 
 const KIND_ACCENT_BG: Record<EvidenceItem['kind'], string> = {
   storm: 'bg-coral/14 text-coral',
-  property: 'bg-ok/14 text-text2',
-  permit: 'bg-amber-100 text-amber-800',
+  // v2.1 — only success/verified states wear green. Property + market are
+  // evidence categories (source signal), so they take Evidence Blue.
+  property: 'bg-blue/15 text-blue',
+  permit: 'bg-warn/15 text-warn',
   ownership: 'bg-text/8 text-text/75',
-  market: 'bg-ok/10 text-text2',
+  market: 'bg-blue/10 text-blue',
   other: 'bg-text/8 text-text/65',
 }
 

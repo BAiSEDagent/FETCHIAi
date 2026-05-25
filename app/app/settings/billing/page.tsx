@@ -45,7 +45,7 @@ export default async function BillingPage() {
                   status === 'active'
                     ? 'bg-ok/15 text-text2 border-ok/30'
                     : status === 'trialing'
-                    ? 'bg-amber-50 text-amber-900 border-amber-200'
+                    ? 'bg-warn/15 text-warn border-warn/30'
                     : 'bg-raised text-text/65 border-text/10'
                 }`}
               >

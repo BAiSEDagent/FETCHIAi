@@ -9,16 +9,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // v2.1 — coral primary CTA. coralDeep on hover AND active/pressed
+        // so the touch feedback matches the brand pressed-state spec.
         default:
-          "bg-coral text-white hover:bg-coralDeep",
+          "bg-coral text-white hover:bg-coralDeep active:bg-coralDeep active:scale-[0.98]",
         destructive:
-          "bg-bad text-white hover:bg-bad/90",
+          "bg-bad text-white hover:bg-bad/90 active:bg-bad/90 active:scale-[0.98]",
         outline:
-          "border border-text/15 bg-transparent text-text hover:bg-text/5",
+          "border border-text/15 bg-transparent text-text hover:bg-text/5 active:bg-text/10",
         secondary:
-          "bg-surface text-text border border-text/10 hover:bg-raised",
+          "bg-surface text-text border border-text/10 hover:bg-raised active:bg-raised",
         ghost:
-          "text-text hover:bg-text/5",
+          "text-text hover:bg-text/5 active:bg-text/10",
         link:
           "text-blue underline-offset-4 hover:underline",
       },
