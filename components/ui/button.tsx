@@ -5,24 +5,22 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-brand-parchment transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        // v2.1 — coral primary CTA. coralDeep on hover AND active/pressed
-        // so the touch feedback matches the brand pressed-state spec.
         default:
-          "bg-coral text-white hover:bg-coralDeep active:bg-coralDeep active:scale-[0.98]",
+          "bg-brand-near-black text-white hover:bg-brand-green active:bg-brand-green active:scale-[0.98]",
         destructive:
-          "bg-bad text-white hover:bg-bad/90 active:bg-bad/90 active:scale-[0.98]",
+          "bg-brand-coral text-white hover:bg-brand-coral/90 active:bg-brand-coral/90 active:scale-[0.98]",
         outline:
-          "border border-text/15 bg-transparent text-text hover:bg-text/5 active:bg-text/10",
+          "border border-brand-near-black/15 bg-transparent text-brand-near-black hover:bg-brand-cream active:bg-brand-cream-muted",
         secondary:
-          "bg-surface text-text border border-text/10 hover:bg-raised active:bg-raised",
+          "bg-brand-cream text-brand-near-black border border-brand-near-black/10 hover:bg-brand-cream-muted active:bg-brand-cream-muted",
         ghost:
-          "text-text hover:bg-text/5 active:bg-text/10",
+          "text-brand-near-black hover:bg-brand-near-black/5 active:bg-brand-near-black/10",
         link:
-          "text-blue underline-offset-4 hover:underline",
+          "text-brand-green underline-offset-4 hover:underline",
       },
       size: {
         default: "h-11 px-5 py-2",
