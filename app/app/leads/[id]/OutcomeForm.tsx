@@ -70,8 +70,8 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
           const active = status === o.id
           const activeClass =
             o.tone === 'positive'
-              ? 'bg-ok text-text border-ok'
-              : 'bg-text/10 text-text border-text'
+              ? 'bg-ok text-white border-ok'
+              : 'bg-text/15 text-text border-text/25'
           return (
             <button
               key={o.id}
@@ -82,7 +82,7 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
               className={`text-[13px] font-semibold px-4 rounded-xl transition-colors min-h-[44px] border ${
                 active
                   ? activeClass
-                  : 'bg-white text-text/75 border-text/10 hover:border-ok hover:text-text'
+                  : 'bg-raised text-text border-text/10 hover:border-text/25 hover:bg-text/[0.06]'
               }`}
             >
               {o.label}
