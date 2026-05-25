@@ -23,16 +23,16 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
   return (
     <div
       className={cn(
-        'rounded-[18px] bg-white/70 px-4 py-3.5 lg:px-5 lg:py-4',
-        'shadow-[inset_0_0_0_1px_rgba(45,43,42,0.06),0_1px_2px_rgba(45,43,42,0.04)]',
+        'rounded-[18px] bg-raised px-4 py-3.5 lg:px-5 lg:py-4',
+        'border border-text/10 shadow-fetchi-soft',
       )}
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45">
+          <p className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/60">
             Morning review
           </p>
-          <p className="mt-0.5 text-[14px] lg:text-[14.5px] font-semibold text-text/85 leading-snug">
+          <p className="mt-0.5 text-[14px] lg:text-[14.5px] font-semibold text-text leading-snug">
             {headline}
           </p>
         </div>
@@ -40,7 +40,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
           className={cn(
             'inline-flex items-center justify-center rounded-full px-2.5 h-[26px] min-w-[44px]',
             'text-[11px] uppercase tracking-[0.1em] font-bold tabular-nums',
-            'bg-ok/15 text-text2',
+            'bg-ok/20 text-ok',
           )}
           aria-hidden
         >
@@ -62,7 +62,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
             key={i}
             className={cn(
               'h-1.5 flex-1 rounded-full transition-colors',
-              i < reviewed ? 'bg-ok' : 'bg-text/10',
+              i < reviewed ? 'bg-ok' : 'bg-text/15',
             )}
           />
         ))}
@@ -70,13 +70,13 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
 
       {/* Reviewed · left footer (single line, no time language) */}
       <div className="mt-2 flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.1em] font-bold tabular-nums">
-        <span className="text-text/55">
+        <span className="text-text/70">
           {reviewed} reviewed
-          <span className="mx-1.5 text-text/35">·</span>
+          <span className="mx-1.5 text-text/40">·</span>
           {left} left
         </span>
         {savedCount > 0 || skippedCount > 0 ? (
-          <span className="text-text/45 normal-case tracking-normal font-medium">
+          <span className="text-text/60 normal-case tracking-normal font-medium">
             <span className="text-ok">{savedCount} saved</span>
             <span className="mx-1.5">·</span>
             <span>{skippedCount} passed</span>
