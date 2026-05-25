@@ -113,3 +113,35 @@ Known limitations or follow-up tasks
 ```
 
 If a task cannot be completed safely, stop and explain the blocker instead of improvising around protected architecture.
+
+## Codex task guidance
+
+When assigned a GitHub issue or PR, Codex should:
+
+1. Read this file first.
+2. Read the linked issue in full.
+3. For customer UI work, read `DESIGN_SYSTEM_V2.md` before opening implementation files.
+4. Inspect existing components/routes before creating new files.
+5. Produce the smallest safe diff that satisfies the acceptance criteria.
+6. Prefer component primitives and token fixes over one-off styling.
+7. Avoid backend, database, auth, billing, provider, or agent changes unless the issue explicitly asks for them.
+8. Run the repo checks requested by the issue and report exact results.
+9. If screenshots are required but the environment cannot capture them, say so clearly in the PR notes and explain what was verified instead.
+
+For the first task, Codex should focus on Issue #1 only: `Design System Lock Pass`.
+
+## Review guidelines
+
+Codex code review should prioritize serious issues over style nits. Flag P0/P1 issues for:
+
+- Any change to protected database/billing files that was not explicitly requested.
+- Any customer UI change that violates `DESIGN_SYSTEM_V2.md` in a material way.
+- Any hardcoded pricing, limits, score thresholds, schedules, provider/model choices, prompts, or email copy.
+- Any unscoped database query that can leak data across workspaces.
+- Any direct LLM/provider/search API call that bypasses the provider abstraction layer.
+- Any accidental exposure of secrets, stack traces, raw provider errors, or API keys.
+- Any use of the Replit Stripe connector or Replit-managed AI integrations where BYOK/provider abstraction is required.
+- Any removal of trial gates, opportunity counters, or usage checks.
+- Any app-structure change that breaks `npm run type-check` or `npm run build`.
+
+Do not block PRs for small copy/style preferences unless they contradict the design system or acceptance criteria.
