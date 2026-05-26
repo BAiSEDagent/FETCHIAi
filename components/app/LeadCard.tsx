@@ -50,10 +50,14 @@ function isHotScore(score: number): boolean {
   return score >= 85
 }
 
+function isPipelineStatus(status: string | null | undefined): boolean {
+  return status === 'saved' || status === 'responded' || status === 'won'
+}
+
 function classifyOpportunity(status: string | null | undefined, signalType: LeadCardSignalType, score: number): OpportunityClass {
   if (status === 'expired') return 'aging'
-  if (typeof signalType === 'string' && DEMO_INTENT_RECORD_SIGNAL_TYPES.has(signalType)) return 'intent_record'
   if (isHotScore(score) && typeof signalType === 'string' && DEMO_URGENT_SIGNAL_TYPES.has(signalType)) return 'urgent'
+  if (typeof signalType === 'string' && DEMO_INTENT_RECORD_SIGNAL_TYPES.has(signalType)) return 'intent_record'
   return 'discovery'
 }
 
@@ -118,17 +122,19 @@ function ListCard({
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
   const tokenText = signalToken ?? signalLabel
   const opportunityClass = classifyOpportunity(status, signalType, score)
-  const inverted = opportunityClass === 'urgent' || opportunityClass === 'intent_record'
-  const urgent = opportunityClass === 'urgent'
-  const intentRecord = opportunityClass === 'intent_record'
+  const pipeline = isPipelineStatus(status)
+  const inverted = !pipeline && (opportunityClass === 'urgent' || opportunityClass === 'intent_record')
+  const urgent = !pipeline && opportunityClass === 'urgent'
+  const intentRecord = !pipeline && opportunityClass === 'intent_record'
 
   const surface = cn(
     'group block rounded-2xl shadow-fetchi-soft transition-all hover:-translate-y-0.5 hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
     large ? 'p-5 lg:p-6' : 'p-4 lg:p-5',
+    pipeline && 'bg-raised text-text border-l-[3px] border-l-ok',
     urgent && 'bg-coral text-white',
     intentRecord && 'bg-parch text-[#2D2B2A] ring-1 ring-inset ring-[#2D2B2A]/10',
-    opportunityClass === 'aging' && 'bg-raised text-text border-l-[3px] border-l-warn',
-    opportunityClass === 'discovery' && 'bg-raised text-text',
+    !pipeline && opportunityClass === 'aging' && 'bg-raised text-text border-l-[3px] border-l-warn',
+    !pipeline && opportunityClass === 'discovery' && 'bg-raised text-text',
   )
   const title = inverted ? (urgent ? 'text-white' : 'text-[#2D2B2A]') : 'text-text'
   const muted = inverted ? (urgent ? 'text-white/75' : 'text-[#2D2B2A]/65') : 'text-text/55'
