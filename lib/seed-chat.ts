@@ -8,6 +8,7 @@
  */
 
 import { db, signals as signalsTable } from '@/db'
+import { formatSignalToken } from '@/lib/signals/token'
 
 export type ChatRole = 'user' | 'assistant'
 
@@ -15,11 +16,14 @@ export type ChatLeadCard = {
   opportunityId: string
   businessName: string
   signalLabel: string
+  signalType?: string | null
+  signalToken?: string | null
   score: number
+  status?: string | null
   location?: string | null
   whyNow?: string | null
   ageLabel?: string | null
-  evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' }>
+  evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' | 'evidence' }>
 }
 
 export type ChatMessage = {
@@ -164,8 +168,15 @@ export async function buildChatThread(
     const baseLabel =
       SIGNAL_LABELS[signal?.signalType ?? 'other'] ?? 'Signal detected'
     const ageLabel = relativeTime(signal?.detectedAt ?? signal?.createdAt ?? null)
+    const signalToken = signal
+      ? formatSignalToken({
+          signalType: signal.signalType,
+          detectedAt: signal.detectedAt ?? signal.createdAt,
+          parsedData: (signal.parsedData ?? null) as Record<string, unknown> | null,
+        })
+      : null
 
-    const evidenceChips: Array<{ label: string; tone?: 'coral' | 'neutral' }> = []
+    const evidenceChips: Array<{ label: string; tone?: 'coral' | 'neutral' | 'evidence' }> = []
     if (prospect?.enrichmentStatus === 'complete') {
       evidenceChips.push({ label: 'Owner reachable', tone: 'neutral' })
     }
@@ -174,7 +185,10 @@ export async function buildChatThread(
       opportunityId: opp.id,
       businessName: prospect?.businessName ?? 'Unknown business',
       signalLabel: signalLabel(signal),
+      signalType: signal?.signalType ?? null,
+      signalToken,
       score: opp.score,
+      status: opp.status ?? 'new',
       location,
       whyNow: opp.whyNow ?? signal?.whyRelevant ?? null,
       ageLabel: `${baseLabel.split(' ').slice(-1)[0] === 'detected' ? 'Signal' : baseLabel.split(' · ')[0]} · ${ageLabel}`,
