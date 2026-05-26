@@ -2,25 +2,14 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { GlyphTile, glyphForSignalType } from '@/components/app/GlyphTile'
+import {
+  leadStatusLabel,
+  resolveLeadSurface,
+  type LeadSurfaceContext,
+  type LeadSurfaceSignalType,
+} from '@/components/app/leadSurfaceResolver'
 
-export type LeadCardSignalType =
-  | 'storm_damage'
-  | 'weather_hail'
-  | 'weather_wind'
-  | 'building_permit'
-  | 'new_business_listing'
-  | 'job_posting'
-  | 'event'
-  | 'funding'
-  | 'news'
-  | 'review'
-  | 'social'
-  | 'expansion'
-  | 'ownership_change'
-  | 'other'
-  | string
-  | null
-  | undefined
+export type LeadCardSignalType = LeadSurfaceSignalType
 
 type Variant = 'list' | 'chat' | 'chat-hero' | 'run' | 'map' | 'related'
 
@@ -37,71 +26,8 @@ type Props = {
   ageLabel?: string | null
   contactName?: string | null
   contactConfidence?: number | null
-  evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' }>
+  evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' | 'evidence' }>
   variant?: Variant
-}
-
-type OpportunityClass = 'urgent' | 'intent_record' | 'discovery' | 'aging'
-type CardSurface = 'coral' | 'parchment' | 'dark'
-
-const DEMO_URGENT_SIGNAL_TYPES = new Set(['storm_damage', 'weather_hail', 'weather_wind'])
-const DEMO_INTENT_RECORD_SIGNAL_TYPES = new Set(['building_permit'])
-
-function isHotScore(score: number): boolean {
-  return score >= 85
-}
-
-function isPipelineStatus(status: string | null | undefined): boolean {
-  return status === 'saved' || status === 'responded' || status === 'won'
-}
-
-function classifyOpportunity(status: string | null | undefined, signalType: LeadCardSignalType, score: number): OpportunityClass {
-  if (status === 'expired') return 'aging'
-  if (isHotScore(score) && typeof signalType === 'string' && DEMO_URGENT_SIGNAL_TYPES.has(signalType)) return 'urgent'
-  if (typeof signalType === 'string' && DEMO_INTENT_RECORD_SIGNAL_TYPES.has(signalType)) return 'intent_record'
-  return 'discovery'
-}
-
-function scoreTier(score: number): string {
-  if (score >= 85) return 'bg-text/[0.08] text-text border border-text/15'
-  if (score >= 70) return 'bg-text/[0.06] text-text/70 border border-text/10'
-  return 'bg-text/[0.05] text-text/55 border border-text/10'
-}
-
-function statusTone(status: string | null | undefined, surface: CardSurface = 'dark'): string {
-  if (!status || status === 'new') {
-    return surface === 'coral'
-      ? 'bg-coralDeep text-white border border-coralDeep/80'
-      : 'bg-coral text-white border border-coralDeep/20'
-  }
-
-  switch (status) {
-    case 'responded':
-    case 'won':
-      return 'bg-ok/12 text-ok border border-ok/25'
-    case 'saved':
-    case 'contacted':
-      return surface === 'parchment'
-        ? 'bg-[#2D2B2A]/10 text-[#2D2B2A] border border-[#2D2B2A]/10'
-        : surface === 'coral'
-          ? 'bg-white/16 text-white border border-white/20'
-          : 'bg-text/[0.06] text-text/65 border border-text/10'
-    case 'lost':
-    case 'skipped':
-    case 'expired':
-      return surface === 'parchment'
-        ? 'bg-[#2D2B2A]/8 text-[#2D2B2A]/60 border border-[#2D2B2A]/10'
-        : 'bg-text/[0.06] text-text/55 border border-text/10'
-    default:
-      return surface === 'parchment'
-        ? 'bg-[#2D2B2A]/8 text-[#2D2B2A]/65 border border-[#2D2B2A]/10'
-        : 'bg-text/[0.08] text-text/65 border border-text/10'
-  }
-}
-
-function statusLabel(status: string | null | undefined): string {
-  if (!status) return 'New'
-  return status.charAt(0).toUpperCase() + status.slice(1)
 }
 
 function initialsFor(name: string): string {
@@ -118,7 +44,7 @@ export function LeadCard(props: Props) {
 }
 
 function RunCard(props: Props) {
-  return <ListCard {...props} large />
+  return <ListCard {...props} large surfaceContext="today" />
 }
 
 function ListCard({
@@ -135,98 +61,74 @@ function ListCard({
   contactName,
   contactConfidence,
   large = false,
-}: Props & { large?: boolean }) {
+  surfaceContext = 'list',
+}: Props & { large?: boolean; surfaceContext?: LeadSurfaceContext }) {
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
   const tokenText = signalToken?.trim() || signalLabel
-  const opportunityClass = classifyOpportunity(status, signalType, score)
-  const pipeline = isPipelineStatus(status)
-  const inverted = !pipeline && (opportunityClass === 'urgent' || opportunityClass === 'intent_record')
-  const urgent = !pipeline && opportunityClass === 'urgent'
-  const intentRecord = !pipeline && opportunityClass === 'intent_record'
-  const cardSurface: CardSurface = urgent ? 'coral' : intentRecord ? 'parchment' : 'dark'
-
-  const surface = cn(
-    'group block rounded-2xl shadow-fetchi-soft transition-all hover:-translate-y-0.5 hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
-    large ? 'p-5 lg:p-6' : 'p-4 lg:p-5',
-    pipeline && 'bg-raised text-text border-l-[3px] border-l-ok',
-    urgent && 'bg-coral text-white',
-    intentRecord && 'bg-parch text-[#2D2B2A] ring-1 ring-inset ring-[#2D2B2A]/10',
-    !pipeline && opportunityClass === 'aging' && 'bg-raised text-text border-l-[3px] border-l-warn',
-    !pipeline && opportunityClass === 'discovery' && 'bg-raised text-text',
-  )
-  const title = inverted ? (urgent ? 'text-white' : 'text-[#2D2B2A]') : 'text-text'
-  const muted = inverted ? (urgent ? 'text-white/75' : 'text-[#2D2B2A]/65') : 'text-text/55'
-  const body = inverted ? (urgent ? 'text-white/90' : 'text-[#2D2B2A]/85') : 'text-text/75'
-  const token = urgent
-    ? 'bg-white/16 text-white border border-white/20'
-    : intentRecord
-      ? 'bg-[#B8B0A2]/40 text-[#2D2B2A] border border-[#2D2B2A]/10'
-      : 'bg-text/[0.06] text-text/70 border border-text/10'
-  const tokenDot = urgent ? 'bg-white/85' : intentRecord ? 'bg-[#2D2B2A]/65' : 'bg-text/35'
-  const glyphTile = urgent
-    ? 'bg-coralDeep/35 text-white ring-1 ring-coralDeep/20'
-    : intentRecord
-      ? 'bg-[#B8B0A2]/45 text-[#2D2B2A] ring-1 ring-[#2D2B2A]/10'
-      : 'bg-text/[0.06] text-text/65 ring-1 ring-text/10'
-  const scorePill = urgent
-    ? 'bg-darkSlab text-white border border-darkSlab'
-    : intentRecord
-      ? 'bg-[#B8B0A2]/45 text-[#2D2B2A] border border-[#2D2B2A]/10'
-      : 'bg-bg/80 text-text border border-text/10'
+  const visual = resolveLeadSurface({ context: surfaceContext, signalType, status, score })
 
   return (
-    <Link href={href} className={surface}>
+    <Link
+      href={href}
+      className={cn(
+        'group block rounded-2xl transition-all hover:-translate-y-0.5 hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+        large ? 'p-5 lg:p-6' : 'p-4 lg:p-5',
+        visual.surface,
+      )}
+    >
       <div className="flex items-start gap-3.5">
-        <GlyphTile glyph={glyphForSignalType(signalType ?? null)} tone="muted" size="md" className={glyphTile} />
+        <GlyphTile glyph={glyphForSignalType(signalType ?? null)} tone="muted" size="md" className={visual.glyphTile} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className={cn('inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold', statusTone(status, cardSurface))}>
-                  {statusLabel(status)}
+                <span className={cn('inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold', visual.statusPill)}>
+                  {leadStatusLabel(status)}
                 </span>
-                <span className={cn('inline-flex items-center gap-1.5 rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums', token)}>
-                  <span className={cn('w-1.5 h-1.5 rounded-full', tokenDot)} />
-                  <span className="truncate max-w-[150px] sm:max-w-[180px]">{tokenText}</span>
-                </span>
-                {ageLabel && <span className={cn('text-[11px]', muted)}>· {ageLabel}</span>}
+                {tokenText && (
+                  <span className={cn('inline-flex items-center gap-1.5 rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums', visual.signalPill)}>
+                    <span className={cn('w-1.5 h-1.5 rounded-full', visual.signalDot)} />
+                    <span className="truncate max-w-[150px] sm:max-w-[180px]">{tokenText}</span>
+                  </span>
+                )}
+                {ageLabel && <span className={cn('text-[11px]', visual.muted)}>· {ageLabel}</span>}
               </div>
-              <h3 className={cn('font-outfit text-[17px] lg:text-[18px] font-semibold leading-tight mt-2 truncate', title)}>
+              <h3 className={cn('font-outfit text-[17px] lg:text-[18px] font-semibold leading-tight mt-2 truncate', visual.title)}>
                 {businessName}
               </h3>
-              {location && <div className={cn('mt-0.5 text-[12.5px] truncate', muted)}>{location}</div>}
+              {location && <div className={cn('mt-0.5 text-[12.5px] truncate', visual.muted)}>{location}</div>}
             </div>
-            <span className={cn('rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', scorePill)}>
+            <span className={cn('rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', visual.score)}>
               {score}
             </span>
           </div>
 
-          {whyNow && <p className={cn('fetchi-clamp-2 mt-3 text-[13px] leading-relaxed', body)}>{whyNow}</p>}
+          {whyNow && <p className={cn('fetchi-clamp-2 mt-3 text-[13px] leading-relaxed', visual.body)}>{whyNow}</p>}
 
           <div className="mt-3 flex items-center justify-between gap-3">
             {contactName ? (
               <div className="flex items-center gap-2 min-w-0">
-                <div className={cn('w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center flex-shrink-0', inverted ? (urgent ? 'bg-white/20 text-white' : 'bg-[#2D2B2A]/10 text-[#2D2B2A]') : 'bg-text/[0.08] text-text/75')}>
+                <div className={cn('w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center flex-shrink-0', visual.contactAvatar)}>
                   {initialsFor(contactName)}
                 </div>
                 <div className="min-w-0">
-                  <div className={cn('text-[12.5px] font-semibold truncate', title)}>{contactName}</div>
+                  <div className={cn('text-[12.5px] font-semibold truncate', visual.title)}>{contactName}</div>
                   {confidence > 0 && (
                     <div className="flex items-center gap-1 mt-0.5" aria-label={`Contact confidence ${confidence} of 3`}>
                       {[0, 1, 2].map(i => (
-                        <span key={i} className={cn('w-1.5 h-1.5 rounded-full', i < confidence ? (inverted ? (urgent ? 'bg-white' : 'bg-[#2D2B2A]') : 'bg-text/45') : (inverted ? (urgent ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/15'))} />
+                        <span key={i} className={cn('w-1.5 h-1.5 rounded-full', i < confidence ? visual.confidenceDot : visual.confidenceDotOff)} />
                       ))}
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className={cn('flex items-center gap-1.5 text-[12px]', muted)}>
-                <span className={cn('w-1.5 h-1.5 rounded-full', inverted ? (urgent ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/20')} />
+              <div className={cn('flex items-center gap-1.5 text-[12px]', visual.muted)}>
+                <span className={cn('w-1.5 h-1.5 rounded-full', visual.confidenceDotOff)} />
                 Finding best contact
               </div>
             )}
-            <ChevronRight className={cn('h-5 w-5 flex-shrink-0', inverted ? (urgent ? 'text-white/70' : 'text-[#2D2B2A]/55') : 'text-text/30 group-hover:text-text/60')} />
+            <ChevronRight className={cn('h-5 w-5 flex-shrink-0', visual.chevron)} />
           </div>
         </div>
       </div>
@@ -234,44 +136,85 @@ function ListCard({
   )
 }
 
-function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location, ageLabel, evidenceChips }: Props) {
-  const hot = isHotScore(score)
+function ChatHeroCard({
+  href,
+  businessName,
+  signalLabel,
+  signalType,
+  signalToken,
+  score,
+  whyNow,
+  status,
+  location,
+  ageLabel,
+  evidenceChips,
+}: Props) {
+  const visual = resolveLeadSurface({ context: 'chat', signalType, status, score })
+  const tokenText = signalToken?.trim() || signalLabel
+
   return (
-    <div className="rounded-2xl bg-raised shadow-fetchi-soft p-4 lg:p-5">
+    <div className={cn('rounded-2xl p-4 lg:p-5', visual.surface)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="font-outfit text-[17px] font-semibold text-text leading-tight">{businessName}</div>
-          <div className="text-[12.5px] text-text/55 mt-1">{location ?? signalLabel}</div>
-        </div>
-        <div className="text-right flex-shrink-0">
-          <div className={cn('font-outfit text-[34px] leading-none font-bold tabular-nums', hot ? 'text-coral' : 'text-text')}>
-            {score}
+          <div className="flex flex-wrap items-center gap-1.5 mb-2">
+            <span className={cn('inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold', visual.statusPill)}>
+              {leadStatusLabel(status)}
+            </span>
+            {tokenText && (
+              <span className={cn('inline-flex items-center gap-1.5 rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums', visual.signalPill)}>
+                <span className={cn('w-1.5 h-1.5 rounded-full', visual.signalDot)} />
+                <span className="truncate max-w-[190px]">{tokenText}</span>
+              </span>
+            )}
           </div>
-          <div className="text-[10px] uppercase tracking-[1px] text-text/45 mt-1 font-bold">score</div>
+          <div className={cn('font-outfit text-[17px] font-semibold leading-tight', visual.title)}>{businessName}</div>
+          <div className={cn('text-[12.5px] mt-1', visual.muted)}>{location ?? signalLabel}</div>
         </div>
+        <span className={cn('rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', visual.score)}>
+          {score}
+        </span>
       </div>
 
-      {(ageLabel || evidenceChips?.length || signalLabel) && (
+      {(ageLabel || evidenceChips?.length) && (
         <div className="flex flex-wrap gap-1.5 mt-3">
-          <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold', hot ? 'bg-coral/12 text-coral' : 'bg-text/[0.06] text-text/70')}>
-            <span className={cn('w-1.5 h-1.5 rounded-full', hot ? 'bg-coral' : 'bg-text/40')} />
-            {signalLabel}{ageLabel ? ` · ${ageLabel}` : ''}
-          </span>
+          {ageLabel && <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold', visual.metadataPill)}>{ageLabel}</span>}
           {evidenceChips?.map(chip => (
-            <span key={chip.label} className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold', chip.tone === 'coral' ? 'bg-coral/12 text-coral' : 'bg-blue/10 text-blue border border-blue/20')}>
+            <span
+              key={chip.label}
+              className={cn(
+                'inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold',
+                chip.tone === 'evidence'
+                  ? 'bg-blue/10 text-blue border border-blue/20'
+                  : chip.tone === 'coral'
+                    ? 'bg-coral/12 text-coral border border-coral/20'
+                    : visual.metadataPill,
+              )}
+            >
               {chip.label}
             </span>
           ))}
         </div>
       )}
 
-      {whyNow && <p className="mt-3 text-[13.5px] text-text/75 leading-[1.6]">{whyNow}</p>}
+      {whyNow && <p className={cn('mt-3 text-[13.5px] leading-[1.6]', visual.body)}>{whyNow}</p>}
 
       <div className="mt-4 flex items-center gap-2">
-        <Link href={href} className="flex-1 inline-flex items-center justify-center h-11 rounded-full bg-coral text-white text-[14px] font-semibold hover:bg-coralDeep transition-colors">
+        <Link
+          href={href}
+          className={cn(
+            'flex-1 inline-flex items-center justify-center h-11 rounded-full text-[14px] font-semibold transition-colors',
+            visual.surfaceKind === 'coral'
+              ? 'bg-darkSlab text-white hover:bg-darkSlab/90'
+              : 'bg-coral text-white hover:bg-coralDeep',
+          )}
+        >
           Open lead
         </Link>
-        <button type="button" className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-surface text-text/75 text-[14px] font-semibold border border-text/8 hover:text-text hover:bg-raised transition-colors" aria-label="Pass on this lead">
+        <button
+          type="button"
+          className={cn('inline-flex items-center justify-center h-11 px-5 rounded-full text-[14px] font-semibold transition-colors', visual.metadataPill)}
+          aria-label="Pass on this lead"
+        >
           Pass
         </button>
       </div>
@@ -279,28 +222,37 @@ function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location
   )
 }
 
-function ChatCard({ href, businessName, signalLabel, signalType, score, status, location, ageLabel }: Props) {
+function ChatCard({ href, businessName, signalLabel, signalType, signalToken, score, status, location, ageLabel }: Props) {
+  const visual = resolveLeadSurface({ context: 'chat', signalType, status, score })
+  const tokenText = signalToken?.trim() || signalLabel
+
   return (
-    <Link href={href} className="group block rounded-2xl bg-raised shadow-fetchi-soft transition-all hover:-translate-y-px hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg p-3.5">
+    <Link
+      href={href}
+      className={cn(
+        'group block rounded-2xl transition-all hover:-translate-y-px hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg p-3.5',
+        visual.surface,
+      )}
+    >
       <div className="flex items-start gap-3">
-        <GlyphTile glyph={glyphForSignalType(signalType ?? null)} size="sm" tone={isHotScore(score) ? 'coral' : 'muted'} />
+        <GlyphTile glyph={glyphForSignalType(signalType ?? null)} size="sm" tone="muted" className={visual.glyphTile} />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-[13.5px] font-semibold text-text truncate">{businessName}</div>
-              <div className="flex items-center gap-1.5 mt-0.5 text-[12.5px] text-text/60">
-                <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', isHotScore(score) ? 'bg-coral' : 'bg-text/30')} />
-                <span className="truncate">{signalLabel}{location ? ` · ${location}` : ''}</span>
-              </div>
+              <div className={cn('text-[13.5px] font-semibold truncate', visual.title)}>{businessName}</div>
+              {tokenText && (
+                <div className={cn('inline-flex items-center gap-1.5 mt-1 rounded-full h-[21px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums max-w-full', visual.signalPill)}>
+                  <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', visual.signalDot)} />
+                  <span className="truncate">{tokenText}{location ? ` · ${location}` : ''}</span>
+                </div>
+              )}
             </div>
-            <span className={cn('rounded-full px-2.5 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', scoreTier(score))}>{score}</span>
+            <span className={cn('rounded-full px-2.5 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', visual.score)}>{score}</span>
           </div>
-          {(status || ageLabel) && (
-            <div className="flex items-center gap-2 mt-2">
-              {status && <span className={cn('hidden sm:inline-flex rounded-full px-2.5 h-[20px] items-center text-[11px] font-semibold', statusTone(status))}>{statusLabel(status)}</span>}
-              {ageLabel && <span className="text-[11.5px] text-text/45">{ageLabel}</span>}
-            </div>
-          )}
+          <div className="flex items-center gap-2 mt-2">
+            <span className={cn('inline-flex rounded-full px-2.5 h-[20px] items-center text-[11px] font-semibold', visual.statusPill)}>{leadStatusLabel(status)}</span>
+            {ageLabel && <span className={cn('text-[11.5px]', visual.muted)}>{ageLabel}</span>}
+          </div>
         </div>
       </div>
     </Link>
