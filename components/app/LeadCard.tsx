@@ -41,17 +41,19 @@ type Props = {
   variant?: Variant
 }
 
-type CardTone = 'storm' | 'permit' | 'won' | 'saved' | 'expiring' | 'default'
+type CardTone = 'storm' | 'permit' | 'expiring' | 'default'
 
 function isHotScore(score: number): boolean {
   return score >= 85
 }
 
+function isWeatherSignal(signalType: LeadCardSignalType): boolean {
+  return signalType === 'storm_damage' || signalType === 'weather_hail' || signalType === 'weather_wind'
+}
+
 function deriveCardTone(status: string | null | undefined, signalType: LeadCardSignalType, score: number): CardTone {
-  if (status === 'won' || status === 'responded') return 'won'
-  if (status === 'saved') return 'saved'
   if (status === 'expired') return 'expiring'
-  if (isHotScore(score) && (signalType === 'storm_damage' || signalType === 'weather_hail' || signalType === 'weather_wind')) return 'storm'
+  if (isHotScore(score) && isWeatherSignal(signalType)) return 'storm'
   if (signalType === 'building_permit') return 'permit'
   return 'default'
 }
@@ -126,8 +128,6 @@ function ListCard({
     large ? 'p-5 lg:p-6' : 'p-4 lg:p-5',
     storm && 'bg-coral text-white',
     permit && 'bg-parch text-[#2D2B2A] ring-1 ring-inset ring-[#2D2B2A]/10',
-    tone === 'won' && 'bg-raised text-text border-l-[3px] border-l-ok',
-    tone === 'saved' && 'bg-raised text-text border-l-[3px] border-l-ok',
     tone === 'expiring' && 'bg-raised text-text border-l-[3px] border-l-warn',
     tone === 'default' && 'bg-raised text-text',
   )
