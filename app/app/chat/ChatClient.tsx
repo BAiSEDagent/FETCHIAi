@@ -72,7 +72,7 @@ export function ChatClient({ initialMessages, greetingName, isEmptyRun, sourcesC
         {messages.map(m => (
           <ChatBubble key={m.id} role={m.role} trailing={m.leads && m.leads.length > 0 ? (
             <div className="flex flex-col gap-3 pt-1">
-              {m.leads.map(l => <LeadCard key={l.opportunityId} href={`/app/leads/${l.opportunityId}`} businessName={l.businessName} signalLabel={l.signalLabel} score={l.score} location={l.location ?? null} whyNow={l.whyNow ?? null} ageLabel={l.ageLabel ?? null} evidenceChips={l.evidenceChips} variant="chat-hero" />)}
+              {m.leads.map(l => <LeadCard key={l.opportunityId} href={`/app/leads/${l.opportunityId}`} businessName={l.businessName} signalLabel={l.signalLabel} signalType={l.signalType} signalToken={l.signalToken} score={l.score} status={l.status} location={l.location ?? null} whyNow={l.whyNow ?? null} ageLabel={l.ageLabel ?? null} evidenceChips={l.evidenceChips} variant="chat-hero" />)}
             </div>
           ) : undefined}>{m.content}</ChatBubble>
         ))}
