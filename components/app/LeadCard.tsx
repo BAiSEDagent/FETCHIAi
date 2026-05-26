@@ -57,18 +57,17 @@ function deriveCardTone(status: string | null | undefined, signalType: LeadCardS
 }
 
 function scoreTier(score: number): string {
-  if (score >= 85) return 'bg-blue/12 text-blue border border-blue/30'
-  if (score >= 70) return 'bg-mustard/15 text-mustard border border-mustard/30'
-  return 'bg-text/[0.06] text-text/60 border border-text/10'
+  if (score >= 85) return 'bg-text/[0.08] text-text border border-text/15'
+  if (score >= 70) return 'bg-text/[0.06] text-text/70 border border-text/10'
+  return 'bg-text/[0.05] text-text/55 border border-text/10'
 }
 
 function statusTone(status: string | null | undefined): string {
   switch (status) {
     case 'saved':
     case 'responded':
-      return 'bg-ok/15 text-ok'
     case 'won':
-      return 'bg-ok text-white'
+      return 'bg-ok/12 text-ok border border-ok/25'
     case 'lost':
     case 'skipped':
     case 'expired':
@@ -117,7 +116,6 @@ function ListCard({
 }: Props & { large?: boolean }) {
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
   const tokenText = signalToken ?? signalLabel
-  const hot = isHotScore(score)
   const tone = deriveCardTone(status, signalType, score)
   const inverted = tone === 'storm' || tone === 'permit'
   const storm = tone === 'storm'
@@ -127,12 +125,11 @@ function ListCard({
     'group block rounded-2xl shadow-fetchi-soft transition-all hover:-translate-y-0.5 hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
     large ? 'p-5 lg:p-6' : 'p-4 lg:p-5',
     storm && 'bg-coral text-white',
-    permit && 'bg-parch text-[#2D2B2A]',
-    tone === 'won' && 'bg-raised text-text ring-1 ring-inset ring-ok/40',
+    permit && 'bg-parch text-[#2D2B2A] ring-1 ring-inset ring-[#2D2B2A]/10',
+    tone === 'won' && 'bg-raised text-text border-l-[3px] border-l-ok',
     tone === 'saved' && 'bg-raised text-text border-l-[3px] border-l-ok',
     tone === 'expiring' && 'bg-raised text-text border-l-[3px] border-l-warn',
     tone === 'default' && 'bg-raised text-text',
-    tone === 'default' && hot && 'ring-1 ring-inset ring-coral/30',
   )
   const title = inverted ? (storm ? 'text-white' : 'text-[#2D2B2A]') : 'text-text'
   const muted = inverted ? (storm ? 'text-white/75' : 'text-[#2D2B2A]/65') : 'text-text/55'
@@ -141,10 +138,8 @@ function ListCard({
     ? 'bg-white/20 text-white'
     : permit
       ? 'bg-[#2D2B2A]/10 text-[#2D2B2A]'
-      : hot
-        ? 'bg-coral/15 text-coral'
-        : 'bg-text/[0.06] text-text/70'
-  const glyphTone = storm ? 'coral' : permit ? 'dark' : hot ? 'coral' : 'muted'
+      : 'bg-text/[0.06] text-text/70'
+  const glyphTone = storm ? 'dark' : permit ? 'dark' : 'muted'
 
   return (
     <Link href={href} className={surface}>
@@ -158,7 +153,7 @@ function ListCard({
                   {statusLabel(status)}
                 </span>
                 <span className={cn('inline-flex items-center gap-1.5 rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums', token)}>
-                  <span className={cn('w-1.5 h-1.5 rounded-full', storm ? 'bg-white' : permit ? 'bg-[#2D2B2A]' : hot ? 'bg-coral' : 'bg-text/35')} />
+                  <span className={cn('w-1.5 h-1.5 rounded-full', storm ? 'bg-white' : permit ? 'bg-[#2D2B2A]' : 'bg-text/35')} />
                   <span className="truncate max-w-[180px]">{tokenText}</span>
                 </span>
                 {ageLabel && <span className={cn('text-[11px]', muted)}>· {ageLabel}</span>}
@@ -168,7 +163,7 @@ function ListCard({
               </h3>
               {location && <div className={cn('mt-0.5 text-[12.5px] truncate', muted)}>{location}</div>}
             </div>
-            <span className={cn('rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', inverted ? (storm ? 'bg-white/20 text-white' : 'bg-[#2D2B2A]/10 text-[#2D2B2A]') : scoreTier(score))}>
+            <span className={cn('rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', inverted ? (storm ? 'bg-darkSlab text-white' : 'bg-[#2D2B2A]/10 text-[#2D2B2A]') : scoreTier(score))}>
               {score}
             </span>
           </div>
@@ -186,7 +181,7 @@ function ListCard({
                   {confidence > 0 && (
                     <div className="flex items-center gap-1 mt-0.5" aria-label={`Contact confidence ${confidence} of 3`}>
                       {[0, 1, 2].map(i => (
-                        <span key={i} className={cn('w-1.5 h-1.5 rounded-full', i < confidence ? (inverted ? (storm ? 'bg-white' : 'bg-[#2D2B2A]') : 'bg-blue') : (inverted ? (storm ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/15'))} />
+                        <span key={i} className={cn('w-1.5 h-1.5 rounded-full', i < confidence ? (inverted ? (storm ? 'bg-white' : 'bg-[#2D2B2A]') : 'bg-text/45') : (inverted ? (storm ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/15'))} />
                       ))}
                     </div>
                   )}
