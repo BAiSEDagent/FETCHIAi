@@ -41,21 +41,20 @@ type Props = {
   variant?: Variant
 }
 
-type CardTone = 'storm' | 'permit' | 'expiring' | 'default'
+type OpportunityClass = 'urgent' | 'intent_record' | 'discovery' | 'aging'
+
+const DEMO_URGENT_SIGNAL_TYPES = new Set(['storm_damage', 'weather_hail', 'weather_wind'])
+const DEMO_INTENT_RECORD_SIGNAL_TYPES = new Set(['building_permit'])
 
 function isHotScore(score: number): boolean {
   return score >= 85
 }
 
-function isWeatherSignal(signalType: LeadCardSignalType): boolean {
-  return signalType === 'storm_damage' || signalType === 'weather_hail' || signalType === 'weather_wind'
-}
-
-function deriveCardTone(status: string | null | undefined, signalType: LeadCardSignalType, score: number): CardTone {
-  if (status === 'expired') return 'expiring'
-  if (isHotScore(score) && isWeatherSignal(signalType)) return 'storm'
-  if (signalType === 'building_permit') return 'permit'
-  return 'default'
+function classifyOpportunity(status: string | null | undefined, signalType: LeadCardSignalType, score: number): OpportunityClass {
+  if (status === 'expired') return 'aging'
+  if (typeof signalType === 'string' && DEMO_INTENT_RECORD_SIGNAL_TYPES.has(signalType)) return 'intent_record'
+  if (isHotScore(score) && typeof signalType === 'string' && DEMO_URGENT_SIGNAL_TYPES.has(signalType)) return 'urgent'
+  return 'discovery'
 }
 
 function scoreTier(score: number): string {
@@ -118,28 +117,28 @@ function ListCard({
 }: Props & { large?: boolean }) {
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
   const tokenText = signalToken ?? signalLabel
-  const tone = deriveCardTone(status, signalType, score)
-  const inverted = tone === 'storm' || tone === 'permit'
-  const storm = tone === 'storm'
-  const permit = tone === 'permit'
+  const opportunityClass = classifyOpportunity(status, signalType, score)
+  const inverted = opportunityClass === 'urgent' || opportunityClass === 'intent_record'
+  const urgent = opportunityClass === 'urgent'
+  const intentRecord = opportunityClass === 'intent_record'
 
   const surface = cn(
     'group block rounded-2xl shadow-fetchi-soft transition-all hover:-translate-y-0.5 hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
     large ? 'p-5 lg:p-6' : 'p-4 lg:p-5',
-    storm && 'bg-coral text-white',
-    permit && 'bg-parch text-[#2D2B2A] ring-1 ring-inset ring-[#2D2B2A]/10',
-    tone === 'expiring' && 'bg-raised text-text border-l-[3px] border-l-warn',
-    tone === 'default' && 'bg-raised text-text',
+    urgent && 'bg-coral text-white',
+    intentRecord && 'bg-parch text-[#2D2B2A] ring-1 ring-inset ring-[#2D2B2A]/10',
+    opportunityClass === 'aging' && 'bg-raised text-text border-l-[3px] border-l-warn',
+    opportunityClass === 'discovery' && 'bg-raised text-text',
   )
-  const title = inverted ? (storm ? 'text-white' : 'text-[#2D2B2A]') : 'text-text'
-  const muted = inverted ? (storm ? 'text-white/75' : 'text-[#2D2B2A]/65') : 'text-text/55'
-  const body = inverted ? (storm ? 'text-white/90' : 'text-[#2D2B2A]/85') : 'text-text/75'
-  const token = storm
+  const title = inverted ? (urgent ? 'text-white' : 'text-[#2D2B2A]') : 'text-text'
+  const muted = inverted ? (urgent ? 'text-white/75' : 'text-[#2D2B2A]/65') : 'text-text/55'
+  const body = inverted ? (urgent ? 'text-white/90' : 'text-[#2D2B2A]/85') : 'text-text/75'
+  const token = urgent
     ? 'bg-white/20 text-white'
-    : permit
+    : intentRecord
       ? 'bg-[#2D2B2A]/10 text-[#2D2B2A]'
       : 'bg-text/[0.06] text-text/70'
-  const glyphTone = storm ? 'dark' : permit ? 'dark' : 'muted'
+  const glyphTone = urgent ? 'dark' : intentRecord ? 'dark' : 'muted'
 
   return (
     <Link href={href} className={surface}>
@@ -149,11 +148,11 @@ function ListCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className={cn('inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold', inverted ? (storm ? 'bg-white/20 text-white' : 'bg-[#2D2B2A]/12 text-[#2D2B2A]') : statusTone(status))}>
+                <span className={cn('inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold', inverted ? (urgent ? 'bg-white/20 text-white' : 'bg-[#2D2B2A]/12 text-[#2D2B2A]') : statusTone(status))}>
                   {statusLabel(status)}
                 </span>
                 <span className={cn('inline-flex items-center gap-1.5 rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums', token)}>
-                  <span className={cn('w-1.5 h-1.5 rounded-full', storm ? 'bg-white' : permit ? 'bg-[#2D2B2A]' : 'bg-text/35')} />
+                  <span className={cn('w-1.5 h-1.5 rounded-full', urgent ? 'bg-white' : intentRecord ? 'bg-[#2D2B2A]' : 'bg-text/35')} />
                   <span className="truncate max-w-[180px]">{tokenText}</span>
                 </span>
                 {ageLabel && <span className={cn('text-[11px]', muted)}>· {ageLabel}</span>}
@@ -163,7 +162,7 @@ function ListCard({
               </h3>
               {location && <div className={cn('mt-0.5 text-[12.5px] truncate', muted)}>{location}</div>}
             </div>
-            <span className={cn('rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', inverted ? (storm ? 'bg-darkSlab text-white' : 'bg-[#2D2B2A]/10 text-[#2D2B2A]') : scoreTier(score))}>
+            <span className={cn('rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', inverted ? (urgent ? 'bg-darkSlab text-white' : 'bg-[#2D2B2A]/10 text-[#2D2B2A]') : scoreTier(score))}>
               {score}
             </span>
           </div>
@@ -173,7 +172,7 @@ function ListCard({
           <div className="mt-3 flex items-center justify-between gap-3">
             {contactName ? (
               <div className="flex items-center gap-2 min-w-0">
-                <div className={cn('w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center flex-shrink-0', inverted ? (storm ? 'bg-white/20 text-white' : 'bg-[#2D2B2A]/10 text-[#2D2B2A]') : 'bg-text/[0.08] text-text/75')}>
+                <div className={cn('w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center flex-shrink-0', inverted ? (urgent ? 'bg-white/20 text-white' : 'bg-[#2D2B2A]/10 text-[#2D2B2A]') : 'bg-text/[0.08] text-text/75')}>
                   {initialsFor(contactName)}
                 </div>
                 <div className="min-w-0">
@@ -181,7 +180,7 @@ function ListCard({
                   {confidence > 0 && (
                     <div className="flex items-center gap-1 mt-0.5" aria-label={`Contact confidence ${confidence} of 3`}>
                       {[0, 1, 2].map(i => (
-                        <span key={i} className={cn('w-1.5 h-1.5 rounded-full', i < confidence ? (inverted ? (storm ? 'bg-white' : 'bg-[#2D2B2A]') : 'bg-text/45') : (inverted ? (storm ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/15'))} />
+                        <span key={i} className={cn('w-1.5 h-1.5 rounded-full', i < confidence ? (inverted ? (urgent ? 'bg-white' : 'bg-[#2D2B2A]') : 'bg-text/45') : (inverted ? (urgent ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/15'))} />
                       ))}
                     </div>
                   )}
@@ -189,11 +188,11 @@ function ListCard({
               </div>
             ) : (
               <div className={cn('flex items-center gap-1.5 text-[12px]', muted)}>
-                <span className={cn('w-1.5 h-1.5 rounded-full', inverted ? (storm ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/20')} />
+                <span className={cn('w-1.5 h-1.5 rounded-full', inverted ? (urgent ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/20')} />
                 Finding best contact
               </div>
             )}
-            <ChevronRight className={cn('h-5 w-5 flex-shrink-0', inverted ? (storm ? 'text-white/70' : 'text-[#2D2B2A]/55') : 'text-text/30 group-hover:text-text/60')} />
+            <ChevronRight className={cn('h-5 w-5 flex-shrink-0', inverted ? (urgent ? 'text-white/70' : 'text-[#2D2B2A]/55') : 'text-text/30 group-hover:text-text/60')} />
           </div>
         </div>
       </div>
