@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { SignOutButton, useUser } from '@clerk/nextjs'
 import { LogOut } from 'lucide-react'
 
@@ -7,17 +8,21 @@ type Variant = 'sidebar' | 'mobile-header'
 
 export function SignOutControl({ variant = 'sidebar' }: { variant?: Variant }) {
   const { user, isLoaded } = useUser()
-  if (!isLoaded || !user) return null
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
-  const initial =
-    (user.firstName?.[0] ??
-      user.primaryEmailAddress?.emailAddress?.[0] ??
-      '?').toUpperCase()
-  const label =
-    user.firstName ??
-    user.fullName ??
-    user.primaryEmailAddress?.emailAddress ??
-    'Account'
+  const ready = mounted && isLoaded && !!user
+  const initial = ready
+    ? (user!.firstName?.[0] ??
+        user!.primaryEmailAddress?.emailAddress?.[0] ??
+        '?').toUpperCase()
+    : '·'
+  const label = ready
+    ? (user!.firstName ??
+        user!.fullName ??
+        user!.primaryEmailAddress?.emailAddress ??
+        'Account')
+    : 'Account'
 
   if (variant === 'mobile-header') {
     return (
