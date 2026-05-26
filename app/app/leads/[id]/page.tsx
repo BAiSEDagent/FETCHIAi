@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { OutcomeForm } from './OutcomeForm'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 import { GlyphTile, glyphForSignalType, type GlyphKey } from '@/components/app/GlyphTile'
+import { leadStatusLabel, resolveLeadSurface } from '@/components/app/leadSurfaceResolver'
 import { formatSignalToken } from '@/lib/signals/token'
 
 export const dynamic = 'force-dynamic'
@@ -49,10 +50,6 @@ function summaryForSignalType(signalType: string | null | undefined): string {
   }
 }
 
-function isHotSignal(signalType: string | null | undefined, score: number): boolean {
-  return score >= 85 && (signalType === 'storm_damage' || signalType === 'weather_hail' || signalType === 'weather_wind')
-}
-
 export default async function LeadProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const ctx = await requireWorkspaceContext()
@@ -79,7 +76,6 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
     db.select().from(outreachPlays).where(and(eq(outreachPlays.workspaceId, ctx.workspaceId), eq(outreachPlays.opportunityId, opp.id))),
   ])
 
-  const hotSignal = isHotSignal(signal?.signalType, opp.score)
   const signalTypeLabel = signal?.signalType
     ? (SIGNAL_TYPE_LABEL[signal.signalType] ?? signal.signalType.replace(/_/g, ' '))
     : 'Signal'
@@ -90,6 +86,13 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
         parsedData: (signal.parsedData ?? null) as Record<string, unknown> | null,
       })
     : null
+  const visual = resolveLeadSurface({
+    context: 'detail',
+    signalType: signal?.signalType ?? null,
+    status: opp.status,
+    score: opp.score,
+  })
+  const signalText = signalToken?.trim() || signalTypeLabel.toUpperCase()
   const evidenceCount = (signal?.whyRelevant ? 1 : 0) + contacts.length + drafts.length + (opp.whyNow ? 1 : 0)
   const locationLine = prospect?.city ? `${prospect.city}${prospect.state ? `, ${prospect.state}` : ''}` : null
   const businessName = prospect?.businessName ?? 'Unknown business'
@@ -110,24 +113,28 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
       </div>
 
       <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+96px)] lg:pb-12 space-y-3 lg:space-y-4">
-        <section className={hotSignal ? 'rounded-[20px] bg-coral text-white shadow-fetchi-card px-5 py-7 lg:px-8 lg:py-9 text-center' : 'rounded-[20px] bg-raised text-text shadow-fetchi-card px-5 py-7 lg:px-8 lg:py-9 text-center'}>
+        <section className={cn('rounded-[20px] px-5 py-7 lg:px-8 lg:py-9 text-center', visual.surface)}>
           <div className="flex items-center justify-center flex-wrap gap-1.5">
-            <span className={hotSignal ? 'inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] tabular-nums bg-white/20 text-white' : 'inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] tabular-nums bg-text/[0.06] text-text/75'} aria-label={`Signal ${signalToken ?? signalTypeLabel}`}>
-              {signalToken ?? signalTypeLabel.toUpperCase()}
+            <span className={cn('inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] tabular-nums', visual.signalPill)} aria-label={`Signal ${signalText}`}>
+              <span className={cn('w-1.5 h-1.5 rounded-full', visual.signalDot)} />
+              {signalText}
+            </span>
+            <span className={cn('inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold', visual.statusPill)}>
+              {leadStatusLabel(opp.status)}
             </span>
             {opp.status === 'new' && (
-              <span className={hotSignal ? 'inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold bg-white/20 text-white' : 'inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold bg-surface text-text/65'}>
+              <span className={cn('inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold', visual.metadataPill)}>
                 No claim filed
               </span>
             )}
           </div>
 
-          <div className={hotSignal ? 'font-outfit text-[72px] lg:text-[86px] leading-none font-bold tabular-nums mt-6 text-white' : 'font-outfit text-[72px] lg:text-[86px] leading-none font-bold tabular-nums mt-6 text-coral'}>
+          <div className={cn('font-outfit text-[72px] lg:text-[86px] leading-none font-bold tabular-nums mt-6', visual.score)}>
             {opp.score}
           </div>
-          <p className={hotSignal ? 'text-body-lg text-white/80 mt-3 px-2' : 'text-body-lg text-text/65 mt-3 px-2'}>{summaryLine}</p>
-          <h1 className={hotSignal ? 'font-outfit text-h1 lg:text-[32px] text-white mt-6 px-2' : 'font-outfit text-h1 lg:text-[32px] text-text mt-6 px-2'}>{businessName}</h1>
-          {locationLine && <div className={hotSignal ? 'text-caption text-white/70 mt-1.5' : 'text-caption text-text/55 mt-1.5'}>{locationLine}</div>}
+          <p className={cn('text-body-lg mt-3 px-2', visual.muted)}>{summaryLine}</p>
+          <h1 className={cn('font-outfit text-h1 lg:text-[32px] mt-6 px-2', visual.title)}>{businessName}</h1>
+          {locationLine && <div className={cn('text-caption mt-1.5', visual.muted)}>{locationLine}</div>}
         </section>
 
         {opp.whyNow && (
@@ -188,14 +195,14 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
                 <div key={d.id} className="space-y-2.5">
                   {d.subjectLine && <div className="text-[13px] font-semibold text-text">{d.subjectLine}</div>}
                   <p className="text-[13px] text-text/75 leading-[1.65] whitespace-pre-wrap">{d.body}</p>
-                  <div className="flex flex-wrap gap-2 pt-1"><Button size="sm">Open draft &amp; contact</Button><Button size="sm" variant="secondary">Edit</Button></div>
+                  <div className="flex flex-wrap gap-2 pt-1"><Button size="sm" variant="secondary">Edit</Button></div>
                 </div>
               ))}
             </div>
           )}
         </SectionCard>
 
-        <div className="flex flex-col items-center gap-2 pt-1 pb-2">
+        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+76px)] z-20 flex flex-col items-center gap-2 pt-3 pb-2 bg-bg/90 backdrop-blur">
           <Button size="lg" className="w-full rounded-full">Open draft &amp; contact</Button>
           <div className="flex items-center justify-center gap-3 text-[13px] font-semibold text-text/55">
             <button type="button" className="min-h-[44px] px-2 hover:text-text">Save for later</button>
