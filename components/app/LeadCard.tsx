@@ -42,6 +42,7 @@ type Props = {
 }
 
 type OpportunityClass = 'urgent' | 'intent_record' | 'discovery' | 'aging'
+type CardSurface = 'coral' | 'parchment' | 'dark'
 
 const DEMO_URGENT_SIGNAL_TYPES = new Set(['storm_damage', 'weather_hail', 'weather_wind'])
 const DEMO_INTENT_RECORD_SIGNAL_TYPES = new Set(['building_permit'])
@@ -67,18 +68,34 @@ function scoreTier(score: number): string {
   return 'bg-text/[0.05] text-text/55 border border-text/10'
 }
 
-function statusTone(status: string | null | undefined): string {
+function statusTone(status: string | null | undefined, surface: CardSurface = 'dark'): string {
+  if (!status || status === 'new') {
+    return surface === 'coral'
+      ? 'bg-coralDeep text-white border border-coralDeep/80'
+      : 'bg-coral text-white border border-coralDeep/20'
+  }
+
   switch (status) {
-    case 'saved':
     case 'responded':
     case 'won':
       return 'bg-ok/12 text-ok border border-ok/25'
+    case 'saved':
+    case 'contacted':
+      return surface === 'parchment'
+        ? 'bg-[#2D2B2A]/10 text-[#2D2B2A] border border-[#2D2B2A]/10'
+        : surface === 'coral'
+          ? 'bg-white/16 text-white border border-white/20'
+          : 'bg-text/[0.06] text-text/65 border border-text/10'
     case 'lost':
     case 'skipped':
     case 'expired':
-      return 'bg-text/[0.06] text-text/55'
+      return surface === 'parchment'
+        ? 'bg-[#2D2B2A]/8 text-[#2D2B2A]/60 border border-[#2D2B2A]/10'
+        : 'bg-text/[0.06] text-text/55 border border-text/10'
     default:
-      return 'bg-text/[0.08] text-text/65'
+      return surface === 'parchment'
+        ? 'bg-[#2D2B2A]/8 text-[#2D2B2A]/65 border border-[#2D2B2A]/10'
+        : 'bg-text/[0.08] text-text/65 border border-text/10'
   }
 }
 
@@ -120,12 +137,13 @@ function ListCard({
   large = false,
 }: Props & { large?: boolean }) {
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
-  const tokenText = signalToken ?? signalLabel
+  const tokenText = signalToken?.trim() || signalLabel
   const opportunityClass = classifyOpportunity(status, signalType, score)
   const pipeline = isPipelineStatus(status)
   const inverted = !pipeline && (opportunityClass === 'urgent' || opportunityClass === 'intent_record')
   const urgent = !pipeline && opportunityClass === 'urgent'
   const intentRecord = !pipeline && opportunityClass === 'intent_record'
+  const cardSurface: CardSurface = urgent ? 'coral' : intentRecord ? 'parchment' : 'dark'
 
   const surface = cn(
     'group block rounded-2xl shadow-fetchi-soft transition-all hover:-translate-y-0.5 hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
@@ -140,26 +158,36 @@ function ListCard({
   const muted = inverted ? (urgent ? 'text-white/75' : 'text-[#2D2B2A]/65') : 'text-text/55'
   const body = inverted ? (urgent ? 'text-white/90' : 'text-[#2D2B2A]/85') : 'text-text/75'
   const token = urgent
-    ? 'bg-white/20 text-white'
+    ? 'bg-white/16 text-white border border-white/20'
     : intentRecord
-      ? 'bg-[#2D2B2A]/10 text-[#2D2B2A]'
-      : 'bg-text/[0.06] text-text/70'
-  const glyphTone = urgent ? 'dark' : intentRecord ? 'dark' : 'muted'
+      ? 'bg-[#B8B0A2]/40 text-[#2D2B2A] border border-[#2D2B2A]/10'
+      : 'bg-text/[0.06] text-text/70 border border-text/10'
+  const tokenDot = urgent ? 'bg-white/85' : intentRecord ? 'bg-[#2D2B2A]/65' : 'bg-text/35'
+  const glyphTile = urgent
+    ? 'bg-coralDeep/35 text-white ring-1 ring-coralDeep/20'
+    : intentRecord
+      ? 'bg-[#B8B0A2]/45 text-[#2D2B2A] ring-1 ring-[#2D2B2A]/10'
+      : 'bg-text/[0.06] text-text/65 ring-1 ring-text/10'
+  const scorePill = urgent
+    ? 'bg-darkSlab text-white border border-darkSlab'
+    : intentRecord
+      ? 'bg-[#B8B0A2]/45 text-[#2D2B2A] border border-[#2D2B2A]/10'
+      : 'bg-bg/80 text-text border border-text/10'
 
   return (
     <Link href={href} className={surface}>
       <div className="flex items-start gap-3.5">
-        <GlyphTile glyph={glyphForSignalType(signalType ?? null)} tone={glyphTone} size="md" />
+        <GlyphTile glyph={glyphForSignalType(signalType ?? null)} tone="muted" size="md" className={glyphTile} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className={cn('inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold', inverted ? (urgent ? 'bg-white/20 text-white' : 'bg-[#2D2B2A]/12 text-[#2D2B2A]') : statusTone(status))}>
+                <span className={cn('inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold', statusTone(status, cardSurface))}>
                   {statusLabel(status)}
                 </span>
                 <span className={cn('inline-flex items-center gap-1.5 rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums', token)}>
-                  <span className={cn('w-1.5 h-1.5 rounded-full', urgent ? 'bg-white' : intentRecord ? 'bg-[#2D2B2A]' : 'bg-text/35')} />
-                  <span className="truncate max-w-[180px]">{tokenText}</span>
+                  <span className={cn('w-1.5 h-1.5 rounded-full', tokenDot)} />
+                  <span className="truncate max-w-[150px] sm:max-w-[180px]">{tokenText}</span>
                 </span>
                 {ageLabel && <span className={cn('text-[11px]', muted)}>· {ageLabel}</span>}
               </div>
@@ -168,7 +196,7 @@ function ListCard({
               </h3>
               {location && <div className={cn('mt-0.5 text-[12.5px] truncate', muted)}>{location}</div>}
             </div>
-            <span className={cn('rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', inverted ? (urgent ? 'bg-darkSlab text-white' : 'bg-[#2D2B2A]/10 text-[#2D2B2A]') : scoreTier(score))}>
+            <span className={cn('rounded-full px-3 py-1 text-[12px] font-bold tabular-nums flex-shrink-0', scorePill)}>
               {score}
             </span>
           </div>
