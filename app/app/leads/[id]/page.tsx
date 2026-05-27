@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 import { GlyphTile, glyphForSignalType, type GlyphKey } from '@/components/app/GlyphTile'
 import { leadStatusLabel, resolveLeadSurface } from '@/components/app/leadSurfaceResolver'
 import { formatSignalToken } from '@/lib/signals/token'
+import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
