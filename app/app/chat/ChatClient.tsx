@@ -87,7 +87,7 @@ export function ChatClient({ initialMessages, greetingName, isEmptyRun, sourcesC
           <div className={`flex-1 flex items-center bg-raised rounded-full border transition-colors ${hasInput ? 'border-coral/60' : 'border-text/10 focus-within:border-blue'}`}>
             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Ask ツ something…" className="flex-1 px-5 py-2.5 bg-transparent text-[14.5px] text-text placeholder:text-text/40 outline-none min-h-[44px]" aria-label="Message Fetchi" />
           </div>
-          <button type="button" aria-label="Send message" onClick={send} disabled={pending || !hasInput} className={`h-11 w-11 rounded-full text-white flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-50 ${hasInput ? 'bg-coral hover:bg-coralDeep' : 'bg-text/10 hover:bg-coral'}`}><Send className="h-[18px] w-[18px] /></button>
+          <button type="button" aria-label="Send message" onClick={send} disabled={pending || !hasInput} className={`h-11 w-11 rounded-full text-white flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-50 ${hasInput ? 'bg-coral hover:bg-coralDeep' : 'bg-text/10 hover:bg-coral'}`}><Send className="h-[18px] w-[18px]" /></button>
         </div>
       </div>
     </div>
