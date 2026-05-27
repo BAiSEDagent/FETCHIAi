@@ -11,7 +11,7 @@ export type LeadLifecycleAccent =
   | 'expiring'
   | 'none'
 export type LeadSurfaceContext = 'chat' | 'today' | 'list' | 'detail'
-export type LeadSurfaceTone = 'urgent' | 'pipeline' | 'intentRecord' | 'discovery' | 'aging'
+export type LeadSurfaceTone = 'urgent' | 'intentRecord' | 'discovery' | 'aging'
 export type LeadSurfaceKind = 'coral' | 'parchment' | 'dark'
 
 export type LeadSurfaceInput = {
@@ -48,7 +48,6 @@ export type LeadSurfaceVisual = {
 
 const URGENT_SIGNAL_TYPES = new Set(['storm_damage', 'weather_hail', 'weather_wind'])
 const RECORD_SIGNAL_TYPES = new Set(['building_permit', 'permit'])
-const PIPELINE_LIFECYCLES = new Set<LeadLifecycleAccent>(['saved', 'responded', 'won'])
 
 export function resolveLeadSignalSurface(signalType: LeadSurfaceSignalType): LeadSignalSurface {
   if (typeof signalType === 'string' && URGENT_SIGNAL_TYPES.has(signalType)) return 'urgent'
@@ -79,8 +78,10 @@ export function resolveLeadSurfaceTone(
   signalSurface: LeadSignalSurface,
   lifecycleAccent: LeadLifecycleAccent,
 ): LeadSurfaceTone {
+  // Aging/expiring is the only lifecycle state that changes the card family.
+  // Saved/contacted/responded/won are workflow metadata and must not turn
+  // urgent or record leads into generic dark pipeline cards.
   if (lifecycleAccent === 'expiring') return 'aging'
-  if (PIPELINE_LIFECYCLES.has(lifecycleAccent)) return 'pipeline'
   if (signalSurface === 'urgent') return 'urgent'
   if (signalSurface === 'record') return 'intentRecord'
   return 'discovery'
@@ -100,7 +101,9 @@ function statusPill(surfaceKind: LeadSurfaceKind, lifecycleAccent: LeadLifecycle
         : 'bg-coral text-white border border-coralDeep/20'
     case 'responded':
     case 'won':
-      return 'bg-ok/12 text-ok border border-ok/25'
+      return surfaceKind === 'coral'
+        ? 'bg-white text-ok border border-white/40'
+        : 'bg-ok/12 text-ok border border-ok/25'
     case 'saved':
     case 'contacted':
       if (surfaceKind === 'parchment') return 'bg-[#2D2B2A]/10 text-[#2D2B2A] border border-[#2D2B2A]/10'
@@ -123,7 +126,14 @@ function surfaceKindFor(tone: LeadSurfaceTone): LeadSurfaceKind {
   return 'dark'
 }
 
-function surfaceClasses(tone: LeadSurfaceTone, context: LeadSurfaceContext): string {
+function darkStatusAccent(lifecycleAccent: LeadLifecycleAccent): string {
+  if (lifecycleAccent === 'expiring') return 'border-l-[3px] border-l-warn'
+  if (lifecycleAccent === 'responded' || lifecycleAccent === 'won') return 'border-l-[3px] border-l-ok'
+  if (lifecycleAccent === 'new') return 'border-l-[3px] border-l-coral'
+  return ''
+}
+
+function surfaceClasses(tone: LeadSurfaceTone, context: LeadSurfaceContext, lifecycleAccent: LeadLifecycleAccent): string {
   const detailShadow = context === 'detail' ? 'shadow-fetchi-card' : 'shadow-fetchi-soft'
   const commonShadow = context === 'today' ? '' : detailShadow
 
@@ -132,12 +142,10 @@ function surfaceClasses(tone: LeadSurfaceTone, context: LeadSurfaceContext): str
       return cn('bg-coral text-white', commonShadow)
     case 'intentRecord':
       return cn('bg-parch text-[#2D2B2A] ring-1 ring-inset ring-[#2D2B2A]/10', commonShadow)
-    case 'pipeline':
-      return cn('bg-raised text-text border-l-[3px] border-l-ok', commonShadow)
     case 'aging':
       return cn('bg-raised text-text border-l-[3px] border-l-warn', commonShadow)
     case 'discovery':
-      return cn('bg-raised text-text', commonShadow)
+      return cn('bg-raised text-text', darkStatusAccent(lifecycleAccent), commonShadow)
   }
 }
 
@@ -168,7 +176,7 @@ export function resolveLeadSurface(input: LeadSurfaceInput): LeadSurfaceVisual {
     signalSurface,
     lifecycleAccent,
     surfaceKind,
-    surface: surfaceClasses(tone, input.context),
+    surface: surfaceClasses(tone, input.context, lifecycleAccent),
     title: isCoral ? 'text-white' : isParchment ? 'text-[#2D2B2A]' : 'text-text',
     body: isCoral ? 'text-white/90' : isParchment ? 'text-[#2D2B2A]/85' : 'text-text/75',
     muted: isCoral ? 'text-white/75' : isParchment ? 'text-[#2D2B2A]/65' : 'text-text/55',
@@ -190,7 +198,7 @@ export function resolveLeadSurface(input: LeadSurfaceInput): LeadSurfaceVisual {
       : isParchment
         ? 'text-[#2D2B2A]/55 group-hover:text-[#2D2B2A]'
         : 'text-text/30 group-hover:text-text/60',
-    accent: tone === 'pipeline' ? 'border-l-ok' : tone === 'aging' ? 'border-l-warn' : '',
+    accent: darkStatusAccent(lifecycleAccent),
     contactAvatar: isCoral
       ? 'bg-white/20 text-white'
       : isParchment
