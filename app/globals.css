@@ -155,20 +155,6 @@
   }
 }
 
-.fetchi-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #58937E;
-  color: white;
-  border: 3.5px solid #2D2B2A;
-  border-radius: 14px;
-  box-shadow: 5px 5px 0 #2D2B2A;
-  transform: rotate(-2deg);
-  font-family: var(--font-outfit), system-ui, sans-serif;
-  font-weight: 700;
-}
-
 .fetchi-wordmark {
   font-family: var(--font-outfit), system-ui, sans-serif;
   font-weight: 600;
