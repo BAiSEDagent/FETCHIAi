@@ -35,6 +35,16 @@ function initialsFor(name: string): string {
   return parts.map(p => p[0]?.toUpperCase() ?? '').join('') || '?'
 }
 
+function isPipelineStatus(status: string | null | undefined): boolean {
+  return status === 'saved' || status === 'contacted' || status === 'responded' || status === 'won'
+}
+
+function signalTypeForSurface(signalType: LeadCardSignalType, status: string | null | undefined, context: LeadSurfaceContext): LeadCardSignalType {
+  if (context === 'chat') return null
+  if (isPipelineStatus(status)) return null
+  return signalType
+}
+
 export function LeadCard(props: Props) {
   const variant = props.variant ?? 'list'
   if (variant === 'chat-hero') return <ChatHeroCard {...props} />
@@ -65,7 +75,7 @@ function ListCard({
 }: Props & { large?: boolean; surfaceContext?: LeadSurfaceContext }) {
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
   const tokenText = signalToken?.trim() || signalLabel
-  const visual = resolveLeadSurface({ context: surfaceContext, signalType, status, score })
+  const visual = resolveLeadSurface({ context: surfaceContext, signalType: signalTypeForSurface(signalType, status, surfaceContext), status, score })
 
   return (
     <Link
@@ -149,7 +159,7 @@ function ChatHeroCard({
   ageLabel,
   evidenceChips,
 }: Props) {
-  const visual = resolveLeadSurface({ context: 'chat', signalType, status, score })
+  const visual = resolveLeadSurface({ context: 'chat', signalType: signalTypeForSurface(signalType, status, 'chat'), status, score })
   const tokenText = signalToken?.trim() || signalLabel
 
   return (
@@ -223,7 +233,7 @@ function ChatHeroCard({
 }
 
 function ChatCard({ href, businessName, signalLabel, signalType, signalToken, score, status, location, ageLabel }: Props) {
-  const visual = resolveLeadSurface({ context: 'chat', signalType, status, score })
+  const visual = resolveLeadSurface({ context: 'chat', signalType: signalTypeForSurface(signalType, status, 'chat'), status, score })
   const tokenText = signalToken?.trim() || signalLabel
 
   return (
