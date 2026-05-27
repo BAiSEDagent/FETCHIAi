@@ -52,12 +52,12 @@ function isHotScore(score: number): boolean {
 }
 
 function isPipelineStatus(status: string | null | undefined): boolean {
-  return status === 'saved' || status === 'responded' || status === 'won'
+  return status === 'saved' || status === 'contacted' || status === 'responded' || status === 'won'
 }
 
-function classifyOpportunity(status: string | null | undefined, signalType: LeadCardSignalType, score: number): OpportunityClass {
+function classifyOpportunity(status: string | null | undefined, signalType: LeadCardSignalType, _score: number): OpportunityClass {
   if (status === 'expired') return 'aging'
-  if (isHotScore(score) && typeof signalType === 'string' && DEMO_URGENT_SIGNAL_TYPES.has(signalType)) return 'urgent'
+  if (typeof signalType === 'string' && DEMO_URGENT_SIGNAL_TYPES.has(signalType)) return 'urgent'
   if (typeof signalType === 'string' && DEMO_INTENT_RECORD_SIGNAL_TYPES.has(signalType)) return 'intent_record'
   return 'discovery'
 }
@@ -258,7 +258,7 @@ function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location
             {signalLabel}{ageLabel ? ` · ${ageLabel}` : ''}
           </span>
           {evidenceChips?.map(chip => (
-            <span key={chip.label} className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold', chip.tone === 'coral' ? 'bg-coral/12 text-coral' : 'bg-blue/10 text-blue border border-blue/20')}>
+            <span key={chip.label} className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold', chip.tone === 'coral' ? 'bg-coral/12 text-coral border border-coral/20' : 'bg-text/[0.06] text-text/70 border border-text/10')}>
               {chip.label}
             </span>
           ))}
