@@ -132,6 +132,14 @@
     font-family: var(--font-dm-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+  body {
+    min-height: 100dvh;
+    background-color: rgb(var(--bg));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  body:has([data-fetchi-theme-root].theme-dark) {
+    --bg: 16 18 17;
+  }
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,

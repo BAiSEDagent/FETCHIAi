@@ -20,7 +20,7 @@ export function MobileBottomNav() {
       aria-label="Primary"
       className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-bg pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="bg-surface shadow-fetchi-sticky px-1 pt-2 pb-1 flex items-stretch gap-0.5">
+      <div className="bg-bg shadow-fetchi-sticky px-1 pt-2 pb-1 flex items-stretch gap-0.5">
         {items.map(item => {
           const Icon = item.icon
           const active = pathname === item.href || pathname.startsWith(item.match)
