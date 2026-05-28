@@ -235,7 +235,6 @@ function ListCard({
 }
 
 function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location, ageLabel, evidenceChips }: Props) {
-  const hot = isHotScore(score)
   return (
     <div className="rounded-2xl bg-raised shadow-fetchi-soft p-4 lg:p-5">
       <div className="flex items-start justify-between gap-4">
@@ -244,7 +243,7 @@ function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location
           <div className="text-[12.5px] text-text/55 mt-1">{location ?? signalLabel}</div>
         </div>
         <div className="text-right flex-shrink-0">
-          <div className={cn('font-outfit text-[34px] leading-none font-bold tabular-nums', hot ? 'text-coral' : 'text-text')}>
+          <div className="font-outfit text-[34px] leading-none font-bold tabular-nums text-text">
             {score}
           </div>
           <div className="text-[10px] uppercase tracking-[1px] text-text/45 mt-1 font-bold">score</div>
@@ -253,9 +252,9 @@ function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location
 
       {(ageLabel || evidenceChips?.length || signalLabel) && (
         <div className="flex flex-wrap gap-1.5 mt-3">
-          <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold', hot ? 'bg-coral/12 text-coral' : 'bg-text/[0.06] text-text/70')}>
-            <span className={cn('w-1.5 h-1.5 rounded-full', hot ? 'bg-coral' : 'bg-text/40')} />
-            {signalLabel}{ageLabel ? ` · ${ageLabel}` : ''}
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold bg-text/[0.06] text-text2">
+            <span className="w-1.5 h-1.5 rounded-full bg-text/40" />
+            {signalLabel}
           </span>
           {evidenceChips?.map(chip => (
             <span key={chip.label} className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold', chip.tone === 'coral' ? 'bg-coral/12 text-coral border border-coral/20' : 'bg-text/[0.06] text-text/70 border border-text/10')}>

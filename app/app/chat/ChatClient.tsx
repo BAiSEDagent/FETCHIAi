@@ -6,6 +6,7 @@ import { sendChatMessage } from './actions'
 import type { ChatMessage } from '@/lib/seed-chat'
 import { ChatBubble, ChatTypingIndicator } from '@/components/app/ChatBubble'
 import { LeadCard } from '@/components/app/LeadCard'
+import { FetchiAvatar } from '@/components/app/FetchiAvatar'
 
 type Props = {
   initialMessages: ChatMessage[]
@@ -51,7 +52,7 @@ export function ChatClient({ initialMessages, greetingName, isEmptyRun, sourcesC
 
       <div className="flex-1 overflow-y-auto px-4 lg:px-7 pb-6 space-y-5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-ok text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0" aria-hidden>ツ</div>
+          <FetchiAvatar size={36} className="flex-shrink-0" />
           <div className="min-w-0">
             <div className="text-[14px] font-bold text-text leading-tight">Fetchi</div>
             <div className="text-[12.5px] text-text/60 mt-0.5 flex items-center gap-1.5">

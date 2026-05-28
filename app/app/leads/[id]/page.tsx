@@ -188,7 +188,7 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
                 <div key={d.id} className="space-y-2.5">
                   {d.subjectLine && <div className="text-[13px] font-semibold text-text">{d.subjectLine}</div>}
                   <p className="text-[13px] text-text/75 leading-[1.65] whitespace-pre-wrap">{d.body}</p>
-                  <div className="flex flex-wrap gap-2 pt-1"><Button size="sm">Open draft &amp; contact</Button><Button size="sm" variant="secondary">Edit</Button></div>
+                  <div className="flex flex-wrap gap-2 pt-1"><Button size="sm" variant="secondary">Edit</Button></div>
                 </div>
               ))}
             </div>
