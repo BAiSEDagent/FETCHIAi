@@ -37,7 +37,7 @@ export default async function Home() {
             href="/sign-up"
             className="inline-flex items-center justify-center h-12 px-7 rounded-xl bg-coral text-white font-semibold text-[15px] hover:bg-coralDeep transition-colors"
           >
-            Start your free trial
+            Start finding buyers
           </Link>
           <Link
             href="/sign-in"
@@ -47,9 +47,6 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="text-[12px] text-text/45 mt-8">
-          10 free leads. No card required.
-        </div>
       </div>
     </main>
   )

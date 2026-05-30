@@ -22,11 +22,11 @@ export default function SignUpPage() {
 
       <div className="text-center mb-6 max-w-sm">
         <h1 className="font-outfit text-[24px] font-semibold text-brand-near-black">
-          Start your free trial
+          Create your Fetchi workspace
         </h1>
         <p className="text-[14px] text-brand-near-black/65 mt-1.5">
-          10 free leads. No card required. Use a real work email — disposable
-          inboxes are blocked.
+          Choose a capped plan before Fetchi starts delivering opportunities.
+          Use a real work email — disposable inboxes are blocked.
         </p>
       </div>
 

@@ -15,11 +15,13 @@ export default async function SettingsHomePage() {
     db.query.workspaceSubscriptions.findFirst({ where: (t, { eq }) => eq(t.workspaceId, ctx.workspaceId) }),
     db.query.signalPreferences.findFirst({ where: (t, { eq }) => eq(t.workspaceId, ctx.workspaceId) }),
   ])
-  const tier = sub?.tier ?? 'trial'
+  const tier = sub?.tier ?? ''
   const inTrial = (sub?.status ?? 'trialing') === 'trialing'
   const used = inTrial ? sub?.trialOpportunitiesUsed ?? 0 : sub?.opportunitiesUsed ?? 0
   const cap = inTrial ? sub?.trialOpportunitiesLimit ?? 5 : sub?.opportunitiesLimit ?? null
-  const usageLabel = cap === null ? `${used} leads` : `${used} / ${cap} leads`
+  const PLAN_REQUIRED_STATUSES = new Set(['trialing', 'expired', 'canceled', 'unpaid', 'incomplete', 'incomplete_expired', 'paused'])
+  const planRequired = !sub || tier === 'trial' || !sub.status || PLAN_REQUIRED_STATUSES.has(sub.status)
+  const usageLabel = planRequired ? '—' : (cap === null ? `${used} leads` : `${used} / ${cap} leads`)
   const initials = (ctx.workspace.businessName ?? 'Fetchi').split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'FA'
   const locationLine = profile?.locationCity ? `${profile.locationCity}${profile.locationState ? `, ${profile.locationState}` : ''} · ${profile.locationRadiusMiles ?? 50}-mi radius` : 'Set your service area'
   const sensitivity = (signalPrefs?.minScoreThreshold ?? 70) >= 85 ? 'Conservative' : (signalPrefs?.minScoreThreshold ?? 70) <= 60 ? 'Aggressive' : 'Balanced'
@@ -33,7 +35,7 @@ export default async function SettingsHomePage() {
   const account: Row[] = [
     { href: '/app/settings/profile', icon: UserIcon, iconTone: 'dark', label: 'Business Profile', hint: 'Who you are and what you sell', value: profile?.vertical ?? 'Set up' },
     { href: '/app/settings/notifications', icon: Bell, iconTone: 'neutral', label: 'Notifications', hint: 'Email-only at launch', value: 'Email' },
-    { href: '/app/settings/billing', icon: CreditCard, iconTone: 'dark', label: 'Plan & Billing', hint: 'Subscription and top-ups', value: tier.charAt(0).toUpperCase() + tier.slice(1) },
+    { href: '/app/settings/billing', icon: CreditCard, iconTone: 'dark', label: 'Plan & Billing', hint: 'Subscription and top-ups', value: planRequired ? 'Plan required' : (tier.charAt(0).toUpperCase() + tier.slice(1)) },
     { href: '/app/settings/usage', icon: Gauge, iconTone: 'green', label: 'Usage', hint: 'Opportunities this cycle', value: usageLabel },
   ]
 
@@ -48,8 +50,14 @@ export default async function SettingsHomePage() {
               <div className="font-outfit text-[17px] font-bold text-text leading-tight truncate">{ctx.workspace.businessName ?? 'Your workspace'}</div>
               <div className="text-[12.5px] text-text/55 mt-0.5 truncate">{locationLine}</div>
               <div className="flex items-center gap-2 mt-2">
-                <span className="inline-flex items-center rounded-full bg-ok/15 text-ok px-2.5 py-0.5 text-[11px] font-bold border border-ok/25 capitalize">{tier} plan</span>
-                <span className="inline-flex items-center rounded-full bg-raised text-text/65 px-2.5 py-0.5 text-[11px] font-semibold border border-text/10">{usageLabel}</span>
+                {planRequired ? (
+                  <Link href="/app/settings/billing" className="inline-flex items-center rounded-full bg-text/8 text-text/60 px-2.5 py-0.5 text-[11px] font-bold border border-text/15">Plan required</Link>
+                ) : (
+                  <>
+                    <span className="inline-flex items-center rounded-full bg-ok/15 text-ok px-2.5 py-0.5 text-[11px] font-bold border border-ok/25 capitalize">{tier} plan</span>
+                    <span className="inline-flex items-center rounded-full bg-raised text-text/65 px-2.5 py-0.5 text-[11px] font-semibold border border-text/10">{usageLabel}</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
