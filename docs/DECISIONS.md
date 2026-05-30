@@ -107,6 +107,20 @@ Related docs:
 
 - `docs/product/settings-spec.md`
 
+### 2026-05 — Capped plans only
+
+Decision:
+Fetchi should use explicit capped tiers, top-ups, or custom capped limits. Fetchi should not advertise or sell an unlimited plan.
+
+Rationale:
+Fetchi has real search, enrichment, agent, and delivery costs. Unlimited usage creates margin risk, quality pressure, and unclear expectations.
+
+Scope:
+If `opportunities_limit` is null in existing data, customer-facing UI must treat it as unconfigured/custom/syncing, not as unlimited.
+
+Status:
+Approved product/pricing rule.
+
 ### 2026-05 — Pricing tiers public visibility
 
 Decision: `pricing_tiers.is_public` is conceptually approved as a future schema/config decision. Agency should remain in database/config but be hidden from public pricing and in-app tier picker for MVP.

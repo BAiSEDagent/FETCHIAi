@@ -47,7 +47,7 @@ Read-only awareness of opportunities consumed vs. plan/trial allowance, reset ti
 Meter-only for v1.
 
 - Used / limit from `workspace_subscriptions.opportunities_used` and `workspace_subscriptions.opportunities_limit`.
-- Null limit renders `Unlimited`, with no progress bar divide-by-zero state.
+- If `opportunities_limit` is null, render a safe fallback such as "Usage limit syncing" or "Custom limit pending." Do not render or advertise Unlimited. Never divide by zero for the progress bar.
 - Reset date from `workspace_subscriptions.opportunities_reset_at`.
 - Trial state uses `trial_opportunities_used`, `trial_opportunities_limit`, and `trial_ends_at`.
 - Link to Plan & Billing for top-up or upgrade.
@@ -114,8 +114,8 @@ Should a near-limit banner live here, or only through the limit-warning email?
 
 ### Acceptance criteria
 
-- Meter reflects live `workspace_subscriptions` across monthly, annual, trial, and unlimited states.
-- Null limit renders `Unlimited`, never a broken bar.
+- Meter reflects live `workspace_subscriptions` across monthly, annual, trial, finite-limit, and null-limit fallback states.
+- Null limit renders a safe syncing/custom fallback and never divides by zero.
 - No write path exists from this tab.
 - 375px layout works.
 - CTA touch target is at least 44x44px.
@@ -440,6 +440,8 @@ Must not touch:
 Preserves card-free trial -> checkout path. `billing_interval` and selected Stripe price ID carry the pricing-page choice.
 
 Top-up applies tier rate through existing logic; do not reimplement billing primitives.
+
+Fetchi does not offer unlimited plans. High-volume customers use explicit capped plans, top-ups, or custom capped agreements.
 
 ### Non-goals
 

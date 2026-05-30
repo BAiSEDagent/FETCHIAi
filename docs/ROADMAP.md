@@ -73,8 +73,11 @@ Build Stripe BYOK integration around existing subscription/workspace credit logi
 - Public Agency plan exposure
 - Firecrawl replacing SerpAPI
 - SMS/push notifications for MVP
-- Unlimited plan
 - Broad refactors while UI baseline is unsettled
+
+## Rejected
+
+- Unlimited plan / unlimited usage promise — use capped tiers, top-ups, or custom capped plans instead
 
 ## Active Planning Docs
 
