@@ -31,7 +31,8 @@ export * from './schema'
 // ─────────────────────────────────────────────
 // ATOMIC OPPORTUNITY COUNTER
 // Always use this — never read-then-write
-// Returns false if limit reached (don't create opportunity)
+// Returns true only when status is active, limit is a finite positive number,
+// and used < limit. Returns false in all other cases (no write occurs).
 // ─────────────────────────────────────────────
 import { sql } from 'drizzle-orm'
 
@@ -40,79 +41,96 @@ export async function consumeOpportunityCredit(workspaceId: string): Promise<boo
     where: (t, { eq }) => eq(t.workspaceId, workspaceId),
   })
 
-  if (!sub) return false
+  // No subscription row, or not an active paid plan — never consume
+  if (!sub || sub.status !== 'active') return false
 
-  if (sub.status === 'trialing') {
-    // Use trial counter — atomic increment with limit check
-    const result = await db.execute(sql`
-      UPDATE workspace_subscriptions
-      SET trial_opportunities_used = trial_opportunities_used + 1,
-          updated_at = now()
-      WHERE workspace_id = ${workspaceId}
-        AND trial_opportunities_used < trial_opportunities_limit
-      RETURNING trial_opportunities_used, trial_opportunities_limit
-    `)
-    return result.length > 0
+  // Limit must be a finite positive number — null/zero/negative = no consumption
+  const limit = sub.opportunitiesLimit
+  if (limit === null || limit === undefined || !Number.isFinite(limit) || limit <= 0) {
+    return false
   }
 
-  // Active/past_due — use paid counter
+  // Atomic increment — only if used < limit (no null-as-unlimited escape)
   const result = await db.execute(sql`
     UPDATE workspace_subscriptions
     SET opportunities_used = opportunities_used + 1,
         updated_at = now()
     WHERE workspace_id = ${workspaceId}
-      AND (
-        opportunities_limit IS NULL
-        OR opportunities_used < opportunities_limit
-      )
+      AND status = 'active'
+      AND opportunities_limit IS NOT NULL
+      AND opportunities_limit > 0
+      AND opportunities_used < opportunities_limit
     RETURNING opportunities_used, opportunities_limit
   `)
   return result.length > 0
 }
 
 // ─────────────────────────────────────────────
-// TRIAL GATE CHECK
-// Call before consumeOpportunityCredit in search_signals tool
-// Returns { allowed: false } when card gate should fire
+// ENTITLEMENT GATE
+// Call before consumeOpportunityCredit in search_signals tool.
+// Returns { allowed: false } whenever opportunity delivery must be blocked.
+// No trial language. No null-as-unlimited. No legacy trial behavior.
 // ─────────────────────────────────────────────
 export interface GateResult {
   allowed: boolean
-  reason?: 'trial_card_gate' | 'trial_expired' | 'limit_reached'
+  reason?: 'plan_required' | 'payment_required' | 'limit_syncing' | 'limit_reached'
+    // Legacy reason codes kept in the union for any existing switch statements:
+    | 'trial_card_gate' | 'trial_expired'
   leadsSeen?: number
   message?: string
 }
+
+// Rule A — no subscription row
+const MSG_PLAN_REQUIRED = 'Choose a capped plan to start receiving opportunities.'
+// Rule C — past_due
+const MSG_PAST_DUE = 'Payment needs attention. Update your plan to keep opportunities flowing.'
+// Rule E — active but limit not yet valid
+const MSG_LIMIT_SYNCING = 'Your plan limit is syncing. Check Plan & Billing before receiving more opportunities.'
+// Rule F — active finite plan, limit reached
+const MSG_LIMIT_REACHED = "You've reached your opportunity limit for this cycle. Manage your plan to keep opportunities flowing."
 
 export async function checkTrialGate(workspaceId: string): Promise<GateResult> {
   const sub = await db.query.workspaceSubscriptions.findFirst({
     where: (t, { eq }) => eq(t.workspaceId, workspaceId),
   })
 
-  if (!sub) return { allowed: false, reason: 'trial_expired' }
+  // Rule A: missing subscription row
+  if (!sub) {
+    return { allowed: false, reason: 'plan_required', message: MSG_PLAN_REQUIRED }
+  }
 
-  // Not trialing — use normal limit check
-  if (sub.status !== 'trialing') return { allowed: true }
+  const status = sub.status ?? 'unknown'
 
-  // Trial expired — block lead creation until billing flow resolves status
-  if (sub.trialEndsAt && sub.trialEndsAt < new Date()) {
+  // Rule B: legacy / pre-payment states — trialing, expired, canceled, or any
+  // unrecognised status. None of these allow real opportunity delivery.
+  if (status !== 'active' && status !== 'past_due') {
+    return { allowed: false, reason: 'plan_required', message: MSG_PLAN_REQUIRED }
+  }
+
+  // Rule C: past_due — payment action required
+  if (status === 'past_due') {
+    return { allowed: false, reason: 'payment_required', message: MSG_PAST_DUE }
+  }
+
+  // status === 'active' from here on
+
+  // Rules D / E: limit must be a finite positive number
+  const limit = sub.opportunitiesLimit
+  if (limit === null || limit === undefined || !Number.isFinite(limit) || limit <= 0) {
+    return { allowed: false, reason: 'limit_syncing', message: MSG_LIMIT_SYNCING }
+  }
+
+  // Rule F: at or over limit
+  const used = sub.opportunitiesUsed ?? 0
+  if (used >= limit) {
     return {
       allowed: false,
-      reason: 'trial_expired',
-      leadsSeen: sub.trialOpportunitiesUsed,
-      message: 'Your 7-day Fetchi trial has ended. Add a payment method or choose a plan to keep finding leads.',
+      reason: 'limit_reached',
+      leadsSeen: used,
+      message: MSG_LIMIT_REACHED,
     }
   }
 
-  // Card already on file — full trial access to all 10 leads
-  if (sub.paymentMethodOnFile) return { allowed: true }
-
-  // Under 5 leads seen — free access, no gate
-  if (sub.trialOpportunitiesUsed < 5) return { allowed: true }
-
-  // 5+ leads seen, no card on file — gate fires
-  return {
-    allowed: false,
-    reason: 'trial_card_gate',
-    leadsSeen: sub.trialOpportunitiesUsed,
-    message: `You've seen ${sub.trialOpportunitiesUsed} leads — Fetchi is working. Add a card to see all 10 in your trial. We won't charge anything until your 7-day trial ends.`,
-  }
+  // Rule E: active finite plan with capacity remaining
+  return { allowed: true }
 }
