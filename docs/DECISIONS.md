@@ -1,0 +1,126 @@
+# Fetchi Decisions Log
+
+Status: Product and repo decision log. Add entries when a decision changes future behavior.
+
+## How to Use This File
+
+Each decision should include:
+
+- date
+- decision
+- rationale
+- scope
+- status
+- links to related docs/issues/PRs
+
+Use Issue #6 for live coordination. Promote stable decisions here.
+
+## Decisions
+
+### 2026-05 — Fetchi product model
+
+Decision: Fetchi is one horizontal signal-to-opportunity engine with vertical-specific interpretation.
+
+Rationale: The product should not become a cloned niche app per vertical, but it also should not feel generic. Vertical-aware labels, scoring, query strategies, and outreach make one engine feel specific to each user.
+
+Status: Approved product direction.
+
+Related docs:
+
+- `docs/PRODUCT_CONTEXT.md`
+- `docs/product/vertical-playbook-registry.md`
+
+### 2026-05 — Launch with 10 core-supported verticals
+
+Decision: Fetchi should launch with ten core-supported verticals, not 5 core + 5 beta.
+
+Launch verticals:
+
+1. Commercial Roofing
+2. HVAC
+3. Commercial Cleaning / Janitorial
+4. Plumbing
+5. Landscaping / Property Maintenance
+6. Electrical Contractors
+7. Restoration Services
+8. Pest Control
+9. Painting / Tenant Improvement
+10. Dumpster Rental / Junk Removal
+
+Status: Approved product/spec direction. Not implemented.
+
+Related docs:
+
+- `docs/product/vertical-playbook-registry.md`
+
+### 2026-05 — Vertical Playbook Registry
+
+Decision: Future verticals should be added by playbook/config, not by cloning the app or rewriting card components.
+
+Status: Approved product/spec direction. Not implemented.
+
+Related docs:
+
+- `docs/product/vertical-playbook-registry.md`
+
+### 2026-05 — AI label guardrail
+
+Decision: AI may interpret and classify, but UI-visible labels must come from approved vertical playbooks/taxonomy. AI must not freestyle card labels.
+
+Status: Approved guardrail. Not fully implemented.
+
+Related docs:
+
+- `docs/product/vertical-playbook-registry.md`
+- `docs/design/lead-card-taxonomy.md`
+
+### 2026-05 — Card surface contract
+
+Decision: Score does not decide card surface color.
+
+Coral is urgent-action surface only. Dark raised is default for previews, pipeline, history, and stable app surfaces. Parchment is for formal record/permit-style surfaces. Fallback states use muted/dashed/dimmed treatments.
+
+Status: Approved design/product rule. Implementation still needs continued QA.
+
+Related docs:
+
+- `docs/design/lead-card-taxonomy.md`
+
+### 2026-05 — Design evidence is not product proof
+
+Decision: A design board can validate visual direction and taxonomy intent, but it does not prove the agent, classifier, scoring, or playbook system works.
+
+Status: Approved PM rule.
+
+Related docs:
+
+- `docs/PM_OPERATING_SYSTEM.md`
+- `docs/design/lead-card-taxonomy.md`
+
+### 2026-05 — Settings spec sequencing
+
+Decision: Usage, Notifications, Signal Sensitivity, and Plan & Billing need product/design specs before implementation.
+
+Status: Active planning. No implementation yet.
+
+### 2026-05 — Pricing tiers public visibility
+
+Decision: `pricing_tiers.is_public` is conceptually approved as a future schema/config decision. Agency should remain in database/config but be hidden from public pricing and in-app tier picker for MVP.
+
+Status: Spec-only. No schema change yet.
+
+### 2026-05 — Firecrawl role
+
+Decision: Firecrawl should be treated as enrichment after a source URL/domain/directory/prospect is found. SerpAPI remains the launch broad search/signal discovery layer.
+
+Status: Product architecture direction. Not implemented in this cleanup pass.
+
+### 2026-05 — Repo cleanup phases
+
+Decision: Repo cleanup should happen as a dedicated hygiene pass, not mixed into feature implementation.
+
+Status: Tracked. Not started.
+
+Related docs:
+
+- `docs/CLEANUP_PLAN.md`
