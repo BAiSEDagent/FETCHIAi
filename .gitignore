@@ -38,3 +38,14 @@ db/migrations/
 Thumbs.db
 .vscode/
 .idea/
+
+# Agent / PM artifact controls
+attached_assets/Pasted-*.txt
+attached_assets/Screenshot_*
+attached_assets/targeted_element_*
+attached_assets/*.rtf
+attached_assets/*.zip
+.agents/memory/
+.local/
+*.log
+zipFile.zip

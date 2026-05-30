@@ -389,6 +389,26 @@ A bad build prompt says things like:
 
 These are not build instructions. They must be rewritten before use.
 
+## Repo Control Protocol
+
+This protocol stops repo-state drift. It governs how every task starts and what
+must never enter the repo.
+
+- Every task starts with `scripts/pm/preflight.sh` (or the equivalent read-only
+  git checks). Do not edit files until preflight is clean.
+- If the branch is ahead, behind, diverged, dirty, has staged changes, or has
+  untracked prompt/screenshot/memory/log/zip artifacts: **STOP** and report. Do
+  not clean, reset, pull, merge, rebase, or push without PM approval.
+- No agent may decide an extra local commit is harmless.
+- No screenshot-only commits.
+- No prompt-dump commits.
+- No `.agents/memory` commits.
+- No logs or zip artifacts committed.
+- No push without PM approval.
+- One task, one scoped commit, one proof packet (`scripts/pm/proof.sh`).
+- Design evidence is not product proof; do not commit design boards as proof
+  unless that is explicitly scoped.
+
 ## 8. Repo Context Discipline
 
 Important context should not live only in chat.

@@ -83,8 +83,31 @@ After PR #2 is merged or otherwise resolved:
 - Remove or ignore stale `claude/*` branches created during failed context sync.
 - Keep one active execution branch at a time.
 
+## Phase 6 — Repo Control Hardening
+
+This phase prevents future repo-state drift. It does **not** purge or de-track
+anything already committed.
+
+In scope (this checkpoint):
+
+- Ignore future prompt/screenshot/memory/log/zip artifacts via targeted
+  `.gitignore` patterns (not a broad `attached_assets/` ignore).
+- Add `scripts/pm/preflight.sh` (read-only drift gate) and
+  `scripts/pm/proof.sh` (type-check + clean build proof packet).
+- Document STOP rules in `docs/PM_OPERATING_SYSTEM.md` (Repo Control Protocol).
+- Do **not** purge history in this checkpoint.
+
+Future cleanup (deferred, separate checkpoints):
+
+- Decide whether to de-track existing committed `attached_assets`, `.agents`,
+  and `zipFile.zip`. Until then they remain tracked and untouched.
+- Decide separately whether to rewrite history.
+- History rewrite requires explicit Adam approval and a backup, and must not be
+  combined with product work.
+
 ## Current Status
 
-Planning/scaffold only.
+Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
 
-No cleanup implementation has been performed by this file.
+No destructive cleanup (de-tracking or history rewrite) has been performed by
+this file.
