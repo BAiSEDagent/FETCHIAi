@@ -101,7 +101,11 @@ Related docs:
 
 Decision: Usage, Notifications, Signal Sensitivity, and Plan & Billing need product/design specs before implementation.
 
-Status: Active planning. No implementation yet.
+Status: Settings Spec v2 approved for repo source-of-truth. Implementation still requires scoped build prompts. Quiet hours, editable notification email override, future signal categories, `pricing_tiers.is_public`, promo-on-active-subscription, custom downgrade/proration, and vertical-playbook-aware sensitivity copy remain deferred.
+
+Related docs:
+
+- `docs/product/settings-spec.md`
 
 ### 2026-05 — Pricing tiers public visibility
 
