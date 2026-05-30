@@ -78,6 +78,8 @@ Build Stripe BYOK integration around existing subscription/workspace credit logi
 ## Rejected
 
 - Unlimited plan / unlimited usage promise — use capped tiers, top-ups, or custom capped plans instead
+- Traditional free trial / free real opportunities — rejected for launch.
+- Use homepage demo, videos, sample/blurred preview, guarantee/credit policy, and capped paid plans instead.
 
 ## Active Planning Docs
 

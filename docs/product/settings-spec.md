@@ -33,14 +33,14 @@ Every read must be `workspace_id` scoped. Every error should map to a friendly m
 
 ### Product purpose
 
-Read-only awareness of opportunities consumed vs. plan/trial allowance, reset timing, and what happens at the limit.
+Read-only awareness of opportunities consumed vs. plan allowance, reset timing, and what happens at the limit.
 
 ### User jobs
 
 - How many opportunities are left?
 - When does usage reset?
 - What happens at the limit and how does the user get more?
-- During trial, how many free opportunities are left?
+- If no active plan is in place, how does the user start receiving opportunities?
 
 ### MVP controls/content
 
@@ -49,7 +49,9 @@ Meter-only for v1.
 - Used / limit from `workspace_subscriptions.opportunities_used` and `workspace_subscriptions.opportunities_limit`.
 - If `opportunities_limit` is null, render a safe fallback such as "Usage limit syncing" or "Custom limit pending." Do not render or advertise Unlimited. Never divide by zero for the progress bar.
 - Reset date from `workspace_subscriptions.opportunities_reset_at`.
-- Trial state uses `trial_opportunities_used`, `trial_opportunities_limit`, and `trial_ends_at`.
+- Legacy trialing status is treated as a pre-payment / plan-required state in customer-facing UI.
+- Usage must not render customer-facing free-trial language.
+- Fetchi may support preview/demo education outside the paid app, but Usage is not a trial-management surface.
 - Link to Plan & Billing for top-up or upgrade.
 - Usage never charges and never mutates counters.
 
@@ -59,7 +61,7 @@ Single column:
 
 1. meter
 2. reset line
-3. trial/top-up CTA
+3. plan/top-up CTA
 
 CTA is full width.
 
@@ -93,7 +95,7 @@ Fully read-only. Only action is navigation to Plan & Billing.
 
 ### Upgrade/trial/billing implications
 
-Usage is the read side of the trial gate. At-limit and trial-ending are upgrade moments. The tab mutates nothing.
+Usage is the read side of the plan gate. At-limit is an upgrade moment, and legacy trialing/expired/canceled states are plan-required moments. The tab mutates nothing.
 
 ### Non-goals
 
@@ -110,11 +112,11 @@ Should a near-limit banner live here, or only through the limit-warning email?
 ### Risks
 
 - Counter drift if Usage reads stale data instead of the live atomic state.
-- Trial vs paid meter confusion if both render without clear separation.
+- Legacy pre-payment states must show a plan-required prompt, not a usage meter.
 
 ### Acceptance criteria
 
-- Meter reflects live `workspace_subscriptions` across monthly, annual, trial, finite-limit, and null-limit fallback states.
+- Meter reflects live `workspace_subscriptions` across active finite-limit, null-limit fallback, legacy pre-payment, past-due, and missing-subscription states.
 - Null limit renders a safe syncing/custom fallback and never divides by zero.
 - No write path exists from this tab.
 - 375px layout works.
@@ -384,7 +386,7 @@ Conservative v1.
 - Top-up flow lives here as one-time purchase at tier top-up rate.
 - Promo codes apply at checkout only and validate against `promo_codes`.
 - No apply-promo-to-active-subscription in v1.
-- Trial state: trial banner plus add-card/choose-plan action when `status = trialing`.
+- Legacy `status = trialing` is treated as a pre-payment / plan-required state: show a choose-plan action, not free-trial language.
 
 ### Mobile behavior
 
@@ -437,7 +439,7 @@ Must not touch:
 
 ### Upgrade/trial/billing implications
 
-Preserves card-free trial -> checkout path. `billing_interval` and selected Stripe price ID carry the pricing-page choice.
+Pre-payment workspaces move directly into plan selection -> checkout. `billing_interval` and selected Stripe price ID carry the pricing-page choice.
 
 Top-up applies tier rate through existing logic; do not reimplement billing primitives.
 

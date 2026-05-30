@@ -121,6 +121,20 @@ If `opportunities_limit` is null in existing data, customer-facing UI must treat
 Status:
 Approved product/pricing rule.
 
+### 2026-05 — No traditional free trial
+
+Decision:
+Fetchi does not offer a traditional free trial.
+
+Rationale:
+Fetchi has real search, enrichment, agent, evidence, contact-routing, and outreach costs. Traditional free trials attract low-intent users and create cost/quality pressure before value is proven.
+
+Scope:
+Fetchi may use homepage demos, videos, sample opportunities, blurred previews, or guided product-preview experiences before payment. Real opportunity delivery, contact routes, and outreach unlock behind capped paid plans.
+
+Status:
+Approved product/pricing rule.
+
 ### 2026-05 — Pricing tiers public visibility
 
 Decision: `pricing_tiers.is_public` is conceptually approved as a future schema/config decision. Agency should remain in database/config but be hidden from public pricing and in-app tier picker for MVP.
