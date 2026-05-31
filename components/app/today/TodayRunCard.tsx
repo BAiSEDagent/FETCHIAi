@@ -26,8 +26,7 @@ const EVIDENCE_KIND_LABEL: Record<EvidenceItem['kind'], string> = {
 }
 
 // v2.3 evidence tones use the Evidence Blue semantic for source-of-truth
-// chips. Coral is reserved for the hot signal ribbon, primary CTA, trial
-// gate, hot score, and marketing italic — never spent on evidence.
+// chips. Coral is reserved for primary CTA only — never spent on evidence.
 const KIND_ACCENT_BG: Record<EvidenceItem['kind'], string> = {
   storm: 'bg-blue/15 text-blue',
   property: 'bg-blue/12 text-blue',

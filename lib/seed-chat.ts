@@ -19,7 +19,7 @@ export type ChatLeadCard = {
   location?: string | null
   whyNow?: string | null
   ageLabel?: string | null
-  evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' }>
+  evidenceChips?: Array<{ label: string; tone?: 'neutral' }>
 }
 
 export type ChatMessage = {
@@ -168,7 +168,7 @@ export async function buildChatThread(
       SIGNAL_LABELS[signal?.signalType ?? 'other'] ?? 'Signal detected'
     const ageLabel = relativeTime(signal?.detectedAt ?? signal?.createdAt ?? null)
 
-    const evidenceChips: Array<{ label: string; tone?: 'coral' | 'neutral' }> = []
+    const evidenceChips: Array<{ label: string; tone?: 'neutral' }> = []
     if (prospect?.enrichmentStatus === 'complete') {
       evidenceChips.push({ label: 'Owner reachable', tone: 'neutral' })
     }

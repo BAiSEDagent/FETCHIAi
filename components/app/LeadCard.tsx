@@ -41,23 +41,17 @@ type Props = {
   variant?: Variant
 }
 
-type OpportunityClass = 'urgent' | 'intent_record' | 'discovery' | 'aging'
-type CardSurface = 'coral' | 'parchment' | 'dark'
+type OpportunityClass = 'intent_record' | 'discovery' | 'aging'
+type CardSurface = 'parchment' | 'dark'
 
-const DEMO_URGENT_SIGNAL_TYPES = new Set(['storm_damage', 'weather_hail', 'weather_wind'])
 const DEMO_INTENT_RECORD_SIGNAL_TYPES = new Set(['building_permit'])
-
-function isHotScore(score: number): boolean {
-  return score >= 85
-}
 
 function isPipelineStatus(status: string | null | undefined): boolean {
   return status === 'saved' || status === 'contacted' || status === 'responded' || status === 'won'
 }
 
-function classifyOpportunity(status: string | null | undefined, signalType: LeadCardSignalType, _score: number): OpportunityClass {
+function classifyOpportunity(status: string | null | undefined, signalType: LeadCardSignalType): OpportunityClass {
   if (status === 'expired') return 'aging'
-  if (typeof signalType === 'string' && DEMO_URGENT_SIGNAL_TYPES.has(signalType)) return 'urgent'
   if (typeof signalType === 'string' && DEMO_INTENT_RECORD_SIGNAL_TYPES.has(signalType)) return 'intent_record'
   return 'discovery'
 }
@@ -70,9 +64,7 @@ function scoreTier(score: number): string {
 
 function statusTone(status: string | null | undefined, surface: CardSurface = 'dark'): string {
   if (!status || status === 'new') {
-    return surface === 'coral'
-      ? 'bg-coralDeep text-white border border-coralDeep/80'
-      : 'bg-coral text-white border border-coralDeep/20'
+    return 'bg-text/[0.08] text-text border border-text/15'
   }
 
   switch (status) {
@@ -83,9 +75,7 @@ function statusTone(status: string | null | undefined, surface: CardSurface = 'd
     case 'contacted':
       return surface === 'parchment'
         ? 'bg-[#2D2B2A]/10 text-[#2D2B2A] border border-[#2D2B2A]/10'
-        : surface === 'coral'
-          ? 'bg-white/16 text-white border border-white/20'
-          : 'bg-text/[0.06] text-text/65 border border-text/10'
+        : 'bg-text/[0.06] text-text/65 border border-text/10'
     case 'lost':
     case 'skipped':
     case 'expired':
@@ -138,41 +128,33 @@ function ListCard({
 }: Props & { large?: boolean }) {
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
   const tokenText = signalToken?.trim() || signalLabel
-  const opportunityClass = classifyOpportunity(status, signalType, score)
+  const opportunityClass = classifyOpportunity(status, signalType)
   const pipeline = isPipelineStatus(status)
-  const inverted = !pipeline && (opportunityClass === 'urgent' || opportunityClass === 'intent_record')
-  const urgent = !pipeline && opportunityClass === 'urgent'
   const intentRecord = !pipeline && opportunityClass === 'intent_record'
-  const cardSurface: CardSurface = urgent ? 'coral' : intentRecord ? 'parchment' : 'dark'
+  const inverted = intentRecord
+  const cardSurface: CardSurface = intentRecord ? 'parchment' : 'dark'
 
   const surface = cn(
     'group block rounded-2xl shadow-fetchi-soft transition-all hover:-translate-y-0.5 hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
     large ? 'p-5 lg:p-6' : 'p-4 lg:p-5',
     pipeline && 'bg-raised text-text border-l-[3px] border-l-ok',
-    urgent && 'bg-coral text-white',
     intentRecord && 'bg-parch text-[#2D2B2A] ring-1 ring-inset ring-[#2D2B2A]/10',
     !pipeline && opportunityClass === 'aging' && 'bg-raised text-text border-l-[3px] border-l-warn',
     !pipeline && opportunityClass === 'discovery' && 'bg-raised text-text',
   )
-  const title = inverted ? (urgent ? 'text-white' : 'text-[#2D2B2A]') : 'text-text'
-  const muted = inverted ? (urgent ? 'text-white/75' : 'text-[#2D2B2A]/65') : 'text-text/55'
-  const body = inverted ? (urgent ? 'text-white/90' : 'text-[#2D2B2A]/85') : 'text-text/75'
-  const token = urgent
-    ? 'bg-white/16 text-white border border-white/20'
-    : intentRecord
-      ? 'bg-[#B8B0A2]/40 text-[#2D2B2A] border border-[#2D2B2A]/10'
-      : 'bg-text/[0.06] text-text/70 border border-text/10'
-  const tokenDot = urgent ? 'bg-white/85' : intentRecord ? 'bg-[#2D2B2A]/65' : 'bg-text/35'
-  const glyphTile = urgent
-    ? 'bg-coralDeep/35 text-white ring-1 ring-coralDeep/20'
-    : intentRecord
-      ? 'bg-[#B8B0A2]/45 text-[#2D2B2A] ring-1 ring-[#2D2B2A]/10'
-      : 'bg-text/[0.06] text-text/65 ring-1 ring-text/10'
-  const scorePill = urgent
-    ? 'bg-darkSlab text-white border border-darkSlab'
-    : intentRecord
-      ? 'bg-[#B8B0A2]/45 text-[#2D2B2A] border border-[#2D2B2A]/10'
-      : 'bg-bg/80 text-text border border-text/10'
+  const title = inverted ? 'text-[#2D2B2A]' : 'text-text'
+  const muted = inverted ? 'text-[#2D2B2A]/65' : 'text-text/55'
+  const body = inverted ? 'text-[#2D2B2A]/85' : 'text-text/75'
+  const token = intentRecord
+    ? 'bg-[#B8B0A2]/40 text-[#2D2B2A] border border-[#2D2B2A]/10'
+    : 'bg-text/[0.06] text-text/70 border border-text/10'
+  const tokenDot = intentRecord ? 'bg-[#2D2B2A]/65' : 'bg-text/35'
+  const glyphTile = intentRecord
+    ? 'bg-[#B8B0A2]/45 text-[#2D2B2A] ring-1 ring-[#2D2B2A]/10'
+    : 'bg-text/[0.06] text-text/65 ring-1 ring-text/10'
+  const scorePill = intentRecord
+    ? 'bg-[#B8B0A2]/45 text-[#2D2B2A] border border-[#2D2B2A]/10'
+    : 'bg-bg/80 text-text border border-text/10'
 
   return (
     <Link href={href} className={surface}>
@@ -206,7 +188,7 @@ function ListCard({
           <div className="mt-3 flex items-center justify-between gap-3">
             {contactName ? (
               <div className="flex items-center gap-2 min-w-0">
-                <div className={cn('w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center flex-shrink-0', inverted ? (urgent ? 'bg-white/20 text-white' : 'bg-[#2D2B2A]/10 text-[#2D2B2A]') : 'bg-text/[0.08] text-text/75')}>
+                <div className={cn('w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center flex-shrink-0', inverted ? 'bg-[#2D2B2A]/10 text-[#2D2B2A]' : 'bg-text/[0.08] text-text/75')}>
                   {initialsFor(contactName)}
                 </div>
                 <div className="min-w-0">
@@ -214,7 +196,7 @@ function ListCard({
                   {confidence > 0 && (
                     <div className="flex items-center gap-1 mt-0.5" aria-label={`Contact confidence ${confidence} of 3`}>
                       {[0, 1, 2].map(i => (
-                        <span key={i} className={cn('w-1.5 h-1.5 rounded-full', i < confidence ? (inverted ? (urgent ? 'bg-white' : 'bg-[#2D2B2A]') : 'bg-text/45') : (inverted ? (urgent ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/15'))} />
+                        <span key={i} className={cn('w-1.5 h-1.5 rounded-full', i < confidence ? (inverted ? 'bg-[#2D2B2A]' : 'bg-text/45') : (inverted ? 'bg-[#2D2B2A]/20' : 'bg-text/15'))} />
                       ))}
                     </div>
                   )}
@@ -222,11 +204,11 @@ function ListCard({
               </div>
             ) : (
               <div className={cn('flex items-center gap-1.5 text-[12px]', muted)}>
-                <span className={cn('w-1.5 h-1.5 rounded-full', inverted ? (urgent ? 'bg-white/30' : 'bg-[#2D2B2A]/20') : 'bg-text/20')} />
+                <span className={cn('w-1.5 h-1.5 rounded-full', inverted ? 'bg-[#2D2B2A]/20' : 'bg-text/20')} />
                 Finding best contact
               </div>
             )}
-            <ChevronRight className={cn('h-5 w-5 flex-shrink-0', inverted ? (urgent ? 'text-white/70' : 'text-[#2D2B2A]/55') : 'text-text/30 group-hover:text-text/60')} />
+            <ChevronRight className={cn('h-5 w-5 flex-shrink-0', inverted ? 'text-[#2D2B2A]/55' : 'text-text/30 group-hover:text-text/60')} />
           </div>
         </div>
       </div>
@@ -257,7 +239,7 @@ function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location
             {signalLabel}
           </span>
           {evidenceChips?.map(chip => (
-            <span key={chip.label} className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold', chip.tone === 'coral' ? 'bg-coral/12 text-coral border border-coral/20' : 'bg-text/[0.06] text-text/70 border border-text/10')}>
+            <span key={chip.label} className="inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold bg-text/[0.06] text-text/70 border border-text/10">
               {chip.label}
             </span>
           ))}
@@ -282,13 +264,13 @@ function ChatCard({ href, businessName, signalLabel, signalType, score, status, 
   return (
     <Link href={href} className="group block rounded-2xl bg-raised shadow-fetchi-soft transition-all hover:-translate-y-px hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg p-3.5">
       <div className="flex items-start gap-3">
-        <GlyphTile glyph={glyphForSignalType(signalType ?? null)} size="sm" tone={isHotScore(score) ? 'coral' : 'muted'} />
+        <GlyphTile glyph={glyphForSignalType(signalType ?? null)} size="sm" tone="muted" />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[13.5px] font-semibold text-text truncate">{businessName}</div>
               <div className="flex items-center gap-1.5 mt-0.5 text-[12.5px] text-text/60">
-                <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', isHotScore(score) ? 'bg-coral' : 'bg-text/30')} />
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-text/30" />
                 <span className="truncate">{signalLabel}{location ? ` · ${location}` : ''}</span>
               </div>
             </div>
