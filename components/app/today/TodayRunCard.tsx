@@ -57,7 +57,6 @@ export function TodayRunCard({ card }: Props) {
 
   const evidence = card.evidence
   const verified = evidence.length >= 2
-  const isHot = card.score >= 85
 
   return (
     <article
@@ -75,16 +74,14 @@ export function TodayRunCard({ card }: Props) {
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-full pl-2 pr-2.5 h-[26px]',
                 'text-[11px] font-mono font-semibold tracking-wide',
-                isHot
-                  ? 'bg-coral/15 text-coral'
-                  : 'bg-text/8 text-text/75',
+                'bg-text/8 text-text/75',
               )}
               title={card.signalLabel}
             >
               <span
                 className={cn(
                   'w-1.5 h-1.5 rounded-full',
-                  isHot ? 'bg-coral' : 'bg-text/40',
+                  'bg-text/40',
                 )}
               />
               {card.signalToken}
@@ -129,7 +126,7 @@ export function TodayRunCard({ card }: Props) {
               </p>
             )}
           </div>
-          <FitBadge score={card.score} isHot={isHot} />
+          <FitBadge score={card.score} />
         </div>
 
         {/* Reason ribbon — neutral elevated chip; coral spend reserved. */}
@@ -271,26 +268,17 @@ export function TodayRunCard({ card }: Props) {
   )
 }
 
-function FitBadge({ score, isHot }: { score: number; isHot: boolean }) {
-  // Hot lead score gets the coral digit (one of the five coral places).
-  // Other scores stay neutral text to keep coral spend disciplined.
+function FitBadge({ score }: { score: number }) {
   return (
     <div
       className={cn(
         'flex flex-col items-center justify-center rounded-full flex-shrink-0',
         'w-[64px] h-[64px] lg:w-[72px] lg:h-[72px]',
-        isHot
-          ? 'bg-coral/12 shadow-[inset_0_0_0_2px_rgba(244,91,59,0.45),0_2px_4px_rgba(0,0,0,0.20)]'
-          : 'bg-text/[0.06] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.10),0_2px_4px_rgba(0,0,0,0.20)]',
+        'bg-text/[0.06] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.10),0_2px_4px_rgba(0,0,0,0.20)]',
       )}
       aria-label={`Fit score ${score} out of 100`}
     >
-      <div
-        className={cn(
-          'font-outfit text-[24px] lg:text-[28px] font-bold leading-none tabular-nums',
-          isHot ? 'text-coral' : 'text-text',
-        )}
-      >
+      <div className="font-outfit text-[24px] lg:text-[28px] font-bold leading-none tabular-nums text-text">
         {score}
       </div>
       <div className="text-[8.5px] uppercase tracking-[0.18em] font-bold text-text/55 mt-0.5">

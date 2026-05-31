@@ -34,7 +34,7 @@ function summaryForSignalType(signalType: string | null | undefined): string {
     case 'storm_damage':
     case 'weather_hail':
     case 'weather_wind':
-      return 'Fresh storm signal matched to a commercial roof opportunity.'
+      return 'Fetchi found a timely signal worth reviewing.'
     case 'building_permit':
     case 'permit':
       return 'Recent permit activity suggests upcoming vendor need.'
@@ -47,10 +47,6 @@ function summaryForSignalType(signalType: string | null | undefined): string {
     default:
       return 'Fetchi found a timely signal worth reviewing.'
   }
-}
-
-function isHotSignal(signalType: string | null | undefined, score: number): boolean {
-  return score >= 85 && (signalType === 'storm_damage' || signalType === 'weather_hail' || signalType === 'weather_wind')
 }
 
 export default async function LeadProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -79,7 +75,6 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
     db.select().from(outreachPlays).where(and(eq(outreachPlays.workspaceId, ctx.workspaceId), eq(outreachPlays.opportunityId, opp.id))),
   ])
 
-  const hotSignal = isHotSignal(signal?.signalType, opp.score)
   const signalTypeLabel = signal?.signalType
     ? (SIGNAL_TYPE_LABEL[signal.signalType] ?? signal.signalType.replace(/_/g, ' '))
     : 'Signal'
@@ -110,24 +105,24 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
       </div>
 
       <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+96px)] lg:pb-12 space-y-3 lg:space-y-4">
-        <section className={hotSignal ? 'rounded-[20px] bg-coral text-white shadow-fetchi-card px-5 py-7 lg:px-8 lg:py-9 text-center' : 'rounded-[20px] bg-raised text-text shadow-fetchi-card px-5 py-7 lg:px-8 lg:py-9 text-center'}>
+        <section className="rounded-[20px] bg-raised text-text shadow-fetchi-card px-5 py-7 lg:px-8 lg:py-9 text-center">
           <div className="flex items-center justify-center flex-wrap gap-1.5">
-            <span className={hotSignal ? 'inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] tabular-nums bg-white/20 text-white' : 'inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] tabular-nums bg-text/[0.06] text-text/75'} aria-label={`Signal ${signalToken ?? signalTypeLabel}`}>
+            <span className="inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] tabular-nums bg-text/[0.06] text-text/75" aria-label={`Signal ${signalToken ?? signalTypeLabel}`}>
               {signalToken ?? signalTypeLabel.toUpperCase()}
             </span>
             {opp.status === 'new' && (
-              <span className={hotSignal ? 'inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold bg-white/20 text-white' : 'inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold bg-surface text-text/65'}>
+              <span className="inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold bg-surface text-text/65">
                 No claim filed
               </span>
             )}
           </div>
 
-          <div className={hotSignal ? 'font-outfit text-[72px] lg:text-[86px] leading-none font-bold tabular-nums mt-6 text-white' : 'font-outfit text-[72px] lg:text-[86px] leading-none font-bold tabular-nums mt-6 text-coral'}>
+          <div className="font-outfit text-[72px] lg:text-[86px] leading-none font-bold tabular-nums mt-6 text-text">
             {opp.score}
           </div>
-          <p className={hotSignal ? 'text-body-lg text-white/80 mt-3 px-2' : 'text-body-lg text-text/65 mt-3 px-2'}>{summaryLine}</p>
-          <h1 className={hotSignal ? 'font-outfit text-h1 lg:text-[32px] text-white mt-6 px-2' : 'font-outfit text-h1 lg:text-[32px] text-text mt-6 px-2'}>{businessName}</h1>
-          {locationLine && <div className={hotSignal ? 'text-caption text-white/70 mt-1.5' : 'text-caption text-text/55 mt-1.5'}>{locationLine}</div>}
+          <p className="text-body-lg text-text/65 mt-3 px-2">{summaryLine}</p>
+          <h1 className="font-outfit text-h1 lg:text-[32px] text-text mt-6 px-2">{businessName}</h1>
+          {locationLine && <div className="text-caption text-text/55 mt-1.5">{locationLine}</div>}
         </section>
 
         {opp.whyNow && (
