@@ -41,20 +41,20 @@ export const workspaceSettings = pgTable('workspace_settings', {
 
 // ─────────────────────────────────────────────
 // WORKSPACE SUBSCRIPTIONS
-// Stripe billing + trial state
+// Stripe billing + subscription state
 // ─────────────────────────────────────────────
 export const workspaceSubscriptions = pgTable('workspace_subscriptions', {
   workspaceId:               text('workspace_id').primaryKey()
                                .references(() => workspaceSettings.workspaceId),
   stripeCustomerId:          text('stripe_customer_id').unique(),
   stripeSubscriptionId:      text('stripe_subscription_id').unique(),
-  // monthly | annual — preserves pricing-page choice through card-free trial → checkout
+  // monthly | annual — preserves pricing-page choice from signup through checkout
   billingInterval:           text('billing_interval').default('monthly').notNull(),
-  // Stripe price ID selected at signup/trial gate; source of truth remains pricing_tiers
+  // Stripe price ID selected at signup/plan selection; source of truth remains pricing_tiers
   selectedStripePriceId:     text('selected_stripe_price_id'),
   // starter | growth | pro | scale
   tier:                      text('tier').default('starter').notNull(),
-  // null = unlimited (Scale tier)
+  // null = unset/custom limit; gate blocks until resolved — do not treat as unlimited
   opportunitiesLimit:        integer('opportunities_limit'),
   opportunitiesUsed:         integer('opportunities_used').default(0).notNull(),
   opportunitiesResetAt:      timestamp('opportunities_reset_at'),
@@ -66,7 +66,7 @@ export const workspaceSubscriptions = pgTable('workspace_subscriptions', {
   topupRateCents:            integer('topup_rate_cents').default(50).notNull(),
   // trialing | active | past_due | canceled | expired
   status:                    text('status').default('trialing').notNull(),
-  // false = card-free trial, true = card collected (not necessarily charged)
+  // false = no payment method on file, true = card collected (not necessarily charged)
   paymentMethodOnFile:       boolean('payment_method_on_file').default(false).notNull(),
   createdAt:                 timestamp('created_at').defaultNow().notNull(),
   updatedAt:                 timestamp('updated_at').defaultNow().notNull(),
@@ -940,7 +940,7 @@ export const pricingTiers = pgTable('pricing_tiers', {
   description:          text('description'),
   monthlyPriceCents:    integer('monthly_price_cents').notNull(),
   annualPriceCents:     integer('annual_price_cents').notNull(),
-  opportunitiesLimit:   integer('opportunities_limit'),  // null = unlimited
+  opportunitiesLimit:   integer('opportunities_limit'),  // null = unset limit; gate blocks until resolved — do not treat as unlimited
   // Top-up rate in cents per opportunity — lower for annual subscribers
   topupRateCentsMonthly: integer('topup_rate_cents_monthly').notNull(),
   topupRateCentsAnnual:  integer('topup_rate_cents_annual').notNull(),
@@ -1108,7 +1108,7 @@ export const promoCodes = pgTable('promo_codes', {
   appliesToTiers:      text('applies_to_tiers').array(),
   // Stripe coupon ID — created via Stripe API when percent/dollar discounts
   stripeCouponId:      text('stripe_coupon_id'),
-  // null = unlimited
+  // null = no redemption cap (admin-controlled promo code; separate from opportunity limits)
   maxRedemptions:      integer('max_redemptions'),
   redemptionsSoFar:    integer('redemptions_so_far').default(0).notNull(),
   expiresAt:           timestamp('expires_at'),
