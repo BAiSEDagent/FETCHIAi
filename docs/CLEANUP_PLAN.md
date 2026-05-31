@@ -105,6 +105,20 @@ Future cleanup (deferred, separate checkpoints):
 - History rewrite requires explicit Adam approval and a backup, and must not be
   combined with product work.
 
+## Completed — Archive original handoff mockups
+
+The five original Replit handoff HTML mockups (`fetchi_core_screens.html`,
+`fetchi_landing_page_v2.html`, `fetchi_settings_screens.html`,
+`fetchi_map_view.html`, `fetchi_admin_screens.html`) were moved from
+`design/` into `design/_archive/original-handoff-mockups/` via `git mv`.
+
+A README was added to the archive folder noting the superseded assumptions.
+`docs/DESIGN_SOURCE_OF_TRUTH.md` was updated with an "Archived design
+artifacts" guard note.
+
+These files are kept for historical reference only and are not live
+source-of-truth.
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.

@@ -59,6 +59,12 @@ Historical assets should eventually move under archive folders in docs/archive/.
 
 Each archive folder should say: Historical reference only. Not active source of truth.
 
+## Archived design artifacts
+
+- `design/_archive/*` is historical reference only.
+- Do not lift colors, typography, mascot/avatar, page layout, trial copy, or lead-card behavior from archived mockups.
+- Current design authority lives in this document plus `docs/design/lead-card-taxonomy.md` and current product specs.
+
 ## Deprecated Context
 
 - PR 5 / codex/issue-4-lead-surface-grammar is superseded unless explicitly reopened.
