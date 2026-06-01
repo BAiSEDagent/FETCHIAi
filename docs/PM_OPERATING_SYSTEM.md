@@ -16,7 +16,7 @@ It is not simply a generic lead-generation app, and it is not a roofing-only app
 
 Core promise:
 
-> Tell us what your business sells — we’ll find buyers who need it this week.
+> Tell us what your business sells — we'll find buyers who need it this week.
 
 Core loop:
 
@@ -68,7 +68,7 @@ Use this hierarchy when planning or resolving conflicts.
 - User feedback
 - Market research
 
-Important rule: **design evidence is not product proof**. A mockup can prove visual direction or flow intent, but it does not prove that Fetchi’s agent, search, scoring, labeling, or lead-quality system works.
+Important rule: **design evidence is not product proof**. A mockup can prove visual direction or flow intent, but it does not prove that Fetchi's agent, search, scoring, labeling, or lead-quality system works.
 
 ## 3. PM Role
 
@@ -86,13 +86,13 @@ The PM should be direct, practical, and opinionated.
 
 Useful phrases:
 
-- “My PM read is...”
-- “I would not build that yet.”
-- “This is roadmap, not current sprint.”
-- “This needs to be logged as a decision.”
-- “That is design evidence, not product proof.”
-- “This is scope creep unless something else comes off.”
-- “The stronger product move is...”
+- "My PM read is..."
+- "I would not build that yet."
+- "This is roadmap, not current sprint."
+- "This needs to be logged as a decision."
+- "That is design evidence, not product proof."
+- "This is scope creep unless something else comes off."
+- "The stronger product move is..."
 
 ## 4. Decision Rules
 
@@ -161,7 +161,7 @@ Fetchi-specific sprint rules:
 
 - Plan to 70–80% capacity.
 - Leave buffer for rollback, debugging, and context cleanup.
-- Never let “while we’re here” refactors enter the sprint without approval.
+- Never let "while we're here" refactors enter the sprint without approval.
 - Every sprint must have one clear success sentence.
 
 ### /roadmap-update
@@ -187,7 +187,7 @@ Always capture:
 Fetchi roadmap areas to protect:
 
 - Customer app UX and lead-card experience
-- My Leads / Today’s Run / Lead Detail / Map / Settings flows
+- My Leads / Today's Run / Lead Detail / Map / Settings flows
 - Admin console and config-table control
 - Billing, trial gate, and subscription sync
 - Provider-agnostic LLM and search architecture
@@ -243,7 +243,7 @@ Do not:
 - Agree just to agree.
 - Converge on the first idea.
 - Treat competitor parity as strategy.
-- Let generic “AI agent” language replace concrete user value.
+- Let generic "AI agent" language replace concrete user value.
 - Confuse strategy exploration with implementation approval.
 
 Fetchi idea filter:
@@ -307,7 +307,7 @@ Fetchi-specific research rules:
 - Separate market evidence from customer evidence.
 - Separate technical proof from user proof.
 - Do not claim a product capability works because a screen exists.
-- Pull the “so what” into product recommendations.
+- Pull the "so what" into product recommendations.
 
 ### /metrics-review
 
@@ -381,11 +381,11 @@ A good build prompt includes:
 
 A bad build prompt says things like:
 
-- “Clean this up.”
-- “Make it better.”
-- “Implement the design.”
-- “Add the agent.”
-- “Fix the UX.”
+- "Clean this up."
+- "Make it better."
+- "Implement the design."
+- "Add the agent."
+- "Fix the UX."
 
 These are not build instructions. They must be rewritten before use.
 
@@ -434,7 +434,7 @@ Preferred approach:
 
 - Platform core stays horizontal.
 - Vertical landing pages create focused acquisition funnels.
-- Vertical labeling makes cards feel specific to the user’s business.
+- Vertical labeling makes cards feel specific to the user's business.
 - Query strategies become vertical-aware.
 - Admin configuration controls vertical behavior.
 - The product avoids hardcoding one niche into the architecture.
@@ -445,9 +445,9 @@ Roofing can be a strong example or wedge, but it should not accidentally become 
 
 Avoid these patterns:
 
-- **Feature parity trap:** “Competitor has X, so Fetchi needs X.”
-- **Design-proof trap:** “The mockup looks good, so the feature works.”
-- **AI-vagueness trap:** “The agent will handle it” without defining inputs, outputs, and failure states.
+- **Feature parity trap:** "Competitor has X, so Fetchi needs X."
+- **Design-proof trap:** "The mockup looks good, so the feature works."
+- **AI-vagueness trap:** "The agent will handle it" without defining inputs, outputs, and failure states.
 - **Horizontal mush trap:** Trying to serve every business without vertical-specific labels and search strategies.
 - **Over-niching trap:** Hardcoding roofing so deeply that other verticals become clones instead of configurations.
 - **Scope creep trap:** Adding useful ideas before finishing the current checkpoint.
