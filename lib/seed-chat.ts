@@ -19,7 +19,7 @@ export type ChatLeadCard = {
   location?: string | null
   whyNow?: string | null
   ageLabel?: string | null
-  evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' }>
+  evidenceChips?: Array<{ label: string; tone?: 'neutral' }>
 }
 
 export type ChatMessage = {
@@ -73,7 +73,10 @@ function relativeTime(d: Date | null | undefined): string {
   if (days <= 0) return 'today'
   if (days === 1) return 'yesterday'
   if (days < 7) return `${days} days ago`
-  if (days < 30) return `${Math.floor(days / 7)} weeks ago`
+  if (days < 30) {
+    const weeks = Math.floor(days / 7)
+    return `${weeks} week${weeks === 1 ? '' : 's'} ago`
+  }
   return d.toLocaleDateString()
 }
 
@@ -165,7 +168,7 @@ export async function buildChatThread(
       SIGNAL_LABELS[signal?.signalType ?? 'other'] ?? 'Signal detected'
     const ageLabel = relativeTime(signal?.detectedAt ?? signal?.createdAt ?? null)
 
-    const evidenceChips: Array<{ label: string; tone?: 'coral' | 'neutral' }> = []
+    const evidenceChips: Array<{ label: string; tone?: 'neutral' }> = []
     if (prospect?.enrichmentStatus === 'complete') {
       evidenceChips.push({ label: 'Owner reachable', tone: 'neutral' })
     }

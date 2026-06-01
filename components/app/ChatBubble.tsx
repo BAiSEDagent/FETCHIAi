@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { FetchiAvatar } from './FetchiAvatar'
 
 type Role = 'user' | 'assistant'
 
@@ -10,23 +11,21 @@ export function ChatBubble({
 }: {
   role: Role
   children: React.ReactNode
-  /** Optional content (e.g. lead cards) rendered below the bubble, aligned with it. */
   trailing?: React.ReactNode
 }) {
   const isUser = role === 'user'
   return (
     <div className={cn('flex gap-2.5 items-start', isUser && 'flex-row-reverse')}>
-      <div
-        className={cn(
-          'w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0 mt-0.5',
-          isUser
-            ? 'bg-text/10 text-text'
-            : 'bg-ok text-text',
-        )}
-        aria-hidden
-      >
-        {isUser ? 'You' : 'ツ'}
-      </div>
+      {isUser ? (
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0 mt-0.5 bg-text/10 text-text"
+          aria-hidden
+        >
+          You
+        </div>
+      ) : (
+        <FetchiAvatar size={32} className="flex-shrink-0 mt-0.5" />
+      )}
       <div className={cn('flex flex-col gap-2 max-w-[82%] lg:max-w-[68%]', isUser && 'items-end')}>
         <div
           className={cn(
@@ -47,19 +46,11 @@ export function ChatBubble({
 export function ChatTypingIndicator() {
   return (
     <div className="flex gap-2.5 items-start">
-      <div className="w-8 h-8 rounded-full bg-ok text-text text-[12px] font-bold flex items-center justify-center flex-shrink-0">
-        ツ
-      </div>
+      <FetchiAvatar size={32} className="flex-shrink-0" />
       <div className="bg-raised rounded-2xl rounded-tl-md px-4 py-3 flex gap-1.5">
         <span className="w-1.5 h-1.5 rounded-full bg-ok animate-bounce" />
-        <span
-          className="w-1.5 h-1.5 rounded-full bg-ok animate-bounce"
-          style={{ animationDelay: '120ms' }}
-        />
-        <span
-          className="w-1.5 h-1.5 rounded-full bg-ok animate-bounce"
-          style={{ animationDelay: '240ms' }}
-        />
+        <span className="w-1.5 h-1.5 rounded-full bg-ok animate-bounce" style={{ animationDelay: '120ms' }} />
+        <span className="w-1.5 h-1.5 rounded-full bg-ok animate-bounce" style={{ animationDelay: '240ms' }} />
       </div>
     </div>
   )

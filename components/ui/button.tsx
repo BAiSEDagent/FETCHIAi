@@ -9,8 +9,6 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // v2.1 — coral primary CTA. coralDeep on hover AND active/pressed
-        // so the touch feedback matches the brand pressed-state spec.
         default:
           "bg-coral text-white hover:bg-coralDeep active:bg-coralDeep active:scale-[0.98]",
         destructive:

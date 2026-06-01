@@ -47,7 +47,7 @@ export type GlyphKey =
   | 'user'
 
 type Size = 'sm' | 'md' | 'lg'
-type Tone = 'green' | 'coral' | 'muted' | 'dark'
+type Tone = 'green' | 'coral' | 'muted' | 'dark' | 'blue'
 
 const SIZE: Record<Size, { tile: string; icon: number }> = {
   sm: { tile: 'w-8 h-8 rounded-[9px]', icon: 16 },
@@ -56,10 +56,11 @@ const SIZE: Record<Size, { tile: string; icon: number }> = {
 }
 
 const TONE: Record<Tone, string> = {
-  green: 'bg-ok/15 text-text2',
+  green: 'bg-ok/15 text-ok',
   coral: 'bg-coral/12 text-coral',
   muted: 'bg-raised text-text/70',
-  dark: 'bg-text/40 text-ok',
+  dark: 'bg-text/10 text-text',
+  blue: 'bg-blue/10 text-blue',
 }
 
 const GLYPHS: Record<GlyphKey, LucideIcon> = {
@@ -93,23 +94,12 @@ type Props = {
   'aria-label'?: string
 }
 
-export function GlyphTile({
-  glyph,
-  size = 'md',
-  tone = 'green',
-  className,
-  'aria-label': ariaLabel,
-}: Props) {
+export function GlyphTile({ glyph, size = 'md', tone = 'green', className, 'aria-label': ariaLabel }: Props) {
   const Icon = GLYPHS[glyph]
   const { tile, icon } = SIZE[size]
   return (
     <span
-      className={cn(
-        'inline-flex items-center justify-center flex-shrink-0',
-        tile,
-        TONE[tone],
-        className,
-      )}
+      className={cn('inline-flex items-center justify-center flex-shrink-0', tile, TONE[tone], className)}
       role={ariaLabel ? 'img' : undefined}
       aria-label={ariaLabel}
       aria-hidden={ariaLabel ? undefined : true}
@@ -119,8 +109,6 @@ export function GlyphTile({
   )
 }
 
-// Canonical signal-type → glyph mapping. Used by LeadCard and Lead Detail so
-// the icon language stays consistent across surfaces.
 export function glyphForSignalType(type: string | null | undefined): GlyphKey {
   switch (type) {
     case 'storm_damage':

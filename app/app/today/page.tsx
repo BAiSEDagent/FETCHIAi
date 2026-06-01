@@ -181,7 +181,7 @@ function demoQueue(): TodayRunCardData[] {
           recencyLabel: 'May 14, 4:17pm',
           detailLine: 'Hail 1.75\u20132.0" corridor across Irving',
           confidence: 100,
-          accent: 'coral',
+          accent: 'blue',
         },
         {
           id: 'd1-e2',
@@ -468,7 +468,7 @@ export default async function TodayPage() {
           readStr(s.parsedData, 'summary') ??
           null,
         confidence: 75,
-        accent: kind === 'storm' ? 'coral' : 'green',
+        accent: kind === 'storm' ? 'blue' : 'green',
       })
     }
 

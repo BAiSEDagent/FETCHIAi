@@ -22,7 +22,7 @@ const VERTICALS: { id: Vertical; glyph: GlyphKey; name: string; desc: string }[]
 ]
 
 const SCOUT_MODES: { id: ScoutMode; label: string; desc: string }[] = [
-  { id: 'off', label: 'Only when I ask', desc: "Fetchi waits. You drive every search from the chat." },
+  { id: 'off', label: 'Only when I ask', desc: 'Fetchi waits. You drive every search from the chat.' },
   { id: 'once_daily', label: 'Once each morning', desc: 'A fresh batch of leads in your inbox by 7am.' },
   { id: 'three_daily', label: 'A few times per day', desc: 'Morning, midday, and late afternoon scans.' },
   { id: 'custom', label: 'Custom schedule', desc: 'Set your own cadence later in Settings.' },
@@ -33,7 +33,6 @@ const STEP_TIME_ESTIMATE = [
   'about 90 seconds left',
   'about 60 seconds left',
   'about 30 seconds left',
-  'last step',
 ]
 
 type Props = {
@@ -52,8 +51,7 @@ type Props = {
 export function OnboardingClient({ initial }: Props) {
   const [pending, startTransition] = useTransition()
   const [showFinding, setShowFinding] = useState(false)
-  // Step 5 is the dual-surface bridge — handed off from saved step 4.
-  const [step, setStep] = useState(Math.min(initial.step + 1, 5) || 1)
+  const [step, setStep] = useState(Math.min(initial.step + 1, 4) || 1)
 
   const [vertical, setVertical] = useState<Vertical | null>(initial.vertical)
   const [businessName, setBusinessName] = useState(initial.businessName ?? '')
@@ -89,15 +87,10 @@ export function OnboardingClient({ initial }: Props) {
         } else if (step === 4) {
           if (!scoutMode) return setErr('Pick how often Fetchi should scout.')
           await saveOnboardingStep({ scoutMode })
-          // Hand off to the dark-surface bridge — gives the user a beat to
-          // see the surface change from cream marketing to dark operator
-          // before Today's Run loads.
-          setStep(5)
-        } else if (step === 5) {
           setShowFinding(true)
           setTimeout(() => {
             void completeOnboarding()
-          }, 2400)
+          }, 1600)
         }
       } catch (e: unknown) {
         setErr(errorMessage(e, 'Something went wrong — try again.'))
@@ -109,119 +102,18 @@ export function OnboardingClient({ initial }: Props) {
     if (step > 1) setStep(step - 1)
   }
 
-  // ─── Loading transition — full dark operator surface preview ──────────
   if (showFinding) {
     return (
-      <div className="theme-dark min-h-screen bg-bg text-text flex flex-col items-center justify-center px-6 text-center">
-        <div className="relative mb-9">
-          <div className="w-[88px] h-[88px] rounded-full bg-ok text-white flex items-center justify-center text-4xl font-semibold">
-            ツ
-          </div>
-          <span className="absolute inset-0 rounded-full border-2 border-ok/40 animate-ping" />
+      <div className="min-h-screen bg-brand-parchment text-brand-near-black flex flex-col items-center justify-center px-6 text-center">
+        <div className="fetchi-avatar mb-9" style={{ width: 88, height: 88, fontSize: 44, lineHeight: 1 }}>
+          ツ
         </div>
-        <h2 className="font-outfit text-4xl mb-3 leading-tight text-text">
-          Finding leads{' '}
-          <em className="kicker-serif not-italic text-coral italic">near you…</em>
+        <h2 className="font-outfit text-[34px] mb-3 leading-tight">
+          Finding leads near you...
         </h2>
-        <p className="text-text/55 max-w-sm leading-relaxed text-[15px]">
-          Fetchi is checking storm reports, permits, and listings in{' '}
-          {city || 'your area'}.
+        <p className="text-brand-near-black/60 max-w-sm leading-relaxed text-[15px]">
+          Fetchi is checking storm reports, permits, and listings in {city || 'your area'}.
         </p>
-      </div>
-    )
-  }
-
-  // ─── Step 5 — dual-surface bridge (dark slab) ─────────────────────────
-  // The first time the user sees the operator surface they're about to
-  // live in. Renders inside the dark theme; sits where the cream
-  // onboarding had been. CTA "Show me my run →" advances to the loading
-  // state, which then completes onboarding.
-  if (step === 5) {
-    return (
-      <div className="theme-dark min-h-screen bg-bg flex flex-col items-center justify-center px-5 py-10">
-        <div className="w-full max-w-[520px]">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <span
-                className="fetchi-avatar"
-                style={{ width: 36, height: 36, fontSize: 16, lineHeight: 1 }}
-                aria-hidden="true"
-              >
-                ツ
-              </span>
-              <span className="fetchi-wordmark text-[20px] text-text">
-                fetchi<span className="text-coral">.ai</span>
-              </span>
-            </div>
-            <span className="text-[12px] text-text/45 font-medium tabular-nums">
-              Step 5 of 5
-            </span>
-          </div>
-
-          <ProgressBars step={5} />
-
-          <div className="mt-10 rounded-3xl bg-raised border border-text/10 shadow-[0_24px_48px_-18px_rgba(0,0,0,0.55)] p-7 lg:p-9">
-            <div className="kicker-serif italic text-[14px] text-coral mb-3">
-              Ready when you are.
-            </div>
-            <h1 className="font-outfit text-[28px] lg:text-[32px] font-bold leading-[1.1] text-text mb-3">
-              Your operator surface
-            </h1>
-            <p className="text-[15px] text-text/65 leading-relaxed mb-7">
-              This is where you&apos;ll review Today&apos;s Run, work the deck,
-              and decide who to reach. We tuned it for early mornings, low
-              light, and focus.
-            </p>
-
-            {/* Mini-card preview — visualizes the dark Today's Run card. */}
-            <div className="rounded-2xl bg-surface border border-text/8 p-4 mb-7">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-coral/15 text-coral px-2 h-[22px] text-[10.5px] font-mono font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-coral" />
-                  HAIL · 48H
-                </span>
-                <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-blue/10 text-blue px-2 h-[22px] text-[10px] font-bold uppercase tracking-wide">
-                  Verified
-                </span>
-              </div>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="font-outfit text-[16px] font-bold text-text leading-tight">
-                    Northside Commercial Plaza
-                  </div>
-                  <div className="text-[11.5px] text-text/55 mt-0.5">
-                    {city || 'Your city'} · 42,000 sq ft
-                  </div>
-                </div>
-                <div className="font-outfit text-[22px] font-bold text-coral tabular-nums leading-none">
-                  92
-                </div>
-              </div>
-            </div>
-
-            <Button
-              onClick={next}
-              disabled={pending}
-              size="lg"
-              className="w-full h-14 text-[16px] rounded-full"
-            >
-              <span className="inline-flex items-center gap-2">
-                Show me my run
-                <ArrowRight className="h-[18px] w-[18px]" />
-              </span>
-            </Button>
-
-            <div className="text-center mt-4">
-              <button
-                type="button"
-                onClick={back}
-                className="text-[12px] text-text/45 font-medium hover:text-text/70"
-              >
-                ← Back to scouting cadence
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     )
   }
@@ -241,11 +133,11 @@ export function OnboardingClient({ initial }: Props) {
       : step === 2
         ? 'We scout signals inside this radius.'
         : step === 3
-          ? 'Two or three sentences are plenty — Fetchi uses this every time it scores a signal.'
+          ? 'Two or three sentences are plenty. Fetchi uses this every time it scores a signal.'
           : 'Change this anytime in Settings.'
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col items-center justify-start lg:justify-center px-4 py-6 lg:py-12">
+    <div className="min-h-screen bg-brand-parchment flex flex-col items-center justify-start lg:justify-center px-4 py-6 lg:py-12">
       <div className="w-full max-w-[520px]">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5">
@@ -256,22 +148,22 @@ export function OnboardingClient({ initial }: Props) {
             >
               ツ
             </span>
-            <span className="fetchi-wordmark text-[20px] text-text">
-              fetchi<span className="text-coral">.ai</span>
+            <span className="fetchi-wordmark text-[20px] text-brand-near-black">
+              fetchi.ai
             </span>
           </div>
-          <span className="text-[12px] text-text/45 font-medium tabular-nums">
-            Step {step} of 5
+          <span className="text-[12px] text-brand-near-black/45 font-medium tabular-nums">
+            Step {step} of 4
           </span>
         </div>
 
         <ProgressBars step={step} />
 
-        <div className="mt-8 lg:mt-9">
-          <h1 className="font-outfit text-[30px] lg:text-[34px] font-bold leading-[1.1] text-text mb-3">
+        <div className="mt-8 lg:mt-9 rounded-[20px] bg-brand-cream shadow-fetchi-card p-5 lg:p-7">
+          <h1 className="font-outfit text-h1 text-brand-near-black mb-3">
             {stepTitle}
           </h1>
-          <p className="text-[15px] text-text/60 mb-7 leading-relaxed">
+          <p className="text-body-lg text-brand-near-black/65 mb-7">
             {stepSubtitle}
           </p>
 
@@ -286,27 +178,15 @@ export function OnboardingClient({ initial }: Props) {
                       type="button"
                       onClick={() => setVertical(v.id)}
                       aria-pressed={selected}
-                      className={`text-left rounded-2xl p-4 min-h-[112px] transition-all ${
+                      className={`text-left rounded-2xl p-4 min-h-[112px] transition-all border ${
                         selected
-                          ? 'bg-text text-bg shadow-fetchi-card'
-                          : 'bg-surface text-text shadow-fetchi-soft hover:-translate-y-px hover:shadow-fetchi-card'
+                          ? 'bg-brand-near-black text-white border-brand-green shadow-fetchi-card'
+                          : 'bg-brand-cream-muted text-brand-near-black border-brand-near-black/10 hover:bg-brand-light'
                       }`}
                     >
-                      <GlyphTile
-                        glyph={v.glyph}
-                        size="md"
-                        tone={selected ? 'dark' : 'green'}
-                        className="mb-3"
-                      />
-
-                      <div className="text-[15px] font-bold leading-tight">
-                        {v.name}
-                      </div>
-                      <div
-                        className={`text-[12.5px] mt-1 leading-snug ${
-                          selected ? 'text-bg/60' : 'text-text/55'
-                        }`}
-                      >
+                      <GlyphTile glyph={v.glyph} size="md" tone={selected ? 'dark' : 'green'} className="mb-3" />
+                      <div className="text-[15px] font-bold leading-tight">{v.name}</div>
+                      <div className={`text-[12.5px] mt-1 leading-snug ${selected ? 'text-white/65' : 'text-brand-near-black/55'}`}>
                         {v.desc}
                       </div>
                     </button>
@@ -315,13 +195,7 @@ export function OnboardingClient({ initial }: Props) {
               </div>
               <div>
                 <FieldLabel htmlFor="biz">Business name</FieldLabel>
-                <Input
-                  id="biz"
-                  value={businessName}
-                  onChange={e => setBusinessName(e.target.value)}
-                  placeholder="Johnson Roofing Co."
-                  className="h-12 text-[15px]"
-                />
+                <Input id="biz" value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="Johnson Roofing Co." className="h-12 text-[15px]" />
               </div>
             </div>
           )}
@@ -331,40 +205,18 @@ export function OnboardingClient({ initial }: Props) {
               <div className="grid grid-cols-[1fr_120px] gap-3">
                 <div>
                   <FieldLabel htmlFor="city">City</FieldLabel>
-                  <Input
-                    id="city"
-                    value={city}
-                    onChange={e => setCity(e.target.value)}
-                    placeholder="Dallas"
-                    className="h-12 text-[15px]"
-                  />
+                  <Input id="city" value={city} onChange={e => setCity(e.target.value)} placeholder="Dallas" className="h-12 text-[15px]" />
                 </div>
                 <div>
                   <FieldLabel htmlFor="state">State</FieldLabel>
-                  <Input
-                    id="state"
-                    value={stateCode}
-                    onChange={e => setStateCode(e.target.value)}
-                    placeholder="TX"
-                    maxLength={4}
-                    className="h-12 text-[15px] uppercase"
-                  />
+                  <Input id="state" value={stateCode} onChange={e => setStateCode(e.target.value)} placeholder="TX" maxLength={4} className="h-12 text-[15px] uppercase" />
                 </div>
               </div>
               <div>
                 <FieldLabel>Service radius</FieldLabel>
                 <div className="flex items-center gap-3 mt-1">
-                  <input
-                    type="range"
-                    min={5}
-                    max={250}
-                    step={5}
-                    value={radius}
-                    onChange={e => setRadius(Number(e.target.value))}
-                    className="flex-1 accent-ok h-2"
-                    aria-label="Service radius in miles"
-                  />
-                  <span className="text-[14px] font-bold text-text bg-surface border border-text/8 rounded-lg px-3 py-1.5 min-w-[72px] text-center tabular-nums">
+                  <input type="range" min={5} max={250} step={5} value={radius} onChange={e => setRadius(Number(e.target.value))} className="flex-1 accent-brand-green h-2" aria-label="Service radius in miles" />
+                  <span className="text-[14px] font-bold text-brand-near-black bg-brand-cream-muted rounded-lg px-3 py-1.5 min-w-[72px] text-center tabular-nums">
                     {radius} mi
                   </span>
                 </div>
@@ -373,12 +225,7 @@ export function OnboardingClient({ initial }: Props) {
           )}
 
           {step === 3 && (
-            <Textarea
-              value={ideal}
-              onChange={e => setIdeal(e.target.value)}
-              placeholder="Commercial property managers and HOA boards. Buildings 5,000–50,000 sq ft. Minimum job size $5,000."
-              className="min-h-[160px] text-[15px] leading-relaxed"
-            />
+            <Textarea value={ideal} onChange={e => setIdeal(e.target.value)} placeholder="Commercial property managers and HOA boards. Buildings 5,000-50,000 sq ft. Minimum job size $5,000." className="min-h-[160px] text-[15px] leading-relaxed" />
           )}
 
           {step === 4 && (
@@ -391,18 +238,14 @@ export function OnboardingClient({ initial }: Props) {
                     type="button"
                     onClick={() => setScoutMode(m.id)}
                     aria-pressed={selected}
-                    className={`text-left rounded-2xl p-4 transition-all min-h-[76px] ${
+                    className={`text-left rounded-2xl p-4 transition-all min-h-[76px] border ${
                       selected
-                        ? 'bg-text text-bg shadow-fetchi-card'
-                        : 'bg-surface text-text shadow-fetchi-soft hover:-translate-y-px hover:shadow-fetchi-card'
+                        ? 'bg-brand-near-black text-white border-brand-green shadow-fetchi-card'
+                        : 'bg-brand-cream-muted text-brand-near-black border-brand-near-black/10 hover:bg-brand-light'
                     }`}
                   >
                     <div className="text-[15px] font-bold">{m.label}</div>
-                    <div
-                      className={`text-[13px] mt-1 leading-relaxed ${
-                        selected ? 'text-bg/65' : 'text-text/55'
-                      }`}
-                    >
+                    <div className={`text-[13px] mt-1 leading-relaxed ${selected ? 'text-white/65' : 'text-brand-near-black/55'}`}>
                       {m.desc}
                     </div>
                   </button>
@@ -412,45 +255,29 @@ export function OnboardingClient({ initial }: Props) {
           )}
 
           {err && (
-            <p
-              role="alert"
-              className="text-[13px] text-bad mt-5 bg-bad/8 border border-bad/20 rounded-xl px-3 py-2"
-            >
+            <p role="alert" className="text-[13px] text-brand-coral mt-5 bg-brand-coral/8 border border-brand-coral/20 rounded-xl px-3 py-2">
               {err}
             </p>
           )}
-        </div>
 
-        <div className="mt-8 lg:mt-10 space-y-3">
-          <Button
-            onClick={next}
-            disabled={pending}
-            size="lg"
-            className="w-full h-14 text-[16px] rounded-full"
-          >
-            {pending ? (
-              'Saving…'
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                {step === 4 ? 'Almost done' : 'Continue'}
-                <ArrowRight className="h-[18px] w-[18px]" />
-              </span>
-            )}
-          </Button>
+          <div className="mt-8 lg:mt-10 space-y-3">
+            <Button onClick={next} disabled={pending} size="lg" className="w-full h-14 text-[16px] rounded-full">
+              {pending ? 'Saving...' : (
+                <span className="inline-flex items-center gap-2">
+                  {step === 4 ? 'Start scouting' : 'Continue'}
+                  <ArrowRight className="h-[18px] w-[18px]" />
+                </span>
+              )}
+            </Button>
 
-          <div className="text-center text-[12px] text-text/45 font-medium">
-            {step > 1 ? (
-              <button
-                type="button"
-                onClick={back}
-                className="hover:text-text mr-3 align-middle"
-              >
-                ← Back
-              </button>
-            ) : null}
-            <span>
-              Step {step} of 5 · {STEP_TIME_ESTIMATE[step - 1]}
-            </span>
+            <div className="text-center text-[12px] text-brand-near-black/45 font-medium">
+              {step > 1 ? (
+                <button type="button" onClick={back} className="hover:text-brand-near-black mr-3 align-middle min-h-[44px] px-2">
+                  Back
+                </button>
+              ) : null}
+              <span>Step {step} of 4 · {STEP_TIME_ESTIMATE[step - 1]}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -461,33 +288,16 @@ export function OnboardingClient({ initial }: Props) {
 function ProgressBars({ step }: { step: number }) {
   return (
     <div className="flex items-center gap-1.5">
-      {[1, 2, 3, 4, 5].map(n => {
-        const filled = n <= step
-        return (
-          <div
-            key={n}
-            className={`h-1.5 flex-1 rounded-full transition-colors ${
-              filled ? 'bg-ok' : 'bg-text/10'
-            }`}
-          />
-        )
-      })}
+      {[1, 2, 3, 4].map(n => (
+        <div key={n} className={`h-1.5 flex-1 rounded-full transition-colors ${n <= step ? 'bg-brand-green' : 'bg-brand-near-black/10'}`} />
+      ))}
     </div>
   )
 }
 
-function FieldLabel({
-  children,
-  htmlFor,
-}: {
-  children: React.ReactNode
-  htmlFor?: string
-}) {
+function FieldLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <label
-      htmlFor={htmlFor}
-      className="block text-[12.5px] font-semibold text-text mb-1.5"
-    >
+    <label htmlFor={htmlFor} className="block text-[12.5px] font-semibold text-brand-near-black mb-1.5">
       {children}
     </label>
   )

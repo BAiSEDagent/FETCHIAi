@@ -1,18 +1,6 @@
 import type { Config } from 'tailwindcss'
 
-/**
- * Fetchi v2.3 — dual-surface Tailwind theme map.
- *
- * v2.3 governs theme boundaries (cream/light marketing + onboarding
- * ↔ dark/operator product). v2.1 governs how the dark product surface
- * uses those tokens (coral discipline, Apollo restraint).
- *
- * Color tokens are pulled from CSS variables defined in app/globals.css
- * under .theme-light and .theme-dark. Components should reach for the
- * v2.3 names (bg, surface, raised, border, text, text2, coral, blue, …),
- * not the legacy brand-* aliases — the aliases stay only as a safety
- * net so unmigrated files keep compiling.
- */
+/** Fetchi v2.3 dual-surface Tailwind theme map. */
 const config: Config = {
   darkMode: ['class'],
   content: [
@@ -36,8 +24,17 @@ const config: Config = {
         heading: ['var(--font-outfit)', 'sans-serif'],
         serif: ['"DM Serif Display"', 'Georgia', 'serif'],
       },
+      fontSize: {
+        display: ['36px', { lineHeight: '1.1', fontWeight: '700' }],
+        h1: ['28px', { lineHeight: '1.15', fontWeight: '600' }],
+        h2: ['22px', { lineHeight: '1.2', fontWeight: '600' }],
+        h3: ['17px', { lineHeight: '1.3', fontWeight: '600' }],
+        'body-lg': ['15px', { lineHeight: '1.6', fontWeight: '400' }],
+        body: ['14px', { lineHeight: '1.55', fontWeight: '400' }],
+        caption: ['12.5px', { lineHeight: '1.5', fontWeight: '500' }],
+        micro: ['11px', { lineHeight: '1.3', fontWeight: '700', letterSpacing: '1px' }],
+      },
       colors: {
-        // ── v2.3 semantic tokens (preferred) ──────────────────────
         bg: 'rgb(var(--bg) / <alpha-value>)',
         surface: 'rgb(var(--surface) / <alpha-value>)',
         raised: 'rgb(var(--raised) / <alpha-value>)',
@@ -55,8 +52,6 @@ const config: Config = {
         parchMute: 'rgb(var(--parchMute) / <alpha-value>)',
         mustard: 'rgb(var(--mustard) / <alpha-value>)',
         darkSlab: 'rgb(var(--darkSlab) / <alpha-value>)',
-
-        // ── shadcn HSL aliases (driven by globals.css per-theme) ──
         border: 'hsl(var(--border-hsl))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -90,13 +85,6 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-
-        // ── LEGACY brand-* aliases — SAFETY NET ONLY ──────────────
-        // Re-pointed at the v2.3 scale so unmigrated files render in
-        // the new system. New code should NOT use these — reach for
-        // bg/surface/raised/text/text2/coral/blue/ok directly.
-        // `brand-near-black` is pinned to the constant darkSlab so
-        // unmigrated dark slabs don't invert when wrapped in .theme-dark.
         'brand-parchment': 'rgb(var(--bg) / <alpha-value>)',
         'brand-cream': 'rgb(var(--surface) / <alpha-value>)',
         'brand-cream-muted': 'rgb(var(--raised) / <alpha-value>)',

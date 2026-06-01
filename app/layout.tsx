@@ -31,17 +31,11 @@ export const metadata: Metadata = {
     "Signal-based lead generation for service businesses. Tell us what your business sells — we'll find the buyers who need it this week.",
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider
       appearance={{
         variables: {
-          /* Clerk forms live on cream/light marketing surfaces — sign-in,
-             sign-up, verify-email. Tokens here mirror the v2.3 light scale. */
           colorPrimary: '#F45B3B',
           colorText: '#0A0A0A',
           colorTextSecondary: '#4B453C',
@@ -75,19 +69,13 @@ export default function RootLayout({
           footerActionLink: 'text-coral hover:text-coralDeep font-semibold',
           alert: 'bg-coral/8 border border-coral/20 text-text rounded-xl',
           alertText: 'text-text text-[13px]',
-          otpCodeFieldInput:
-            'bg-bg border border-border rounded-xl text-text focus:border-coral',
+          otpCodeFieldInput: 'bg-bg border border-border rounded-xl text-text focus:border-coral',
           badge: 'bg-raised text-text2 border border-border',
         },
       }}
     >
-      <html
-        lang="en"
-        className={`theme-light ${outfit.variable} ${dmSans.variable} ${dmSerif.variable}`}
-      >
-        <body className="min-h-screen bg-bg text-text antialiased">
-          {children}
-        </body>
+      <html lang="en" className={`theme-light ${outfit.variable} ${dmSans.variable} ${dmSerif.variable}`}>
+        <body className="min-h-screen bg-bg text-text antialiased">{children}</body>
       </html>
     </ClerkProvider>
   )

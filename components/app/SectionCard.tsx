@@ -12,9 +12,6 @@ type Props = {
   tone?: 'default' | 'highlight' | 'muted'
 }
 
-// v2.1 — `highlight` is no longer green. Green is reserved for
-// saved/won/responded/verified/success only. Why Now / callouts use
-// the raised dark surface so the card label carries the emphasis.
 const TONE: Record<NonNullable<Props['tone']>, string> = {
   default: 'bg-surface',
   highlight: 'bg-raised',
@@ -33,13 +30,7 @@ export function SectionCard({
 }: Props) {
   const hasHeader = eyebrow || title || description || actions
   return (
-    <section
-      className={cn(
-        'rounded-2xl shadow-fetchi-soft overflow-hidden',
-        TONE[tone],
-        className,
-      )}
-    >
+    <section className={cn('rounded-2xl shadow-fetchi-soft overflow-hidden', TONE[tone], className)}>
       {hasHeader && (
         <div className="flex items-start justify-between gap-4 px-5 lg:px-6 pt-5 lg:pt-6 pb-3">
           <div className="min-w-0 flex-1">
@@ -49,7 +40,7 @@ export function SectionCard({
               </div>
             )}
             {title && (
-              <h2 className="font-outfit text-[17px] font-semibold text-text leading-tight">
+              <h2 className="font-outfit text-h3 text-text">
                 {title}
               </h2>
             )}
@@ -62,13 +53,7 @@ export function SectionCard({
           {actions && <div className="flex-shrink-0">{actions}</div>}
         </div>
       )}
-      <div
-        className={cn(
-          'px-5 lg:px-6 pb-5 lg:pb-6',
-          !hasHeader && 'pt-5 lg:pt-6',
-          bodyClassName,
-        )}
-      >
+      <div className={cn('px-5 lg:px-6 pb-5 lg:pb-6', !hasHeader && 'pt-5 lg:pt-6', bodyClassName)}>
         {children}
       </div>
     </section>

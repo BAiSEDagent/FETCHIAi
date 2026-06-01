@@ -2,66 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─────────────────────────────────────────────────────────────────
-   Fetchi v2.3 — dual-surface brand token system.
-
-   v2.3 is the master theme-boundary spec (cream/light marketing +
-   onboarding ↔ dark/operator product). v2.1 is the dark-product
-   usage-discipline sub-spec (coral discipline, Apollo restraint,
-   lead-card variants).
-
-   Tokens are stored as space-separated RGB triples so Tailwind's
-   `rgb(var(--x) / <alpha-value>)` opacity syntax keeps working.
-
-   Coral is RARE — five places only:
-     1. hot/urgent lead-card surface
-     2. primary product CTA
-     3. score on the hot card
-     4. trial-gate / upgrade moment
-     5. one italic kicker per marketing section
-
-   Evidence Blue is SEMANTIC — source/audit/proof affordances only.
-   Sage-green-as-brand is GONE; green is success only (--ok).
-   ───────────────────────────────────────────────────────────────── */
-
 @layer base {
   :root {
-    /* Shared brand — same in every theme */
-    --coral: 244 91 59;           /* #F45B3B */
-    --coralDeep: 217 78 50;       /* #D94E32 */
-    --warn: 227 169 54;           /* #E3A936 */
-
-    /* Radius + shadow tokens kept stable across themes */
+    --coral: 244 91 59;
+    --coralDeep: 217 78 50;
+    --warn: 227 169 54;
     --radius: 0.75rem;
   }
 
-  /* ── theme-light · cream/light marketing + onboarding ───────── */
   .theme-light {
-    --bg: 250 246 232;            /* #FAF6E8 cream */
-    --surface: 243 238 220;       /* #F3EEDC */
-    --raised: 232 224 204;        /* #E8E0CC */
-    --border: 216 207 186;        /* #D8CFBA */
-    --text: 10 10 10;             /* #0A0A0A */
-    --text2: 75 69 60;            /* #4B453C */
-    --textMuted: 122 113 101;     /* #7A7165 */
-    --coralSoft: 247 198 184;     /* #F7C6B8 */
-    --blue: 78 134 200;           /* #4E86C8 evidence blue */
-    --ok: 47 159 112;             /* #2F9F70 */
-    --bad: 217 78 69;             /* #D94E45 */
-    --parch: 239 231 211;         /* #EFE7D3 */
-    --parchMute: 211 191 177;     /* #D3BFB1 */
-    --mustard: 247 232 178;       /* #F7E8B2 */
-    --darkSlab: 16 18 17;         /* #101211 — used for marketing dark slabs */
-
-    /* shadcn HSL aliases re-pointed at v2.3 light scale so existing
-       ui/* primitives (Button, Card, Input, Sheet, etc.) auto-adopt. */
+    --bg: 250 246 232;
+    --surface: 243 238 220;
+    --raised: 232 224 204;
+    --border: 216 207 186;
+    --text: 10 10 10;
+    --text2: 75 69 60;
+    --textMuted: 122 113 101;
+    --coralSoft: 247 198 184;
+    --blue: 78 134 200;
+    --ok: 47 159 112;
+    --bad: 217 78 69;
+    --parch: 239 231 211;
+    --parchMute: 211 191 177;
+    --mustard: 247 232 178;
+    --darkSlab: 16 18 17;
     --background: 50 56% 95%;
     --foreground: 0 0% 4%;
     --card: 47 50% 91%;
     --card-foreground: 0 0% 4%;
     --popover: 47 50% 91%;
     --popover-foreground: 0 0% 4%;
-    --primary: 13 90% 59%;        /* coral primary */
+    --primary: 13 90% 59%;
     --primary-foreground: 0 0% 100%;
     --secondary: 44 35% 86%;
     --secondary-foreground: 0 0% 4%;
@@ -76,32 +47,29 @@
     --ring: 13 90% 59%;
   }
 
-  /* ── theme-dark · authenticated product (v2.1 discipline) ──── */
   .theme-dark {
-    --bg: 16 18 17;               /* #101211 */
-    --surface: 23 26 24;          /* #171A18 */
-    --raised: 32 36 31;           /* #20241F */
-    --border: 45 51 46;           /* #2D332E */
-    --text: 247 243 232;          /* #F7F3E8 */
-    --text2: 184 176 162;         /* #B8B0A2 */
-    --textMuted: 126 120 109;     /* #7E786D */
-    --coralSoft: 58 29 23;        /* #3A1D17 */
-    --blue: 111 159 216;          /* #6F9FD8 */
-    --ok: 69 192 138;             /* #45C08A */
-    --bad: 239 90 78;             /* #EF5A4E */
-    --parch: 239 231 211;         /* #EFE7D3 */
-    --parchMute: 211 191 177;     /* #D3BFB1 */
-    --mustard: 247 232 178;       /* #F7E8B2 (rare in dark) */
+    --bg: 16 18 17;
+    --surface: 23 26 24;
+    --raised: 32 36 31;
+    --border: 45 51 46;
+    --text: 247 243 232;
+    --text2: 184 176 162;
+    --textMuted: 126 120 109;
+    --coralSoft: 58 29 23;
+    --blue: 111 159 216;
+    --ok: 69 192 138;
+    --bad: 239 90 78;
+    --parch: 239 231 211;
+    --parchMute: 211 191 177;
+    --mustard: 247 232 178;
     --darkSlab: 16 18 17;
-
-    /* shadcn HSL aliases re-pointed at v2.3 dark scale. */
     --background: 130 6% 6%;
     --foreground: 44 56% 94%;
     --card: 132 6% 10%;
     --card-foreground: 44 56% 94%;
     --popover: 132 6% 10%;
     --popover-foreground: 44 56% 94%;
-    --primary: 13 90% 59%;        /* coral primary, still rare */
+    --primary: 13 90% 59%;
     --primary-foreground: 0 0% 100%;
     --secondary: 120 7% 14%;
     --secondary-foreground: 44 56% 94%;
@@ -113,13 +81,9 @@
     --destructive-foreground: 0 0% 100%;
     --border-hsl: 132 8% 19%;
     --input: 132 8% 19%;
-    --ring: 213 56% 64%;          /* evidence blue ring */
+    --ring: 213 56% 64%;
   }
 
-  /* Default any unwrapped surface to theme-light. The root <html>
-     also carries .theme-light in app/layout.tsx so this is a belt-
-     and-braces fallback for portals (sheets, dialogs) that render
-     outside the layout tree. */
   :root:not(.theme-dark):not(.theme-light) {
     --bg: 250 246 232;
     --surface: 243 238 220;
@@ -168,9 +132,14 @@
     font-family: var(--font-dm-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  /* Kill Chrome/Safari autofill's pale yellow paint so inputs keep their
-     themed background. Uses an inset shadow trick because background-color
-     can't be overridden directly on :-webkit-autofill. */
+  body {
+    min-height: 100dvh;
+    background-color: rgb(var(--bg));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  body:has([data-fetchi-theme-root].theme-dark) {
+    --bg: 16 18 17;
+  }
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
@@ -190,35 +159,16 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-outfit), system-ui, sans-serif;
     font-weight: 600;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
-}
-
-/* Fetchi avatar — ツ tile. The stamped offset shadow is reserved for THIS
-   element only. Do not reuse on cards. The avatar belongs on cream
-   marketing surfaces; it should not appear as decoration inside the
-   dark product chrome. */
-.fetchi-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #58937E;
-  color: white;
-  border: 3.5px solid #2D2B2A;
-  border-radius: 14px;
-  box-shadow: 5px 5px 0 #2D2B2A;
-  transform: rotate(-2deg);
-  font-family: var(--font-outfit), system-ui, sans-serif;
-  font-weight: 700;
 }
 
 .fetchi-wordmark {
   font-family: var(--font-outfit), system-ui, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.045em;
+  letter-spacing: 0;
 }
 
-/* Two-line clamp helper used by lead cards and chat surfaces. */
 .fetchi-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -226,12 +176,9 @@
   overflow: hidden;
 }
 
-/* Marketing serif kicker — DM Serif Display italic, used SPARINGLY
-   on cream marketing/onboarding surfaces. One per major section.
-   Never use inside product screens. */
 .kicker-serif {
   font-family: 'DM Serif Display', Georgia, serif;
   font-style: italic;
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }

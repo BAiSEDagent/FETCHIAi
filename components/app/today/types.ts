@@ -20,7 +20,7 @@ export type EvidenceItem = {
   detailLine: string | null
   /** 0-100. Drives the confidence dots on the back evidence row. */
   confidence: number
-  accent: 'coral' | 'green'
+  accent: 'green' | 'blue'
 }
 
 export type ContactItem = {

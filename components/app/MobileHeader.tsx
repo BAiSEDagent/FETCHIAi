@@ -1,12 +1,17 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
 import { Menu } from 'lucide-react'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { FetchiAvatar } from './FetchiAvatar'
 import { Sidebar } from './Sidebar'
-import { SignOutControl } from './SignOutControl'
+import { Button } from '@/components/ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 
 type Props = {
   leadsCount: number
@@ -14,40 +19,35 @@ type Props = {
 }
 
 export function MobileHeader({ leadsCount, creditsSlot }: Props) {
-  const [open, setOpen] = useState(false)
-
   return (
-    <header className="lg:hidden sticky top-0 z-30 bg-surface flex items-center justify-between px-2 h-14 shadow-fetchi-sticky">
-      <Sheet open={open} onOpenChange={setOpen}>
+    <header className="lg:hidden sticky top-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-text/8 px-4 h-16 flex items-center justify-between">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <FetchiAvatar size={30} />
+        <span className="fetchi-wordmark text-[20px] text-text truncate">Fetchi</span>
+      </div>
+      <Sheet>
         <SheetTrigger asChild>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-11 w-11 rounded-xl text-text hover:bg-text/[0.06]"
             aria-label="Open menu"
-            className="h-11 w-11 flex items-center justify-center text-white/75 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
           >
             <Menu className="h-5 w-5" />
-          </button>
+          </Button>
         </SheetTrigger>
         <SheetContent
           side="left"
+          data-fetchi-theme-root
           className="theme-dark w-[220px] p-0 bg-surface text-text border-0"
         >
-          <Sidebar
-            leadsCount={leadsCount}
-            creditsSlot={creditsSlot}
-            onNavigate={() => setOpen(false)}
-          />
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation</SheetTitle>
+            <SheetDescription>Primary workspace and settings navigation.</SheetDescription>
+          </SheetHeader>
+          <Sidebar leadsCount={leadsCount} creditsSlot={creditsSlot} />
         </SheetContent>
       </Sheet>
-
-      <Link
-        href="/app/chat"
-        className="flex items-center gap-2 hover:opacity-90 transition-opacity"
-      >
-        <FetchiAvatar size={24} />
-        <span className="fetchi-wordmark text-[18px] text-white">Fetchi</span>
-      </Link>
-
-      <SignOutControl variant="mobile-header" />
     </header>
   )
 }

@@ -20,7 +20,7 @@ export function MobileBottomNav() {
       aria-label="Primary"
       className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-bg pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="bg-surface border-t border-text/8 px-1 pt-2 pb-1 flex items-stretch gap-0.5">
+      <div className="bg-bg shadow-fetchi-sticky px-1 pt-2 pb-1 flex items-stretch gap-0.5">
         {items.map(item => {
           const Icon = item.icon
           const active = pathname === item.href || pathname.startsWith(item.match)
@@ -30,31 +30,19 @@ export function MobileBottomNav() {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'group relative flex-1 flex flex-col items-center justify-center gap-1 min-h-[56px] rounded-xl outline-none transition-colors',
+                'group relative flex-1 flex flex-col items-center justify-center gap-1 min-h-[64px] rounded-xl outline-none transition-colors',
                 'focus-visible:ring-2 focus-visible:ring-blue/40',
+                active ? 'text-text' : 'text-text/55',
               )}
             >
               {active && (
                 <span
                   aria-hidden
-                  className="absolute -top-2 left-1/2 -translate-x-1/2 h-[3px] w-7 rounded-full bg-ok"
+                  className="absolute top-1.5 left-1/2 -translate-x-1/2 h-1 w-7 rounded-full bg-ok"
                 />
               )}
-              <Icon
-                className={cn(
-                  'h-[22px] w-[22px]',
-                  active ? 'text-text' : 'text-text/55',
-                )}
-                strokeWidth={active ? 2.4 : 1.75}
-              />
-              <span
-                className={cn(
-                  'text-[11px] leading-none',
-                  active
-                    ? 'font-bold text-text'
-                    : 'font-semibold text-text/55',
-                )}
-              >
+              <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.2 : 1.8} />
+              <span className={cn('text-[11px] leading-none', active ? 'font-bold' : 'font-semibold')}>
                 {item.label}
               </span>
             </Link>

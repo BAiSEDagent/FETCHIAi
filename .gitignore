@@ -38,3 +38,10 @@ db/migrations/
 Thumbs.db
 .vscode/
 .idea/
+
+# Agent / PM artifact controls — broad ignore; active design boards archived under design/_archive/
+attached_assets/
+.agents/memory/
+.local/
+*.log
+zipFile.zip

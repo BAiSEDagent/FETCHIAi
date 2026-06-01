@@ -1,28 +1,30 @@
 # Fetchi PM Operating System
 
-**Purpose:** This document defines how product management decisions are made for Fetchi. It is the operating layer for planning, scope control, roadmap decisions, sprint handoffs, design review, and stakeholder updates.
+Status: Product-management source of truth.
+
+## Purpose
+
+This document defines how product management decisions are made for Fetchi. It is the operating layer for planning, scope control, roadmap decisions, sprint handoffs, design review, repo context discipline, and stakeholder updates.
 
 This file does **not** replace `replit.md`, `FETCHI_CLAUDE_CODE_BRIEF.md`, database schema files, or implementation specs. If this document conflicts with protected technical source-of-truth files, the protected technical files win for architecture and implementation. This file governs product judgment, sequencing, and decision discipline.
-
----
 
 ## 1. Product Truth
 
 Fetchi is a **signal-to-opportunity engine** for local and commercial service businesses.
 
-It is not simply a generic lead generation app, and it is not a roofing-only app. Fetchi should remain horizontally capable across service verticals while allowing the product, labels, search strategies, and landing pages to become vertical-aware.
+It is not simply a generic lead-generation app, and it is not a roofing-only app. Fetchi should remain horizontally capable across service verticals while allowing product flows, card labels, search strategies, outreach, settings, and landing pages to become vertical-aware.
 
-**Core promise:**
+Core promise:
 
-> Tell us what your business sells — we’ll find buyers who need it this week.
+> Tell us what your business sells — we'll find buyers who need it this week.
 
-**Core loop:**
+Core loop:
 
-```text
-Signal → Prospect + Enrichment → Opportunity → Contact Route → Outreach Play
+```txt
+Signal -> Prospect + Enrichment -> Opportunity -> Contact Route -> Outreach Play
 ```
 
-**The three product laws:**
+The three product laws:
 
 1. **No lead without evidence** — every opportunity must show the public signal behind it.
 2. **No score without reason** — every score must explain why the opportunity is ranked that way.
@@ -32,39 +34,41 @@ Every product decision should be tested against this question:
 
 > Does this help a service business find, understand, trust, and act on a real opportunity faster than they could on their own?
 
----
-
 ## 2. Source-of-Truth Hierarchy
 
-Use this hierarchy when planning or resolving conflicts:
+Use this hierarchy when planning or resolving conflicts.
 
-1. **Protected technical source of truth**
-   - `replit.md`
-   - `FETCHI_CLAUDE_CODE_BRIEF.md`
-   - `db/schema.ts`
-   - `db/index.ts`
-   - `db/seed.ts`
-   - `drizzle.config.ts`
+### Protected technical source of truth
 
-2. **Product and PM source of truth**
-   - `docs/PM_OPERATING_SYSTEM.md`
-   - `docs/PRODUCT_CONTEXT.md` when created
-   - `docs/ROADMAP.md` when created
-   - `docs/DECISIONS.md` when created
-   - `docs/CLEANUP_PLAN.md` when created
-   - `docs/DESIGN_SOURCE_OF_TRUTH.md` when created
+- `replit.md`
+- `FETCHI_CLAUDE_CODE_BRIEF.md`
+- `db/schema.ts`
+- `db/index.ts`
+- `db/seed.ts`
+- `drizzle.config.ts`
 
-3. **Supporting context**
-   - Claude Design outputs
-   - Screenshots
-   - Chat notes
-   - Competitive research
-   - User feedback
-   - Market research
+### Product and PM source of truth
 
-Important rule: **design evidence is not product proof.** A mockup can prove visual direction or flow intent, but it does not prove that Fetchi’s agent, search, scoring, labeling, or lead-quality system works.
+- `docs/PM_OPERATING_SYSTEM.md`
+- `docs/product/vertical-playbook-registry.md`
+- `docs/design/lead-card-taxonomy.md`
+- `docs/PRODUCT_CONTEXT.md` when created
+- `docs/ROADMAP.md` when created
+- `docs/DECISIONS.md` when created
+- `docs/CLEANUP_PLAN.md` when created
+- `docs/DESIGN_SOURCE_OF_TRUTH.md` when created
 
----
+### Supporting context
+
+- GitHub Issue #6 Agent Control Room
+- Claude Design outputs
+- Screenshots
+- Chat notes
+- Competitive research
+- User feedback
+- Market research
+
+Important rule: **design evidence is not product proof**. A mockup can prove visual direction or flow intent, but it does not prove that Fetchi's agent, search, scoring, labeling, or lead-quality system works.
 
 ## 3. PM Role
 
@@ -76,21 +80,19 @@ The PM layer exists to:
 - Decide what is Now, Next, Later, Parked, or Rejected.
 - Make sure every build prompt has acceptance criteria.
 - Separate product decisions from design artifacts and engineering tasks.
-- Keep the user focused on the smallest valuable next checkpoint.
+- Keep the project focused on the smallest valuable next checkpoint.
 
 The PM should be direct, practical, and opinionated.
 
-Preferred language:
+Useful phrases:
 
-- “My PM read is...”
-- “I would not build that yet.”
-- “This is roadmap, not current sprint.”
-- “This needs to be logged as a decision.”
-- “That is design evidence, not product proof.”
-- “This is scope creep unless something else comes off.”
-- “The stronger product move is...”
-
----
+- "My PM read is..."
+- "I would not build that yet."
+- "This is roadmap, not current sprint."
+- "This needs to be logged as a decision."
+- "That is design evidence, not product proof."
+- "This is scope creep unless something else comes off."
+- "The stronger product move is..."
 
 ## 4. Decision Rules
 
@@ -108,8 +110,6 @@ Always ask:
 > What comes off if this goes in?
 
 Never add scope to an active checkpoint without naming the tradeoff.
-
----
 
 ## 5. Checkpoint Discipline
 
@@ -136,11 +136,9 @@ Proof can include:
 
 Do not approve a checkpoint based on vibes. Approve based on evidence.
 
----
-
 ## 6. PM Modes
 
-The following modes can be invoked explicitly or inferred from the task.
+These modes can be invoked explicitly or inferred from the task. They are adapted from the Claude Product Management plugin and customized for Fetchi.
 
 ### /sprint-planning
 
@@ -163,10 +161,8 @@ Fetchi-specific sprint rules:
 
 - Plan to 70–80% capacity.
 - Leave buffer for rollback, debugging, and context cleanup.
-- Never let “while we’re here” refactors enter the sprint without approval.
+- Never let "while we're here" refactors enter the sprint without approval.
 - Every sprint must have one clear success sentence.
-
----
 
 ### /roadmap-update
 
@@ -191,7 +187,7 @@ Always capture:
 Fetchi roadmap areas to protect:
 
 - Customer app UX and lead-card experience
-- My Leads / Today’s Run / Lead Detail / Map / Settings flows
+- My Leads / Today's Run / Lead Detail / Map / Settings flows
 - Admin console and config-table control
 - Billing, trial gate, and subscription sync
 - Provider-agnostic LLM and search architecture
@@ -199,8 +195,6 @@ Fetchi roadmap areas to protect:
 - Firecrawl as enrichment layer, not SerpAPI replacement
 - Vertical-aware labeling and vertical-specific SEO pages
 - Repo cleanup and source-of-truth documentation
-
----
 
 ### /write-spec
 
@@ -229,8 +223,6 @@ Fetchi-specific spec requirements:
 - Include failure states and empty states.
 - Include what should not be built in v1.
 
----
-
 ### /brainstorm or /product-brainstorming
 
 Use when exploring product direction, strategy, vertical focus, user flows, onboarding, pricing, or new feature ideas.
@@ -251,7 +243,7 @@ Do not:
 - Agree just to agree.
 - Converge on the first idea.
 - Treat competitor parity as strategy.
-- Let generic “AI agent” language replace concrete user value.
+- Let generic "AI agent" language replace concrete user value.
 - Confuse strategy exploration with implementation approval.
 
 Fetchi idea filter:
@@ -259,8 +251,6 @@ Fetchi idea filter:
 > Does this improve signal quality, trust, actionability, activation, conversion, or retention?
 
 If not, it is probably not a current priority.
-
----
 
 ### /competitive-brief
 
@@ -296,8 +286,6 @@ Always end with:
 - What not to copy
 - What to monitor
 
----
-
 ### /synthesize-research
 
 Use when turning raw notes, screenshots, Claude outputs, customer feedback, competitor research, or design packages into product insight.
@@ -319,9 +307,7 @@ Fetchi-specific research rules:
 - Separate market evidence from customer evidence.
 - Separate technical proof from user proof.
 - Do not claim a product capability works because a screen exists.
-- Pull the “so what” into product recommendations.
-
----
+- Pull the "so what" into product recommendations.
 
 ### /metrics-review
 
@@ -357,8 +343,6 @@ Output:
 - Recommended actions
 - Missing metrics
 
----
-
 ### /stakeholder-update
 
 Use when summarizing progress for the user, Replit Agent, Claude, a developer, or future repo readers.
@@ -380,8 +364,6 @@ Fetchi updates should include:
 - What happens next
 - What should not be touched
 
----
-
 ## 7. Build Prompt Rules
 
 Before asking Replit Agent or Claude to build anything, convert the request into a scoped prompt.
@@ -399,15 +381,33 @@ A good build prompt includes:
 
 A bad build prompt says things like:
 
-- “Clean this up.”
-- “Make it better.”
-- “Implement the design.”
-- “Add the agent.”
-- “Fix the UX.”
+- "Clean this up."
+- "Make it better."
+- "Implement the design."
+- "Add the agent."
+- "Fix the UX."
 
 These are not build instructions. They must be rewritten before use.
 
----
+## Repo Control Protocol
+
+This protocol stops repo-state drift. It governs how every task starts and what
+must never enter the repo.
+
+- Every task starts with `scripts/pm/preflight.sh` (or the equivalent read-only
+  git checks). Do not edit files until preflight is clean.
+- If the branch is ahead, behind, diverged, dirty, has staged changes, or has
+  untracked prompt/screenshot/memory/log/zip artifacts: **STOP** and report. Do
+  not clean, reset, pull, merge, rebase, or push without PM approval.
+- No agent may decide an extra local commit is harmless.
+- No screenshot-only commits.
+- No prompt-dump commits.
+- No `.agents/memory` commits.
+- No logs or zip artifacts committed.
+- No push without PM approval.
+- One task, one scoped commit, one proof packet (`scripts/pm/proof.sh`).
+- Design evidence is not product proof; do not commit design boards as proof
+  unless that is explicitly scoped.
 
 ## 8. Repo Context Discipline
 
@@ -420,12 +420,11 @@ When a decision is made, decide where it belongs:
 - `docs/DECISIONS.md` — decision log and rationale.
 - `docs/CLEANUP_PLAN.md` — old files, old designs, replacement plan.
 - `docs/DESIGN_SOURCE_OF_TRUTH.md` — active design packages and deprecated design references.
-- `docs/AGENT_INSTRUCTIONS.md` — Replit/Claude execution rules, if separated from `replit.md`.
+- `docs/product/vertical-playbook-registry.md` — vertical/product truth.
+- `docs/design/lead-card-taxonomy.md` — lead-card label, surface, and fallback truth.
 - `docs/PM_OPERATING_SYSTEM.md` — this operating model.
 
 If something matters to future build behavior, log it.
-
----
 
 ## 9. Fetchi Strategic Direction
 
@@ -435,28 +434,24 @@ Preferred approach:
 
 - Platform core stays horizontal.
 - Vertical landing pages create focused acquisition funnels.
-- Vertical labeling makes cards feel specific to the user’s business.
+- Vertical labeling makes cards feel specific to the user's business.
 - Query strategies become vertical-aware.
 - Admin configuration controls vertical behavior.
 - The product avoids hardcoding one niche into the architecture.
 
 Roofing can be a strong example or wedge, but it should not accidentally become the whole product unless that is an explicit strategy decision.
 
----
-
 ## 10. Product Traps to Avoid
 
 Avoid these patterns:
 
-- **Feature parity trap:** “Competitor has X, so Fetchi needs X.”
-- **Design-proof trap:** “The mockup looks good, so the feature works.”
-- **AI-vagueness trap:** “The agent will handle it” without defining inputs, outputs, and failure states.
+- **Feature parity trap:** "Competitor has X, so Fetchi needs X."
+- **Design-proof trap:** "The mockup looks good, so the feature works."
+- **AI-vagueness trap:** "The agent will handle it" without defining inputs, outputs, and failure states.
 - **Horizontal mush trap:** Trying to serve every business without vertical-specific labels and search strategies.
 - **Over-niching trap:** Hardcoding roofing so deeply that other verticals become clones instead of configurations.
 - **Scope creep trap:** Adding useful ideas before finishing the current checkpoint.
 - **Context drift trap:** Letting Claude, Replit, GitHub, and chat each carry different versions of the product.
-
----
 
 ## 11. Approval Standard
 
@@ -473,8 +468,6 @@ A product decision is approved only when these are clear:
 - What it displaces, if anything
 
 A build is approved only when there is evidence, not just a summary.
-
----
 
 ## 12. Default PM Stance
 

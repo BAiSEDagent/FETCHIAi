@@ -23,9 +23,7 @@ export const DECK_VIEWPORT_FRAME =
 // Button heights from spec.
 export const ACTION_BUTTON_HEIGHT = 'h-[60px]'
 
-// Primary "Add" button — coral (primary CTA discipline). One of the five
-// coral surfaces in the system: hot ribbon, primary CTA, hot score, trial
-// gate, marketing italic.
+// Primary "Add" button — coral (primary CTA discipline).
 export const PRIMARY_BUTTON_SURFACE =
   'bg-coral text-white shadow-[0_10px_22px_-12px_rgba(244,91,59,0.65),0_2px_4px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.18)] hover:bg-coralDeep'
 
