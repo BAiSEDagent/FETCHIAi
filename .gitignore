@@ -39,12 +39,8 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Agent / PM artifact controls
-attached_assets/Pasted-*.txt
-attached_assets/Screenshot_*
-attached_assets/targeted_element_*
-attached_assets/*.rtf
-attached_assets/*.zip
+# Agent / PM artifact controls — broad ignore; active design boards archived under design/_archive/
+attached_assets/
 .agents/memory/
 .local/
 *.log

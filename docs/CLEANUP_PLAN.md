@@ -130,9 +130,24 @@ Local Claude Design files that circulated during planning sessions are supersede
 
 Archived mockups under `design/_archive/*` remain as historical reference only and are not affected by this note.
 
+## Completed — Current-tree de-track + design board archive
+
+- All `attached_assets/**` removed from active repo tracking via `git rm -r --cached`.
+  Files remain on local disk and in git history. Future additions are blocked by
+  the broad `attached_assets/` entry in `.gitignore`.
+- `zipFile.zip` removed from active repo tracking via `git rm --cached`.
+  Remains gitignored.
+- 9 v2 design-system boards (coral audit, token board, theme boundary) moved from
+  `attached_assets/` into `design/_archive/design-boards-v2/` for provenance.
+  README added to archive folder.
+- `.gitignore` consolidated: replaced targeted `Pasted-*`, `Screenshot_*`,
+  `targeted_element_*`, `.rtf`, `.zip` patterns with a single `attached_assets/` rule.
+- `.agents/skills/**` intentionally left tracked and untouched pending a separate
+  decision.
+- No history rewrite performed. Files accessible in git history if ever needed.
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
 
-No destructive cleanup (de-tracking or history rewrite) has been performed by
-this file.
+Current-tree artifact de-tracking complete (see completed entry above).
