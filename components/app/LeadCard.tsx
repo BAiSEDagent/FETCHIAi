@@ -22,6 +22,21 @@ export type LeadCardSignalType =
   | null
   | undefined
 
+export type FallbackState =
+  | 'needs_review'
+  | 'weak_fit'
+  | 'missing_evidence'
+  | 'exploratory'
+  | 'discarded'
+
+const FALLBACK_LABELS: Record<FallbackState, string> = {
+  needs_review: 'Needs review',
+  weak_fit: 'Weak fit',
+  missing_evidence: 'Missing evidence',
+  exploratory: 'Exploratory',
+  discarded: 'Discarded',
+}
+
 type Variant = 'list' | 'chat' | 'chat-hero' | 'run' | 'map' | 'related'
 
 type Props = {
@@ -39,6 +54,9 @@ type Props = {
   contactConfidence?: number | null
   evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' }>
   variant?: Variant
+  verticalFitLabel?: string | null
+  freshnessLabel?: string | null
+  fallbackState?: FallbackState | null
 }
 
 type OpportunityClass = 'intent_record' | 'discovery' | 'aging'
@@ -124,6 +142,9 @@ function ListCard({
   ageLabel,
   contactName,
   contactConfidence,
+  verticalFitLabel,
+  freshnessLabel,
+  fallbackState,
   large = false,
 }: Props & { large?: boolean }) {
   const confidence = Math.max(0, Math.min(3, contactConfidence ?? 0))
@@ -156,6 +177,14 @@ function ListCard({
     ? 'bg-[#B8B0A2]/45 text-[#2D2B2A] border border-[#2D2B2A]/10'
     : 'bg-bg/80 text-text border border-text/10'
 
+  const neutralChip = inverted
+    ? 'bg-[#2D2B2A]/[0.05] text-[#2D2B2A]/60 border border-[#2D2B2A]/10'
+    : 'bg-text/[0.04] text-text/55 border border-text/8'
+
+  const fallbackChip = inverted
+    ? 'bg-transparent text-[#2D2B2A]/45 border border-dashed border-[#2D2B2A]/20'
+    : 'bg-transparent text-text/38 border border-dashed border-text/15'
+
   return (
     <Link href={href} className={surface}>
       <div className="flex items-start gap-3.5">
@@ -163,16 +192,35 @@ function ListCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
+              {/* Label row: status · signal/token · vertical-fit · freshness · age */}
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className={cn('inline-flex items-center rounded-full px-2.5 h-[22px] text-[11px] font-semibold', statusTone(status, cardSurface))}>
                   {statusLabel(status)}
                 </span>
                 <span className={cn('inline-flex items-center gap-1.5 rounded-full h-[22px] px-2 text-[10.5px] font-bold tracking-[0.04em] tabular-nums', token)}>
                   <span className={cn('w-1.5 h-1.5 rounded-full', tokenDot)} />
-                  <span className="truncate max-w-[150px] sm:max-w-[180px]">{tokenText}</span>
+                  <span className="truncate max-w-[130px] sm:max-w-[160px]">{tokenText}</span>
                 </span>
+                {verticalFitLabel && (
+                  <span className={cn('inline-flex items-center rounded-full h-[22px] px-2.5 text-[10.5px] font-medium', neutralChip)}>
+                    {verticalFitLabel}
+                  </span>
+                )}
+                {freshnessLabel && (
+                  <span className={cn('inline-flex items-center rounded-full h-[22px] px-2.5 text-[10.5px] font-medium', neutralChip)}>
+                    {freshnessLabel}
+                  </span>
+                )}
                 {ageLabel && <span className={cn('text-[11px]', muted)}>· {ageLabel}</span>}
               </div>
+              {/* Fallback state — distinct row, muted/dashed, honest */}
+              {fallbackState && (
+                <div className="mt-1.5">
+                  <span className={cn('inline-flex items-center rounded-md h-[20px] px-2.5 text-[10px] font-semibold', fallbackChip)}>
+                    {FALLBACK_LABELS[fallbackState]}
+                  </span>
+                </div>
+              )}
               <h3 className={cn('font-outfit text-[17px] lg:text-[18px] font-semibold leading-tight mt-2 truncate', title)}>
                 {businessName}
               </h3>
@@ -216,7 +264,7 @@ function ListCard({
   )
 }
 
-function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location, ageLabel, evidenceChips }: Props) {
+function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location, ageLabel, evidenceChips, verticalFitLabel, fallbackState }: Props) {
   return (
     <div className="rounded-2xl bg-raised shadow-fetchi-soft p-4 lg:p-5">
       <div className="flex items-start justify-between gap-4">
@@ -232,17 +280,27 @@ function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location
         </div>
       </div>
 
-      {(ageLabel || evidenceChips?.length || signalLabel) && (
+      {(ageLabel || evidenceChips?.length || signalLabel || verticalFitLabel || fallbackState) && (
         <div className="flex flex-wrap gap-1.5 mt-3">
           <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold bg-text/[0.06] text-text2">
             <span className="w-1.5 h-1.5 rounded-full bg-text/40" />
             {signalLabel}
           </span>
+          {verticalFitLabel && (
+            <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-medium bg-text/[0.04] text-text/55 border border-text/8">
+              {verticalFitLabel}
+            </span>
+          )}
           {evidenceChips?.map(chip => (
             <span key={chip.label} className="inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold bg-text/[0.06] text-text/70 border border-text/10">
               {chip.label}
             </span>
           ))}
+          {fallbackState && (
+            <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-medium bg-transparent text-text/38 border border-dashed border-text/15">
+              {FALLBACK_LABELS[fallbackState]}
+            </span>
+          )}
         </div>
       )}
 

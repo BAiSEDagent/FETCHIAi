@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight, Search, ArrowUpDown, X, ArrowLeft } from 'lucide-react'
-import { LeadCard, type LeadCardSignalType } from '@/components/app/LeadCard'
+import { LeadCard, type LeadCardSignalType, type FallbackState } from '@/components/app/LeadCard'
 import { cn } from '@/lib/utils'
 
 export type LeadRow = {
@@ -21,6 +21,9 @@ export type LeadRow = {
   createdAtMs: number
   contactName: string | null
   contactConfidence: number | null
+  verticalFitLabel?: string | null
+  freshnessLabel?: string | null
+  fallbackState?: FallbackState | null
 }
 
 type SortKey = 'score' | 'freshness' | 'recent' | 'name'
@@ -234,6 +237,9 @@ export function MyLeadsView({
               ageLabel={lead.ageLabel}
               contactName={lead.contactName}
               contactConfidence={lead.contactConfidence}
+              verticalFitLabel={lead.verticalFitLabel}
+              freshnessLabel={lead.freshnessLabel}
+              fallbackState={lead.fallbackState}
               variant="list"
             />
           ))}
@@ -397,6 +403,9 @@ export function MyLeadsView({
                 ageLabel={lead.ageLabel}
                 contactName={lead.contactName}
                 contactConfidence={lead.contactConfidence}
+                verticalFitLabel={lead.verticalFitLabel}
+                freshnessLabel={lead.freshnessLabel}
+                fallbackState={lead.fallbackState}
                 variant="list"
               />
             ))}

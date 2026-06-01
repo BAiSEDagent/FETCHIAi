@@ -146,6 +146,18 @@ Archived mockups under `design/_archive/*` remain as historical reference only a
   decision.
 - No history rewrite performed. Files accessible in git history if ever needed.
 
+## Completed — Product Proof CP1 — Vertical-Fit + Fallback Lead Card Display
+
+`LeadCard.tsx`, `MyLeadsView.tsx`, and `lib/seed-chat.ts` updated to support
+five label layers (status/lifecycle, signal, vertical-fit, freshness, score)
+and five fallback states (needs_review, weak_fit, missing_evidence, exploratory,
+discarded). Fixture examples added to `lib/seed-chat.ts` covering strong
+vertical-fit, weak_fit, missing_evidence, and exploratory states.
+
+Scope: UI/data-display proof only.
+Not agent/search/classifier proof.
+Does not touch DB/provider/billing/auth.
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
