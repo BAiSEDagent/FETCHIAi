@@ -13,6 +13,23 @@ Config is source of truth:
 
 No price, threshold, or email body should be inlined in application code.
 
+### Plan model guardrails
+
+- No traditional free trial. Fetchi does not offer a free-trial window or a trial-ends countdown.
+- No unlimited plan. High-volume customers use explicit capped plans, top-ups, or custom capped agreements.
+- Usage is retrospective: delivered / capped allowance / remaining. There is no trial-window mode.
+- No trial-counter framing (e.g. "0 of 10 used"). No trial-expiry countdown banners. No free-signup / payment-not-required copy.
+- Plan & Billing uses capped plans only.
+- `legacy status = trialing` rows are treated as pre-payment / plan-required states in customer-facing UI, not as active free-trial states.
+
+**Usage V2 — deferred (not in scope for MVP):**
+
+- Cost-per-lead display
+- Spend forecast
+- Usage sparkline / history chart
+- Per-signal-type breakdown
+- CSV export
+
 Core objects touched:
 
 - Workspace

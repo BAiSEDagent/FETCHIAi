@@ -15,6 +15,39 @@ Current live coordination:
 
 - GitHub Issue 6: Agent Control Room
 
+## Current visual direction
+
+**Dark product / operator surface** — all authenticated app surfaces (chat, today, leads, lead detail, map, settings). Dark base, raised cards, parchment accents where appropriate.
+
+**Cream marketing / light surface** — public marketing, pricing pages, vertical SEO, public-facing content, and onboarding handoff flows.
+
+**Shared brand tokens** — `#58937E` (brand green), `#D85A30` (coral), `#EBE6D9` (parchment), `#2D2B2A` (dark), Outfit (headings), DM Sans (body) — stable across both surfaces.
+
+**Coral — approved uses only:**
+
+- Active `urgent_action` lead-card surface when backed by dated action-window evidence
+- Primary CTA and monetization CTA
+- Cap-reached or upgrade moment
+- Approved brand/CTA affordance
+
+**Coral is NOT:**
+
+- High score — score does not create a coral card
+- Storm / hail / weather signal
+- Vertical identity color
+- Lifecycle or status color
+- Generic icon or accent color
+
+**Current design authority map:**
+
+| Topic | Authority |
+|---|---|
+| Visual / color / surface | `docs/DESIGN_SOURCE_OF_TRUTH.md` (this file) |
+| Lead-card taxonomy | `docs/design/lead-card-taxonomy.md` |
+| Settings | `docs/product/settings-spec.md` |
+| Vertical registry | `docs/product/vertical-playbook-registry.md` |
+| Commercial cleaning playbook | `docs/product/playbooks/commercial-cleaning.md` |
+
 ## Active UI Baseline
 
 The active UI baseline is PR 2 on branch codex/issue-1-design-system-lock until it is merged, replaced, or rejected.

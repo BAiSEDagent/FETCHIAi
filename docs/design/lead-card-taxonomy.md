@@ -74,6 +74,14 @@ sensitivity floor = surfacing eligibility
 
 A high-score card may still be dark if it is saved, responded, won, contacted, or otherwise part of pipeline/history.
 
+## urgent_action Evidence Rule
+
+`urgent_action` surface requires dated action-window evidence.
+
+Dated action-window evidence means the signal carries a specific, verifiable date or time window that creates a real deadline for the contractor — permit expiry date, job posting close date, storm event timestamp, review-response window, or similar.
+
+A card with a high score but no dated action-window evidence must remain on the default dark surface. Score does not create `urgent_action`. Evidence does.
+
 ## Score Rule
 
 Score expresses service-fit strength, not color.

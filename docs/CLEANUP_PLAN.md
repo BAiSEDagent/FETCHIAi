@@ -119,6 +119,17 @@ artifacts" guard note.
 These files are kept for historical reference only and are not live
 source-of-truth.
 
+## Local Claude Design specs — superseded once repo docs carry current truth
+
+Local Claude Design files that circulated during planning sessions are superseded by the repo docs once repo docs carry their current truth. The following should not remain as live local source-of-truth:
+
+- `FETCHI_SETTINGS_SPEC.md`
+- `FETCHI_VERTICAL_PLAYBOOKS_SPEC.md`
+- `FETCHI_CORAL_SPEC.md`
+- `playbook-commercial-cleaning-DRAFT.md`
+
+Archived mockups under `design/_archive/*` remain as historical reference only and are not affected by this note.
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
