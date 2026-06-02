@@ -44,7 +44,17 @@ Each core-supported vertical must define, at minimum:
 
 A vertical is not core-supported merely because it appears in onboarding. It is core-supported when the above playbook rules exist and are used by the opportunity pipeline.
 
-## Vertical Playbook Registry
+## Active Playbook Registry
+
+The following vertical playbooks are currently authored and active as product/spec source of truth. A playbook listed here as `active` has a complete v1 spec. It is NOT claimed to be classifier-implemented until fixtures pass.
+
+| vertical_key | display_name | status | version | playbook_file |
+|---|---|---|---|---|
+| `commercial_cleaning` | Commercial Cleaning / Janitorial | active | 1.0 | `docs/product/playbooks/commercial-cleaning.md` |
+
+All other launch verticals remain spec-planned but not yet playbook-authored. They will be added to this table as each playbook reaches v1 status.
+
+## Vertical Playbook Registry (spec fields)
 
 A vertical playbook should eventually define:
 
