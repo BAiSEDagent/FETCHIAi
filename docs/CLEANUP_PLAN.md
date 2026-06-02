@@ -158,6 +158,20 @@ Scope: UI/data-display proof only.
 Not agent/search/classifier proof.
 Does not touch DB/provider/billing/auth.
 
+## Completed — Product Proof CP2 — Commercial Cleaning Playbook v1
+
+`docs/product/playbooks/commercial-cleaning.md` restructured and completed
+as a full v1 vertical playbook for Commercial Cleaning / Janitorial.
+`docs/product/vertical-playbook-registry.md` updated with an Active Playbook
+Registry table confirming `commercial_cleaning` v1.0 is active and pointing
+to the playbook file.
+
+Scope: product-spec proof only.
+No app/component/lib/db/auth/billing/provider/schema changes.
+Establishes approved labels, evidence requirements, scoring rubric, query
+templates, outreach plays, disqualification rules, and fallback state rules
+for one non-roofing launch vertical.
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
