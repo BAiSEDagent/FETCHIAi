@@ -11,6 +11,13 @@ import { db, signals as signalsTable } from '@/db'
 
 export type ChatRole = 'user' | 'assistant'
 
+export type ChatFallbackState =
+  | 'needs_review'
+  | 'weak_fit'
+  | 'missing_evidence'
+  | 'exploratory'
+  | 'discarded'
+
 export type ChatLeadCard = {
   opportunityId: string
   businessName: string
@@ -20,6 +27,9 @@ export type ChatLeadCard = {
   whyNow?: string | null
   ageLabel?: string | null
   evidenceChips?: Array<{ label: string; tone?: 'neutral' }>
+  verticalFitLabel?: string | null
+  freshnessLabel?: string | null
+  fallbackState?: ChatFallbackState | null
 }
 
 export type ChatMessage = {
@@ -46,6 +56,88 @@ const SIGNAL_LABELS: Record<string, string> = {
   ownership_change: 'Ownership change',
   other: 'Signal detected',
 }
+
+/**
+ * Deterministic vertical-fit label from signal type.
+ * Values drawn from approved taxonomy only — not AI-generated.
+ */
+const SIGNAL_VERTICAL_FIT: Record<string, string | null> = {
+  storm_damage: 'Roof',
+  weather_hail: 'Roof',
+  weather_wind: 'Roof',
+  building_permit: 'Tenant Improvement',
+  new_business_listing: 'Final Clean',
+  job_posting: 'New Office',
+  event: 'Restaurant',
+  funding: 'New Office',
+  news: 'New Office',
+  social: 'New Office',
+  expansion: 'New Office',
+  ownership_change: 'Equip Replace',
+  review: 'Pest Review',
+  other: null,
+}
+
+/**
+ * Fixture demo lead cards for product proof — exported so downstream views
+ * can use them without touching the database. Covers strong vertical-fit,
+ * weak_fit, missing_evidence, and exploratory fallback states.
+ * Labels drawn from approved taxonomy only.
+ */
+export const DEMO_VERTICAL_LEADS: ChatLeadCard[] = [
+  {
+    opportunityId: 'demo-vf-1',
+    businessName: 'Pinnacle Ridge Estates',
+    signalLabel: 'Recent hail event',
+    score: 91,
+    location: 'Plano, TX',
+    whyNow: '1.5" hail confirmed across the subdivision 18 hours ago — HOA roof inspection window typically opens within 48 hours.',
+    ageLabel: 'Hail event · 18h ago',
+    verticalFitLabel: 'Roof',
+    freshnessLabel: 'Signal today',
+    evidenceChips: [{ label: 'HOA confirmed', tone: 'neutral' }],
+    fallbackState: null,
+  },
+  {
+    opportunityId: 'demo-vf-2',
+    businessName: 'Westbrook Fitness & Spa',
+    signalLabel: 'New business listing',
+    score: 67,
+    location: 'Allen, TX',
+    whyNow: 'Grand opening in 12 days — new facilities in this zone typically need final cleaning before soft launch.',
+    ageLabel: 'New listing · 2d ago',
+    verticalFitLabel: 'Final Clean',
+    freshnessLabel: 'Signal 2d ago',
+    evidenceChips: [],
+    fallbackState: 'weak_fit',
+  },
+  {
+    opportunityId: 'demo-vf-3',
+    businessName: 'Meridian Commercial Partners',
+    signalLabel: 'Funding announcement',
+    score: 54,
+    location: 'Irving, TX',
+    whyNow: 'Announced $3.1M Series A — typical expansion into new office space in 60–90 days, but scope unclear.',
+    ageLabel: 'Funding · 4d ago',
+    verticalFitLabel: 'New Office',
+    freshnessLabel: 'Signal 4d ago',
+    evidenceChips: [],
+    fallbackState: 'missing_evidence',
+  },
+  {
+    opportunityId: 'demo-vf-4',
+    businessName: 'Lakeview Restaurant Group',
+    signalLabel: 'Local event',
+    score: 48,
+    location: 'Frisco, TX',
+    whyNow: 'Hosting a corporate dinner event for 200 guests — possible catering or facilities scope, but no direct signal of service need.',
+    ageLabel: 'Event · 5d ago',
+    verticalFitLabel: 'Restaurant',
+    freshnessLabel: 'Signal 5d ago',
+    evidenceChips: [],
+    fallbackState: 'exploratory',
+  },
+]
 
 type SignalRow = typeof signalsTable.$inferSelect
 
@@ -86,6 +178,19 @@ function signalLabel(signal: SignalRow | null | undefined): string {
   const where = signalLocation(signal)
   const when = relativeTime(signal.detectedAt ?? signal.createdAt)
   return [base, where, when].filter(Boolean).join(' · ')
+}
+
+function freshnessLabelFor(signal: SignalRow | null | undefined): string | null {
+  if (!signal) return null
+  const d = signal.detectedAt ?? signal.createdAt
+  const diff = Date.now() - new Date(d).getTime()
+  const hours = Math.floor(diff / 3_600_000)
+  const days = Math.floor(diff / 86_400_000)
+  const base = SIGNAL_LABELS[signal.signalType]?.split(' ')[0] ?? 'Signal'
+  if (hours <= 0) return `${base} · just now`
+  if (hours < 24) return `${base} · ${hours}h ago`
+  if (days === 1) return `${base} · yesterday`
+  return `${base} · ${days}d ago`
 }
 
 export type BuildChatThreadInput = {
@@ -173,6 +278,10 @@ export async function buildChatThread(
       evidenceChips.push({ label: 'Owner reachable', tone: 'neutral' })
     }
 
+    const signalType = signal?.signalType ?? 'other'
+    const verticalFitLabel = SIGNAL_VERTICAL_FIT[signalType] ?? null
+    const freshnessLabel = freshnessLabelFor(signal)
+
     cards.push({
       opportunityId: opp.id,
       businessName: prospect?.businessName ?? 'Unknown business',
@@ -182,6 +291,9 @@ export async function buildChatThread(
       whyNow: opp.whyNow ?? signal?.whyRelevant ?? null,
       ageLabel: `${baseLabel.split(' ').slice(-1)[0] === 'detected' ? 'Signal' : baseLabel.split(' · ')[0]} · ${ageLabel}`,
       evidenceChips,
+      verticalFitLabel,
+      freshnessLabel,
+      fallbackState: null,
     })
   }
 
