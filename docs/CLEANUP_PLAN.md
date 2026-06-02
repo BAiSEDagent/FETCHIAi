@@ -172,6 +172,19 @@ Establishes approved labels, evidence requirements, scoring rubric, query
 templates, outreach plays, disqualification rules, and fallback state rules
 for one non-roofing launch vertical.
 
+## Completed — Product Proof CP3 — Agent Web Data Architecture Docs
+
+Created three architecture source-of-truth docs and updated this plan:
+`docs/AGENT_WEB_DATA_ARCHITECTURE.md`, `docs/PROVIDER_CONTRACTS.md`,
+`docs/PLAYBOOK_SEARCH_EXAMPLES.md`.
+
+Scope: docs-only architecture proof.
+No app/code/provider/schema changes.
+Defines the SerpApi (discovery) / Firecrawl (evidence hydration) responsibility
+split, the signal state model, the evidence gate, the fallback flow, the
+conceptual provider contracts, and playbook-to-query examples — before any
+provider contract, schema, or agent implementation is written (scoped to CP4+).
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
