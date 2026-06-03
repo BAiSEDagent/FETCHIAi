@@ -185,6 +185,17 @@ split, the signal state model, the evidence gate, the fallback flow, the
 conceptual provider contracts, and playbook-to-query examples — before any
 provider contract, schema, or agent implementation is written (scoped to CP4+).
 
+## Product Proof CP5A — No-op Provider Wiring Proof
+
+State:
+- verifies CP4 provider contracts can be consumed through a shell-run no-op smoke path
+- no live SerpApi calls
+- no Firecrawl calls
+- no DB/schema changes
+- no routes/UI changes
+- no fake leads/opportunities
+- prepares for CP5B real provider smoke proof
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
