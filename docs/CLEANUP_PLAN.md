@@ -209,6 +209,18 @@ State:
 - SerpApi is called only from `lib/providers/serpapi-search-provider.ts`; the secret is read only in the shell smoke script
 - prepares for CP5C Firecrawl evidence hydration
 
+## Product Proof CP5C — Firecrawl Evidence Hydration Smoke Proof
+
+State:
+- proves one real Firecrawl scrape call can run behind EvidenceProvider
+- normalizes a known source URL into EvidenceDocument only
+- no SerpApi changes or calls
+- no DB/schema changes
+- no routes/UI changes
+- no fake leads/opportunities/evidence
+- no scoring/classifier/outreach
+- prepares for evidence gate design between CandidateSignal and Opportunity
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
