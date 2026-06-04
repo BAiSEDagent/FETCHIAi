@@ -196,6 +196,19 @@ State:
 - no fake leads/opportunities
 - prepares for CP5B real provider smoke proof
 
+## Product Proof CP5B — SerpApi Discovery Smoke Proof
+
+State:
+- proves ONE real SerpApi `google_light` call runs behind the CP4 SearchProvider contract
+- normalizes hits into pre-evidence CandidateSignal[] only (a snippet is a candidate, never a lead/opportunity)
+- no Firecrawl / evidence hydration
+- no DB/schema changes or DB writes
+- no routes/UI/runtime wiring
+- no scoring/classifier/fit-decision/outreach; no fake leads/opportunities
+- no new dependencies
+- SerpApi is called only from `lib/providers/serpapi-search-provider.ts`; the secret is read only in the shell smoke script
+- prepares for CP5C Firecrawl evidence hydration
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
