@@ -1,7 +1,7 @@
 'use client'
 
 import { Menu } from 'lucide-react'
-import { FetchiAvatar } from './FetchiAvatar'
+import { FetchiWordmark } from '@/components/brand'
 import { Sidebar } from './Sidebar'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,10 +21,7 @@ type Props = {
 export function MobileHeader({ leadsCount, creditsSlot }: Props) {
   return (
     <header className="lg:hidden sticky top-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-text/8 px-4 h-16 flex items-center justify-between">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <FetchiAvatar size={30} />
-        <span className="fetchi-wordmark text-[20px] text-text truncate">Fetchi</span>
-      </div>
+      <FetchiWordmark markSize={30} className="min-w-0" />
       <Sheet>
         <SheetTrigger asChild>
           <Button

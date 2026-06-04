@@ -15,7 +15,7 @@ import {
   CreditCard,
   Monitor,
 } from 'lucide-react'
-import { FetchiAvatar } from './FetchiAvatar'
+import { FetchiWordmark } from '@/components/brand'
 import { SignOutControl } from './SignOutControl'
 
 type NavItem = {
@@ -165,8 +165,7 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
         onClick={onNavigate}
         className="flex items-center gap-2.5 px-5 pb-5 mb-3 border-b border-text/8 hover:opacity-90 transition-opacity"
       >
-        <FetchiAvatar size={28} />
-        <span className="fetchi-wordmark text-[19px] text-text">Fetchi</span>
+        <FetchiWordmark markSize={28} />
       </Link>
 
       <div className="text-[10px] font-bold uppercase tracking-[1.4px] text-text/30 px-5 mt-2 mb-1.5">

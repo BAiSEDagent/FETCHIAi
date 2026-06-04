@@ -23,6 +23,8 @@ Current live coordination:
 
 **Shared brand tokens** — `#58937E` (brand green), `#D85A30` (coral), `#EBE6D9` (parchment), `#2D2B2A` (dark), Outfit (headings), DM Sans (body) — stable across both surfaces.
 
+**2026-06-04 brand mark note:** Fetchi Stack is the promoted brand mark. Its three-block geometry is fixed; the `tone` prop only swaps fills. On dark surfaces, the top block remains the fresh-signal block. Retired kana/avatar treatments should not be reused in new UI.
+
 **Coral — approved uses only:**
 
 - Active `urgent_action` lead-card surface when backed by dated action-window evidence
