@@ -22,9 +22,29 @@ Signal -> Prospect + Enrichment -> Opportunity -> Contact Route -> Outreach Play
 
 ## Product Laws
 
-1. No lead without evidence.
-2. No score without reason.
-3. No explanation without action.
+1. No opportunity without signal.
+2. No lead without evidence.
+3. No score without reason.
+4. No explanation without action.
+
+## Lead Supply Lanes
+
+Fetchi remains a signal-to-opportunity engine, not a generic scraped lead list.
+It can surface two honest lead-supply lanes:
+
+1. **Signal-backed Opportunities** — A fresh public buying signal has been
+   hydrated with evidence. Only this lane can claim urgency, answer "why now,"
+   and later become a scored opportunity after classification and action
+   routing.
+2. **Evidence-backed Prospect Leads** — A high-fit target account has public or
+   otherwise legitimate evidence, but no confirmed fresh buying signal. These
+   prospects can be useful for pipeline building and research, but they cannot
+   claim "why now."
+
+No-signal prospects must not use urgent opportunity language, coral urgency,
+freshness labels, or "need this week" copy. Directory, database, maps, or
+company-site mining can support an evidence-backed prospect, but it does not
+create an opportunity unless a separate buying signal is found.
 
 ## Launch Vertical Strategy
 

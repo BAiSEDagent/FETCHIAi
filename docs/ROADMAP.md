@@ -4,6 +4,48 @@ Status: Planning source of truth. Keep this short and update as priorities chang
 
 ## Now
 
+### Lead supply architecture — CP7 docs-only
+
+Goal: define how Fetchi can grow lead supply without weakening the signal-to-opportunity
+promise.
+
+Engine model:
+
+- **Opportunity Engine** — signal discovery, evidence hydration, evidence gate,
+  classification/scoring, and qualified opportunities. This lane owns
+  Opportunity Urgency and requires a fresh public buying signal.
+- **Prospect Mining Engine** — prospect mining, evidence packets, prospect-fit review,
+  and Prospect Pool inventory. This lane creates evidence-backed prospects, not urgent
+  opportunities.
+- **Enrichment Engine** — contact route, buyer context, website/location/account details,
+  and source confidence for either opportunities or prospects.
+
+Lead supply model:
+
+- Prospect Pool holds evidence-backed prospects that are useful for pipeline building but
+  do not have a confirmed fresh buying signal.
+- Evidence-backed prospects can become CRM-ready later, but they must not claim urgency,
+  "why now," or "needs this week" without a separate signal.
+
+Export and CRM sequence:
+
+1. CSV export first.
+2. CRM field mapping next.
+3. HubSpot, Pipedrive, Zapier, and Make integrations later.
+4. Daily/weekly prospect mining jobs later, after the Prospect Mining Engine contract is
+   proven.
+
+Score split:
+
+- **Prospect Fit** — account and vertical fit for evidence-backed prospects.
+- **Outreach Readiness** — contactability, source confidence, and buyer-context quality.
+- **Opportunity Urgency** — signal-backed timeliness only; unavailable for no-signal
+  prospects.
+
+Scope boundary: CP7 is docs/spec only. No runtime work, DB/schema changes, UI/routes,
+provider implementation, package changes, classifier/scoring implementation, or outreach
+implementation.
+
 ### UI/design stabilization
 
 Goal: make the current customer app surfaces coherent enough to become the baseline.
@@ -85,6 +127,8 @@ Build Stripe BYOK integration around existing subscription/workspace credit logi
 
 - `docs/PM_OPERATING_SYSTEM.md`
 - `docs/PRODUCT_CONTEXT.md`
+- `docs/AGENT_WEB_DATA_ARCHITECTURE.md`
+- `docs/PROVIDER_CONTRACTS.md`
 - `docs/product/vertical-playbook-registry.md`
 - `docs/design/lead-card-taxonomy.md`
 - `docs/DECISIONS.md`
