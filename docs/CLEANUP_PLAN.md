@@ -221,6 +221,18 @@ State:
 - no scoring/classifier/outreach
 - prepares for evidence gate design between CandidateSignal and Opportunity
 
+## Product Proof CP6 — Candidate → Evidence Gate Contract
+
+State:
+- defines deterministic candidate+evidence gate
+- proves candidates cannot pass without source-linked evidence
+- returns approved fallback states for missing/weak/mismatched evidence
+- no provider calls
+- no DB/schema changes
+- no routes/UI changes
+- no scoring/classifier/outreach
+- prepares for later classification/scoring only after evidence gate passes
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
