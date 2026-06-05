@@ -233,6 +233,16 @@ State:
 - no scoring/classifier/outreach
 - prepares for later classification/scoring only after evidence gate passes
 
+## Product Proof CP7 — Lead Supply Architecture Update
+
+State:
+- defines signal-backed opportunities vs evidence-backed prospect leads
+- adds LeadKind / SourceEvidenceType concepts
+- documents the Prospect Mining lane and Prospect Pool distinction
+- treats Firecrawl Workflows as agent workflow references, not runtime authority
+- no provider implementation, DB/schema, UI/routes, scoring/classifier/outreach
+- prepares for fixture packs and prospect mining contract proof
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.

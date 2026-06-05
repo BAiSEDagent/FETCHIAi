@@ -208,6 +208,79 @@ Contract rules:
 
 ---
 
+## Prospect mining contracts
+
+These are docs-only conceptual contracts for the evidence-backed prospect lane. They do
+not implement a provider, do not emit opportunities, and do not authorize schema changes.
+
+```ts
+// docs-only conceptual contracts — not imported code
+
+type LeadKind =
+  | "signal_backed_opportunity"
+  | "evidence_backed_prospect"
+  | "exploratory_prospect";
+
+type SourceEvidenceType =
+  | "permit"
+  | "maps_listing"
+  | "directory"
+  | "company_website"
+  | "news"
+  | "job_posting"
+  | "review"
+  | "database"
+  | "property_portfolio";
+
+interface ProspectMiningInput {
+  workspaceId: string;
+  vertical: string;
+  location: { city: string; state: string; county?: string };
+  sourceTypes: SourceEvidenceType[];
+  targetAccountCriteria: string[]; // approved playbook/account-fit criteria
+  budget: BudgetEnvelope;
+}
+
+interface ProspectEvidencePacket {
+  leadKind: "evidence_backed_prospect" | "exploratory_prospect";
+  sourceType: SourceEvidenceType;
+  sourceUrl?: string;
+  sourceName?: string;
+  fetchedAt: string;            // ISO timestamp
+  accessNotes: string;          // how the public/legitimate source was accessed
+  businessName?: string;
+  location?: { address?: string; city?: string; state?: string };
+  evidenceSummary: string;      // grounded summary, no inferred buying signal
+  fitReasons: string[];
+  contactRouteHints?: string[];
+  rawProviderMetadata: unknown;
+}
+
+interface ProspectMiningOutput {
+  leadKind: "evidence_backed_prospect" | "exploratory_prospect";
+  evidencePackets: ProspectEvidencePacket[];
+  providerRunIds: string[];
+  prospectPoolNotes: string[];
+  costEstimateUsd: number;
+  error?: AgentError;
+}
+```
+
+Contract rules:
+- `ProspectMiningOutput` cannot emit opportunities, opportunity status, urgency scores, or
+  "why now" claims.
+- Directory, database, maps, and company-site lists are evidence-backed prospects only
+  unless a separate signal is discovered and hydrated through the signal-backed lane.
+- Prospect evidence must include public or legitimate source evidence plus access notes.
+- SerpApi remains the discovery provider for bounded search tasks.
+- Firecrawl remains the hydration, extraction, and enrichment provider for known sources.
+- LLMs may reason about fit later, but they cannot invent signal labels or upgrade a
+  no-signal prospect into an opportunity.
+- Firecrawl Workflows may inform repeatable workflow design, but they are references only
+  in this checkpoint and are not runtime authority.
+
+---
+
 ## Agent IO contracts
 
 Each agent has a typed input and output. These are conceptual contracts that show what

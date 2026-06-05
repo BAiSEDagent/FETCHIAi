@@ -65,6 +65,83 @@ The same raw signal can produce different opportunities for different workspaces
 
 ---
 
+## Lead supply lanes
+
+Fetchi supports two surfaced lead-supply lanes plus one shared enrichment lane. The lanes
+are intentionally separate so a prospect without a fresh buying signal never inherits
+opportunity language, urgency, or "why now" claims.
+
+### Lane A: Signal-backed Opportunities
+
+```
+Signal Discovery  ->  Evidence Hydration  ->  Evidence Gate  ->  Classification/Scoring  ->  Opportunity
+```
+
+- Starts from a public buying signal discovered through bounded, playbook-defined queries.
+- Requires source-linked evidence and a dated artifact before classification.
+- Can become `qualified_opportunity` only after the evidence gate passes.
+- Can claim urgency only when the evidence supports "why now."
+
+### Lane B: Evidence-backed Prospect Leads
+
+```
+Prospect Mining  ->  Evidence Packet  ->  Prospect Fit Gate  ->  Prospect Pool
+```
+
+- Starts from high-fit account discovery through public or legitimate sources such as
+  directories, maps listings, company websites, databases, or property portfolios.
+- Requires evidence of identity, fit, source, and access path.
+- Does not create opportunities and does not answer "why now" unless a separate fresh
+  buying signal is found.
+- Feeds a Prospect Pool for pipeline research, analyst review, or future signal watching.
+
+### Lane C: Enrichment
+
+```
+Enrichment  ->  Contact Route + Buyer Context
+```
+
+- Can enrich either Lane A or Lane B.
+- Adds website, location, contact-route hints, buyer context, account size, and source
+  confidence.
+- Does not change lead kind by itself. Enrichment cannot turn a no-signal prospect into an
+  opportunity.
+
+Docs-only lead-kind concepts:
+
+```ts
+type LeadKind =
+  | "signal_backed_opportunity"
+  | "evidence_backed_prospect"
+  | "exploratory_prospect";
+
+type SourceEvidenceType =
+  | "permit"
+  | "maps_listing"
+  | "directory"
+  | "company_website"
+  | "news"
+  | "job_posting"
+  | "review"
+  | "database"
+  | "property_portfolio";
+```
+
+**Today's Opportunities** are Lane A items that pass the evidence gate and later clear
+classification/scoring. They can carry opportunity urgency only when evidence supports the
+freshness window and the recommended action.
+
+**Prospect Pool** is Lane B inventory. It is evidence-backed account supply, not a ranked
+opportunity feed. Prospect-fit/readiness scoring may come later and should measure account
+fit, source confidence, and contactability. It is separate from opportunity urgency
+scoring, which requires a fresh signal and why-now evidence.
+
+Firecrawl Workflows may be used as references for repeatable prospect-mining workflow
+designs. They are not runtime authority in this checkpoint, do not introduce a dependency,
+and do not replace the provider contracts below.
+
+---
+
 ## Provider responsibility split
 
 Each provider has one clear job. Responsibilities do not overlap.
@@ -90,20 +167,24 @@ Key boundaries:
 These laws hold across all verticals and all checkpoints. Implementation that violates
 any of them is wrong, regardless of how it performs.
 
-1. **No lead without evidence.** Every surfaced opportunity must cite a dated public
-   artifact. No evidence → not a `qualified_opportunity`.
-2. **No score without reason.** A score is never shown without machine-readable score
+1. **No opportunity without signal.** A surfaced opportunity requires a fresh public
+   buying signal plus source-linked evidence. No-signal prospects can be useful leads,
+   but they are not opportunities.
+2. **No lead without evidence.** Every surfaced lead must cite public or legitimate
+   evidence. Every surfaced opportunity must cite a dated public artifact. No evidence →
+   not surfaced.
+3. **No score without reason.** A score is never shown without machine-readable score
    reasons that a human could audit.
-3. **No explanation without action.** Every surfaced opportunity carries a recommended
+4. **No explanation without action.** Every surfaced opportunity carries a recommended
    action; outreach drafts are explanations the user can act on, never auto-sent.
-4. **A search snippet is not an opportunity.** A SerpApi hit is a candidate. It must be
+5. **A search snippet is not an opportunity.** A SerpApi hit is a candidate. It must be
    hydrated and pass the evidence gate before it can be surfaced as an opportunity.
-5. **AI must not freestyle UI labels.** Classifiers may interpret and explain, but every
+6. **AI must not freestyle UI labels.** Classifiers may interpret and explain, but every
    UI-visible label must come from an approved playbook/taxonomy.
-6. **Labels come from approved playbooks.** Signal labels, vertical-fit labels, and
+7. **Labels come from approved playbooks.** Signal labels, vertical-fit labels, and
    freshness labels are drawn only from the active vertical playbook and
    `docs/design/lead-card-taxonomy.md`.
-7. **Fallback states are valid product states, not failures.** `needs_review`,
+8. **Fallback states are valid product states, not failures.** `needs_review`,
    `weak_fit`, `missing_evidence`, and `exploratory` are honest, intentional states — a
    fallback card must look deliberate, never broken.
 
