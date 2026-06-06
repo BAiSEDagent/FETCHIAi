@@ -268,6 +268,14 @@ State:
 - summarizes Fetchi product laws, lead-supply lanes, launch verticals, source-of-truth docs, protected files, local commands, and validation discipline
 - no runtime code, DB/schema, provider, auth, billing, route/UI, package, or connector contents-API changes
 
+## Product Proof CP10B — Roadmap Rebalance + Next Proof Sequence
+
+State:
+- rebalances roadmap after CP6–CP10A landed
+- moves stale UI/design stabilization out of active Now
+- defines next contract-first proof sequence toward scoring/classification
+- no code, runtime, provider, DB/schema, UI/routes, package, or implementation changes
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
