@@ -252,6 +252,15 @@ State:
 - no provider calls, DB/schema, UI/routes, scoring/classifier/outreach, CRM sync/export, or workflow runtime
 - prepares for later Prospect Pool fixtures and export/CRM contract proof
 
+## Product Proof CP9 — Prospect Mining Fixture Pack
+
+State:
+- adds deterministic Commercial Cleaning prospect-mining fixtures
+- proves directory, maps listing, company website, and property portfolio prospects can enter Prospect Pool without becoming opportunities
+- proves urgency language and opportunity fields are blocked
+- no provider calls, Firecrawl workflow runtime, DB/schema, routes/UI, scoring/classifier/outreach, CRM sync, or package changes
+- prepares for later prospect-mining fixture packs and CRM-ready export planning
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
