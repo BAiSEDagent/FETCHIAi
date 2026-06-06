@@ -261,6 +261,13 @@ State:
 - no provider calls, Firecrawl workflow runtime, DB/schema, routes/UI, scoring/classifier/outreach, CRM sync, or package changes
 - prepares for later prospect-mining fixture packs and CRM-ready export planning
 
+## Product Proof CP10A — README Entry Point
+
+State:
+- adds a complete root README as the repo entry point
+- summarizes Fetchi product laws, lead-supply lanes, launch verticals, source-of-truth docs, protected files, local commands, and validation discipline
+- no runtime code, DB/schema, provider, auth, billing, route/UI, package, or connector contents-API changes
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
