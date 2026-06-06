@@ -243,6 +243,15 @@ State:
 - no provider implementation, DB/schema, UI/routes, scoring/classifier/outreach
 - prepares for fixture packs and prospect mining contract proof
 
+## Product Proof CP8 — Prospect Mining Contract Proof
+
+State:
+- adds inert prospect-mining TypeScript contracts and deterministic validation
+- proves evidence-backed prospects are Prospect Pool items, not opportunities
+- blocks missing source evidence, missing access notes, urgency language, and opportunity-only fields
+- no provider calls, DB/schema, UI/routes, scoring/classifier/outreach, CRM sync/export, or workflow runtime
+- prepares for later Prospect Pool fixtures and export/CRM contract proof
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
