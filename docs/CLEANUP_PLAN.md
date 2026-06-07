@@ -181,7 +181,7 @@ Created three architecture source-of-truth docs and updated this plan:
 Scope: docs-only architecture proof.
 No app/code/provider/schema changes.
 Defines the SerpApi (discovery) / Firecrawl (evidence hydration) responsibility
-split, the signal state model, the evidence gate, the fallback flow, the
+split, the signal state model, the evidence gate, the fallback flow, and the
 conceptual provider contracts, and playbook-to-query examples — before any
 provider contract, schema, or agent implementation is written (scoped to CP4+).
 
@@ -285,6 +285,16 @@ State:
 - requires score reasons for non-null scores
 - no runtime scoring, provider calls, DB/schema, routes/UI, classifier/outreach, CRM sync/export, or package changes
 - prepares for CP12 signal-backed opportunity scoring contract
+
+## Product Proof CP12 — Signal-backed Opportunity Scoring Contract
+
+State:
+- adds inert signal-backed opportunity urgency scoring contract
+- requires signal, source-linked evidence, provider lineage, freshness window, and why-now reasons
+- blocks opportunity urgency for evidence-backed prospects
+- requires machine-readable score reasons for non-null urgency scores
+- no runtime scoring, provider calls, DB/schema, routes/UI, classifier/outreach, CRM sync/export, or package changes
+- prepares for CP13 Classification Contract Harness
 
 ## Current Status
 
