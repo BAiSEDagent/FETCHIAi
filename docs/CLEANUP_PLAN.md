@@ -286,6 +286,16 @@ State:
 - no runtime scoring, provider calls, DB/schema, routes/UI, classifier/outreach, CRM sync/export, or package changes
 - prepares for CP12 signal-backed opportunity scoring contract
 
+## Product Proof CP12 — Signal-backed Opportunity Scoring Contract
+
+State:
+- adds inert signal-backed opportunity urgency scoring contract
+- requires signal, source-linked evidence, provider lineage, freshness window, and why-now reasons
+- blocks opportunity urgency for evidence-backed prospects
+- requires machine-readable score reasons for non-null urgency scores
+- no runtime scoring, provider calls, DB/schema, routes/UI, classifier/outreach, CRM sync/export, or package changes
+- prepares for CP13 Classification Contract Harness
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
