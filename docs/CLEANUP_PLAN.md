@@ -181,7 +181,7 @@ Created three architecture source-of-truth docs and updated this plan:
 Scope: docs-only architecture proof.
 No app/code/provider/schema changes.
 Defines the SerpApi (discovery) / Firecrawl (evidence hydration) responsibility
-split, the signal state model, the evidence gate, the fallback flow, and the
+split, the signal state model, the evidence gate, the fallback flow, the
 conceptual provider contracts, and playbook-to-query examples — before any
 provider contract, schema, or agent implementation is written (scoped to CP4+).
 
