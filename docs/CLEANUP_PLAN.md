@@ -276,6 +276,16 @@ State:
 - defines next contract-first proof sequence toward scoring/classification
 - no code, runtime, provider, DB/schema, UI/routes, package, or implementation changes
 
+## Product Proof CP11 — Prospect Fit / Outreach Readiness Scoring Contract
+
+State:
+- adds inert prospect scoring contract
+- separates Prospect Fit and Outreach Readiness from Opportunity Urgency
+- blocks opportunity urgency scoring for evidence-backed prospects
+- requires score reasons for non-null scores
+- no runtime scoring, provider calls, DB/schema, routes/UI, classifier/outreach, CRM sync/export, or package changes
+- prepares for CP12 signal-backed opportunity scoring contract
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
