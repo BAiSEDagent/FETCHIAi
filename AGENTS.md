@@ -2,104 +2,131 @@
 
 These rules apply to every coding agent working in this repository: Replit Agent, Claude Code, Codex, Cursor, or any future automation.
 
-## Source of truth
+## Start Here
 
-- GitHub is the source of truth for code, docs, issues, and PRs.
-- Work from the current `main` branch unless an issue or PR says otherwise.
-- Prefer one task per branch and one PR per task.
-- Do not make broad unrelated edits while solving a narrow task.
+Agents should use the current repo entry and control surfaces in this order:
 
-## Product context
+1. `README.md`
+2. GitHub Issue #6 Agent Control Room, when doing active checkpoint work
+3. `docs/PM_OPERATING_SYSTEM.md`
+4. `docs/ROADMAP.md`
+5. `docs/PRODUCT_CONTEXT.md`
+6. Scoped source docs for the assigned task
 
-Fetchi is a signal-based lead generation SaaS for local and commercial service businesses. It watches public buying signals, turns them into evidence-backed opportunities, explains why each lead matters now, and helps the user take action.
+Work from the current `main` branch unless the active issue, PR, or checkpoint explicitly says otherwise. Prefer one task per branch and one PR per task. Keep diffs narrow and avoid unrelated edits.
 
-The core product loop is:
+## Product Context
+
+Fetchi is a signal-to-opportunity engine for local and commercial service businesses. Fetchi watches public buying signals, enriches prospects with evidence, separates Prospect Pool items from signal-backed opportunities, and helps users take action when the evidence supports it.
+
+Core loop:
 
 ```txt
-Signal → Prospect + Enrichment → Opportunity → Contact Route → Outreach Play
+Signal -> Prospect + Enrichment -> Opportunity -> Contact Route -> Outreach Play
 ```
 
-The three product laws:
+## Product Laws
 
-1. No lead without evidence.
-2. No score without reason.
-3. No explanation without action.
+- No opportunity without signal.
+- No lead without evidence.
+- No score without reason.
+- No explanation without action.
 
-## Design rules
+## Lead Supply Lanes
 
-- Customer surfaces must follow `DESIGN_SYSTEM_V2.md`.
-- The current design north star is: **Calmer. One decision per step. Big tap targets. No SaaS clutter.**
-- The five attached asset screenshots referenced in `DESIGN_SYSTEM_V2.md` are the visual ground truth for customer surfaces.
-- Do not treat the older HTML files in `design/` as the final visual target when they conflict with `DESIGN_SYSTEM_V2.md`.
-- Admin surfaces are intentionally separate from the customer app design language.
-- Design at 375px mobile width first, then scale up.
-- Minimum touch target is 44×44px.
-- Never use pure white cards directly on parchment customer surfaces; use the cream/brand surface tokens from `DESIGN_SYSTEM_V2.md`.
-- The stamp/shadow treatment is reserved for the ツ avatar only.
+Signal-backed Opportunities can carry urgency only when signal, evidence, and why-now reasons exist. Opportunity urgency is not allowed from score, status, vertical, or prospect evidence alone.
 
-## Protected files
+Evidence-backed Prospects can enter the Prospect Pool, but must not claim urgency, opportunity status, coral urgency treatment, or opportunity urgency scores. Prospects can have Prospect Fit and Outreach Readiness signals, but they are not opportunities until a qualifying signal-backed opportunity path exists.
+
+Status, signal, vertical fit, freshness, score, and surface color are separate product concepts. Do not collapse them into one label or one color rule.
+
+## Source Docs
+
+Use the current source docs for the task surface:
+
+- `docs/DESIGN_SOURCE_OF_TRUTH.md` is the current design source of truth.
+- `docs/design/lead-card-taxonomy.md` is the current label, fallback, and surface-color source of truth.
+- `docs/product/vertical-playbook-registry.md` and scoped playbooks define approved UI-visible taxonomy labels.
+- `docs/AGENT_WEB_DATA_ARCHITECTURE.md`, `docs/PROVIDER_CONTRACTS.md`, and `docs/PLAYBOOK_SEARCH_EXAMPLES.md` describe provider and evidence architecture.
+- `docs/repo-stale-entry-audit.md` tracks stale or legacy repo-control surfaces.
+
+`DESIGN_SYSTEM_V2.md` is legacy and needs Adam decision per `docs/repo-stale-entry-audit.md`. Do not use it as active customer UI authority unless a checkpoint explicitly scopes it.
+
+## Provider Boundaries
+
+- SerpApi = discovery.
+- Firecrawl = evidence hydration/extraction after a source exists.
+- LLMs may classify, score, explain, and draft only inside approved contracts, playbooks, and taxonomy.
+- UI-visible labels must come from approved taxonomy and playbooks, not freeform LLM text.
+- DB/audit = lineage.
+
+Do not make direct provider calls outside scoped provider abstraction work. Do not add provider runtime, Firecrawl workflow runtime, broad crawling, scoring runtime, classifier runtime, outreach runtime, CRM sync, or export implementation unless explicitly scoped.
+
+Never expose raw stack traces, API errors, secrets, provider payloads, or API keys to users.
+
+## Protected Files
 
 Do not modify these files unless the issue explicitly asks for it:
 
 ```txt
+replit.md
+FETCHI_CLAUDE_CODE_BRIEF.md
 db/schema.ts
 db/index.ts
 db/seed.ts
 drizzle.config.ts
 ```
 
-These files define the database contract and billing/trial gate primitives. Do not rewrite them for style, convenience, or compile fixes.
+Also avoid DB/schema, auth, billing, provider/search/agent logic, admin, settings, middleware, package files, and runtime implementation changes unless explicitly scoped.
 
-## Architecture rules
+## Architecture Rules
 
 - All database queries must be workspace-scoped with `workspace_id` / `workspaceId`.
-- Do not hardcode prices, opportunity limits, score thresholds, cron schedules, email copy, prompt copy, feature gates, or provider/model choices.
+- Do not hardcode prices, opportunity limits, score thresholds, cron schedules, email copy, prompt copy, feature gates, provider choices, or model choices.
 - Runtime config should come from database-backed config tables where already modeled.
-- All LLM calls must route through the provider abstraction in `lib/agents/providers.ts` or its current repo equivalent.
-- All search calls must route through the search provider abstraction in `lib/search/` or its current repo equivalent.
-- SerpApi is the discovery/search layer, not the enrichment layer.
-- Firecrawl, if added, should be provider-abstracted enrichment after a URL/domain/source is found. Do not replace SerpApi with Firecrawl.
-- Never expose raw stack traces, API errors, secrets, or provider responses to users.
-
-## Stripe and billing rules
-
-- Do not use the Replit Stripe connector.
-- Stripe is BYOK.
-- Do not modify the subscription schema, `consumeOpportunityCredit()`, or `checkTrialGate()` unless explicitly assigned.
-- Do not bypass trial gates, card gates, opportunity counters, or usage accounting for UI convenience.
-
-## Replit rules
-
-- Replit is the preview/runtime environment, not the sole source of truth.
-- Do not enable Replit AI Integrations for Anthropic/OpenAI/Google unless the issue explicitly asks for it.
-- Do not set `DATABASE_URL` manually. Replit injects it.
+- All LLM calls must route through the provider abstraction in the current repo equivalent.
+- All search calls must route through the search provider abstraction in the current repo equivalent.
+- Do not replace real logic with mocks unless the issue explicitly calls for fixtures.
 - Do not add secrets to source files.
 
-## Change discipline
+## Change Discipline
 
 Before implementation:
 
-1. Read the issue.
-2. Identify the exact files needed.
-3. Check `DESIGN_SYSTEM_V2.md` for customer UI tasks.
-4. Check existing components before creating new primitives.
+1. Read the active checkpoint or issue.
+2. Confirm branch, base, role, preflight, postflight, and file-lock rules.
+3. Identify the exact allowed files.
+4. Inspect existing components, contracts, scripts, or docs before creating new primitives.
 
 During implementation:
 
 - Keep changes scoped.
-- Prefer small reusable primitives over one-off styling.
-- Avoid arbitrary colors, spacing, shadows, and custom status palettes.
+- Prefer existing patterns and small reusable primitives.
+- Avoid broad cleanup mixed with product work.
+- Avoid protected/runtime work unless explicitly scoped.
 - Do not delete working features to simplify the task.
-- Do not replace real logic with mocks unless the issue explicitly calls for fixtures.
+- Do not modify package files unless explicitly scoped.
 
-Before reporting done:
+## Validation Discipline
 
-- Run `npm run type-check` when TypeScript changed.
-- Run `npm run build` when app structure, routes, or shared components changed.
-- Include the commands run and results in the PR or final report.
-- For UI changes, include screenshots at 375px mobile and desktop.
+Before reporting done, run the checks required by the checkpoint. Default proof expectations:
 
-## PR expectations
+- `npm run type-check`
+- `rm -rf .next && npm run build`
+- route count for builds when relevant
+- smoke scripts for product-proof checkpoints
+- screenshots only for UI checkpoints
+- exact blockers if local env, DNS, credential, dependency, or connector issues prevent proof
+
+Use temporary shell-only environment placeholders for local build proof only when approved or already established for the checkpoint. Do not write `.env` files or real secrets.
+
+## Codex and GitHub Workflow
+
+- Do not push or open a PR until Adam approves.
+- Use the GitHub connector path for Codex PR publication when requested.
+- Do not use unauthenticated shell `git push`.
+- Do not merge without explicit approval.
+- Replit remains the final runtime/build proof environment when requested.
 
 Every PR should include:
 
@@ -114,49 +141,33 @@ Known limitations or follow-up tasks
 
 If a task cannot be completed safely, stop and explain the blocker instead of improvising around protected architecture.
 
-## Codex task guidance
+## Review Guidelines
 
-When assigned a GitHub issue or PR, Codex should:
+Code review should prioritize serious issues over style nits. Flag P0/P1 issues for:
 
-1. Read this file first.
-2. Read the linked issue in full.
-3. For customer UI work, read `DESIGN_SYSTEM_V2.md` before opening implementation files.
-4. Inspect existing components/routes before creating new files.
-5. Produce the smallest safe diff that satisfies the acceptance criteria.
-6. Prefer component primitives and token fixes over one-off styling.
-7. Avoid backend, database, auth, billing, provider, or agent changes unless the issue explicitly asks for them.
-8. Run the repo checks requested by the issue and report exact results.
-9. If screenshots are required but the environment cannot capture them, say so clearly in the PR notes and explain what was verified instead.
-
-For the first task, Codex should focus on Issue #1 only: `Design System Lock Pass`.
-
-## Review guidelines
-
-Codex code review should prioritize serious issues over style nits. Flag P0/P1 issues for:
-
-- Any change to protected database/billing files that was not explicitly requested.
-- Any customer UI change that violates `DESIGN_SYSTEM_V2.md` in a material way.
+- Any change to protected files that was not explicitly requested.
 - Any hardcoded pricing, limits, score thresholds, schedules, provider/model choices, prompts, or email copy.
 - Any unscoped database query that can leak data across workspaces.
 - Any direct LLM/provider/search API call that bypasses the provider abstraction layer.
 - Any accidental exposure of secrets, stack traces, raw provider errors, or API keys.
-- Any use of the Replit Stripe connector or Replit-managed AI integrations where BYOK/provider abstraction is required.
-- Any removal of trial gates, opportunity counters, or usage checks.
+- Any removal of trial gates, opportunity counters, usage checks, evidence gates, or score reasons.
 - Any app-structure change that breaks `npm run type-check` or `npm run build`.
 
-Do not block PRs for small copy/style preferences unless they contradict the design system or acceptance criteria.
+Do not block PRs for small copy/style preferences unless they contradict active source docs or acceptance criteria.
 
-## Safe-area and bottom-fixed UI convention
+## Safe-Area and Bottom-Fixed UI Convention
 
-Any `fixed bottom-0` element (`BottomNav`, sticky footers, sticky CTAs) MUST:
-- use the theme background token on its own element (e.g. `bg-bg`)
+Any `fixed bottom-0` element (`BottomNav`, sticky footers, sticky CTAs) must:
+
+- use the theme background token on its own element, for example `bg-bg`
 - include `style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}`
 
 Body must keep `padding-bottom: env(safe-area-inset-bottom)` and `background: var(--bg)`.
 
-Product dark surfaces must paint into the safe area. The product layout uses a `[data-fetchi-theme-root].theme-dark` marker — `body:has([data-fetchi-theme-root].theme-dark)` flips `--bg` to dark so the safe-area paints dark.
+Product dark surfaces must paint into the safe area. The product layout uses a `[data-fetchi-theme-root].theme-dark` marker; `body:has([data-fetchi-theme-root].theme-dark)` flips `--bg` to dark so the safe area paints dark.
 
 Never:
+
 - rely on a parent container to paint the safe-area zone
 - introduce `border-t`, `<hr>`, or 1px dividers between routed content and bottom-fixed UI
 - paint the inner BottomNav wrapper with its own background that ends above the safe area
