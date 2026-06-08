@@ -306,6 +306,15 @@ State:
 - no LLM runtime, provider calls, DB/schema, routes/UI, scoring, outreach, CRM sync/export, or package changes
 - prepares for later classifier implementation and additional vertical fixture packs
 
+## Product Proof CP13B-A — Stale Repo Entry Audit
+
+State:
+- audits root/docs instruction files for stale control surfaces
+- identifies delete candidates without deleting them
+- preserves protected/source-of-truth docs
+- no code, runtime, provider, DB/schema, routes/UI, package, or implementation changes
+- prepares for CP13B-B approved stale-file removal
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
