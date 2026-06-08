@@ -296,6 +296,16 @@ State:
 - no runtime scoring, provider calls, DB/schema, routes/UI, classifier/outreach, CRM sync/export, or package changes
 - prepares for CP13 Classification Contract Harness
 
+## Product Proof CP13 — Classification Contract Harness
+
+State:
+- adds inert Commercial Cleaning classification contract harness
+- proves signal, vertical-fit, fallback, and surface labels must come from approved playbook/taxonomy values
+- blocks freestyle UI-visible labels
+- blocks urgent_action surface without evidence and why-now reasons
+- no LLM runtime, provider calls, DB/schema, routes/UI, scoring, outreach, CRM sync/export, or package changes
+- prepares for later classifier implementation and additional vertical fixture packs
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
