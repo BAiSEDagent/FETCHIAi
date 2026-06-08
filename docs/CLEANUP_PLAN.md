@@ -324,6 +324,15 @@ State:
 - no code, runtime, provider, DB/schema, routes/UI, package, or implementation changes
 - reduces risk of future agents reviving old kickoff/build flows
 
+## Product Proof CP13C — Agent Control Docs Refresh
+
+State:
+- refreshes AGENTS.md to remove stale Issue #1 / DESIGN_SYSTEM_V2 active-authority instructions
+- points agents to README.md, Issue #6, PM operating system, roadmap, product context, design source of truth, and lead-card taxonomy
+- preserves DESIGN_SYSTEM_V2.md, protected technical files, README.md, and current source-of-truth docs
+- no code, runtime, provider, DB/schema, routes/UI, package, or implementation changes
+- reduces risk of future agents following stale kickoff/design workflow
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
