@@ -4,7 +4,7 @@ Status: Planning source of truth. Keep this short and update as priorities chang
 
 ## Now
 
-### Product-proof sequence — current center
+### Product-proof sequence - current center
 
 Goal: keep Fetchi moving from product architecture toward implementation by proving one
 contract boundary at a time before adding runtime, DB/schema, UI, or provider surface.
@@ -25,48 +25,57 @@ Recently landed product-proof chain:
   - Proved directory, maps listing, company website, and property portfolio prospects can enter Prospect Pool without becoming opportunities.
 - **CP10A — README + Repo Entry Point**
   - Added the root README entry point with product laws, lead-supply lanes, engine boundaries, source-of-truth docs, protected files, commands, and validation discipline.
+- **CP10B — Roadmap Rebalance + Next Proof Sequence**
+  - Moved stale UI/design stabilization out of active Now.
+  - Defined the contract-first sequence toward scoring and classification.
+- **CP11 — Prospect Fit / Outreach Readiness Scoring Contract**
+  - Added the inert prospect scoring contract.
+  - Separated Prospect Fit and Outreach Readiness from Opportunity Urgency.
+- **CP12 — Signal-backed Opportunity Scoring Contract**
+  - Added the inert signal-backed opportunity urgency scoring contract.
+  - Required signal, source-linked evidence, provider lineage, freshness window, and why-now reasons.
+- **CP13 — Classification Contract Harness**
+  - Added the inert Commercial Cleaning classification contract harness.
+  - Proved UI-visible labels must come from approved playbook/taxonomy values.
+- **CP13B-A — Stale Repo Entry Audit**
+  - Audited root/docs instruction files for stale control surfaces.
+  - Identified delete candidates without deleting them.
+- **CP13B-B — Remove Approved Stale Root Files**
+  - Deleted the approved stale root control files.
+  - Preserved current entry/control surfaces.
+- **CP13C — Agent Control Docs Refresh**
+  - Refreshed `AGENTS.md` so future agents use current repo control surfaces.
+  - Marked `DESIGN_SYSTEM_V2.md` as legacy unless explicitly scoped.
 
 Current active mode:
 
-- Roadmap rebalance after CP6–CP10A landed.
-- Next proof sequence planning.
+- Lead Funnel product spec before CP14.
+- Next proof sequence planning around Prospect Pool export contract.
 - No runtime expansion until the next contract checkpoint is explicitly scoped.
-- No DB/schema, provider runtime, UI/routes, package, billing, auth, or admin changes in this mode.
+- No DB/schema, provider runtime, UI/routes, package, billing, auth, admin, export UI, CRM sync, or outreach changes in this mode.
 
 ## Next
 
-### CP11 — Prospect Fit / Outreach Readiness Scoring Contract
+### CP14A — Lead Funnel Product Spec
 
-- Contract only.
-- Separate Prospect Fit from Outreach Readiness.
-- Keep evidence-backed prospects out of opportunity urgency scoring.
-- No runtime scoring.
-- No UI.
-- No DB/schema.
+- Spec only.
+- Define Lead Funnel as Prospect Pool + Signal Watch + Opportunities + Suggested Actions.
+- Preserve strict separation between evidence-backed prospects and signal-backed opportunities.
+- Use Twin research, Firecrawl data proof, and Suggested Actions as product inputs.
+- No runtime, DB/schema, UI/routes, provider, export, CRM, or outreach implementation.
 
-### CP12 — Signal-backed Opportunity Scoring Contract
+### CP14 — Prospect Pool Export Contract
 
-- Define the contract for signal-backed opportunity scoring.
-- Separate Opportunity Urgency from Prospect Fit and Outreach Readiness.
-- Require why-now evidence before urgency scoring is available.
-- Prevent fake urgency for evidence-backed prospects.
-
-### CP13 — Classification Contract Harness
-
-- Prove classification against approved playbook labels only.
-- Start with Commercial Cleaning fixtures.
-- Verify fallback behavior when labels, fit, or evidence are weak.
-- No freestyle UI-visible labels.
-
-### CP14 — Prospect Pool Export Planning
-
-- Plan CSV/export shape before implementation.
-- Define export fields, exclusions, and guardrails for evidence-backed prospects.
-- Keep CRM-ready planning separate from CRM sync implementation.
+- Contract/spec proof after CP14A.
+- Define export readiness fields.
+- Define blocked claims and blocked fields.
+- Define CRM-ready mapping shape.
+- Define CSV/export guardrails.
+- No actual CRM sync/export UI yet.
 
 ### CP15 — Vertical Expansion: Commercial Roofing Playbook v1
 
-- Add the next vertical playbook only after scoring and classification seams are proven.
+- Add the next vertical playbook only after scoring, classification, Lead Funnel, and export seams are proven.
 - Use the same playbook/config model as Commercial Cleaning.
 - Do not hardcode vertical behavior into components or runtime.
 
@@ -127,12 +136,15 @@ after classification and scoring contracts are proven.
 - Runtime Firecrawl workflow integration.
 - Broad crawling.
 - CRM sync implementation.
+- Export UI implementation.
+- Auto-outreach.
 - Cloned niche apps.
+- Cloned agent marketplace.
 - Building 50 verticals immediately.
 - DB/schema changes without an explicit checkpoint.
 - New provider runtime without an explicit checkpoint.
 - Public Agency plan exposure.
-- Firecrawl replacing SerpAPI.
+- Firecrawl replacing SerpApi.
 - SMS/push notifications for MVP.
 - Broad refactors while product-proof sequencing is active.
 
@@ -149,6 +161,7 @@ after classification and scoring contracts are proven.
 - `docs/AGENT_WEB_DATA_ARCHITECTURE.md`
 - `docs/PROVIDER_CONTRACTS.md`
 - `docs/product/vertical-playbook-registry.md`
+- `docs/product/lead-funnel-product-spec.md`
 - `docs/design/lead-card-taxonomy.md`
 - `docs/DECISIONS.md`
 - `docs/CLEANUP_PLAN.md`

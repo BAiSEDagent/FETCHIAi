@@ -333,6 +333,16 @@ State:
 - no code, runtime, provider, DB/schema, routes/UI, package, or implementation changes
 - reduces risk of future agents following stale kickoff/design workflow
 
+## Product Proof CP14A — Lead Funnel Product Spec
+
+State:
+- adds Lead Funnel product spec as docs-only checkpoint
+- updates roadmap to place CP14A before CP14 Prospect Pool Export Contract
+- defines Lead Funnel as Prospect Pool + Signal Watch + Opportunities + Suggested Actions
+- preserves evidence/prospect/opportunity guardrails
+- no code, runtime, provider, DB/schema, routes/UI, package, export, CRM, or outreach implementation changes
+- keeps runtime Firecrawl, broad crawling, CRM sync, export UI, and auto-outreach parked
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
