@@ -315,6 +315,15 @@ State:
 - no code, runtime, provider, DB/schema, routes/UI, package, or implementation changes
 - prepares for CP13B-B approved stale-file removal
 
+## Product Proof CP13B-B — Remove Approved Stale Repo Entry Files
+
+State:
+- deletes stale root control files approved by CP13B-A audit
+- removed CODEX_KICKOFF.md, START_HERE.md, and REPLIT_AGENT_OPENING_PROMPT.md
+- preserves AGENTS.md, DESIGN_SYSTEM_V2.md, protected technical files, README.md, and current source-of-truth docs
+- no code, runtime, provider, DB/schema, routes/UI, package, or implementation changes
+- reduces risk of future agents reviving old kickoff/build flows
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
