@@ -343,6 +343,14 @@ State:
 - no code, runtime, provider, DB/schema, routes/UI, package, export, CRM, or outreach implementation changes
 - keeps runtime Firecrawl, broad crawling, CRM sync, export UI, and auto-outreach parked
 
+## Product Proof CP14A-B — Roadmap MVP Completion + Remaining Work Update
+
+State:
+- updates roadmap with PM build-completion snapshot, working MVP definition, and remaining MVP chunks
+- preserves CP14 as Prospect Pool Export Contract and adds downstream CP16-CP18 planning sequence
+- no code, runtime, provider, DB/schema, routes/UI, package, export, CRM, billing, or outreach implementation changes
+- keeps runtime Firecrawl, broad crawling, CRM sync, auto-outreach, DB/schema, and provider runtime parked unless explicitly scoped
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
