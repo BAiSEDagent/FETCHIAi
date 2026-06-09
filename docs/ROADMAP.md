@@ -46,38 +46,126 @@ Recently landed product-proof chain:
 - **CP13C — Agent Control Docs Refresh**
   - Refreshed `AGENTS.md` so future agents use current repo control surfaces.
   - Marked `DESIGN_SYSTEM_V2.md` as legacy unless explicitly scoped.
+- **CP14A — Lead Funnel Product Spec**
+  - Defined Lead Funnel as Prospect Pool + Signal Watch + Opportunities + Suggested Actions.
+  - Preserved the separation between evidence-backed prospects and signal-backed opportunities.
 
 Current active mode:
 
-- Lead Funnel product spec before CP14.
-- Next proof sequence planning around Prospect Pool export contract.
+- Roadmap MVP completion and remaining-work clarity.
+- Next proof sequence planning around Prospect Pool export contract, contact route/outreach contracts, and Lead Funnel runtime planning.
 - No runtime expansion until the next contract checkpoint is explicitly scoped.
 - No DB/schema, provider runtime, UI/routes, package, billing, auth, admin, export UI, CRM sync, or outreach changes in this mode.
 
+## Build Completion Snapshot
+
+These are PM planning estimates, not automated metrics:
+
+- Working sellable product: 30-35% done.
+- Product architecture / proof spine: 70-75% done.
+- Launch-ready SaaS: 20-25% done.
+
+Fetchi has a strong product-contract spine: evidence gates, prospect mining contracts, scoring seams, classification guardrails, lead-supply architecture, and Lead Funnel product definition are now documented or scaffolded. Fetchi is not yet a working lead engine because runtime discovery, evidence hydration, storage, export, billing, and customer Lead Funnel surfaces are not implemented.
+
+## Working MVP Definition
+
+A first sellable MVP means:
+
+- A Commercial Cleaning user can sign up.
+- The user can enter service area and business type.
+- Fetchi can produce a first Lead Funnel.
+- The Lead Funnel honestly separates Prospect Pool items from signal-backed opportunities.
+- The user can inspect evidence and contact-route hints.
+- The user can use Suggested Actions.
+- The user can save, export, or draft outreach.
+- The product never shows unsupported urgency claims.
+
+## Remaining MVP Work Chunks
+
+1. Finish contract/spec runway
+   - CP14 — Prospect Pool Export Contract.
+   - CP15 — Commercial Roofing Playbook v1.
+   - CP16 — Contact Route / Outreach Play Contract.
+   - CP17 — Lead Funnel Runtime Implementation Plan.
+
+2. Lead Funnel storage and normalization
+   - Lead Funnel record shape.
+   - Prospect Pool records.
+   - Opportunity records.
+   - Watchlist / Needs Review states.
+   - Evidence source storage.
+   - Blocked claims storage.
+   - Contact route hints.
+   - Run lineage.
+   - Note: likely requires an explicit protected DB/schema checkpoint.
+
+3. Discovery + evidence hydration runtime
+   - SerpApi = discovery / what changed.
+   - Firecrawl = evidence hydration/extraction after source exists.
+   - LLM = classify/explain/draft inside approved playbooks/contracts.
+   - DB/audit = lineage.
+   - No broad crawling.
+   - No random agent marketplace.
+
+4. Customer Lead Funnel surfaces
+   - Today's Opportunities.
+   - Prospect Pool.
+   - Watchlist.
+   - Needs Review.
+   - Lead Detail evidence.
+   - Suggested Actions.
+   - Export-ready prospects.
+
+5. Export and outreach
+   - CSV export first.
+   - Google Sheets-shaped export fields.
+   - Outreach draft only, not auto-send.
+   - Contact route confidence.
+   - Blocked claims included.
+
+6. Billing and launch readiness
+   - Stripe BYOK.
+   - Trial/credit gates.
+   - Usage limits.
+   - Admin controls.
+   - Production env checks.
+   - Basic support/feedback loop.
+
 ## Next
-
-### CP14A — Lead Funnel Product Spec
-
-- Spec only.
-- Define Lead Funnel as Prospect Pool + Signal Watch + Opportunities + Suggested Actions.
-- Preserve strict separation between evidence-backed prospects and signal-backed opportunities.
-- Use Twin research, Firecrawl data proof, and Suggested Actions as product inputs.
-- No runtime, DB/schema, UI/routes, provider, export, CRM, or outreach implementation.
 
 ### CP14 — Prospect Pool Export Contract
 
-- Contract/spec proof after CP14A.
+- Contract/spec proof.
 - Define export readiness fields.
 - Define blocked claims and blocked fields.
 - Define CRM-ready mapping shape.
 - Define CSV/export guardrails.
 - No actual CRM sync/export UI yet.
 
-### CP15 — Vertical Expansion: Commercial Roofing Playbook v1
+### CP15 — Commercial Roofing Playbook v1
 
-- Add the next vertical playbook only after scoring, classification, Lead Funnel, and export seams are proven.
+- Add the next vertical playbook after scoring, classification, Lead Funnel, and export seams are proven.
 - Use the same playbook/config model as Commercial Cleaning.
 - Do not hardcode vertical behavior into components or runtime.
+
+### CP16 — Contact Route / Outreach Play Contract
+
+- Contract only.
+- Define contact route hints, confidence, blocked claims, and outreach-play eligibility.
+- Draft-only outreach guardrails.
+- No auto-send, CRM sync, provider runtime, DB/schema, or UI implementation.
+
+### CP17 — Lead Funnel Runtime Implementation Plan
+
+- Implementation plan only.
+- Sequence storage, provider runtime, lineage, customer surfaces, export, billing gates, and validation.
+- Identify required explicit DB/schema checkpoints before any schema work.
+
+### CP18 — Lead Funnel MVP Implementation
+
+- Implementation checkpoint after CP17 is approved.
+- Keep scope tied to the working MVP definition.
+- Do not overbuild beyond the first Lead Funnel path.
 
 ## Later
 
@@ -133,10 +221,10 @@ after classification and scoring contracts are proven.
 
 ## Parked / Not Now
 
-- Runtime Firecrawl workflow integration.
+- Runtime Firecrawl workflow integration until scoped.
 - Broad crawling.
 - CRM sync implementation.
-- Export UI implementation.
+- Export UI implementation until after export contract.
 - Auto-outreach.
 - Cloned niche apps.
 - Cloned agent marketplace.
