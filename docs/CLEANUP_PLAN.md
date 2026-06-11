@@ -273,7 +273,7 @@ State:
 State:
 - rebalances roadmap after CP6–CP10A landed
 - moves stale UI/design stabilization out of active Now
-- defines next contract-first sequence toward scoring/classification
+- defines next contract-first proof sequence toward scoring/classification
 - no code, runtime, provider, DB/schema, UI/routes, package, or implementation changes
 
 ## Product Proof CP11 — Prospect Fit / Outreach Readiness Scoring Contract
