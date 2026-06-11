@@ -273,7 +273,7 @@ State:
 State:
 - rebalances roadmap after CP6–CP10A landed
 - moves stale UI/design stabilization out of active Now
-- defines next contract-first proof sequence toward scoring/classification
+- defines next contract-first sequence toward scoring/classification
 - no code, runtime, provider, DB/schema, UI/routes, package, or implementation changes
 
 ## Product Proof CP11 — Prospect Fit / Outreach Readiness Scoring Contract
@@ -358,6 +358,14 @@ State:
 - defines export readiness, required fields, blocked fields/claims, CSV/Sheets guardrails, and CRM-ready account-worklist mapping shape
 - proves Prospect Pool export does not turn prospects into opportunities
 - no runtime export, CSV generation, CRM sync, DB/schema, provider, routes/UI, billing, package, or outreach changes
+
+## Product Proof CP15 — Commercial Roofing Playbook v1
+
+State:
+- adds Commercial Roofing as a v1 core-supported vertical playbook/spec
+- adds an inert Commercial Roofing classification contract and smoke proof for approved labels, fallback states, surfaces, and blocked claims
+- preserves Prospect Pool vs Opportunity separation, weather-safety rules, procurement routing, and contractor-as-buyer guardrails
+- no runtime classifier, provider, Shovels, DB/schema, routes/UI, CRM/export, outreach, billing, admin, settings, package, or Claim Guard changes
 
 ## Current Status
 
