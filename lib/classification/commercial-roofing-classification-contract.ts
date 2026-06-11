@@ -58,7 +58,6 @@ export const APPROVED_COMMERCIAL_ROOFING_SURFACES = [
   'preview',
   'formal_record',
   'fallback',
-  'watchlist',
 ] as const
 
 export type CommercialRoofingSignalLabel =
