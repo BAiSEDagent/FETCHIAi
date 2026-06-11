@@ -50,9 +50,10 @@ The following vertical playbooks are currently authored and active as product/sp
 
 | vertical_key | display_name | status | version | playbook_file |
 |---|---|---|---|---|
+| `commercial_roofing` | Commercial Roofing | active | 1.0 | `docs/product/playbooks/commercial-roofing.md` |
 | `commercial_cleaning` | Commercial Cleaning / Janitorial | active | 1.0 | `docs/product/playbooks/commercial-cleaning.md` |
 
-All other launch verticals remain spec-planned but not yet playbook-authored. They will be added to this table as each playbook reaches v1 status.
+Commercial Roofing is active as CP15 playbook/spec proof, not runtime proof. All other launch verticals remain spec-planned but not yet playbook-authored. They will be added to this table as each playbook reaches v1 status.
 
 ## Vertical Playbook Registry (spec fields)
 
