@@ -351,6 +351,14 @@ State:
 - no code, runtime, provider, DB/schema, routes/UI, package, export, CRM, billing, or outreach implementation changes
 - keeps runtime Firecrawl, broad crawling, CRM sync, auto-outreach, DB/schema, and provider runtime parked unless explicitly scoped
 
+## Product Proof CP14 — Prospect Pool Export Contract
+
+State:
+- adds Prospect Pool export contract/spec and inert deterministic smoke proof
+- defines export readiness, required fields, blocked fields/claims, CSV/Sheets guardrails, and CRM-ready account-worklist mapping shape
+- proves Prospect Pool export does not turn prospects into opportunities
+- no runtime export, CSV generation, CRM sync, DB/schema, provider, routes/UI, billing, package, or outreach changes
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
