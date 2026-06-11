@@ -53,7 +53,8 @@ Recently landed product-proof chain:
 Current active mode:
 
 - Roadmap MVP completion and remaining-work clarity.
-- Next proof sequence planning around Prospect Pool export contract, contact route/outreach contracts, and Lead Funnel runtime planning.
+- CP14 Prospect Pool Export Contract remains the active checkpoint.
+- Next proof sequence planning around contact route/outreach contracts and Lead Funnel runtime planning.
 - No runtime expansion until the next contract checkpoint is explicitly scoped.
 - No DB/schema, provider runtime, UI/routes, package, billing, auth, admin, export UI, CRM sync, or outreach changes in this mode.
 
@@ -140,6 +141,7 @@ A first sellable MVP means:
 - Define blocked claims and blocked fields.
 - Define CRM-ready mapping shape.
 - Define CSV/export guardrails.
+- Add inert deterministic smoke proof only.
 - No actual CRM sync/export UI yet.
 
 ### CP15 — Commercial Roofing Playbook v1
