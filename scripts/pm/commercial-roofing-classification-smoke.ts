@@ -73,7 +73,7 @@ const stormExposureWatchlistInput: CommercialRoofingClassificationInput = {
   rawSignalId: 'fixture-commercial-roofing-storm-exposure-001',
   proposedSignalLabels: ['STORM EXPOSURE'],
   proposedVerticalFitLabels: ['Storm Inspection', 'Commercial Roof'],
-  proposedSurface: 'watchlist',
+  proposedSurface: 'preview',
   evidenceSummary:
     'Official storm report shows hail exposure near a verified commercial property in the service area.',
   evidenceSourceUrls: ['https://weather.example.gov/storm-report-001'],
@@ -171,7 +171,7 @@ const cases = {
     stormExposureWatchlistResult.verticalFitLabels.includes(
       'Storm Inspection',
     ) &&
-    stormExposureWatchlistResult.opportunitySurface === 'watchlist',
+    stormExposureWatchlistResult.opportunitySurface === 'preview',
   freestyledSignalLabelBlocks:
     freestyledSignalLabelResult.ok === false &&
     freestyledSignalLabelResult.reasonCode === 'unapproved_signal_label',
