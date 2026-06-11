@@ -53,7 +53,7 @@ Recently landed product-proof chain:
 Current active mode:
 
 - Roadmap MVP completion and remaining-work clarity.
-- CP14 Prospect Pool Export Contract remains the active checkpoint.
+- CP15 Commercial Roofing Playbook v1 is the active checkpoint.
 - Next proof sequence planning around contact route/outreach contracts and Lead Funnel runtime planning.
 - No runtime expansion until the next contract checkpoint is explicitly scoped.
 - No DB/schema, provider runtime, UI/routes, package, billing, auth, admin, export UI, CRM sync, or outreach changes in this mode.
@@ -148,6 +148,7 @@ A first sellable MVP means:
 
 - Add the next vertical playbook after scoring, classification, Lead Funnel, and export seams are proven.
 - Use the same playbook/config model as Commercial Cleaning.
+- Add an inert classification contract smoke proof for approved Commercial Roofing labels and blocked claims.
 - Do not hardcode vertical behavior into components or runtime.
 
 ### CP16 — Contact Route / Outreach Play Contract
