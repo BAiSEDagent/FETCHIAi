@@ -156,3 +156,27 @@ Status: Tracked. Not started.
 Related docs:
 
 - `docs/CLEANUP_PLAN.md`
+
+### 2026-06 — CP-INFRA GitHub publishing path
+
+Decision: GitHub connector git-data single-commit publishing is the preferred
+fallback when shell `git push` is unavailable. Contents API per-file publishing
+is exception-only, requires Adam approval, and requires blob-SHA verification
+for every changed file. Agents must not configure ad hoc credentials or install
+`gh` mid-checkpoint. Replit remains the final post-merge proof runner on
+`main`.
+
+Rationale: CP15 and CP-CG1 showed that Codex-local commits may be valid local
+proof while GitHub cannot ingest the local commit object through shell push.
+Publishing mechanics must recreate approved file contents without drifting into
+product work.
+
+Scope: Checkpoint publishing, draft PR, merge, post-merge proof, and branch
+cleanup flow only.
+
+Status: Approved operating decision.
+
+Related docs:
+
+- `docs/infra/github-publishing-path.md`
+- `docs/PM_OPERATING_SYSTEM.md`
