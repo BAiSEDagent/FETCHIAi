@@ -53,7 +53,7 @@ Recently landed product-proof chain:
 Current active mode:
 
 - Roadmap MVP completion and remaining-work clarity.
-- CP15 Commercial Roofing Playbook v1 is the active checkpoint.
+- CP-INFRA GitHub Publishing Path Decision is the active checkpoint.
 - Next proof sequence planning around contact route/outreach contracts and Lead Funnel runtime planning.
 - No runtime expansion until the next contract checkpoint is explicitly scoped.
 - No DB/schema, provider runtime, UI/routes, package, billing, auth, admin, export UI, CRM sync, or outreach changes in this mode.
