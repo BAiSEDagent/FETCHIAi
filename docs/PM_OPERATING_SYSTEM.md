@@ -408,6 +408,9 @@ must never enter the repo.
 - One task, one scoped commit, one proof packet (`scripts/pm/proof.sh`).
 - Design evidence is not product proof; do not commit design boards as proof
   unless that is explicitly scoped.
+- Checkpoint publishing follows `docs/infra/github-publishing-path.md`. That
+  policy governs Codex/Replit local proof, approved draft PR publishing, merge
+  approval, final Replit proof, and branch cleanup.
 
 ## 8. Repo Context Discipline
 

@@ -367,6 +367,14 @@ State:
 - preserves Prospect Pool vs Opportunity separation, weather-safety rules, procurement routing, and contractor-as-buyer guardrails
 - no runtime classifier, provider, Shovels, DB/schema, routes/UI, CRM/export, outreach, billing, admin, settings, package, or Claim Guard changes
 
+## CP-INFRA — GitHub Publishing Path Decision
+
+State:
+- documents the official checkpoint publishing path after CP15 and CP-CG1
+- prefers normal authenticated git push when pre-approved credentials exist, GitHub connector git-data single-commit publishing as fallback, and contents API per-file publishing only by explicit exception
+- requires blob-SHA verification, draft PR review, explicit merge approval, Replit final proof, and branch cleanup
+- no GitHub Actions, credentials, package, app/runtime, provider, DB/schema, routes/UI, export, CRM, outreach, or source architecture changes
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
