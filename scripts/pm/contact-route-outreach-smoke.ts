@@ -107,7 +107,7 @@ const baseProspectInput: ContactRouteOutreachInput = {
       riskLevel: 'low',
     },
   ],
-  recommendedAction: 'draft outreach only when allowed',
+  recommendedAction: 'draft evidence-limited outreach',
 }
 
 function evaluate(
@@ -128,7 +128,12 @@ function zeroSideEffects(result: ContactRouteOutreachDecision): boolean {
   )
 }
 
-const validProspectResult = evaluate(baseProspectInput)
+function hasBlockedReason(
+  result: ContactRouteOutreachDecision,
+  reasonCode: string,
+): boolean {
+  return result.blockedClaims.some((claim) => claim.reasonCode === reasonCode)
+}
 
 const validOpportunityResult = evaluate({
   workspaceId: 'workspace:cp16',
@@ -151,6 +156,7 @@ const validOpportunityResult = evaluate({
       text: 'urgent vendor response requested by June 14',
       evidenceIndexes: [1],
       riskLevel: 'high',
+      sourcePhrase: 'urgent vendor response requested by June 14',
     },
   ],
   signal: {
@@ -158,73 +164,37 @@ const validOpportunityResult = evaluate({
     evidenceIndexes: [1],
     fresh: true,
   },
-  recommendedAction: 'draft outreach only when allowed',
+  recommendedAction: 'draft source-backed personalized outreach',
+})
+
+const validProspectResult = evaluate(baseProspectInput)
+
+const prospectUrgencyClaimResult = evaluate({
+  ...baseProspectInput,
+  outreachClaims: [
+    {
+      kind: 'urgency',
+      text: 'urgent vendor response requested by June 14',
+      evidenceIndexes: [0],
+      riskLevel: 'high',
+    },
+  ],
+  recommendedAction: 'draft evidence-limited outreach without risky claims',
 })
 
 const exploratoryResult = evaluate({
   ...baseProspectInput,
   leadKind: 'exploratory_prospect',
-  recommendedAction: 'send to review',
+  recommendedAction: 'enrich evidence and contact route',
 })
 
 const missingEvidenceResult = evaluate({
   ...baseProspectInput,
   evidence: [],
-  recommendedAction: 'hydrate contact evidence',
+  recommendedAction: 'hydrate evidence',
 })
 
-const invalidRouteEvidenceIndexResult = evaluate({
-  ...baseProspectInput,
-  routeCandidates: [
-    {
-      ...baseProspectInput.routeCandidates[0],
-      evidenceIndexes: [99],
-    },
-  ],
-})
-
-const routeWithoutEvidenceResult = evaluate({
-  ...baseProspectInput,
-  routeCandidates: [
-    {
-      ...baseProspectInput.routeCandidates[0],
-      evidenceIndexes: [],
-    },
-  ],
-})
-
-const namedContactWithoutSourceResult = evaluate({
-  ...baseProspectInput,
-  routeCandidates: [
-    {
-      ...baseProspectInput.routeCandidates[0],
-      routeType: 'front_desk',
-      name: 'Jordan Rivera',
-      title: undefined,
-      url: undefined,
-    },
-  ],
-})
-
-const emailWithoutSourceResult = evaluate({
-  ...baseProspectInput,
-  routeCandidates: [
-    {
-      ...baseProspectInput.routeCandidates[0],
-      routeType: 'direct_email',
-      email: 'ops@northloop.example',
-      url: undefined,
-    },
-  ],
-})
-
-const procurementNonProcurementRouteResult = evaluate({
-  ...baseProspectInput,
-  procurementRequired: true,
-  recommendedAction: 'use procurement portal',
-})
-
-const procurementPortalResult = evaluate({
+const procurementResult = evaluate({
   workspaceId: 'workspace:cp16',
   leadKind: 'signal_backed_opportunity',
   evidence: [procurementEvidence],
@@ -254,17 +224,54 @@ const procurementPortalResult = evaluate({
   recommendedAction: 'use procurement portal',
 })
 
-const prospectUrgencyClaimResult = evaluate({
+const namedContactWithoutSourceResult = evaluate({
   ...baseProspectInput,
-  outreachClaims: [
+  routeCandidates: [
     {
-      kind: 'urgency',
-      text: 'urgent vendor response requested by June 14',
-      evidenceIndexes: [0],
-      riskLevel: 'high',
+      ...baseProspectInput.routeCandidates[0],
+      routeType: 'front_desk',
+      name: 'Jordan Rivera',
+      title: undefined,
+      url: undefined,
     },
   ],
-  recommendedAction: 'send to review',
+  recommendedAction: 'draft evidence-limited outreach without named contact',
+})
+
+const emailWithoutSourceResult = evaluate({
+  ...baseProspectInput,
+  routeCandidates: [
+    {
+      ...baseProspectInput.routeCandidates[0],
+      routeType: 'direct_email',
+      email: 'ops@northloop.example',
+      url: undefined,
+    },
+  ],
+  recommendedAction: 'draft evidence-limited outreach without email personalization',
+})
+
+const invalidRouteEvidenceIndexResult = evaluate({
+  ...baseProspectInput,
+  routeCandidates: [
+    {
+      ...baseProspectInput.routeCandidates[0],
+      evidenceIndexes: [99],
+    },
+  ],
+})
+
+const unknownRouteResult = evaluate({
+  ...baseProspectInput,
+  routeCandidates: [
+    {
+      routeType: 'unknown',
+      label: 'Unknown route',
+      evidenceIndexes: [0],
+      confidence: 'needs_review',
+    },
+  ],
+  recommendedAction: 'hydrate contact evidence',
 })
 
 const highRiskUnsupportedClaimResult = evaluate({
@@ -293,127 +300,141 @@ const missingRecommendedActionResult = evaluate({
   recommendedAction: undefined,
 })
 
-const unknownRouteResult = evaluate({
-  ...baseProspectInput,
-  routeCandidates: [
-    {
-      routeType: 'unknown',
-      label: 'Unknown route',
-      evidenceIndexes: [0],
-      confidence: 'needs_review',
-    },
-  ],
-  recommendedAction: 'hydrate contact evidence',
-})
-
 const cases: SmokeCase[] = [
   {
-    name: 'validEvidenceBackedProspectAllowsLowRiskDraft',
+    name: 'signalBackedOpportunitySupportedUrgencyProducesSourceBackedPersonalizedDraft',
+    passed:
+      validOpportunityResult.ok === true &&
+      validOpportunityResult.outreachCtaAvailable === true &&
+      validOpportunityResult.allowedOutreachMode ===
+        'source_backed_personalized_draft' &&
+      validOpportunityResult.personalizationAllowed === true &&
+      validOpportunityResult.routeReadiness === 'verified_route' &&
+      validOpportunityResult.blockedClaims.length === 0 &&
+      zeroSideEffects(validOpportunityResult),
+  },
+  {
+    name: 'evidenceBackedProspectLowRiskRouteProducesEvidenceLimitedDraft',
     passed:
       validProspectResult.ok === true &&
-      validProspectResult.routeReady === true &&
-      validProspectResult.outreachAllowed === true &&
-      validProspectResult.outreachPlayLevel === 'draft_allowed' &&
+      validProspectResult.outreachCtaAvailable === true &&
+      validProspectResult.allowedOutreachMode === 'evidence_limited_draft' &&
+      validProspectResult.personalizationAllowed === false &&
       validProspectResult.routeReadiness === 'plausible_route' &&
       zeroSideEffects(validProspectResult),
   },
   {
-    name: 'validSignalBackedOpportunityAllowsUrgencyDraft',
+    name: 'prospectUrgencyClaimBlockedButOutreachStillSafeMode',
     passed:
-      validOpportunityResult.ok === true &&
-      validOpportunityResult.outreachAllowed === true &&
-      validOpportunityResult.routeReadiness === 'verified_route' &&
-      validOpportunityResult.outreachPlayLevel === 'draft_allowed' &&
-      zeroSideEffects(validOpportunityResult),
+      prospectUrgencyClaimResult.ok === true &&
+      prospectUrgencyClaimResult.outreachCtaAvailable === true &&
+      prospectUrgencyClaimResult.allowedOutreachMode ===
+        'evidence_limited_draft' &&
+      prospectUrgencyClaimResult.outreachPlayLevel !== 'manual_review_recommended' &&
+      hasBlockedReason(
+        prospectUrgencyClaimResult,
+        'urgency_claim_without_signal',
+      ) &&
+      prospectUrgencyClaimResult.personalizationAllowed === false,
   },
   {
-    name: 'exploratoryProspectBlocksDraft',
+    name: 'exploratoryProspectReturnsGenericOutreachTemplate',
     passed:
-      exploratoryResult.ok === false &&
-      exploratoryResult.reasonCode === 'outreach_not_allowed_for_exploratory' &&
-      exploratoryResult.outreachPlayLevel === 'manual_review_only' &&
-      zeroSideEffects(exploratoryResult),
+      exploratoryResult.ok === true &&
+      exploratoryResult.outreachCtaAvailable === true &&
+      exploratoryResult.allowedOutreachMode === 'generic_outreach_template' &&
+      exploratoryResult.personalizationAllowed === false &&
+      exploratoryResult.recommendedAction === 'enrich evidence and contact route',
   },
   {
-    name: 'missingEvidenceBlocks',
+    name: 'missingEvidenceReturnsGenericTemplateAndBlocksPersonalization',
     passed:
-      missingEvidenceResult.ok === false &&
-      missingEvidenceResult.reasonCode === 'missing_evidence' &&
-      missingEvidenceResult.fallbackState === 'missing_evidence',
+      missingEvidenceResult.ok === true &&
+      missingEvidenceResult.outreachCtaAvailable === true &&
+      missingEvidenceResult.allowedOutreachMode === 'generic_outreach_template' &&
+      missingEvidenceResult.personalizationAllowed === false &&
+      missingEvidenceResult.blockedClaims.length > 0 &&
+      missingEvidenceResult.recommendedAction === 'hydrate evidence',
   },
   {
-    name: 'invalidRouteEvidenceIndexBlocks',
+    name: 'procurementRequiredReturnsProcurementOnly',
+    passed:
+      procurementResult.ok === true &&
+      procurementResult.outreachCtaAvailable === true &&
+      procurementResult.allowedOutreachMode === 'procurement_only' &&
+      procurementResult.outreachAllowed === false &&
+      procurementResult.routeReadiness === 'procurement_only',
+  },
+  {
+    name: 'namedContactWithoutSourceBlocksContactClaimAndDowngradesPersonalization',
+    passed:
+      namedContactWithoutSourceResult.ok === true &&
+      namedContactWithoutSourceResult.outreachCtaAvailable === true &&
+      namedContactWithoutSourceResult.allowedOutreachMode ===
+        'evidence_limited_draft' &&
+      hasBlockedReason(
+        namedContactWithoutSourceResult,
+        'named_contact_without_source',
+      ) &&
+      namedContactWithoutSourceResult.personalizationAllowed === false,
+  },
+  {
+    name: 'emailWithoutSourceBlocksContactDetailAndDowngradesPersonalization',
+    passed:
+      emailWithoutSourceResult.ok === true &&
+      emailWithoutSourceResult.outreachCtaAvailable === true &&
+      emailWithoutSourceResult.allowedOutreachMode === 'evidence_limited_draft' &&
+      hasBlockedReason(emailWithoutSourceResult, 'email_without_source') &&
+      emailWithoutSourceResult.personalizationAllowed === false,
+  },
+  {
+    name: 'invalidEvidenceIndexBlocksBecauseInputMalformed',
     passed:
       invalidRouteEvidenceIndexResult.ok === false &&
-      invalidRouteEvidenceIndexResult.reasonCode === 'invalid_evidence_index',
+      invalidRouteEvidenceIndexResult.reasonCode === 'invalid_evidence_index' &&
+      invalidRouteEvidenceIndexResult.allowedOutreachMode ===
+        'manual_review_recommended' &&
+      invalidRouteEvidenceIndexResult.outreachCtaAvailable === true,
   },
   {
-    name: 'routeWithoutEvidenceBlocks',
+    name: 'unknownNoUsableRouteAllowsGenericTemplateAndHydrateAction',
     passed:
-      routeWithoutEvidenceResult.ok === false &&
-      routeWithoutEvidenceResult.reasonCode === 'route_without_evidence',
+      unknownRouteResult.ok === true &&
+      unknownRouteResult.outreachCtaAvailable === true &&
+      unknownRouteResult.allowedOutreachMode === 'generic_outreach_template' &&
+      unknownRouteResult.personalizationAllowed === false &&
+      unknownRouteResult.recommendedAction === 'hydrate contact evidence',
   },
   {
-    name: 'namedContactWithoutSourceBlocks',
+    name: 'highRiskUnsupportedBudgetClaimBlockedFromDraft',
     passed:
-      namedContactWithoutSourceResult.ok === false &&
-      namedContactWithoutSourceResult.reasonCode ===
-        'named_contact_without_source',
-  },
-  {
-    name: 'emailWithoutSourceBlocks',
-    passed:
-      emailWithoutSourceResult.ok === false &&
-      emailWithoutSourceResult.reasonCode === 'email_without_source',
-  },
-  {
-    name: 'procurementRequiredNonProcurementRouteBlocks',
-    passed:
-      procurementNonProcurementRouteResult.ok === false &&
-      procurementNonProcurementRouteResult.reasonCode === 'procurement_required' &&
-      procurementNonProcurementRouteResult.outreachPlayLevel ===
-        'procurement_only',
-  },
-  {
-    name: 'procurementPortalAllowsProcurementOnly',
-    passed:
-      procurementPortalResult.ok === true &&
-      procurementPortalResult.routeReadiness === 'procurement_only' &&
-      procurementPortalResult.outreachPlayLevel === 'procurement_only' &&
-      procurementPortalResult.outreachAllowed === false,
-  },
-  {
-    name: 'prospectUrgencyClaimBlocks',
-    passed:
-      prospectUrgencyClaimResult.ok === false &&
-      prospectUrgencyClaimResult.reasonCode === 'urgency_claim_without_signal',
-  },
-  {
-    name: 'highRiskClaimWithoutVerbatimSupportBlocks',
-    passed:
-      highRiskUnsupportedClaimResult.ok === false &&
-      highRiskUnsupportedClaimResult.reasonCode ===
+      highRiskUnsupportedClaimResult.ok === true &&
+      highRiskUnsupportedClaimResult.outreachCtaAvailable === true &&
+      highRiskUnsupportedClaimResult.allowedOutreachMode ===
+        'manual_review_recommended' &&
+      hasBlockedReason(
+        highRiskUnsupportedClaimResult,
         'high_risk_claim_without_verbatim_support',
+      ) &&
+      highRiskUnsupportedClaimResult.personalizationAllowed === false,
   },
   {
-    name: 'missingRecommendedActionBlocks',
+    name: 'missingRecommendedActionSuppliesSafeDefault',
     passed:
-      missingRecommendedActionResult.ok === false &&
-      missingRecommendedActionResult.reasonCode === 'missing_recommended_action',
+      missingRecommendedActionResult.ok === true &&
+      missingRecommendedActionResult.allowedOutreachMode ===
+        'evidence_limited_draft' &&
+      missingRecommendedActionResult.recommendedAction ===
+        'draft evidence-limited outreach without risky claims',
   },
   {
-    name: 'unknownNoUsableRouteBlocks',
-    passed:
-      unknownRouteResult.ok === false &&
-      unknownRouteResult.reasonCode === 'no_usable_route',
-  },
-  {
-    name: 'sideEffectCountersStayZeroOnPassAndBlock',
+    name: 'sideEffectCountersStayZeroOnPassReviewAndDowngrade',
     passed:
       zeroSideEffects(validProspectResult) &&
       zeroSideEffects(validOpportunityResult) &&
       zeroSideEffects(missingEvidenceResult) &&
-      zeroSideEffects(highRiskUnsupportedClaimResult),
+      zeroSideEffects(highRiskUnsupportedClaimResult) &&
+      zeroSideEffects(invalidRouteEvidenceIndexResult),
   },
 ]
 
@@ -442,4 +463,3 @@ console.log(JSON.stringify(proof, null, 2))
 if (!proof.ok) {
   process.exit(1)
 }
-

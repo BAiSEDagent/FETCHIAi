@@ -1,10 +1,10 @@
 /**
  * CP16 - Contact Route / Outreach Play contract proof.
  *
- * Deterministic eligibility gate only. It validates contact-route and
- * outreach-play readiness without provider calls, DB writes, env reads, system
- * time, LLM calls, network, route/UI imports, opportunity creation, scoring,
- * email sending, CRM sync, or export implementation.
+ * Deterministic eligibility gate only. It selects the safest outreach output
+ * mode without provider calls, DB writes, env reads, system time, LLM calls,
+ * network, route/UI imports, opportunity creation, scoring, email sending, CRM
+ * sync, or export implementation.
  */
 
 import type { FallbackState } from '../providers/contracts'
@@ -41,11 +41,13 @@ export type ContactRouteConfidence =
   | 'blocked'
 
 export type OutreachPlayLevel =
-  | 'draft_allowed'
-  | 'manual_review_only'
+  | 'source_backed_personalized_draft'
+  | 'evidence_limited_draft'
+  | 'generic_outreach_template'
   | 'procurement_only'
-  | 'enrich_contact_route'
-  | 'no_outreach'
+  | 'manual_review_recommended'
+
+export type AllowedOutreachMode = OutreachPlayLevel
 
 export type OutreachRiskLevel = 'low' | 'medium' | 'high'
 
@@ -127,6 +129,14 @@ export interface ContactRouteOutreachViolation {
   message: string
 }
 
+export interface BlockedOutreachClaim {
+  reasonCode: ContactRouteOutreachReasonCode
+  path: string
+  message: string
+  claimKind?: OutreachClaimKind
+  claimText?: string
+}
+
 export interface ContactRouteOutreachSideEffects {
   sentEmail: false
   wroteDb: false
@@ -142,16 +152,20 @@ interface ContactRouteOutreachBase extends ContactRouteOutreachSideEffects {
   leadKind: ContactRouteLeadKind
   routeReadiness: ContactRouteReadiness
   outreachPlayLevel: OutreachPlayLevel
+  allowedOutreachMode: AllowedOutreachMode
+  outreachCtaAvailable: true
   selectedRoute: ContactRouteCandidate | null
   gateReasons: string[]
   recommendedAction: string
+  blockedClaims: BlockedOutreachClaim[]
+  personalizationAllowed: boolean
 }
 
 export interface ContactRouteOutreachPass extends ContactRouteOutreachBase {
   ok: true
-  routeReady: true
+  routeReady: boolean
   outreachAllowed: boolean
-  violations: []
+  violations: ContactRouteOutreachViolation[]
 }
 
 export interface ContactRouteOutreachBlock extends ContactRouteOutreachBase {
@@ -290,15 +304,17 @@ function claimHasVerbatimSupport(
   evidence: readonly EvidenceDocument[],
 ): boolean {
   const text = citedEvidenceText(claim.evidenceIndexes, evidence)
-  const supportPhrases = [claim.text, claim.sourcePhrase].filter(isNonEmptyString)
+  const supportPhrases = [claim.sourcePhrase, claim.text].filter(isNonEmptyString)
 
   return supportPhrases.some((phrase) => textSupportsValue(text, phrase))
 }
 
 function routeReadinessFromCandidate(
-  route: ContactRouteCandidate,
+  route: ContactRouteCandidate | null,
   procurementRequired: boolean,
 ): ContactRouteReadiness {
+  if (route === null) return 'needs_review'
+
   if (procurementRequired && PROCUREMENT_ROUTE_TYPES.includes(route.routeType)) {
     return 'procurement_only'
   }
@@ -320,29 +336,45 @@ function fallbackFor(
   return 'needs_review'
 }
 
-function actionFor(reasonCode: ContactRouteOutreachReasonCode): string {
-  switch (reasonCode) {
-    case 'missing_evidence':
+function actionFor(mode: AllowedOutreachMode): string {
+  switch (mode) {
+    case 'source_backed_personalized_draft':
+      return 'draft source-backed personalized outreach'
+    case 'evidence_limited_draft':
+      return 'draft evidence-limited outreach without risky claims'
+    case 'generic_outreach_template':
       return 'hydrate contact evidence'
-    case 'procurement_required':
+    case 'procurement_only':
       return 'use procurement portal'
-    case 'outreach_not_allowed_for_exploratory':
+    case 'manual_review_recommended':
       return 'send to review'
-    case 'missing_route':
-    case 'route_without_evidence':
-    case 'named_contact_without_source':
-    case 'email_without_source':
-    case 'phone_without_source':
-    case 'url_without_source':
-      return 'verify contact route'
-    case 'missing_recommended_action':
-      return 'send to review'
-    case 'no_usable_route':
-      return 'hydrate contact evidence'
-    case 'blocked_route':
-      return 'discard'
-    default:
-      return 'send to review'
+  }
+}
+
+function directOutreachAvailable(mode: AllowedOutreachMode): boolean {
+  return mode !== 'procurement_only'
+}
+
+function violation(
+  reasonCode: ContactRouteOutreachReasonCode,
+  path: string,
+  message: string,
+): ContactRouteOutreachViolation {
+  return { reasonCode, path, message }
+}
+
+function blockedClaim(
+  reasonCode: ContactRouteOutreachReasonCode,
+  path: string,
+  message: string,
+  claim?: OutreachClaim,
+): BlockedOutreachClaim {
+  return {
+    reasonCode,
+    path,
+    message,
+    claimKind: claim?.kind,
+    claimText: claim?.text,
   }
 }
 
@@ -353,10 +385,11 @@ function blockDecision(params: {
   message: string
   selectedRoute?: ContactRouteCandidate | null
   routeReadiness?: ContactRouteReadiness
-  outreachPlayLevel?: OutreachPlayLevel
+  allowedOutreachMode?: AllowedOutreachMode
   routeReady?: boolean
 }): ContactRouteOutreachBlock {
-  const action = trimmedAction(params.input.recommendedAction) ?? actionFor(params.reasonCode)
+  const mode = params.allowedOutreachMode ?? 'manual_review_recommended'
+  const action = trimmedAction(params.input.recommendedAction) ?? actionFor(mode)
 
   return {
     ok: false,
@@ -365,44 +398,55 @@ function blockDecision(params: {
     routeReady: params.routeReady ?? false,
     outreachAllowed: false,
     routeReadiness: params.routeReadiness ?? 'blocked',
-    outreachPlayLevel: params.outreachPlayLevel ?? 'no_outreach',
+    outreachPlayLevel: mode,
+    allowedOutreachMode: mode,
+    outreachCtaAvailable: true,
     selectedRoute: params.selectedRoute ?? null,
     reasonCode: params.reasonCode,
     fallbackState: fallbackFor(params.reasonCode),
-    violations: [
-      {
-        reasonCode: params.reasonCode,
-        path: params.path,
-        message: params.message,
-      },
-    ],
+    violations: [violation(params.reasonCode, params.path, params.message)],
     gateReasons: [params.message],
     recommendedAction: action,
+    blockedClaims: [],
+    personalizationAllowed: false,
     ...SIDE_EFFECTS,
   }
 }
 
-function passDecision(params: {
+function safeDecision(params: {
   input: ContactRouteOutreachInput
-  selectedRoute: ContactRouteCandidate
+  selectedRoute: ContactRouteCandidate | null
   routeReadiness: ContactRouteReadiness
-  outreachPlayLevel: OutreachPlayLevel
-  outreachAllowed: boolean
+  allowedOutreachMode: AllowedOutreachMode
+  routeReady: boolean
+  personalizationAllowed: boolean
+  violations: ContactRouteOutreachViolation[]
+  blockedClaims: BlockedOutreachClaim[]
   gateReasons: string[]
+  recommendedAction?: string
 }): ContactRouteOutreachPass {
+  const mode = params.allowedOutreachMode
+  const action =
+    trimmedAction(params.input.recommendedAction) ??
+    trimmedAction(params.recommendedAction) ??
+    actionFor(mode)
+
   return {
     ok: true,
     workspaceId: params.input.workspaceId,
     leadKind: params.input.leadKind,
-    routeReady: true,
-    outreachAllowed: params.outreachAllowed,
+    routeReady: params.routeReady,
+    outreachAllowed: directOutreachAvailable(mode),
     routeReadiness: params.routeReadiness,
-    outreachPlayLevel: params.outreachPlayLevel,
+    outreachPlayLevel: mode,
+    allowedOutreachMode: mode,
+    outreachCtaAvailable: true,
     selectedRoute: params.selectedRoute,
     gateReasons: params.gateReasons,
-    recommendedAction:
-      trimmedAction(params.input.recommendedAction) ?? 'draft outreach only when allowed',
-    violations: [],
+    recommendedAction: action,
+    blockedClaims: params.blockedClaims,
+    personalizationAllowed: params.personalizationAllowed,
+    violations: params.violations,
     ...SIDE_EFFECTS,
   }
 }
@@ -420,6 +464,7 @@ function firstSupportedRoute(
   if (input.procurementRequired === true) {
     return (
       candidates.find((route) => PROCUREMENT_ROUTE_TYPES.includes(route.routeType)) ??
+      candidates[0] ??
       null
     )
   }
@@ -427,44 +472,184 @@ function firstSupportedRoute(
   return candidates[0] ?? null
 }
 
+function routeSupportViolations(
+  selectedRoute: ContactRouteCandidate,
+  input: ContactRouteOutreachInput,
+): {
+  violations: ContactRouteOutreachViolation[]
+  blockedClaims: BlockedOutreachClaim[]
+} {
+  const selectedRouteText = citedEvidenceText(
+    selectedRoute.evidenceIndexes,
+    input.evidence,
+  )
+  const violations: ContactRouteOutreachViolation[] = []
+  const blockedClaims: BlockedOutreachClaim[] = []
+
+  const add = (
+    reasonCode: ContactRouteOutreachReasonCode,
+    path: string,
+    message: string,
+  ): void => {
+    violations.push(violation(reasonCode, path, message))
+    blockedClaims.push(blockedClaim(reasonCode, path, message))
+  }
+
+  if (
+    (isNonEmptyString(selectedRoute.name) &&
+      !textSupportsValue(selectedRouteText, selectedRoute.name)) ||
+    (isNonEmptyString(selectedRoute.title) &&
+      !textSupportsValue(selectedRouteText, selectedRoute.title))
+  ) {
+    add(
+      'named_contact_without_source',
+      'selectedRoute.name',
+      'Named contact or title is not supported by cited route evidence.',
+    )
+  }
+
+  if (
+    isNonEmptyString(selectedRoute.email) &&
+    !textSupportsValue(selectedRouteText, selectedRoute.email)
+  ) {
+    add(
+      'email_without_source',
+      'selectedRoute.email',
+      'Email address is not supported by cited route evidence.',
+    )
+  }
+
+  if (
+    isNonEmptyString(selectedRoute.phone) &&
+    !textSupportsPhone(selectedRouteText, selectedRoute.phone)
+  ) {
+    add(
+      'phone_without_source',
+      'selectedRoute.phone',
+      'Phone number is not supported by cited route evidence.',
+    )
+  }
+
+  if (
+    isNonEmptyString(selectedRoute.url) &&
+    !textSupportsUrl(selectedRouteText, selectedRoute.url)
+  ) {
+    add(
+      'url_without_source',
+      'selectedRoute.url',
+      'URL, form, or portal route is not supported by cited evidence.',
+    )
+  }
+
+  return { violations, blockedClaims }
+}
+
+function claimSafety(
+  input: ContactRouteOutreachInput,
+): {
+  violations: ContactRouteOutreachViolation[]
+  blockedClaims: BlockedOutreachClaim[]
+} {
+  const violations: ContactRouteOutreachViolation[] = []
+  const blockedClaims: BlockedOutreachClaim[] = []
+
+  input.outreachClaims.forEach((claim, claimIndex) => {
+    const path = `outreachClaims[${claimIndex}]`
+
+    if (claim.evidenceIndexes.length === 0) {
+      const message = 'Every outreach claim must cite evidence indexes.'
+      violations.push(violation('invalid_evidence_index', `${path}.evidenceIndexes`, message))
+      blockedClaims.push(
+        blockedClaim('invalid_evidence_index', `${path}.evidenceIndexes`, message, claim),
+      )
+      return
+    }
+
+    const highRisk = claimIsHighRisk(claim)
+
+    if (input.leadKind === 'exploratory_prospect' && highRisk) {
+      const message =
+        'Exploratory prospects cannot use lead-specific urgency, damage, need, budget, buying-intent, or authority claims.'
+      violations.push(violation('outreach_not_allowed_for_exploratory', path, message))
+      blockedClaims.push(
+        blockedClaim('outreach_not_allowed_for_exploratory', path, message, claim),
+      )
+      return
+    }
+
+    if (input.leadKind === 'evidence_backed_prospect' && highRisk) {
+      const message =
+        'Evidence-backed prospects cannot use urgency, damage, need, budget, buying-intent, insurance, vendor-selection, or authority claims.'
+      violations.push(violation('urgency_claim_without_signal', path, message))
+      blockedClaims.push(blockedClaim('urgency_claim_without_signal', path, message, claim))
+      return
+    }
+
+    if (input.leadKind === 'signal_backed_opportunity' && highRisk) {
+      if (input.signal === undefined || input.signal.fresh !== true) {
+        const message = 'High-risk opportunity claims require fresh signal metadata.'
+        violations.push(violation('urgency_claim_without_signal', path, message))
+        blockedClaims.push(blockedClaim('urgency_claim_without_signal', path, message, claim))
+        return
+      }
+
+      if (!claimHasVerbatimSupport(claim, input.evidence)) {
+        const message =
+          'High-risk outreach claims require verbatim support in cited evidence.'
+        violations.push(
+          violation('high_risk_claim_without_verbatim_support', `${path}.text`, message),
+        )
+        blockedClaims.push(
+          blockedClaim(
+            'high_risk_claim_without_verbatim_support',
+            `${path}.text`,
+            message,
+            claim,
+          ),
+        )
+      }
+    }
+  })
+
+  return { violations, blockedClaims }
+}
+
+function missingEvidenceDecision(
+  input: ContactRouteOutreachInput,
+): ContactRouteOutreachPass {
+  const message =
+    'Missing evidence limits outreach to a generic template with no lead-specific personalization.'
+  const blockedClaims = input.outreachClaims.map((claim, claimIndex) =>
+    blockedClaim(
+      'missing_evidence',
+      `outreachClaims[${claimIndex}]`,
+      'Lead-specific claim removed because no source-linked evidence is available.',
+      claim,
+    ),
+  )
+
+  return safeDecision({
+    input,
+    selectedRoute: null,
+    routeReadiness: 'needs_review',
+    allowedOutreachMode: 'generic_outreach_template',
+    routeReady: false,
+    personalizationAllowed: false,
+    violations: [violation('missing_evidence', 'evidence', message)],
+    blockedClaims,
+    gateReasons: [message],
+    recommendedAction: 'hydrate evidence',
+  })
+}
+
 export function evaluateContactRouteOutreach(
   input: ContactRouteOutreachInput,
 ): ContactRouteOutreachDecision {
   if (input.evidence.length === 0) {
-    return blockDecision({
-      input,
-      reasonCode: 'missing_evidence',
-      path: 'evidence',
-      message: 'Contact route and outreach decisions require source-linked evidence.',
-      routeReadiness: 'blocked',
-      outreachPlayLevel: 'no_outreach',
-    })
-  }
-
-  if (input.routeCandidates.length === 0) {
-    return blockDecision({
-      input,
-      reasonCode: 'missing_route',
-      path: 'routeCandidates',
-      message: 'At least one contact route candidate is required.',
-      routeReadiness: 'blocked',
-      outreachPlayLevel: 'enrich_contact_route',
-    })
+    return missingEvidenceDecision(input)
   }
 
   for (const [routeIndex, route] of input.routeCandidates.entries()) {
-    if (route.evidenceIndexes.length === 0) {
-      return blockDecision({
-        input,
-        reasonCode: 'route_without_evidence',
-        path: `routeCandidates[${routeIndex}].evidenceIndexes`,
-        message: 'Every contact route must cite evidence indexes.',
-        selectedRoute: route,
-        routeReadiness: 'needs_review',
-        outreachPlayLevel: 'enrich_contact_route',
-      })
-    }
-
     if (!hasValidIndexes(route.evidenceIndexes, input.evidence.length)) {
       return blockDecision({
         input,
@@ -473,23 +658,20 @@ export function evaluateContactRouteOutreach(
         message: 'Route candidate cites an evidence index that does not exist.',
         selectedRoute: route,
         routeReadiness: 'blocked',
-        outreachPlayLevel: 'no_outreach',
+        allowedOutreachMode: 'manual_review_recommended',
       })
     }
   }
 
   for (const [claimIndex, claim] of input.outreachClaims.entries()) {
-    if (
-      claim.evidenceIndexes.length === 0 ||
-      !hasValidIndexes(claim.evidenceIndexes, input.evidence.length)
-    ) {
+    if (!hasValidIndexes(claim.evidenceIndexes, input.evidence.length)) {
       return blockDecision({
         input,
         reasonCode: 'invalid_evidence_index',
         path: `outreachClaims[${claimIndex}].evidenceIndexes`,
-        message: 'Every outreach claim must cite valid evidence indexes.',
+        message: 'Outreach claim cites an evidence index that does not exist.',
         routeReadiness: 'blocked',
-        outreachPlayLevel: 'no_outreach',
+        allowedOutreachMode: 'manual_review_recommended',
       })
     }
   }
@@ -504,255 +686,189 @@ export function evaluateContactRouteOutreach(
       path: 'signal.evidenceIndexes',
       message: 'Signal metadata cites an evidence index that does not exist.',
       routeReadiness: 'blocked',
-      outreachPlayLevel: 'no_outreach',
+      allowedOutreachMode: 'manual_review_recommended',
     })
   }
 
   const selectedRoute = firstSupportedRoute(input)
+  const routeViolations: ContactRouteOutreachViolation[] = []
+  const routeBlockedClaims: BlockedOutreachClaim[] = []
+
+  if (input.routeCandidates.length === 0) {
+    routeViolations.push(
+      violation(
+        'missing_route',
+        'routeCandidates',
+        'No contact route candidate is available; use a generic template and hydrate contact evidence.',
+      ),
+    )
+  }
+
+  input.routeCandidates.forEach((route, routeIndex) => {
+    if (route.evidenceIndexes.length === 0) {
+      routeViolations.push(
+        violation(
+          'route_without_evidence',
+          `routeCandidates[${routeIndex}].evidenceIndexes`,
+          'Contact route has no cited evidence and cannot support personalization.',
+        ),
+      )
+    }
+  })
 
   if (selectedRoute === null) {
-    if (input.procurementRequired === true) {
-      const directRoute = input.routeCandidates.find(
-        (route) =>
-          route.routeType !== 'unknown' &&
-          !PROCUREMENT_ROUTE_TYPES.includes(route.routeType),
-      )
+    const message =
+      'No usable non-unknown contact route is available; use a generic template and hydrate contact evidence.'
+    const reasonCode: ContactRouteOutreachReasonCode =
+      input.routeCandidates.length === 0 ? 'missing_route' : 'no_usable_route'
 
-      return blockDecision({
-        input,
-        reasonCode: 'procurement_required',
-        path: 'routeCandidates',
-        message: 'Procurement is required, so direct outreach cannot bypass it.',
-        selectedRoute: directRoute ?? null,
-        routeReadiness: 'procurement_only',
-        outreachPlayLevel: 'procurement_only',
-        routeReady: directRoute !== undefined,
-      })
-    }
-
-    const hasBlockedRoute = input.routeCandidates.some(
-      (route) => route.confidence === 'blocked',
-    )
-    const reasonCode: ContactRouteOutreachReasonCode = hasBlockedRoute
-      ? 'blocked_route'
-      : 'no_usable_route'
-
-    return blockDecision({
+    return safeDecision({
       input,
-      reasonCode,
-      path: 'routeCandidates',
-      message: hasBlockedRoute
-        ? 'The available contact route is blocked.'
-        : 'No usable non-unknown contact route is available.',
-      routeReadiness: hasBlockedRoute ? 'blocked' : 'needs_review',
-      outreachPlayLevel: hasBlockedRoute ? 'no_outreach' : 'enrich_contact_route',
-    })
-  }
-
-  const selectedRouteText = citedEvidenceText(
-    selectedRoute.evidenceIndexes,
-    input.evidence,
-  )
-
-  if (
-    (isNonEmptyString(selectedRoute.name) &&
-      !textSupportsValue(selectedRouteText, selectedRoute.name)) ||
-    (isNonEmptyString(selectedRoute.title) &&
-      !textSupportsValue(selectedRouteText, selectedRoute.title))
-  ) {
-    return blockDecision({
-      input,
-      reasonCode: 'named_contact_without_source',
-      path: 'selectedRoute.name',
-      message: 'Named contact or title is not supported by cited route evidence.',
-      selectedRoute,
+      selectedRoute: null,
       routeReadiness: 'needs_review',
-      outreachPlayLevel: 'enrich_contact_route',
+      allowedOutreachMode: 'generic_outreach_template',
+      routeReady: false,
+      personalizationAllowed: false,
+      violations: [
+        ...routeViolations,
+        violation(reasonCode, 'routeCandidates', message),
+      ],
+      blockedClaims: input.outreachClaims.map((claim, claimIndex) =>
+        blockedClaim(
+          reasonCode,
+          `outreachClaims[${claimIndex}]`,
+          'Lead-specific personalization removed until a source-linked contact route is available.',
+          claim,
+        ),
+      ),
+      gateReasons: [message],
+      recommendedAction: 'hydrate contact evidence',
     })
   }
 
-  if (
-    isNonEmptyString(selectedRoute.email) &&
-    !textSupportsValue(selectedRouteText, selectedRoute.email)
-  ) {
-    return blockDecision({
-      input,
-      reasonCode: 'email_without_source',
-      path: 'selectedRoute.email',
-      message: 'Email address is not supported by cited route evidence.',
-      selectedRoute,
-      routeReadiness: 'needs_review',
-      outreachPlayLevel: 'enrich_contact_route',
-    })
-  }
-
-  if (
-    isNonEmptyString(selectedRoute.phone) &&
-    !textSupportsPhone(selectedRouteText, selectedRoute.phone)
-  ) {
-    return blockDecision({
-      input,
-      reasonCode: 'phone_without_source',
-      path: 'selectedRoute.phone',
-      message: 'Phone number is not supported by cited route evidence.',
-      selectedRoute,
-      routeReadiness: 'needs_review',
-      outreachPlayLevel: 'enrich_contact_route',
-    })
-  }
-
-  if (
-    isNonEmptyString(selectedRoute.url) &&
-    !textSupportsUrl(selectedRouteText, selectedRoute.url)
-  ) {
-    return blockDecision({
-      input,
-      reasonCode: 'url_without_source',
-      path: 'selectedRoute.url',
-      message: 'URL, form, or portal route is not supported by cited evidence.',
-      selectedRoute,
-      routeReadiness: 'needs_review',
-      outreachPlayLevel: 'enrich_contact_route',
-    })
-  }
+  const selectedRouteSupport = routeSupportViolations(selectedRoute, input)
+  routeViolations.push(...selectedRouteSupport.violations)
+  routeBlockedClaims.push(...selectedRouteSupport.blockedClaims)
 
   if (
     input.procurementRequired === true &&
     !PROCUREMENT_ROUTE_TYPES.includes(selectedRoute.routeType)
   ) {
-    return blockDecision({
+    const message = 'Procurement is required, so direct outreach cannot bypass it.'
+
+    return safeDecision({
       input,
-      reasonCode: 'procurement_required',
-      path: 'selectedRoute.routeType',
-      message: 'Procurement is required, so direct outreach cannot bypass it.',
       selectedRoute,
       routeReadiness: 'procurement_only',
-      outreachPlayLevel: 'procurement_only',
+      allowedOutreachMode: 'procurement_only',
       routeReady: true,
+      personalizationAllowed: false,
+      violations: [
+        ...routeViolations,
+        violation('procurement_required', 'selectedRoute.routeType', message),
+      ],
+      blockedClaims: routeBlockedClaims,
+      gateReasons: [message],
+      recommendedAction: 'use procurement portal',
     })
   }
 
-  const recommendedAction = trimmedAction(input.recommendedAction)
-
-  if (recommendedAction === null) {
-    return blockDecision({
-      input,
-      reasonCode: 'missing_recommended_action',
-      path: 'recommendedAction',
-      message: 'Every contact route and outreach decision requires a recommended action.',
-      selectedRoute,
-      routeReadiness: routeReadinessFromCandidate(
-        selectedRoute,
-        input.procurementRequired === true,
-      ),
-      outreachPlayLevel: 'manual_review_only',
-      routeReady: true,
-    })
-  }
-
-  for (const [claimIndex, claim] of input.outreachClaims.entries()) {
-    if (claimIsHighRisk(claim)) {
-      if (input.leadKind === 'evidence_backed_prospect') {
-        return blockDecision({
-          input,
-          reasonCode: 'urgency_claim_without_signal',
-          path: `outreachClaims[${claimIndex}]`,
-          message:
-            'Evidence-backed prospects cannot use urgency, need, damage, budget, buying-intent, or authority claims.',
-          selectedRoute,
-          routeReadiness: routeReadinessFromCandidate(
-            selectedRoute,
-            input.procurementRequired === true,
-          ),
-          outreachPlayLevel: 'manual_review_only',
-          routeReady: true,
-        })
-      }
-
-      if (
-        input.leadKind === 'signal_backed_opportunity' &&
-        input.signal === undefined
-      ) {
-        return blockDecision({
-          input,
-          reasonCode: 'urgency_claim_without_signal',
-          path: `outreachClaims[${claimIndex}]`,
-          message: 'High-risk opportunity claims require signal metadata.',
-          selectedRoute,
-          routeReadiness: routeReadinessFromCandidate(
-            selectedRoute,
-            input.procurementRequired === true,
-          ),
-          outreachPlayLevel: 'manual_review_only',
-          routeReady: true,
-        })
-      }
-
-      if (!claimHasVerbatimSupport(claim, input.evidence)) {
-        return blockDecision({
-          input,
-          reasonCode: 'high_risk_claim_without_verbatim_support',
-          path: `outreachClaims[${claimIndex}].text`,
-          message:
-            'High-risk outreach claims require verbatim support in cited evidence.',
-          selectedRoute,
-          routeReadiness: routeReadinessFromCandidate(
-            selectedRoute,
-            input.procurementRequired === true,
-          ),
-          outreachPlayLevel: 'manual_review_only',
-          routeReady: true,
-        })
-      }
-    }
-  }
+  const claimCheck = claimSafety(input)
+  const violations = [...routeViolations, ...claimCheck.violations]
+  const blockedClaims = [...routeBlockedClaims, ...claimCheck.blockedClaims]
+  const routeReadiness = routeReadinessFromCandidate(
+    selectedRoute,
+    input.procurementRequired === true,
+  )
+  const routeReady =
+    routeReadiness === 'verified_route' ||
+    routeReadiness === 'plausible_route' ||
+    routeReadiness === 'procurement_only'
 
   if (input.procurementRequired === true) {
-    return passDecision({
+    return safeDecision({
       input,
       selectedRoute,
       routeReadiness: 'procurement_only',
-      outreachPlayLevel: 'procurement_only',
-      outreachAllowed: false,
+      allowedOutreachMode: 'procurement_only',
+      routeReady: true,
+      personalizationAllowed: false,
+      violations,
+      blockedClaims,
       gateReasons: ['Procurement route is supported; direct outreach is not allowed.'],
+      recommendedAction: 'use procurement portal',
     })
   }
 
   if (input.leadKind === 'exploratory_prospect') {
-    return blockDecision({
+    return safeDecision({
       input,
-      reasonCode: 'outreach_not_allowed_for_exploratory',
-      path: 'leadKind',
-      message: 'Exploratory prospects must go to evidence/contact review before drafting.',
       selectedRoute,
-      routeReadiness: routeReadinessFromCandidate(selectedRoute, false),
-      outreachPlayLevel:
-        selectedRoute.confidence === 'needs_review'
-          ? 'enrich_contact_route'
-          : 'manual_review_only',
-      routeReady: selectedRoute.confidence !== 'needs_review',
+      routeReadiness,
+      allowedOutreachMode: 'generic_outreach_template',
+      routeReady,
+      personalizationAllowed: false,
+      violations,
+      blockedClaims,
+      gateReasons: [
+        'Exploratory prospects use generic outreach until evidence and route context are enriched.',
+      ],
+      recommendedAction: 'enrich evidence and contact route',
     })
   }
 
-  if (selectedRoute.confidence === 'needs_review') {
-    return blockDecision({
+  if (input.leadKind === 'evidence_backed_prospect') {
+    const needsReview = selectedRoute.confidence === 'needs_review'
+    const mode: AllowedOutreachMode = needsReview
+      ? 'manual_review_recommended'
+      : 'evidence_limited_draft'
+
+    return safeDecision({
       input,
-      reasonCode: 'no_usable_route',
-      path: 'selectedRoute.confidence',
-      message: 'Selected contact route needs review before outreach.',
       selectedRoute,
-      routeReadiness: 'needs_review',
-      outreachPlayLevel: 'enrich_contact_route',
-      routeReady: false,
+      routeReadiness,
+      allowedOutreachMode: mode,
+      routeReady,
+      personalizationAllowed: false,
+      violations,
+      blockedClaims,
+      gateReasons:
+        blockedClaims.length > 0
+          ? ['Prospect outreach is limited to evidence-safe language with risky claims removed.']
+          : ['Prospect route and low-risk evidence support an evidence-limited draft.'],
+      recommendedAction:
+        blockedClaims.length > 0
+          ? 'draft evidence-limited outreach without risky claims'
+          : undefined,
     })
   }
 
-  return passDecision({
+  if (blockedClaims.length > 0 || selectedRoute.confidence === 'needs_review') {
+    return safeDecision({
+      input,
+      selectedRoute,
+      routeReadiness,
+      allowedOutreachMode: 'manual_review_recommended',
+      routeReady,
+      personalizationAllowed: false,
+      violations,
+      blockedClaims,
+      gateReasons: [
+        'Opportunity outreach needs manual review because route support or claim support is incomplete.',
+      ],
+      recommendedAction: 'send to review',
+    })
+  }
+
+  return safeDecision({
     input,
     selectedRoute,
-    routeReadiness: routeReadinessFromCandidate(selectedRoute, false),
-    outreachPlayLevel: 'draft_allowed',
-    outreachAllowed: true,
-    gateReasons: ['Contact route, lane, evidence, claims, and action passed.'],
+    routeReadiness,
+    allowedOutreachMode: 'source_backed_personalized_draft',
+    routeReady,
+    personalizationAllowed: true,
+    violations,
+    blockedClaims,
+    gateReasons: ['Route, signal, evidence, claims, and safe outreach mode passed.'],
   })
 }
