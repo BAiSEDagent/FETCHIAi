@@ -49,13 +49,19 @@ Recently landed product-proof chain:
 - **CP14A — Lead Funnel Product Spec**
   - Defined Lead Funnel as Prospect Pool + Signal Watch + Opportunities + Suggested Actions.
   - Preserved the separation between evidence-backed prospects and signal-backed opportunities.
+- **CP14 — Prospect Pool Export Contract**
+  - Defined export-ready Prospect Pool records without implementing CSV, CRM, UI, or sync behavior.
+- **CP15 — Commercial Roofing Playbook v1**
+  - Added the next vertical playbook/spec while preserving contract-first guardrails.
+- **CP16 — Contact Route / Outreach Play Contract**
+  - Closed the contact-route and safe-outreach-mode contract without sending outreach or adding runtime.
 
 Current active mode:
 
-- Roadmap MVP completion and remaining-work clarity.
-- CP-INFRA GitHub Publishing Path Decision is the active checkpoint.
-- Next proof sequence planning around contact route/outreach contracts and Lead Funnel runtime planning.
-- No runtime expansion until the next contract checkpoint is explicitly scoped.
+- CP17 Lead Funnel Runtime Implementation Plan is active.
+- CP17 is planning only and does not prove runtime behavior.
+- CP16 is closed.
+- Next implementation will be split into smaller checkpoints, not one broad CP18.
 - No DB/schema, provider runtime, UI/routes, package, billing, auth, admin, export UI, CRM sync, or outreach changes in this mode.
 
 ## Build Completion Snapshot
@@ -84,10 +90,9 @@ A first sellable MVP means:
 ## Remaining MVP Work Chunks
 
 1. Finish contract/spec runway
-   - CP14 — Prospect Pool Export Contract.
-   - CP15 — Commercial Roofing Playbook v1.
-   - CP16 — Contact Route / Outreach Play Contract.
-   - CP17 — Lead Funnel Runtime Implementation Plan.
+   - CP14, CP15, and CP16 are closed.
+   - CP17 — Lead Funnel Runtime Implementation Plan is active and planning-only.
+   - CP17 must split the next implementation work into small checkpoints before runtime begins.
 
 2. Lead Funnel storage and normalization
    - Lead Funnel record shape.
@@ -134,41 +139,21 @@ A first sellable MVP means:
 
 ## Next
 
-### CP14 — Prospect Pool Export Contract
-
-- Contract/spec proof.
-- Define export readiness fields.
-- Define blocked claims and blocked fields.
-- Define CRM-ready mapping shape.
-- Define CSV/export guardrails.
-- Add inert deterministic smoke proof only.
-- No actual CRM sync/export UI yet.
-
-### CP15 — Commercial Roofing Playbook v1
-
-- Add the next vertical playbook after scoring, classification, Lead Funnel, and export seams are proven.
-- Use the same playbook/config model as Commercial Cleaning.
-- Add an inert classification contract smoke proof for approved Commercial Roofing labels and blocked claims.
-- Do not hardcode vertical behavior into components or runtime.
-
-### CP16 — Contact Route / Outreach Play Contract
-
-- Contract only.
-- Define contact route hints, confidence, blocked claims, and outreach-play eligibility.
-- Draft-only outreach guardrails.
-- No auto-send, CRM sync, provider runtime, DB/schema, or UI implementation.
-
 ### CP17 — Lead Funnel Runtime Implementation Plan
 
 - Implementation plan only.
-- Sequence storage, provider runtime, lineage, customer surfaces, export, billing gates, and validation.
+- Define one shared Lead Funnel Run Executor with six run-mode configurations.
+- Sequence storage, provider runtime, lineage, customer surfaces, outcome capture, nearby, export, notifications, billing gates, and validation.
 - Identify required explicit DB/schema checkpoints before any schema work.
+- No DB/schema, provider runtime, UI/routes, scheduling, map, CRM/export, billing, notification, or outreach implementation.
 
-### CP18 — Lead Funnel MVP Implementation
+### After CP17 — Split Implementation Checkpoints
 
-- Implementation checkpoint after CP17 is approved.
-- Keep scope tied to the working MVP definition.
-- Do not overbuild beyond the first Lead Funnel path.
+- CP18A — Protected DB/schema and normalized storage.
+- CP18B — Shared executor runtime foundation.
+- CP18C — Chat-triggered live discovery proof.
+- CP18D — Lead Funnel persistence and lineage if not safely combined earlier.
+- CP19A/CP19B+ — Outcome foundation before actionable Today/Morning Brief, then export, Nearby/My Funnel, Fresh Area Sweep, Scheduled Scout, notification delivery, and billing/usage gates as separate checkpoints.
 
 ## Later
 
@@ -253,6 +238,7 @@ after classification and scoring contracts are proven.
 - `docs/PROVIDER_CONTRACTS.md`
 - `docs/product/vertical-playbook-registry.md`
 - `docs/product/lead-funnel-product-spec.md`
+- `docs/product/lead-funnel-runtime-implementation-plan.md`
 - `docs/design/lead-card-taxonomy.md`
 - `docs/DECISIONS.md`
 - `docs/CLEANUP_PLAN.md`
