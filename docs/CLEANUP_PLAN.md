@@ -375,6 +375,17 @@ State:
 - requires blob-SHA verification, draft PR review, explicit merge approval, Replit final proof, and branch cleanup
 - no GitHub Actions, credentials, package, app/runtime, provider, DB/schema, routes/UI, export, CRM, outreach, or source architecture changes
 
+## Product Proof CP17 - Lead Funnel Runtime Implementation Plan
+
+State:
+- adds the planning-only implementation sequence for one Lead Funnel Run Executor
+  with six run-mode configurations
+- updates roadmap status so CP16 is closed, CP17 is active, and the next runtime
+  work is split into smaller checkpoints instead of one broad CP18
+- no runtime, DB/schema, provider, routes/UI, map/geolocation, CRM/export,
+  billing, notification, outreach, package, workflow, credential, or cleanup
+  implementation changes
+
 ## Current Status
 
 Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
