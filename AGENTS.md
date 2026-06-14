@@ -2,12 +2,16 @@
 
 These rules apply to every coding agent working in this repository: Replit Agent, Claude Code, Codex, Cursor, or any future automation.
 
+> ## Pointer
+> Active branch: `main`. Active checkpoint and scope live in GitHub Issue #6 and the linked checkpoint issue.
+> Authority hierarchy: `docs/PM_OPERATING_SYSTEM.md` §2. Design rules: `docs/DESIGN_SOURCE_OF_TRUTH.md`. Token values: `app/globals.css` + `tailwind.config.ts`.
+
 ## Start Here
 
 Agents should use the current repo entry and control surfaces in this order:
 
 1. `README.md`
-2. GitHub Issue #6 Agent Control Room, when doing active checkpoint work
+2. GitHub Issue #6 Agent Control Room for coordination state only, plus the linked checkpoint issue for active scope
 3. `docs/PM_OPERATING_SYSTEM.md`
 4. `docs/ROADMAP.md`
 5. `docs/PRODUCT_CONTEXT.md`
@@ -50,7 +54,8 @@ Use the current source docs for the task surface:
 - `docs/AGENT_WEB_DATA_ARCHITECTURE.md`, `docs/PROVIDER_CONTRACTS.md`, and `docs/PLAYBOOK_SEARCH_EXAMPLES.md` describe provider and evidence architecture.
 - `docs/repo-stale-entry-audit.md` tracks stale or legacy repo-control surfaces.
 
-`DESIGN_SYSTEM_V2.md` is legacy and needs Adam decision per `docs/repo-stale-entry-audit.md`. Do not use it as active customer UI authority unless a checkpoint explicitly scopes it.
+`DESIGN_SYSTEM_V2.md` was deleted as stale design authority. Do not use it,
+PR #2, or `codex/issue-1-design-system-lock` as active customer UI authority.
 
 ## Provider Boundaries
 
@@ -126,7 +131,9 @@ Use temporary shell-only environment placeholders for local build proof only whe
 - Use the GitHub connector path for Codex PR publication when requested.
 - Do not use unauthenticated shell `git push`.
 - Do not merge without explicit approval.
-- Replit remains the final runtime/build proof environment when requested.
+- Replit remains the current/default post-merge proof environment when requested.
+  It is not the default implementer, the primary checkpoint owner, a Codex
+  rescue path, or the source of active branch/scope authority.
 
 Every PR should include:
 
@@ -150,7 +157,7 @@ Code review should prioritize serious issues over style nits. Flag P0/P1 issues 
 - Any unscoped database query that can leak data across workspaces.
 - Any direct LLM/provider/search API call that bypasses the provider abstraction layer.
 - Any accidental exposure of secrets, stack traces, raw provider errors, or API keys.
-- Any removal of trial gates, opportunity counters, usage checks, evidence gates, or score reasons.
+- Any removal of plan gates, opportunity counters, usage checks, evidence gates, or score reasons.
 - Any app-structure change that breaks `npm run type-check` or `npm run build`.
 
 Do not block PRs for small copy/style preferences unless they contradict active source docs or acceptance criteria.

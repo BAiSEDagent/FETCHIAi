@@ -14,10 +14,24 @@ Cleanup should remove stale artifacts, archive old context safely, and make acti
 - Archive first unless we are certain nothing references the file.
 - Do not mix cleanup with feature implementation.
 - Do not change protected DB/billing/provider files during cleanup.
-- Do not start broad cleanup until PR #2 visual QA is settled.
+- Do not treat historical PR #2 / PR #3 cleanup instructions as active branch
+  or checkpoint authority.
 - Keep app code changes separate from docs/hygiene changes.
 
-## Phase 1 — Clean PR #2 before merge
+## Current Cleanup State — CP17B
+
+- CP17 Lead Funnel Runtime Implementation Plan is closed.
+- CP17B Control + Design Reconciliation is the current cleanup/control
+  checkpoint.
+- PR #2 / PR #3 cleanup instructions below are historical/superseded. They are
+  retained for context only and must not be used as active branch, PR, or
+  checkpoint instructions.
+- `cleanup/repo-hygiene` is stale/diverged/parked. Do not delete, rebase, reset,
+  or merge it in CP17B.
+- Replit remains the current/default post-merge proof environment for merged
+  `main`; old Replit-primary build instructions are historical.
+
+## Historical Phase 1 — Clean PR #2 before merge
 
 Before PR #2 becomes the UI/design baseline:
 
@@ -32,7 +46,7 @@ Before PR #2 becomes the UI/design baseline:
   - `/app/leads`
   - `/app/leads/[id]`
 
-## Phase 2 — Reconcile repo hygiene PR #3
+## Historical Phase 2 — Reconcile repo hygiene PR #3
 
 After PR #2 is resolved:
 
@@ -74,7 +88,7 @@ Each archive folder should include a short README:
 
 > Historical reference only. Not active source of truth.
 
-## Phase 5 — Branch and PR cleanup
+## Historical Phase 5 — Branch and PR cleanup
 
 After PR #2 is merged or otherwise resolved:
 
@@ -386,8 +400,23 @@ State:
   billing, notification, outreach, package, workflow, credential, or cleanup
   implementation changes
 
+## Product Proof CP17B - Control + Design Reconciliation
+
+State:
+- reconciles source-of-truth authority so live code and current docs beat
+  protected historical prose
+- demotes `replit.md` and `FETCHI_CLAUDE_CODE_BRIEF.md` with header-only
+  historical warnings
+- deletes stale competing `DESIGN_SYSTEM_V2.md`
+- replaces `docs/DESIGN_SOURCE_OF_TRUTH.md` with a slim design-rule doc that
+  leaves token values to live code
+- records PR #2 / PR #3 instructions as historical/superseded and keeps
+  `cleanup/repo-hygiene` parked
+- no schema, package, provider/runtime, UI/routes, migrations, CI, branch
+  cleanup, or CP18 implementation changes
+
 ## Current Status
 
-Planning/scaffold plus Repo Control Hardening tooling and STOP rules.
+CP17B control/design reconciliation is active.
 
 Current-tree artifact de-tracking complete (see completed entry above).

@@ -55,13 +55,19 @@ Recently landed product-proof chain:
   - Added the next vertical playbook/spec while preserving contract-first guardrails.
 - **CP16 — Contact Route / Outreach Play Contract**
   - Closed the contact-route and safe-outreach-mode contract without sending outreach or adding runtime.
+- **CP17 — Lead Funnel Runtime Implementation Plan**
+  - Closed the planning-only implementation sequence for the first Lead Funnel runtime.
+  - Split the remaining runtime path into narrow checkpoints without authorizing runtime work.
 
 Current active mode:
 
-- CP17 Lead Funnel Runtime Implementation Plan is active.
-- CP17 is planning only and does not prove runtime behavior.
-- CP16 is closed.
-- Next implementation will be split into smaller checkpoints, not one broad CP18.
+- CP17B Control + Design Reconciliation is the current cleanup/control checkpoint.
+- CP17 is closed.
+- CPSEC1 may run in parallel as its own package/security checkpoint.
+- CP18 is the first live Commercial Cleaning runtime slice after CP17B and
+  required post-merge proof complete.
+- New inert contracts, playbooks, and plans are frozen until CP18 renders one
+  real opportunity with lineage.
 - No DB/schema, provider runtime, UI/routes, package, billing, auth, admin, export UI, CRM sync, or outreach changes in this mode.
 
 ## Build Completion Snapshot
@@ -91,8 +97,10 @@ A first sellable MVP means:
 
 1. Finish contract/spec runway
    - CP14, CP15, and CP16 are closed.
-   - CP17 — Lead Funnel Runtime Implementation Plan is active and planning-only.
-   - CP17 must split the next implementation work into small checkpoints before runtime begins.
+   - CP17 — Lead Funnel Runtime Implementation Plan is closed and planning-only.
+   - CP17B is reconciling control/design authority before runtime begins.
+   - No new inert contracts, playbooks, or plans before CP18 proves one real
+     Commercial Cleaning opportunity with lineage.
 
 2. Lead Funnel storage and normalization
    - Lead Funnel record shape.
@@ -139,21 +147,34 @@ A first sellable MVP means:
 
 ## Next
 
-### CP17 — Lead Funnel Runtime Implementation Plan
+### CP17B — Control + Design Reconciliation
 
-- Implementation plan only.
-- Define one shared Lead Funnel Run Executor with six run-mode configurations.
-- Sequence storage, provider runtime, lineage, customer surfaces, outcome capture, nearby, export, notifications, billing gates, and validation.
-- Identify required explicit DB/schema checkpoints before any schema work.
-- No DB/schema, provider runtime, UI/routes, scheduling, map, CRM/export, billing, notification, or outreach implementation.
+- Documentation/control checkpoint only.
+- Retire stale protected prose authority and old design-system branch references.
+- Delete stale competing design authority and keep token values owned by live code.
+- Keep `docs/ROADMAP.md`, `docs/PRODUCT_CONTEXT.md`, and
+  `docs/CLEANUP_PLAN.md` changes to current-state alignment.
+- No schema, package, provider/runtime, UI/routes, migrations, CI, or branch
+  cleanup work.
 
-### After CP17 — Split Implementation Checkpoints
+### CPSEC1 — Parallel Security Checkpoint
 
-- CP18A — Protected DB/schema and normalized storage.
-- CP18B — Shared executor runtime foundation.
-- CP18C — Chat-triggered live discovery proof.
-- CP18D — Lead Funnel persistence and lineage if not safely combined earlier.
-- CP19A/CP19B+ — Outcome foundation before actionable Today/Morning Brief, then export, Nearby/My Funnel, Fresh Area Sweep, Scheduled Scout, notification delivery, and billing/usage gates as separate checkpoints.
+- Standalone package/security checkpoint.
+- Must pin a specific Next.js remediation target and prove residual advisory
+  status.
+- Do not bundle into CP17B.
+
+### CP18 — First Live Commercial Cleaning Runtime Slice
+
+- First product proof after cleanup/security.
+- Render one real Commercial Cleaning opportunity on an internal page with
+  evidence-backed source lineage, provider run IDs/source URLs, score and
+  why-now reason.
+- Use live SerpApi/Firecrawl keys if ready, otherwise recorded-real provider
+  runs. Never fake data.
+- Passing smoke scripts alone does not count.
+- CP17's split checkpoint plan remains planning context, but CP18 is the next
+  product proof gate.
 
 ## Later
 
@@ -197,7 +218,7 @@ Sequence remains:
 Run scheduling comes after prospect mining contracts, fixture packs, scoring seams, export
 planning, and runtime provider boundaries are proven.
 
-### Billing/trial/subscription stabilization
+### Billing/plan/subscription stabilization
 
 Build Stripe BYOK integration around existing subscription/workspace credit logic when
 ready.

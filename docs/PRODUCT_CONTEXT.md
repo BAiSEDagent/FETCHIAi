@@ -102,6 +102,7 @@ One app. One codebase. Vertical-specific playbooks.
 
 ## Current Product State
 
-Fetchi is still in build/design stabilization.
+Fetchi is still in product-proof mode.
 
-The current focus is establishing reliable customer app UX, lead-card grammar, settings specs, and vertical playbook context before deeper agent implementation.
+The current focus is clean control/design authority, the parallel security
+target, then the first live Commercial Cleaning runtime slice.

@@ -1,3 +1,8 @@
+> ## ⚠️ HISTORICAL — Replit build notes, superseded
+> The active workflow is Codex → GitHub → `main`, with Replit used for post-merge proof and cleanup unless Adam explicitly scopes otherwise.
+> Current controlling sources: live code plus `docs/PM_OPERATING_SYSTEM.md`, `docs/PRODUCT_CONTEXT.md`, `docs/DECISIONS.md`, and `docs/DESIGN_SOURCE_OF_TRUTH.md`.
+> Do not infer the active branch, checkpoint, product behavior, pricing, design, or schema/migration process from this file when it conflicts with current code or docs.
+
 # Fetchi.ai — Agent Instructions
 
 ## Project
