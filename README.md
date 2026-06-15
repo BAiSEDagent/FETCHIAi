@@ -115,7 +115,7 @@ Start with these docs:
 - `docs/AGENT_WEB_DATA_ARCHITECTURE.md` — signal, prospect, enrichment, evidence, and opportunity architecture
 - `docs/PROVIDER_CONTRACTS.md` — SearchProvider, EvidenceProvider, and prospect-mining contract boundaries
 - `docs/product/vertical-playbook-registry.md` — vertical playbook model and launch verticals
-- `docs/product/playbooks/commercial-cleaning.md` — first complete v1 vertical playbook
+- `docs/product/playbooks/*` — current v1 vertical playbooks
 - `docs/design/lead-card-taxonomy.md` — lead-card label, fallback, and surface-color rules
 - `docs/DESIGN_SOURCE_OF_TRUTH.md` — current design-system source-of-truth notes
 
@@ -124,7 +124,6 @@ Start with these docs:
 Do not touch these unless the active checkpoint explicitly scopes them:
 
 - `replit.md`
-- `FETCHI_CLAUDE_CODE_BRIEF.md`
 - `db/schema.ts`
 - `db/index.ts`
 - `db/seed.ts`
@@ -132,9 +131,9 @@ Do not touch these unless the active checkpoint explicitly scopes them:
 
 Also avoid auth, Clerk, middleware, billing, Stripe, provider/search/agent logic, admin, settings, homepage, signup, and onboarding changes unless explicitly scoped.
 
-`replit.md` and `FETCHI_CLAUDE_CODE_BRIEF.md` are historical foundation files
-unless a current checkpoint explicitly scopes otherwise. They do not override
-live code or current product/decision/design docs.
+`replit.md` is historical/superseded unless a current checkpoint explicitly
+scopes otherwise. Deleted historical briefs are not current files or authority;
+use git history only for rationale if needed.
 
 ## Getting Started
 

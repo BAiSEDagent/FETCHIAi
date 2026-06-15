@@ -75,7 +75,6 @@ Do not modify these files unless the issue explicitly asks for it:
 
 ```txt
 replit.md
-FETCHI_CLAUDE_CODE_BRIEF.md
 db/schema.ts
 db/index.ts
 db/seed.ts
@@ -86,7 +85,11 @@ Also avoid DB/schema, auth, billing, provider/search/agent logic, admin, setting
 
 ## Architecture Rules
 
-- All database queries must be workspace-scoped with `workspace_id` / `workspaceId`.
+- Global normalized public entities, evidence, and signal events may be globally
+  deduplicated only through approved storage/repository interfaces.
+- Workspace Lead Funnel records, actions, watches, notes, contact history,
+  outreach state, outcomes, private activity, and customer-specific fit, score,
+  and lifecycle state must remain workspace-scoped.
 - Do not hardcode prices, opportunity limits, score thresholds, cron schedules, email copy, prompt copy, feature gates, provider choices, or model choices.
 - Runtime config should come from database-backed config tables where already modeled.
 - All LLM calls must route through the provider abstraction in the current repo equivalent.
