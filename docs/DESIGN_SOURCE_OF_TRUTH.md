@@ -1,117 +1,85 @@
 # Fetchi Design Source of Truth
 
-Status: Design context map.
+Status: Current design rules and intent. This file does not own implementation
+token values, branch state, PR state, or product proof.
 
-## Active Design Truth
+## Authority
 
-Current active design and product docs:
+Live code owns design token values:
 
-- docs/design/lead-card-taxonomy.md
-- docs/product/vertical-playbook-registry.md
-- docs/PRODUCT_CONTEXT.md
-- docs/PM_OPERATING_SYSTEM.md
+- `app/globals.css`
+- `tailwind.config.ts`
 
-Current live coordination:
+This document owns design rules, intent, and guardrails only. Do not hardcode
+color values, token values, branch names, PR state, or coordination state here.
 
-- GitHub Issue 6: Agent Control Room
+Current product/design companions:
 
-## Current visual direction
+- `docs/PM_OPERATING_SYSTEM.md`
+- `docs/PRODUCT_CONTEXT.md`
+- `docs/DECISIONS.md`
+- `docs/ROADMAP.md`
+- `docs/design/lead-card-taxonomy.md`
+- `docs/product/vertical-playbook-registry.md`
+- `docs/product/playbooks/*`
 
-**Dark product / operator surface** — all authenticated app surfaces (chat, today, leads, lead detail, map, settings). Dark base, raised cards, parchment accents where appropriate.
+## Surface Model
 
-**Cream marketing / light surface** — public marketing, pricing pages, vertical SEO, public-facing content, and onboarding handoff flows.
+Authenticated product/operator surfaces use the dark operator surface.
 
-**Shared brand tokens** — `#58937E` (brand green), `#D85A30` (coral), `#EBE6D9` (parchment), `#2D2B2A` (dark), Outfit (headings), DM Sans (body) — stable across both surfaces.
+Marketing, pricing, public vertical pages, and onboarding handoff surfaces use
+the cream marketing/onboarding surface.
 
-**2026-06-04 brand mark note:** Fetchi Stack is the promoted brand mark. Its three-block geometry is fixed; the `tone` prop only swaps fills. On dark surfaces, the top block remains the fresh-signal block. Retired kana/avatar treatments should not be reused in new UI.
+## Brand Mark
 
-**Coral — approved uses only:**
+Fetchi Stack is the current brand mark. Retired kana, mascot, and avatar
+treatments are historical and must not appear in new UI unless Adam explicitly
+approves a future checkpoint.
 
-- Active `urgent_action` lead-card surface when backed by dated action-window evidence
-- Primary CTA and monetization CTA
-- Cap-reached or upgrade moment
-- Approved brand/CTA affordance
+## Coral Rule
 
-**Coral is NOT:**
+Coral is reserved for urgent-action and monetization moments explicitly allowed
+by current taxonomy and product docs.
 
-- High score — score does not create a coral card
-- Storm / hail / weather signal
-- Vertical identity color
-- Lifecycle or status color
-- Generic icon or accent color
+Coral must not be derived from score alone. There is no score-to-coral logic.
+High score, vertical, lifecycle, weather category, or generic status cannot make
+a card coral.
 
-**Current design authority map:**
+## Lead-Card Rule
 
-| Topic | Authority |
-|---|---|
-| Visual / color / surface | `docs/DESIGN_SOURCE_OF_TRUTH.md` (this file) |
-| Lead-card taxonomy | `docs/design/lead-card-taxonomy.md` |
-| Settings | `docs/product/settings-spec.md` |
-| Vertical registry | `docs/product/vertical-playbook-registry.md` |
-| Commercial cleaning playbook | `docs/product/playbooks/commercial-cleaning.md` |
+Lead-card design must preserve six separate layers:
 
-## Active UI Baseline
+- status/lifecycle
+- signal
+- vertical fit
+- freshness
+- score
+- surface color
 
-The active UI baseline is PR 2 on branch codex/issue-1-design-system-lock until it is merged, replaced, or rejected.
+Do not collapse those layers into one label, one color, or one state.
 
-Customer surfaces to review:
+Fallback states must be intentional and honest. Missing evidence, weak fit,
+review-needed, exploratory, discarded, and contact-route uncertainty states
+should explain the limitation instead of pretending the record is stronger than
+it is.
 
-- app chat
-- app today
-- app leads
-- app lead detail
-- app map
-- app settings
+## Labels And Verticals
 
-## Lead Card Design Truth
+UI-visible labels must come from approved playbooks, the vertical registry, or
+the lead-card taxonomy. AI-generated labels are not allowed to freestyle into
+the UI.
 
-Lead-card label, surface, fallback, and proof rules live in docs/design/lead-card-taxonomy.md.
+Verticals are added by playbook/config and shared product rules, not by cloned
+screens or separate app experiences.
 
-Key rules:
+## Design Evidence
 
-- Status, signal, vertical-fit, freshness, score, and surface color are separate concerns.
-- Coral is urgent-action surface only.
-- Score does not decide card surface.
-- Fallback states must look intentional and honest.
-- Design boards are visual targets, not agent proof.
+Design evidence is not product proof. Mockups, screenshots, boards, and design
+artifacts can show visual direction or flow intent; they do not prove search,
+classification, scoring, evidence, contact route, outreach, billing, or runtime
+behavior.
 
-## Vertical Design Truth
-
-Launch verticals and the playbook registry model live in docs/product/vertical-playbook-registry.md.
-
-Key rules:
-
-- Ten core-supported launch verticals.
-- One app and one codebase.
-- Future verticals are added by playbook/config.
-- AI must not freestyle UI labels.
-
-## Historical Design References
-
-Old design HTML files, screenshots, token boards, handoff prompts, and agent-generated mockups may be useful for historical context but are not source of truth unless explicitly promoted here.
-
-Historical assets should eventually move under archive folders in docs/archive/.
-
-Each archive folder should say: Historical reference only. Not active source of truth.
-
-## Archived design artifacts
-
-- `design/_archive/*` is historical reference only.
-- Do not lift colors, typography, mascot/avatar, page layout, trial copy, or lead-card behavior from archived mockups.
-- Current design authority lives in this document plus `docs/design/lead-card-taxonomy.md` and current product specs.
-
-## Deprecated Context
-
-- PR 5 / codex/issue-4-lead-surface-grammar is superseded unless explicitly reopened.
-- Old kana/mascot/avatar treatments should not be reintroduced without approval.
-- Old design artifacts should not override current card taxonomy or product context docs.
-
-## How to Add New Design Context
-
-When Claude Design or another design tool creates a new board/spec:
-
-1. Treat the board as design evidence, not product proof.
-2. Extract stable decisions into docs.
-3. Add or update the relevant source-of-truth file.
-4. Link the artifact here if it remains active.
-5. Archive it when superseded.
+Archived design artifacts are historical only. Do not lift old colors,
+typography, mascot/avatar treatments, page layouts, trial copy, branch state,
+or lead-card behavior from archived mockups unless current docs explicitly
+promote that rule.

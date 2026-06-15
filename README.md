@@ -45,7 +45,12 @@ Fetchi has two honest lead-supply lanes plus shared enrichment.
 - Are high-fit target accounts with public or legitimate evidence.
 - Do not have a confirmed fresh buying signal.
 - Can enter the Prospect Pool for pipeline research and later enrichment.
-- Must not claim urgency, "why now," "needs this week," coral urgency, opportunity status, outreach drafts, or opportunity urgency scores unless a separate buying signal is found.
+- May receive CP16-approved evidence-limited outreach drafts or generic safe
+  templates.
+- Must not claim unsupported urgency, active need, buying intent, budget,
+  authority, damage, opportunity status, "why now," "needs this week," coral
+  urgency, or opportunity urgency scores unless a separate buying signal is
+  found.
 
 ### Enrichment
 
@@ -75,7 +80,9 @@ Fetchi's planned launch verticals are:
 9. Painting / Tenant Improvement
 10. Dumpster Rental / Junk Removal
 
-Commercial Cleaning / Janitorial currently has the first complete v1 playbook spec. Other launch verticals remain planned until their playbooks and proof fixtures exist.
+Commercial Cleaning / Janitorial and Commercial Roofing currently have authored
+v1 playbook specs. Other launch verticals remain planned until their playbooks
+and proof fixtures exist.
 
 ## Current Implementation Status
 
@@ -108,7 +115,7 @@ Start with these docs:
 - `docs/AGENT_WEB_DATA_ARCHITECTURE.md` — signal, prospect, enrichment, evidence, and opportunity architecture
 - `docs/PROVIDER_CONTRACTS.md` — SearchProvider, EvidenceProvider, and prospect-mining contract boundaries
 - `docs/product/vertical-playbook-registry.md` — vertical playbook model and launch verticals
-- `docs/product/playbooks/commercial-cleaning.md` — first complete v1 vertical playbook
+- `docs/product/playbooks/*` — current v1 vertical playbooks
 - `docs/design/lead-card-taxonomy.md` — lead-card label, fallback, and surface-color rules
 - `docs/DESIGN_SOURCE_OF_TRUTH.md` — current design-system source-of-truth notes
 
@@ -117,7 +124,6 @@ Start with these docs:
 Do not touch these unless the active checkpoint explicitly scopes them:
 
 - `replit.md`
-- `FETCHI_CLAUDE_CODE_BRIEF.md`
 - `db/schema.ts`
 - `db/index.ts`
 - `db/seed.ts`
@@ -125,13 +131,38 @@ Do not touch these unless the active checkpoint explicitly scopes them:
 
 Also avoid auth, Clerk, middleware, billing, Stripe, provider/search/agent logic, admin, settings, homepage, signup, and onboarding changes unless explicitly scoped.
 
-## Local Development
+`replit.md` is historical/superseded unless a current checkpoint explicitly
+scopes otherwise. Deleted historical briefs are not current files or authority;
+use git history only for rationale if needed.
+
+## Getting Started
+
+Create a local environment file from the example and fill only the values needed
+for the surface you are running:
+
+```bash
+cp .env.example .env.local
+```
+
+Local development requires a PostgreSQL-compatible `DATABASE_URL`. Replit
+injects it automatically; outside Replit, provide a local or development
+database URL in the shell or `.env.local`.
 
 Install dependencies:
 
 ```bash
 npm ci
 ```
+
+For local/dev database setup, sync the current Drizzle schema and seed data:
+
+```bash
+npm run db:push
+npm run db:seed
+```
+
+`npm run db:push` is a local/dev schema sync path. It is not a production
+migration strategy.
 
 Run the app:
 

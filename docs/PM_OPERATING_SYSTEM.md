@@ -6,7 +6,7 @@ Status: Product-management source of truth.
 
 This document defines how product management decisions are made for Fetchi. It is the operating layer for planning, scope control, roadmap decisions, sprint handoffs, design review, repo context discipline, and stakeholder updates.
 
-This file does **not** replace `replit.md`, `FETCHI_CLAUDE_CODE_BRIEF.md`, database schema files, or implementation specs. If this document conflicts with protected technical source-of-truth files, the protected technical files win for architecture and implementation. This file governs product judgment, sequencing, and decision discipline.
+This file does **not** replace live implementation files or active product, decision, and design docs. If historical foundation files conflict with live code or current product/decision/design docs, current sources win. This file governs product judgment, sequencing, and decision discipline.
 
 ## 1. Product Truth
 
@@ -36,39 +36,45 @@ Every product decision should be tested against this question:
 
 ## 2. Source-of-Truth Hierarchy
 
-Use this hierarchy when planning or resolving conflicts.
+Use this hierarchy when planning or resolving conflicts. Higher tiers win.
 
-### Protected technical source of truth
+### Live code — implementation & token truth (wins on "how it's built" and on values)
+- `db/schema.ts`, `db/index.ts`, `db/seed.ts`, `drizzle.config.ts`
+- `app/globals.css`, `tailwind.config.ts` (design token values)
+- `lib/providers/*`, `lib/gates/*` (provider/gate contracts as implemented)
 
-- `replit.md`
-- `FETCHI_CLAUDE_CODE_BRIEF.md`
-- `db/schema.ts`
-- `db/index.ts`
-- `db/seed.ts`
-- `drizzle.config.ts`
-
-### Product and PM source of truth
-
+### Current product, decision & design truth (wins on product behavior, pricing, labels, design rules)
 - `docs/PM_OPERATING_SYSTEM.md`
+- `docs/PRODUCT_CONTEXT.md`
+- `docs/DECISIONS.md`
+- `docs/ROADMAP.md`
+- `docs/DESIGN_SOURCE_OF_TRUTH.md`
 - `docs/product/vertical-playbook-registry.md`
+- `docs/product/settings-spec.md`
+- `docs/product/playbooks/*`
 - `docs/design/lead-card-taxonomy.md`
-- `docs/PRODUCT_CONTEXT.md` when created
-- `docs/ROADMAP.md` when created
-- `docs/DECISIONS.md` when created
-- `docs/CLEANUP_PLAN.md` when created
-- `docs/DESIGN_SOURCE_OF_TRUTH.md` when created
+- `docs/CLEANUP_PLAN.md`
+
+### Historical foundation — rationale only, NEVER an implementation authority
+- `replit.md` (Replit build model superseded by Codex -> GitHub workflow)
+
+Deleted historical briefs are not current files and are not authority. If needed,
+they may be consulted through git history for rationale only. They do not
+authorize behavior. If historical prose conflicts with live code or current
+product/decision/design docs, those win — always.
 
 ### Supporting context
+- GitHub Issue #6 (coordination state only), design outputs, screenshots, research
 
-- GitHub Issue #6 Agent Control Room
-- Claude Design outputs
-- Screenshots
-- Chat notes
-- Competitive research
-- User feedback
-- Market research
+Important rule: design evidence is not product proof, and historical-brief text is not authorization. Neither a mockup nor a line in the technical brief proves or authorizes anything the current docs or code do not.
 
-Important rule: **design evidence is not product proof**. A mockup can prove visual direction or flow intent, but it does not prove that Fetchi's agent, search, scoring, labeling, or lead-quality system works.
+Current workflow rule: Codex owns implementation checkpoints through GitHub and
+`main` unless Adam explicitly scopes otherwise. Replit remains the current/default
+post-merge proof environment for merged `main`, including type-check, clean
+build, route count, clean-state confirmation, and branch-cleanup verification.
+Replit is not the default implementer, primary checkpoint owner, Codex rescue
+path, or source of active branch/scope authority. Old Replit-primary
+build-from-scratch instructions are historical.
 
 ## 3. PM Role
 
@@ -142,7 +148,8 @@ These modes can be invoked explicitly or inferred from the task. They are adapte
 
 ### /sprint-planning
 
-Use when planning the next Replit session, checkpoint, cleanup pass, or short build cycle.
+Use when planning the next implementation checkpoint, proof session, cleanup pass,
+or short build cycle.
 
 Output:
 
@@ -189,7 +196,7 @@ Fetchi roadmap areas to protect:
 - Customer app UX and lead-card experience
 - My Leads / Today's Run / Lead Detail / Map / Settings flows
 - Admin console and config-table control
-- Billing, trial gate, and subscription sync
+- Billing, plan gates, usage gates, and subscription sync
 - Provider-agnostic LLM and search architecture
 - SerpAPI launch adapter
 - Firecrawl as enrichment layer, not SerpAPI replacement
@@ -345,12 +352,13 @@ Output:
 
 ### /stakeholder-update
 
-Use when summarizing progress for the user, Replit Agent, Claude, a developer, or future repo readers.
+Use when summarizing progress for the user, the Replit proof runner, Claude, a
+developer, or future repo readers.
 
 Always tailor to audience:
 
 - **Executive / founder:** outcome-focused, concise, decision-oriented.
-- **Engineering / Replit:** exact scope, files, blockers, acceptance criteria.
+- **Engineering / Replit proof:** exact scope, files, blockers, acceptance criteria, and post-merge proof needs.
 - **Design / Claude:** product intent, flows, constraints, screen requirements.
 - **Repo / future context:** decision log, source of truth, next actions.
 
@@ -366,7 +374,8 @@ Fetchi updates should include:
 
 ## 7. Build Prompt Rules
 
-Before asking Replit Agent or Claude to build anything, convert the request into a scoped prompt.
+Before asking an implementation agent or proof runner to do anything, convert
+the request into a scoped prompt.
 
 A good build prompt includes:
 
@@ -409,8 +418,8 @@ must never enter the repo.
 - Design evidence is not product proof; do not commit design boards as proof
   unless that is explicitly scoped.
 - Checkpoint publishing follows `docs/infra/github-publishing-path.md`. That
-  policy governs Codex/Replit local proof, approved draft PR publishing, merge
-  approval, final Replit proof, and branch cleanup.
+  policy governs local proof, approved draft PR publishing, merge approval,
+  final Replit post-merge proof, and branch cleanup.
 
 ## 8. Repo Context Discipline
 
