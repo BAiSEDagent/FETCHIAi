@@ -112,6 +112,8 @@ const CP19_VERTICAL_FIT_LABEL =
   'Post-Construction Clean' satisfies CommercialCleaningVerticalFitLabel
 const CP19_QUERY =
   'commercial buildout permit Dallas TX last 45 days'
+const CP19_MAX_PROVIDER_CALLS = 4
+const CP19_MAX_FIRECRAWL_ATTEMPTS = CP19_MAX_PROVIDER_CALLS - 1
 
 function hasValue(value: string | undefined): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -132,7 +134,7 @@ function replayFingerprint(text: string): string {
 function buildBudget(workspaceId: string): BudgetEnvelope {
   return {
     workspaceId,
-    maxProviderCalls: 4,
+    maxProviderCalls: CP19_MAX_PROVIDER_CALLS,
     maxSpendEstimateUsd: 0.05,
     triggeredBy: 'admin_replay',
   }
@@ -687,10 +689,25 @@ export async function getCp19LiveProof(): Promise<Cp19ProofResult> {
 
   const evidenceProvider = new FirecrawlEvidenceProvider(firecrawlKey)
   let lastBlocker = 'No live candidate produced surfaceable dated evidence.'
+  let firecrawlAttempts = 0
 
   for (const candidate of candidates) {
     if (!candidate.hit.url) continue
+    if (
+      calls.length >= CP19_MAX_PROVIDER_CALLS ||
+      firecrawlAttempts >= CP19_MAX_FIRECRAWL_ATTEMPTS
+    ) {
+      return blockedProof({
+        blockerCode: 'no_surfaceable_live_opportunity',
+        blocker:
+          'Provider call cap reached after 1 SerpApi call and 3 Firecrawl attempts without a surfaceable live opportunity.',
+        capturedAt,
+        evaluatedAt: nowIso(),
+        calls,
+      })
+    }
 
+    firecrawlAttempts += 1
     const evidenceResult = await evidenceProvider.scrapeUrl({
       url: candidate.hit.url,
       workspaceId: CP19_WORKSPACE_ID,
