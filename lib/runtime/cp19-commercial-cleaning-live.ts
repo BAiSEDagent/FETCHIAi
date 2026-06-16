@@ -111,9 +111,11 @@ const CP19_WORKSPACE_ID = 'cp19-admin-live-proof'
 const CP19_VERTICAL_FIT_LABEL =
   'Post-Construction Clean' satisfies CommercialCleaningVerticalFitLabel
 const CP19_QUERY =
-  'site:tdlr.texas.gov/TABS Dallas "Project #" "Registration Date"'
+  'site:tdlr.texas.gov/TABS "TABS2026" "Project #" "Registration Date" Dallas'
 const CP19_MAX_PROVIDER_CALLS = 4
 const CP19_MAX_FIRECRAWL_ATTEMPTS = CP19_MAX_PROVIDER_CALLS - 1
+const CP19_TABS_PROJECT_ID_PATTERN = /\bTABS2026\d+\b/gi
+const CP19_TABS_PROJECT_URL_BASE = 'https://www.tdlr.texas.gov/TABS/Search/Project/'
 
 function hasValue(value: string | undefined): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -388,11 +390,44 @@ function buildSearchTask(capturedAt: string, budget: BudgetEnvelope): SearchTask
   }
 }
 
+function extractTabsProjectIds(candidate: CandidateSignal): string[] {
+  const text = `${candidate.hit.title}\n${candidate.hit.snippet}\n${candidate.hit.url ?? ''}`
+  const ids: string[] = []
+  const seen = new Set<string>()
+
+  for (const match of text.matchAll(CP19_TABS_PROJECT_ID_PATTERN)) {
+    const id = match[0].toUpperCase()
+    if (seen.has(id)) continue
+    seen.add(id)
+    ids.push(id)
+  }
+
+  return ids
+}
+
+function canonicalTabsProjectUrl(projectId: string): string {
+  return `${CP19_TABS_PROJECT_URL_BASE}${projectId}`
+}
+
+function candidateWithSourceUrl(
+  candidate: CandidateSignal,
+  sourceUrl: string,
+): CandidateSignal {
+  return {
+    ...candidate,
+    hit: {
+      ...candidate.hit,
+      url: sourceUrl,
+    },
+  }
+}
+
 function candidateRank(candidate: CandidateSignal): number {
   const text = `${candidate.hit.title}\n${candidate.hit.snippet}\n${candidate.hit.url ?? ''}`
   let rank = 0
 
   if (/permit|TABS|building|construction/i.test(text)) rank += 3
+  if (/TABS2026\d+|Project #|Registration Date/i.test(text)) rank += 3
   if (/buildout|build-out|tenant improvement|renovation|alteration|remodel/i.test(text)) rank += 3
   if (/Dallas|Fort Worth|Arlington|Plano|Frisco|Irving|Denton|Highland Village/i.test(text)) rank += 2
   if (candidate.hit.url) rank += 1
@@ -402,6 +437,36 @@ function candidateRank(candidate: CandidateSignal): number {
 
 function sortedCandidates(candidates: CandidateSignal[]): CandidateSignal[] {
   return [...candidates].sort((a, b) => candidateRank(b) - candidateRank(a))
+}
+
+function evidenceCandidates(candidates: CandidateSignal[]): CandidateSignal[] {
+  const rankedCandidates = sortedCandidates(candidates)
+  const seenProjectIds = new Set<string>()
+  const tabsProjectCandidates: CandidateSignal[] = []
+
+  for (const candidate of rankedCandidates) {
+    for (const projectId of extractTabsProjectIds(candidate)) {
+      if (seenProjectIds.has(projectId)) continue
+      seenProjectIds.add(projectId)
+      tabsProjectCandidates.push(
+        candidateWithSourceUrl(candidate, canonicalTabsProjectUrl(projectId)),
+      )
+    }
+  }
+
+  if (tabsProjectCandidates.length > 0) return tabsProjectCandidates
+
+  const seenSourceUrls = new Set<string>()
+  const originalUrlCandidates: CandidateSignal[] = []
+
+  for (const candidate of rankedCandidates) {
+    const sourceUrl = candidate.hit.url?.trim()
+    if (!sourceUrl || seenSourceUrls.has(sourceUrl)) continue
+    seenSourceUrls.add(sourceUrl)
+    originalUrlCandidates.push(candidateWithSourceUrl(candidate, sourceUrl))
+  }
+
+  return originalUrlCandidates
 }
 
 function assertContract<T extends { ok: boolean; gateReasons: string[] }>(
@@ -673,14 +738,13 @@ export async function getCp19LiveProof(): Promise<Cp19ProofResult> {
     })
   }
 
-  const candidates = sortedCandidates(
-    searchResult.candidates.filter((candidate) => hasValue(candidate.hit.url)),
-  )
+  const candidates = evidenceCandidates(searchResult.candidates)
 
   if (candidates.length === 0) {
     return blockedProof({
       blockerCode: 'no_live_candidates',
-      blocker: 'SerpApi returned no live candidates with source URLs.',
+      blocker:
+        'SerpApi returned no TABS2026 project IDs and no live candidates with source URLs.',
       capturedAt,
       evaluatedAt: nowIso(),
       calls,
