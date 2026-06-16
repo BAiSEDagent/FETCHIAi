@@ -111,7 +111,7 @@ const CP19_WORKSPACE_ID = 'cp19-admin-live-proof'
 const CP19_VERTICAL_FIT_LABEL =
   'Post-Construction Clean' satisfies CommercialCleaningVerticalFitLabel
 const CP19_QUERY =
-  'commercial buildout permit Dallas TX last 45 days'
+  'site:tdlr.texas.gov/TABS/Search/Project/TABS "Registration Date" "Renovation/Alteration" Dallas'
 const CP19_MAX_PROVIDER_CALLS = 4
 const CP19_MAX_FIRECRAWL_ATTEMPTS = CP19_MAX_PROVIDER_CALLS - 1
 
