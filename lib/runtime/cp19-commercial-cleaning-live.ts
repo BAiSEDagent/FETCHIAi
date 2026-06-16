@@ -116,6 +116,15 @@ const CP19_MAX_PROVIDER_CALLS = 4
 const CP19_MAX_FIRECRAWL_ATTEMPTS = CP19_MAX_PROVIDER_CALLS - 1
 const CP19_TABS_PROJECT_ID_PATTERN = /\bTABS2026\d+\b/gi
 const CP19_TABS_PROJECT_URL_BASE = 'https://www.tdlr.texas.gov/TABS/Search/Project/'
+const CP19_DFW_MARKET_PATTERN =
+  /\b(Dallas|Tarrant|Collin|Denton|Rockwall|Kaufman|Ellis|Johnson|Parker|Fort Worth|Arlington|Plano|Frisco|Irving|Garland|Richardson|McKinney|Grapevine|Carrollton|Lewisville|Mesquite|Grand Prairie)\b/i
+const CP19_RESIDENTIAL_DISQUALIFIER_PATTERN =
+  /\b(single[-\s]family(?:\s+residential)?|residential subdivision)\b/i
+const CP19_SIDEWALK_CURB_PATTERN = /\b(sidewalk|curb ramps?)\b/i
+const CP19_RESIDENTIAL_CONTEXT_PATTERN =
+  /\b(residential|single[-\s]family|subdivision)\b/i
+const CP19_COMMERCIAL_FIT_PATTERN =
+  /\b(commercial|tenant improvement|buildout|build-out|finish out|renovation|alteration|office|retail|restaurant|warehouse|shell|medical|suite|remodel)\b/i
 
 function hasValue(value: string | undefined): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -358,6 +367,39 @@ function extractProspect(
   }
 }
 
+function evaluateProductScope(evidence: EvidenceDocument): { ok: boolean; reason: string } {
+  const text = `${evidence.title ?? ''}\n${evidence.cleanedText}`
+
+  if (!CP19_DFW_MARKET_PATTERN.test(text)) {
+    return {
+      ok: false,
+      reason:
+        'Live TDLR evidence was fresh but did not match the CP19 DFW commercial-cleaning scope: location is outside approved DFW counties/cities.',
+    }
+  }
+
+  if (
+    CP19_RESIDENTIAL_DISQUALIFIER_PATTERN.test(text) ||
+    (CP19_SIDEWALK_CURB_PATTERN.test(text) && CP19_RESIDENTIAL_CONTEXT_PATTERN.test(text))
+  ) {
+    return {
+      ok: false,
+      reason:
+        'Live TDLR evidence was fresh but did not match the CP19 DFW commercial-cleaning scope: residential-only scope is disqualified.',
+    }
+  }
+
+  if (!CP19_COMMERCIAL_FIT_PATTERN.test(text)) {
+    return {
+      ok: false,
+      reason:
+        'Live TDLR evidence was fresh but did not match the CP19 DFW commercial-cleaning scope: no commercial/buildout/TI fit term was present.',
+    }
+  }
+
+  return { ok: true, reason: 'CP19 DFW commercial-cleaning scope guard passed.' }
+}
+
 function excerptFromEvidence(text: string): string {
   const lines = text
     .split(/\n+/)
@@ -495,6 +537,11 @@ function makeReadyProof({
   evidence: EvidenceDocument
   sourceDate: string
 }): Cp19LiveOpportunity {
+  const productScope = evaluateProductScope(evidence)
+  if (!productScope.ok) {
+    throw new Error(productScope.reason)
+  }
+
   const prospect = extractProspect(candidate, evidence)
   if (!prospect) {
     throw new Error('Live evidence did not include a usable prospect name and location.')
