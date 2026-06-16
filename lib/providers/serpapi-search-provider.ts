@@ -35,6 +35,9 @@ const COST_ESTIMATE_USD = 0.01
 /** SerpApi REST endpoint. SerpApi is called only from this file. */
 const SERPAPI_ENDPOINT = 'https://serpapi.com/search.json'
 
+/** Keep surfaced provider errors useful without leaking secrets or long payloads. */
+const MAX_PROVIDER_ERROR_MESSAGE_LENGTH = 240
+
 /** Shape of the slice of the SerpApi response this adapter reads. */
 interface SerpApiOrganicResult {
   title?: unknown
@@ -55,6 +58,45 @@ function newRunId(): string {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+function sanitizeProviderErrorMessage(value: unknown): string | null {
+  if (!isNonEmptyString(value)) return null
+
+  const cleaned = value
+    .replace(/https?:\/\/\S+/gi, '[provider-url-redacted]')
+    .replace(/api_key=([^&\s]+)/gi, 'api_key=[redacted]')
+    .replace(/(api[_ -]?key\s*[:=]\s*)["']?[^"'\s,}]+/gi, '$1[redacted]')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (cleaned.length === 0) return null
+
+  return cleaned.length > MAX_PROVIDER_ERROR_MESSAGE_LENGTH
+    ? `${cleaned.slice(0, MAX_PROVIDER_ERROR_MESSAGE_LENGTH - 3).trim()}...`
+    : cleaned
+}
+
+function parseSerpApiErrorPayload(value: unknown): string | null {
+  if (typeof value !== 'object' || value === null) return null
+
+  const payload = value as SerpApiResponse
+  return sanitizeProviderErrorMessage(payload.error)
+}
+
+async function parseSerpApiErrorResponse(response: Response): Promise<string | null> {
+  try {
+    const body = await response.text()
+    if (!isNonEmptyString(body)) return null
+
+    try {
+      return parseSerpApiErrorPayload(JSON.parse(body)) ?? sanitizeProviderErrorMessage(body)
+    } catch {
+      return sanitizeProviderErrorMessage(body)
+    }
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -117,9 +159,13 @@ export class SerpApiSearchProvider implements SearchProvider {
     }
 
     if (!response.ok) {
+      const providerMessage = await parseSerpApiErrorResponse(response)
+
       return this.errorResult(providerRunId, {
         code: 'provider_request_failed',
-        message: `SerpApi discovery request failed with status ${response.status}.`,
+        message: providerMessage
+          ? `SerpApi discovery request failed with status ${response.status}: ${providerMessage}`
+          : `SerpApi discovery request failed with status ${response.status}.`,
         retryable: response.status >= 500,
         providerRunId,
       })
@@ -137,10 +183,11 @@ export class SerpApiSearchProvider implements SearchProvider {
       })
     }
 
-    if (isNonEmptyString(payload.error)) {
+    const providerMessage = parseSerpApiErrorPayload(payload)
+    if (providerMessage) {
       return this.errorResult(providerRunId, {
         code: 'provider_request_failed',
-        message: 'SerpApi discovery reported an error for this query.',
+        message: `SerpApi discovery reported an error for this query: ${providerMessage}`,
         retryable: false,
         providerRunId,
       })
