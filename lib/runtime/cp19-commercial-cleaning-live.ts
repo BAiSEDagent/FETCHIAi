@@ -111,7 +111,7 @@ const CP19_WORKSPACE_ID = 'cp19-admin-live-proof'
 const CP19_VERTICAL_FIT_LABEL =
   'Post-Construction Clean' satisfies CommercialCleaningVerticalFitLabel
 const CP19_QUERY =
-  'site:tdlr.texas.gov/TABS/Search/Project/TABS "Registration Date" "Renovation/Alteration" Dallas'
+  'site:tdlr.texas.gov/TABS Dallas "Project #" "Registration Date"'
 const CP19_MAX_PROVIDER_CALLS = 4
 const CP19_MAX_FIRECRAWL_ATTEMPTS = CP19_MAX_PROVIDER_CALLS - 1
 
