@@ -382,7 +382,7 @@ function buildSearchTask(capturedAt: string, budget: BudgetEnvelope): SearchTask
     signalType: CP19_SIGNAL_ID,
     engine: 'google_light',
     query: CP19_QUERY,
-    location: { city: 'Dallas-Fort Worth', state: 'TX' },
+    location: { city: 'Dallas', state: 'Texas, United States' },
     dateWindow: '45 days',
     budget,
   }
