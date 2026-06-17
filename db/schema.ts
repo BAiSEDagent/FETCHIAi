@@ -201,6 +201,123 @@ export const opportunities = pgTable('opportunities', {
 }))
 
 // ─────────────────────────────────────────────
+// EVIDENCE SOURCES
+// Public official source artifacts only. No workspace-private status, outcome,
+// contact, CRM, or outreach state belongs here.
+// ─────────────────────────────────────────────
+export const evidenceSources = pgTable('evidence_sources', {
+  id:                  uuid('id').defaultRandom().primaryKey(),
+  // tdlr_tabs_project | future official/public source type
+  sourceType:          text('source_type').notNull(),
+  // tdlr | county_permit_portal | future public authority
+  sourceAuthority:     text('source_authority').notNull(),
+  // External stable id, e.g. TABS2026022803
+  externalId:          text('external_id').notNull(),
+  sourceUrl:           text('source_url').notNull(),
+  sourceTitle:         text('source_title'),
+  sourceDate:          timestamp('source_date').notNull(),
+  evidenceFingerprint: text('evidence_fingerprint').notNull(),
+  // Sanitized public source metadata only. No API keys or workspace-private state.
+  sourceMetadata:      jsonb('source_metadata').default({}).notNull(),
+  firstSeenAt:         timestamp('first_seen_at').defaultNow().notNull(),
+  lastSeenAt:          timestamp('last_seen_at').defaultNow().notNull(),
+}, (table) => ({
+  typeExternalUnique: uniqueIndex('evidence_sources_type_external_unique')
+                        .on(table.sourceType, table.externalId),
+  sourceUrlUnique:    uniqueIndex('evidence_sources_url_unique')
+                        .on(table.sourceUrl),
+  sourceDateIdx:      index('evidence_sources_date_idx').on(table.sourceDate),
+  fingerprintIdx:     index('evidence_sources_fingerprint_idx')
+                        .on(table.evidenceFingerprint),
+}))
+
+// ─────────────────────────────────────────────
+// RUNTIME LINEAGE RUNS
+// Provider/source-adapter replay metadata only. Never store API keys.
+// ─────────────────────────────────────────────
+export const runtimeLineageRuns = pgTable('runtime_lineage_runs', {
+  id:                 uuid('id').defaultRandom().primaryKey(),
+  // serpapi | tdlr-tabs | firecrawl
+  provider:           text('provider').notNull(),
+  providerRunId:      text('provider_run_id').notNull(),
+  // source_validation | source_adapter_listing | evidence_hydration
+  runRole:            text('run_role').notNull(),
+  // ok | error | skipped
+  status:             text('status').default('ok').notNull(),
+  evidenceSourceId:   uuid('evidence_source_id')
+                        .references(() => evidenceSources.id),
+  sourceUrl:          text('source_url'),
+  query:              text('query'),
+  engine:             text('engine'),
+  estimatedCostCents: integer('estimated_cost_cents').default(0).notNull(),
+  startedAt:          timestamp('started_at').defaultNow().notNull(),
+  completedAt:        timestamp('completed_at'),
+  // Sanitized request/result metadata for replay. No secrets.
+  requestMetadata:    jsonb('request_metadata').default({}).notNull(),
+  responseMetadata:   jsonb('response_metadata').default({}).notNull(),
+  createdAt:          timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  providerRunUnique: uniqueIndex('runtime_lineage_provider_run_unique')
+                       .on(table.providerRunId),
+  providerRoleIdx:   index('runtime_lineage_provider_role_idx')
+                       .on(table.provider, table.runRole),
+  evidenceSourceIdx: index('runtime_lineage_evidence_source_idx')
+                       .on(table.evidenceSourceId),
+  sourceUrlIdx:      index('runtime_lineage_source_url_idx').on(table.sourceUrl),
+}))
+
+// ─────────────────────────────────────────────
+// OPPORTUNITY EVIDENCE PROOFS
+// Workspace-private proof snapshot linking a surfaced opportunity to source,
+// lineage, gate reasons, score reason, and next action.
+// ─────────────────────────────────────────────
+export const opportunityEvidenceProofs = pgTable('opportunity_evidence_proofs', {
+  id:                       uuid('id').defaultRandom().primaryKey(),
+  workspaceId:              text('workspace_id').notNull()
+                              .references(() => workspaceSettings.workspaceId),
+  opportunityId:            uuid('opportunity_id').notNull()
+                              .references(() => opportunities.id),
+  evidenceSourceId:         uuid('evidence_source_id').notNull()
+                              .references(() => evidenceSources.id),
+  proofHash:                text('proof_hash').notNull(),
+  leadKind:                 text('lead_kind')
+                              .default('signal_backed_opportunity')
+                              .notNull(),
+  providerMode:             text('provider_mode').default('LIVE').notNull(),
+  market:                   text('market').notNull(),
+  vertical:                 text('vertical').notNull(),
+  signalType:               text('signal_type').notNull(),
+  signalLabel:              text('signal_label').notNull(),
+  verticalFitLabel:         text('vertical_fit_label').notNull(),
+  score:                    integer('score').notNull(),
+  whyNow:                   text('why_now').notNull(),
+  scoreReason:              text('score_reason').notNull(),
+  nextActionLabel:          text('next_action_label').notNull(),
+  nextActionDetail:         text('next_action_detail').notNull(),
+  evidenceSummary:          text('evidence_summary').notNull(),
+  sourceExcerpt:            text('source_excerpt').notNull(),
+  sourceFingerprint:        text('source_fingerprint').notNull(),
+  searchProviderRunId:      text('search_provider_run_id').notNull(),
+  evidenceProviderRunId:    text('evidence_provider_run_id').notNull(),
+  sourceAdapterRunIds:      text('source_adapter_run_ids').array().default([]).notNull(),
+  sourceAdapterListingUrls: text('source_adapter_listing_urls').array().default([]).notNull(),
+  gateReasons:              jsonb('gate_reasons').default({}).notNull(),
+  providerLineage:          jsonb('provider_lineage').default({}).notNull(),
+  proofMetadata:            jsonb('proof_metadata').default({}).notNull(),
+  createdAt:                timestamp('created_at').defaultNow().notNull(),
+  updatedAt:                timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  opportunityUnique: uniqueIndex('opportunity_evidence_proofs_opportunity_unique')
+                       .on(table.opportunityId),
+  proofHashUnique:   uniqueIndex('opportunity_evidence_proofs_hash_unique')
+                       .on(table.proofHash),
+  workspaceIdx:      index('opportunity_evidence_proofs_workspace_idx')
+                       .on(table.workspaceId),
+  evidenceSourceIdx: index('opportunity_evidence_proofs_source_idx')
+                       .on(table.evidenceSourceId),
+}))
+
+// ─────────────────────────────────────────────
 // LEAD PASS REASONS
 // Captures structured feedback when a user passes on a lead in Today's Stack.
 // Used as training data for the Quality Scoring Agent to improve future scoring
@@ -696,6 +813,7 @@ export const workspaceSettingsRelations = relations(workspaceSettings, ({ one, m
   opportunities:           many(opportunities),
   agentRuns:               many(agentRuns),
   events:                  many(events),
+  opportunityEvidenceProofs: many(opportunityEvidenceProofs),
 }))
 
 export const signalsRelations = relations(signals, ({ one, many }) => ({
@@ -729,6 +847,34 @@ export const opportunitiesRelations = relations(opportunities, ({ one, many }) =
     references: [prospects.id],
   }),
   outreachPlays: many(outreachPlays),
+  evidenceProofs: many(opportunityEvidenceProofs),
+}))
+
+export const evidenceSourcesRelations = relations(evidenceSources, ({ many }) => ({
+  runtimeLineageRuns: many(runtimeLineageRuns),
+  opportunityEvidenceProofs: many(opportunityEvidenceProofs),
+}))
+
+export const runtimeLineageRunsRelations = relations(runtimeLineageRuns, ({ one }) => ({
+  evidenceSource: one(evidenceSources, {
+    fields: [runtimeLineageRuns.evidenceSourceId],
+    references: [evidenceSources.id],
+  }),
+}))
+
+export const opportunityEvidenceProofsRelations = relations(opportunityEvidenceProofs, ({ one }) => ({
+  workspace: one(workspaceSettings, {
+    fields: [opportunityEvidenceProofs.workspaceId],
+    references: [workspaceSettings.workspaceId],
+  }),
+  opportunity: one(opportunities, {
+    fields: [opportunityEvidenceProofs.opportunityId],
+    references: [opportunities.id],
+  }),
+  evidenceSource: one(evidenceSources, {
+    fields: [opportunityEvidenceProofs.evidenceSourceId],
+    references: [evidenceSources.id],
+  }),
 }))
 
 export const contactRoutesRelations = relations(contactRoutes, ({ one }) => ({
@@ -773,6 +919,15 @@ export type NewProspect  = typeof prospects.$inferInsert
 
 export type Opportunity     = typeof opportunities.$inferSelect
 export type NewOpportunity  = typeof opportunities.$inferInsert
+
+export type EvidenceSource     = typeof evidenceSources.$inferSelect
+export type NewEvidenceSource  = typeof evidenceSources.$inferInsert
+
+export type RuntimeLineageRun     = typeof runtimeLineageRuns.$inferSelect
+export type NewRuntimeLineageRun  = typeof runtimeLineageRuns.$inferInsert
+
+export type OpportunityEvidenceProof     = typeof opportunityEvidenceProofs.$inferSelect
+export type NewOpportunityEvidenceProof  = typeof opportunityEvidenceProofs.$inferInsert
 
 export type ContactRoute     = typeof contactRoutes.$inferSelect
 export type NewContactRoute  = typeof contactRoutes.$inferInsert
