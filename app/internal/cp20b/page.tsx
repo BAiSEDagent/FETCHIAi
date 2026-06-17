@@ -182,56 +182,121 @@ function Header({ proof }: { proof: Cp20bProofResult }) {
   )
 }
 
+function SanitizerDiagnostics({
+  proof,
+}: {
+  proof: Extract<Cp20bProofResult, { status: 'blocked' }>
+}) {
+  const diagnostics = proof.sanitizerDiagnostics
+  if (!diagnostics) return null
+
+  return (
+    <section className="rounded-lg border border-text/10 bg-white p-5 shadow-[0_14px_36px_rgba(10,10,10,0.07)] md:p-6">
+      <div className="mb-5 flex items-center gap-2">
+        <ShieldCheck className="h-5 w-5 text-blue" aria-hidden="true" />
+        <h2 className="font-outfit text-[24px] font-bold text-text">
+          Sanitizer Diagnostics
+        </h2>
+      </div>
+      <dl>
+        <ProofRow label="Candidate count" value={String(diagnostics.candidateCount)} />
+        <ProofRow
+          label="Fallback accepted"
+          value={diagnostics.fallbackExtractionAccepted ? 'Yes' : 'No'}
+        />
+        <ProofRow
+          label="No accepted fallback"
+          value={diagnostics.fallbackExtractionFoundNoAcceptedCandidate ? 'Yes' : 'No'}
+        />
+      </dl>
+      <div className="mt-4 space-y-3">
+        {diagnostics.candidates.map((candidate, index) => (
+          <div
+            key={`${candidate.sourceLabel}-${candidate.candidateType}-${index}`}
+            className="rounded-lg border border-text/10 bg-bg px-4 py-3"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-text/45">
+                  {candidate.sourceLabel} / {candidate.candidateType}
+                </div>
+                <div className="mt-1 text-[13px] font-semibold text-text/70">
+                  Length {candidate.length} - Source labels{' '}
+                  {candidate.hadSourceLabels ? 'yes' : 'no'} - Over length{' '}
+                  {candidate.overLength ? 'yes' : 'no'}
+                </div>
+              </div>
+              <div className="rounded-md bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-text/55">
+                {candidate.rejectionReason ? 'Rejected' : 'Accepted'}
+              </div>
+            </div>
+            <code className="mt-3 block break-words rounded-md bg-white px-3 py-2 text-[12px] leading-relaxed text-text">
+              {candidate.preview || 'Empty candidate'}
+            </code>
+            <p className="mt-2 text-[12px] leading-relaxed text-text/62">
+              {candidate.rejectionReason ?? 'Candidate passed sanitizer checks.'}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function BlockedProof({ proof }: { proof: Extract<Cp20bProofResult, { status: 'blocked' }> }) {
   return (
-    <section className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
-      <article className="rounded-lg border border-text/10 bg-white p-5 shadow-[0_14px_36px_rgba(10,10,10,0.07)] md:p-6">
-        <div className="mb-5 flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-coral" aria-hidden="true" />
-          <h2 className="font-outfit text-[26px] font-bold text-text">
-            CP20B Not Persisted
-          </h2>
-        </div>
-        <dl>
-          <ProofRow label="Blocker code" value={proof.blockerCode} />
-          <ProofRow label="Blocker" value={proof.blocker} />
-          <ProofRow
-            label="Missing env"
-            value={proof.missingEnv.length > 0 ? proof.missingEnv.join(', ') : 'None reported'}
-          />
-          <ProofRow label="DB writes" value={String(proof.dbWrites)} />
-          <ProofRow
-            label="Search run ID"
-            value={proof.liveLineage.searchProviderRunId ?? 'Not available'}
-          />
-          <ProofRow
-            label="TDLR adapter run IDs"
-            value={
-              proof.liveLineage.sourceAdapterRunIds.length > 0
-                ? proof.liveLineage.sourceAdapterRunIds.join(', ')
-                : 'Not available'
-            }
-          />
-          <ProofRow
-            label="Firecrawl run ID"
-            value={proof.liveLineage.evidenceProviderRunId ?? 'Not available'}
-          />
-        </dl>
-      </article>
+    <div className="space-y-5">
+      <section className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
+        <article className="rounded-lg border border-text/10 bg-white p-5 shadow-[0_14px_36px_rgba(10,10,10,0.07)] md:p-6">
+          <div className="mb-5 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-coral" aria-hidden="true" />
+            <h2 className="font-outfit text-[26px] font-bold text-text">
+              CP20B Not Persisted
+            </h2>
+          </div>
+          <dl>
+            <ProofRow label="Blocker code" value={proof.blockerCode} />
+            <ProofRow label="Blocker" value={proof.blocker} />
+            <ProofRow
+              label="Missing env"
+              value={proof.missingEnv.length > 0 ? proof.missingEnv.join(', ') : 'None reported'}
+            />
+            <ProofRow label="DB writes" value={String(proof.dbWrites)} />
+            <ProofRow
+              label="Search run ID"
+              value={proof.liveLineage.searchProviderRunId ?? 'Not available'}
+            />
+            <ProofRow
+              label="TDLR adapter run IDs"
+              value={
+                proof.liveLineage.sourceAdapterRunIds.length > 0
+                  ? proof.liveLineage.sourceAdapterRunIds.join(', ')
+                  : 'Not available'
+              }
+            />
+            <ProofRow
+              label="Firecrawl run ID"
+              value={proof.liveLineage.evidenceProviderRunId ?? 'Not available'}
+            />
+          </dl>
+        </article>
 
-      <aside className="rounded-lg border border-text/10 bg-white p-5 shadow-[0_14px_36px_rgba(10,10,10,0.07)] md:p-6">
-        <div className="mb-5 flex items-center gap-2">
-          <Database className="h-5 w-5 text-blue" aria-hidden="true" />
-          <h2 className="font-outfit text-[24px] font-bold text-text">
-            Persistence Guard
-          </h2>
-        </div>
-        <p className="text-[13px] leading-relaxed text-text/65">
-          CP20B writes nothing unless CP20A live gates pass and the prospect
-          sanitizer accepts a bounded business name.
-        </p>
-      </aside>
-    </section>
+        <aside className="rounded-lg border border-text/10 bg-white p-5 shadow-[0_14px_36px_rgba(10,10,10,0.07)] md:p-6">
+          <div className="mb-5 flex items-center gap-2">
+            <Database className="h-5 w-5 text-blue" aria-hidden="true" />
+            <h2 className="font-outfit text-[24px] font-bold text-text">
+              Persistence Guard
+            </h2>
+          </div>
+          <p className="text-[13px] leading-relaxed text-text/65">
+            CP20B writes nothing unless CP20A live gates pass and the prospect
+            sanitizer accepts a bounded business name.
+          </p>
+        </aside>
+      </section>
+
+      <SanitizerDiagnostics proof={proof} />
+    </div>
   )
 }
 

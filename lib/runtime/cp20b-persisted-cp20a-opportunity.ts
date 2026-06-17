@@ -21,6 +21,7 @@ const CP20B_MARKET = 'DFW'
 const CP20B_PROVIDER_MODE = 'LIVE'
 const CP20B_BUSINESS_NAME_MAX_LENGTH = 120
 const CP20B_BUSINESS_NAME_MAX_WORDS = 12
+const CP20B_BUSINESS_NAME_PREVIEW_LENGTH = 80
 const CP20B_SOURCE_FIELD_LABELS = [
   'Project Number',
   'Project #',
@@ -44,6 +45,23 @@ const CP20B_RAW_SOURCE_CHUNK_PATTERN =
   /\b(TDLR|TABS20\d+|Registration Date|Project\s*(Number|#|Name)|Facility Name|Business Name|Tenant Name|Property Name|Type of Work|Scope of Work|Location Address|Project Address|Site Address)\b/i
 
 type Cp20bStatus = 'ready' | 'blocked'
+
+export type Cp20bSanitizerCandidateDiagnostic = {
+  sourceLabel: string
+  candidateType: string
+  length: number
+  preview: string
+  rejectionReason: string | null
+  hadSourceLabels: boolean
+  overLength: boolean
+}
+
+export type Cp20bSanitizerDiagnostics = {
+  candidateCount: number
+  fallbackExtractionAccepted: boolean
+  fallbackExtractionFoundNoAcceptedCandidate: boolean
+  candidates: Cp20bSanitizerCandidateDiagnostic[]
+}
 
 export type Cp20bPersistedLineageRun = {
   provider: string
@@ -131,6 +149,7 @@ export type Cp20bBlockedProof = {
     sourceAdapterRunIds: string[]
     evidenceProviderRunId: string | null
   }
+  sanitizerDiagnostics?: Cp20bSanitizerDiagnostics
 }
 
 export type Cp20bProofResult = Cp20bPersistedOpportunity | Cp20bBlockedProof
@@ -222,6 +241,12 @@ function cleanBusinessNameCandidate(value: string | null | undefined): string | 
   return cleaned.length > 0 ? cleaned : null
 }
 
+function safeBusinessNamePreview(value: string): string {
+  const preview = value.replace(/\s+/g, ' ').trim()
+  if (preview.length <= CP20B_BUSINESS_NAME_PREVIEW_LENGTH) return preview
+  return `${preview.slice(0, CP20B_BUSINESS_NAME_PREVIEW_LENGTH - 3)}...`
+}
+
 function trimAtNextSourceFieldLabel(value: string): string {
   let end = value.length
 
@@ -263,6 +288,23 @@ function extractLabeledBusinessNameValue(
   }
 
   return null
+}
+
+function extractLabeledBusinessNameCandidates(
+  text: string,
+): Array<{ sourceLabel: string; candidateType: string; value: string }> {
+  return [
+    'Tenant Name',
+    'Business Name',
+    'Facility Name',
+    'Property Name',
+    'Project Name',
+    'Permit For',
+    'Applicant',
+  ].flatMap((label) => {
+    const value = extractLabeledBusinessNameValue(text, [label])
+    return value ? [{ sourceLabel: label, candidateType: 'labeled-field', value }] : []
+  })
 }
 
 function tenantNameFromFinishOut(value: string): string | null {
@@ -323,7 +365,42 @@ function cp20bBusinessNameRejectionReason({
   return null
 }
 
-function extractCleanBusinessName(liveProof: Cp20aLiveOpportunity): string | null {
+function sanitizerCandidateDiagnostic({
+  sourceLabel,
+  candidateType,
+  value,
+  sourceExcerpt,
+  rejectEmbeddedSourceExcerpt,
+}: {
+  sourceLabel: string
+  candidateType: string
+  value: string
+  sourceExcerpt: string
+  rejectEmbeddedSourceExcerpt: boolean
+}): Cp20bSanitizerCandidateDiagnostic {
+  const reason = cp20bBusinessNameRejectionReason({
+    businessName: value,
+    sourceExcerpt,
+    rejectEmbeddedSourceExcerpt,
+  })
+
+  return {
+    sourceLabel,
+    candidateType,
+    length: value.length,
+    preview: safeBusinessNamePreview(value),
+    rejectionReason: reason,
+    hadSourceLabels:
+      CP20B_FORBIDDEN_SOURCE_LABEL_PATTERN.test(value) ||
+      CP20B_RAW_SOURCE_CHUNK_PATTERN.test(value),
+    overLength: value.length > CP20B_BUSINESS_NAME_MAX_LENGTH,
+  }
+}
+
+function extractCleanBusinessName(liveProof: Cp20aLiveOpportunity): {
+  businessName: string | null
+  diagnostics: Cp20bSanitizerDiagnostics
+} {
   const sourceText = [
     liveProof.prospect.businessName,
     liveProof.evidence.sourceTitle ?? '',
@@ -331,27 +408,38 @@ function extractCleanBusinessName(liveProof: Cp20aLiveOpportunity): string | nul
     liveProof.score.whyNow,
     liveProof.nextAction.detail,
   ].join('\n')
-  const labeledCandidates = [
-    extractLabeledBusinessNameValue(sourceText, ['Tenant Name', 'Business Name']),
-    extractLabeledBusinessNameValue(sourceText, ['Facility Name', 'Property Name']),
-    extractLabeledBusinessNameValue(sourceText, ['Project Name', 'Permit For', 'Applicant']),
-  ].filter((candidate): candidate is string => candidate !== null)
+  const labeledCandidates = extractLabeledBusinessNameCandidates(sourceText)
   const candidates = [
-    ...labeledCandidates.map(tenantNameFromFinishOut),
+    ...labeledCandidates.flatMap((candidate) => {
+      const derived = tenantNameFromFinishOut(candidate.value)
+      return derived
+        ? [{
+            sourceLabel: `tenant-from-finish-out(${candidate.sourceLabel})`,
+            candidateType: 'derived',
+            value: derived,
+          }]
+        : []
+    }),
     ...labeledCandidates,
-  ].filter((candidate): candidate is string => candidate !== null)
-
-  for (const candidate of candidates) {
-    const reason = cp20bBusinessNameRejectionReason({
-      businessName: candidate,
+  ]
+  const diagnostics = candidates.map((candidate) =>
+    sanitizerCandidateDiagnostic({
+      ...candidate,
       sourceExcerpt: liveProof.evidence.sourceExcerpt,
       rejectEmbeddedSourceExcerpt: false,
-    })
+    }),
+  )
+  const accepted = candidates.find((_, index) => diagnostics[index]?.rejectionReason === null)
 
-    if (!reason) return candidate
+  return {
+    businessName: accepted?.value ?? null,
+    diagnostics: {
+      candidateCount: diagnostics.length,
+      fallbackExtractionAccepted: Boolean(accepted),
+      fallbackExtractionFoundNoAcceptedCandidate: !accepted,
+      candidates: diagnostics,
+    },
   }
-
-  return null
 }
 
 function parseCityState(location: string, address: string | null): {
@@ -371,7 +459,11 @@ function parseCityState(location: string, address: string | null): {
   return { city: null, state: null }
 }
 
-function sanitizerFailure(reason: string, liveProof?: Cp20aLiveOpportunity): Cp20bBlockedProof {
+function sanitizerFailure(
+  reason: string,
+  liveProof?: Cp20aLiveOpportunity,
+  sanitizerDiagnostics?: Cp20bSanitizerDiagnostics,
+): Cp20bBlockedProof {
   return {
     status: 'blocked',
     providerMode: CP20B_PROVIDER_MODE,
@@ -385,6 +477,7 @@ function sanitizerFailure(reason: string, liveProof?: Cp20aLiveOpportunity): Cp2
       sourceAdapterRunIds: liveProof?.lineage.sourceAdapterRunIds ?? [],
       evidenceProviderRunId: liveProof?.lineage.evidenceProviderRunId ?? null,
     },
+    ...(sanitizerDiagnostics ? { sanitizerDiagnostics } : {}),
   }
 }
 
@@ -396,12 +489,32 @@ function sanitizeProspect(liveProof: Cp20aLiveOpportunity): SanitizedProspect | 
     sourceExcerpt,
     rejectEmbeddedSourceExcerpt: true,
   })
+  const directDiagnostic = sanitizerCandidateDiagnostic({
+    sourceLabel: 'liveProof.prospect.businessName',
+    candidateType: 'direct',
+    value: businessName,
+    sourceExcerpt,
+    rejectEmbeddedSourceExcerpt: true,
+  })
+  const extracted = directRejectionReason ? extractCleanBusinessName(liveProof) : null
   const cleanBusinessName = directRejectionReason
-    ? extractCleanBusinessName(liveProof)
+    ? extracted?.businessName
     : businessName
 
   if (!cleanBusinessName) {
-    return sanitizerFailure(directRejectionReason ?? 'Prospect sanitizer rejected the business name.', liveProof)
+    return sanitizerFailure(
+      directRejectionReason ?? 'Prospect sanitizer rejected the business name.',
+      liveProof,
+      {
+        candidateCount: 1 + (extracted?.diagnostics.candidateCount ?? 0),
+        fallbackExtractionAccepted: false,
+        fallbackExtractionFoundNoAcceptedCandidate: Boolean(directRejectionReason),
+        candidates: [
+          directDiagnostic,
+          ...(extracted?.diagnostics.candidates ?? []),
+        ],
+      },
+    )
   }
 
   const address = liveProof.prospect.address?.trim() || null
