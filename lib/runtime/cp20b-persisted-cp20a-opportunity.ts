@@ -19,6 +19,29 @@ const CP20B_SOURCE_TYPE = 'tdlr_tabs_project'
 const CP20B_SOURCE_AUTHORITY = 'tdlr'
 const CP20B_MARKET = 'DFW'
 const CP20B_PROVIDER_MODE = 'LIVE'
+const CP20B_BUSINESS_NAME_MAX_LENGTH = 120
+const CP20B_BUSINESS_NAME_MAX_WORDS = 12
+const CP20B_SOURCE_FIELD_LABELS = [
+  'Project Number',
+  'Project #',
+  'Project Name',
+  'Facility Name',
+  'Registration Date',
+  'Type of Work',
+  'Scope of Work',
+  'Location Address',
+  'Project Address',
+  'Site Address',
+  'Business Name',
+  'Tenant Name',
+  'Permit For',
+  'Applicant',
+  'Property Name',
+] as const
+const CP20B_FORBIDDEN_SOURCE_LABEL_PATTERN =
+  /\b(Project\s*(Number|#|Name)|Facility Name|Business Name|Tenant Name|Property Name|Registration Date|Type of Work|Scope of Work|Location Address|Project Address|Site Address)\b/i
+const CP20B_RAW_SOURCE_CHUNK_PATTERN =
+  /\b(TDLR|TABS20\d+|Registration Date|Project\s*(Number|#|Name)|Facility Name|Business Name|Tenant Name|Property Name|Type of Work|Scope of Work|Location Address|Project Address|Site Address)\b/i
 
 type Cp20bStatus = 'ready' | 'blocked'
 
@@ -184,6 +207,153 @@ function normalizedText(value: string): string {
     .trim()
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function cleanBusinessNameCandidate(value: string | null | undefined): string | null {
+  if (!value) return null
+
+  const cleaned = value
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s:|.,;-]+|[\s:|.,;-]+$/g, '')
+    .trim()
+
+  return cleaned.length > 0 ? cleaned : null
+}
+
+function trimAtNextSourceFieldLabel(value: string): string {
+  let end = value.length
+
+  for (const label of CP20B_SOURCE_FIELD_LABELS) {
+    const pattern = new RegExp(`\\b${escapeRegExp(label)}\\b\\s*:?`, 'i')
+    const match = pattern.exec(value)
+    if (match && match.index > 0) {
+      end = Math.min(end, match.index)
+    }
+  }
+
+  return value.slice(0, end)
+}
+
+function extractLabeledBusinessNameValue(
+  text: string,
+  labels: readonly string[],
+): string | null {
+  for (const label of labels) {
+    const escaped = escapeRegExp(label)
+    const tableMatch = text.match(
+      new RegExp(`\\|\\s*${escaped}\\s*\\|\\s*([^|\\n\\r]+)\\|`, 'i'),
+    )
+    const lineMatch = text.match(
+      new RegExp(`(?:^|[\\n\\r|])\\s*${escaped}\\s*:?\\s*([^\\n\\r|]+)`, 'i'),
+    )
+    const inlineMatch = text.match(
+      new RegExp(`\\b${escaped}\\b\\s*:?\\s*([\\s\\S]{1,240})`, 'i'),
+    )
+    const rawValue =
+      tableMatch?.[1] ??
+      lineMatch?.[1] ??
+      (inlineMatch?.[1] ? trimAtNextSourceFieldLabel(inlineMatch[1]) : null)
+    const cleaned = cleanBusinessNameCandidate(
+      rawValue ? trimAtNextSourceFieldLabel(rawValue) : null,
+    )
+
+    if (cleaned) return cleaned
+  }
+
+  return null
+}
+
+function tenantNameFromFinishOut(value: string): string | null {
+  const match = value.match(
+    /\b([A-Za-z][A-Za-z0-9 '&./-]{2,80}?)\s+(?:finish[-\s]?out|build[-\s]?out|tenant improvement|TI)\b/i,
+  )
+  if (!match?.[1]) return null
+
+  const lastSegment = match[1].split(/\s[-/]\s|[/]/).pop()
+  return cleanBusinessNameCandidate(lastSegment)
+}
+
+function cp20bBusinessNameRejectionReason({
+  businessName,
+  sourceExcerpt,
+  rejectEmbeddedSourceExcerpt,
+}: {
+  businessName: string
+  sourceExcerpt: string
+  rejectEmbeddedSourceExcerpt: boolean
+}): string | null {
+  const normalizedName = normalizedText(businessName)
+  const normalizedExcerpt = normalizedText(sourceExcerpt)
+
+  if (!businessName) {
+    return 'Prospect sanitizer rejected an empty business name.'
+  }
+
+  if (/[\r\n]/.test(businessName)) {
+    return 'Prospect sanitizer rejected a multiline business name.'
+  }
+
+  if (businessName.length > CP20B_BUSINESS_NAME_MAX_LENGTH) {
+    return 'Prospect sanitizer rejected a business name longer than 120 characters.'
+  }
+
+  if (CP20B_FORBIDDEN_SOURCE_LABEL_PATTERN.test(businessName)) {
+    return 'Prospect sanitizer rejected a business name containing source-field labels.'
+  }
+
+  if (CP20B_RAW_SOURCE_CHUNK_PATTERN.test(businessName)) {
+    return 'Prospect sanitizer rejected a business name that looked like raw TDLR detail text.'
+  }
+
+  if (businessName.split(/\s+/).length > CP20B_BUSINESS_NAME_MAX_WORDS) {
+    return 'Prospect sanitizer rejected a business name that looked like an overlong source excerpt.'
+  }
+
+  if (
+    rejectEmbeddedSourceExcerpt &&
+    normalizedName.length > 20 &&
+    normalizedExcerpt.length > normalizedName.length + 40 &&
+    normalizedExcerpt.includes(normalizedName)
+  ) {
+    return 'Prospect sanitizer rejected a business name that was embedded in a raw source excerpt.'
+  }
+
+  return null
+}
+
+function extractCleanBusinessName(liveProof: Cp20aLiveOpportunity): string | null {
+  const sourceText = [
+    liveProof.prospect.businessName,
+    liveProof.evidence.sourceTitle ?? '',
+    liveProof.evidence.sourceExcerpt,
+    liveProof.score.whyNow,
+    liveProof.nextAction.detail,
+  ].join('\n')
+  const labeledCandidates = [
+    extractLabeledBusinessNameValue(sourceText, ['Tenant Name', 'Business Name']),
+    extractLabeledBusinessNameValue(sourceText, ['Facility Name', 'Property Name']),
+    extractLabeledBusinessNameValue(sourceText, ['Project Name', 'Permit For', 'Applicant']),
+  ].filter((candidate): candidate is string => candidate !== null)
+  const candidates = [
+    ...labeledCandidates.map(tenantNameFromFinishOut),
+    ...labeledCandidates,
+  ].filter((candidate): candidate is string => candidate !== null)
+
+  for (const candidate of candidates) {
+    const reason = cp20bBusinessNameRejectionReason({
+      businessName: candidate,
+      sourceExcerpt: liveProof.evidence.sourceExcerpt,
+      rejectEmbeddedSourceExcerpt: false,
+    })
+
+    if (!reason) return candidate
+  }
+
+  return null
+}
+
 function parseCityState(location: string, address: string | null): {
   city: string | null
   state: string | null
@@ -221,57 +391,17 @@ function sanitizerFailure(reason: string, liveProof?: Cp20aLiveOpportunity): Cp2
 function sanitizeProspect(liveProof: Cp20aLiveOpportunity): SanitizedProspect | Cp20bBlockedProof {
   const businessName = liveProof.prospect.businessName.trim()
   const sourceExcerpt = liveProof.evidence.sourceExcerpt.trim()
-  const normalizedName = normalizedText(businessName)
-  const normalizedExcerpt = normalizedText(sourceExcerpt)
-  const forbiddenLabelPattern =
-    /\b(Project\s*(Number|#)|Facility Name|Registration Date|Type of Work|Scope of Work)\b/i
-  const rawChunkPattern = /\b(TDLR|TABS20\d+|Registration Date|Project #|Type of Work|Scope of Work)\b/i
+  const directRejectionReason = cp20bBusinessNameRejectionReason({
+    businessName,
+    sourceExcerpt,
+    rejectEmbeddedSourceExcerpt: true,
+  })
+  const cleanBusinessName = directRejectionReason
+    ? extractCleanBusinessName(liveProof)
+    : businessName
 
-  if (!businessName) {
-    return sanitizerFailure('Prospect sanitizer rejected an empty business name.', liveProof)
-  }
-
-  if (/[\r\n]/.test(businessName)) {
-    return sanitizerFailure('Prospect sanitizer rejected a multiline business name.', liveProof)
-  }
-
-  if (businessName.length > 120) {
-    return sanitizerFailure(
-      'Prospect sanitizer rejected a business name longer than 120 characters.',
-      liveProof,
-    )
-  }
-
-  if (forbiddenLabelPattern.test(businessName)) {
-    return sanitizerFailure(
-      'Prospect sanitizer rejected a business name containing source-field labels.',
-      liveProof,
-    )
-  }
-
-  if (rawChunkPattern.test(businessName)) {
-    return sanitizerFailure(
-      'Prospect sanitizer rejected a business name that looked like raw TDLR detail text.',
-      liveProof,
-    )
-  }
-
-  if (businessName.split(/\s+/).length > 12) {
-    return sanitizerFailure(
-      'Prospect sanitizer rejected a business name that looked like an overlong source excerpt.',
-      liveProof,
-    )
-  }
-
-  if (
-    normalizedName.length > 20 &&
-    normalizedExcerpt.length > normalizedName.length + 40 &&
-    normalizedExcerpt.includes(normalizedName)
-  ) {
-    return sanitizerFailure(
-      'Prospect sanitizer rejected a business name that was embedded in a raw source excerpt.',
-      liveProof,
-    )
+  if (!cleanBusinessName) {
+    return sanitizerFailure(directRejectionReason ?? 'Prospect sanitizer rejected the business name.', liveProof)
   }
 
   const address = liveProof.prospect.address?.trim() || null
@@ -279,7 +409,7 @@ function sanitizeProspect(liveProof: Cp20aLiveOpportunity): SanitizedProspect | 
   const { city, state } = parseCityState(location, address)
 
   return {
-    businessName,
+    businessName: cleanBusinessName,
     address,
     city,
     state,
@@ -293,8 +423,12 @@ function isBlockedProof(
   return 'blockerCode' in value
 }
 
-function evidenceSummary(liveProof: Cp20aLiveOpportunity, externalId: string): string {
-  return `${liveProof.prospect.businessName} has official TDLR project ${externalId} dated ${liveProof.evidence.sourceDate} with approved ${liveProof.evidence.signalLabel} / ${liveProof.evidence.verticalFitLabel} proof.`
+function evidenceSummary(
+  liveProof: Cp20aLiveOpportunity,
+  externalId: string,
+  sanitizedProspect: SanitizedProspect,
+): string {
+  return `${sanitizedProspect.businessName} has official TDLR project ${externalId} dated ${liveProof.evidence.sourceDate} with approved ${liveProof.evidence.signalLabel} / ${liveProof.evidence.verticalFitLabel} proof.`
 }
 
 function signalHash(workspaceId: string, externalId: string): string {
@@ -677,7 +811,7 @@ async function persistLiveProof(input: PersistInput): Promise<Cp20bPersistedOppo
           scoreReason: liveProof.score.reason,
           nextActionLabel: liveProof.nextAction.label,
           nextActionDetail: liveProof.nextAction.detail,
-          evidenceSummary: evidenceSummary(liveProof, externalId),
+          evidenceSummary: evidenceSummary(liveProof, externalId, sanitizedProspect),
           sourceExcerpt: liveProof.evidence.sourceExcerpt,
           sourceFingerprint: liveProof.lineage.liveFingerprint,
           searchProviderRunId: liveProof.lineage.searchProviderRunId,
@@ -696,7 +830,7 @@ async function persistLiveProof(input: PersistInput): Promise<Cp20bPersistedOppo
             scoreReason: liveProof.score.reason,
             nextActionLabel: liveProof.nextAction.label,
             nextActionDetail: liveProof.nextAction.detail,
-            evidenceSummary: evidenceSummary(liveProof, externalId),
+            evidenceSummary: evidenceSummary(liveProof, externalId, sanitizedProspect),
             sourceExcerpt: liveProof.evidence.sourceExcerpt,
             sourceFingerprint: liveProof.lineage.liveFingerprint,
             searchProviderRunId: liveProof.lineage.searchProviderRunId,
