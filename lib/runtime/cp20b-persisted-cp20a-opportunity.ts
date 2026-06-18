@@ -42,6 +42,20 @@ const CP20B_FORBIDDEN_SOURCE_LABEL_PATTERN =
   /\b(Project\s*(Number|#|Name)|Facility Name|Business Name|Tenant Name|Property Name|Registration Date|Type of Work|Scope of Work|Location Address|Project Address|Site Address)\b/i
 const CP20B_RAW_SOURCE_CHUNK_PATTERN =
   /\b(TDLR|TABS20\d+|Registration Date|Project\s*(Number|#|Name)|Facility Name|Business Name|Tenant Name|Property Name|Type of Work|Scope of Work|Location Address|Project Address|Site Address)\b/i
+const CP20B_LEADING_SEGMENT_LABELS = [
+  'Project Number',
+  'Project #',
+  'Facility Name',
+  'Registration Date',
+  'Type of Work',
+  'Scope of Work',
+  'Location Address',
+  'Project Address',
+  'Site Address',
+  'Business Name',
+  'Tenant Name',
+  'Property Name',
+]
 
 type Cp20bStatus = 'ready' | 'blocked'
 
@@ -134,12 +148,14 @@ export type Cp20bBlockedProof = {
   sanitizerDiagnostics?: Cp20bSanitizerDiagnostics
 }
 
+export type Cp20bProofResult = Cp20bPersistedOpportunity | Cp20bBlockedProof
+
 export type Cp20bSanitizerCandidateDiagnostic = {
   sourceLabel: string
   candidateType: 'direct' | 'labeled-field' | 'finish-out-derived' | 'leading-before-source-label'
   preview: string
   length: number
-  hasSourceLabels: boolean
+  hadSourceLabels: boolean
   overLength: boolean
   accepted: boolean
   rejectionReason: string | null
@@ -148,8 +164,8 @@ export type Cp20bSanitizerCandidateDiagnostic = {
 export type Cp20bSanitizerDiagnostics = {
   directRejectionReason: string | null
   candidateCount: number
-  fallbackAccepted: boolean
-  noAcceptedFallback: boolean
+  fallbackExtractionAccepted: boolean
+  fallbackExtractionFoundNoAcceptedCandidate: boolean
   candidates: Cp20bSanitizerCandidateDiagnostic[]
 }
 
@@ -262,9 +278,18 @@ function trimAtNextSourceFieldLabel(value: string): string {
 }
 
 function leadingSegmentBeforeFirstSourceLabel(value: string): string | null {
-  const trimmed = trimAtNextSourceFieldLabel(value)
-  if (trimmed.length >= value.length) return null
-  return cleanBusinessNameCandidate(trimmed)
+  const lower = value.toLowerCase()
+  let earliest = value.length
+
+  for (const label of CP20B_LEADING_SEGMENT_LABELS) {
+    const idx = lower.indexOf(label.toLowerCase())
+    if (idx > 0) {
+      earliest = Math.min(earliest, idx)
+    }
+  }
+
+  if (earliest >= value.length) return null
+  return cleanBusinessNameCandidate(value.slice(0, earliest))
 }
 
 function extractLabeledBusinessNameValue(
@@ -322,7 +347,7 @@ function diagnosticForCandidate({
     candidateType,
     preview: value.length > 80 ? `${value.slice(0, 77)}...` : value,
     length: value.length,
-    hasSourceLabels:
+    hadSourceLabels:
       CP20B_FORBIDDEN_SOURCE_LABEL_PATTERN.test(value) ||
       CP20B_RAW_SOURCE_CHUNK_PATTERN.test(value),
     overLength: value.length > CP20B_BUSINESS_NAME_MAX_LENGTH,
@@ -412,8 +437,8 @@ function extractCleanBusinessName(liveProof: Cp20aLiveOpportunity): {
       diagnostics: {
         directRejectionReason,
         candidateCount: diagnostics.length,
-        fallbackAccepted: false,
-        noAcceptedFallback: false,
+        fallbackExtractionAccepted: false,
+        fallbackExtractionFoundNoAcceptedCandidate: false,
         candidates: diagnostics,
       },
     }
@@ -476,8 +501,8 @@ function extractCleanBusinessName(liveProof: Cp20aLiveOpportunity): {
         diagnostics: {
           directRejectionReason,
           candidateCount: diagnostics.length,
-          fallbackAccepted: true,
-          noAcceptedFallback: false,
+          fallbackExtractionAccepted: true,
+          fallbackExtractionFoundNoAcceptedCandidate: false,
           candidates: diagnostics,
         },
       }
@@ -489,8 +514,8 @@ function extractCleanBusinessName(liveProof: Cp20aLiveOpportunity): {
     diagnostics: {
       directRejectionReason,
       candidateCount: diagnostics.length,
-      fallbackAccepted: false,
-      noAcceptedFallback: true,
+      fallbackExtractionAccepted: false,
+      fallbackExtractionFoundNoAcceptedCandidate: true,
       candidates: diagnostics,
     },
   }
