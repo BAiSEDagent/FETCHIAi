@@ -58,17 +58,28 @@ Recently landed product-proof chain:
 - **CP17 — Lead Funnel Runtime Implementation Plan**
   - Closed the planning-only implementation sequence for the first Lead Funnel runtime.
   - Split the remaining runtime path into narrow checkpoints without authorizing runtime work.
+- **CP18 — Commercial Cleaning Recorded-Real Runtime Slice**
+  - Rendered one internal/admin-only Commercial Cleaning opportunity with evidence, score reason, provider lineage, and next action.
+  - Preserved customer surfaces and recorded-real proof semantics.
+- **CP19 — Live Provider Mechanics + Rejection Guard Proof**
+  - Proved live SerpApi discovery, live Firecrawl hydration, provider mode `LIVE`, non-recorded run IDs, visible spend/calls, Claim Guard behavior, and product-scope rejection.
+  - Closed as live-provider mechanics and live rejection proof, not as accepted-opportunity proof.
+- **CP20A — TDLR/TABS Direct Source-Adapter Proof**
+  - Proved a CP20A-local official TDLR/TABS source adapter against direct source-native JSON, then Firecrawl-hydrated the official detail URL.
+  - Rendered a runtime-produced accepted live DFW Commercial Cleaning opportunity on an internal/admin-only proof route.
+- **CP20B — Persisted CP20A Opportunity Proof**
+  - Closed persistence for one accepted CP20A-style opportunity with replayable lineage and DB readback.
+  - PR #44 merged at `2a99b97c73c42a49bdb22c269ced0d15bbf527c2`; branch `cp20b-persisted-cp20a-opportunity` was deleted.
+  - Caveat: runtime persistence and DB readback were proven through direct `getCp20bPersistedOpportunityProof(userId)` invocation via `tsx`, not full authenticated HTTP/browser-route proof because automated Clerk auth was blocked.
 
 Current active mode:
 
-- CP17B Control + Design Reconciliation is the current cleanup/control checkpoint.
-- CP17 is closed.
-- CPSEC1 may run in parallel as its own package/security checkpoint.
-- CP18 is the first live Commercial Cleaning runtime slice after CP17B and
-  required post-merge proof complete.
-- New inert contracts, playbooks, and plans are frozen until CP18 renders one
-  real opportunity with lineage.
-- No DB/schema, provider runtime, UI/routes, package, billing, auth, admin, export UI, CRM sync, or outreach changes in this mode.
+- CP17B and CP18 are closed history, not the active current center.
+- CP20B is closed after PR #44 merge and branch cleanup.
+- The next recommended checkpoint is **CP20C — Persisted Lead Funnel Read Model**.
+- CP20C should convert persisted DB rows into a normalized, lane-safe Lead Funnel view model before any Promotion Wire, Signal Watch, customer dashboard, outreach, CRM/export, or scheduler work.
+- Scout should be used only as an executable blueprint for CP20C read-model shape, not as a replacement for Fetchi's production base. Fetchi keeps Postgres, Clerk, billing, provider proofs, and current repo architecture.
+- No provider runtime, package, billing, auth, admin/settings, export UI, CRM sync, outreach, or customer-route work is active in this mode unless separately scoped.
 
 ## Build Completion Snapshot
 
@@ -96,11 +107,9 @@ A first sellable MVP means:
 ## Remaining MVP Work Chunks
 
 1. Finish contract/spec runway
-   - CP14, CP15, and CP16 are closed.
-   - CP17 — Lead Funnel Runtime Implementation Plan is closed and planning-only.
-   - CP17B is reconciling control/design authority before runtime begins.
-   - No new inert contracts, playbooks, or plans before CP18 proves one real
-     Commercial Cleaning opportunity with lineage.
+   - CP14, CP15, CP16, CP17, CP17B, CP18, CP19, CP20A, and CP20B are closed.
+   - CP20B proved persisted CP20A-style opportunity lineage and DB readback with the authenticated-route caveat above.
+   - CP20C is the next narrow checkpoint: persisted DB rows -> normalized Lead Funnel read model.
 
 2. Lead Funnel storage and normalization
    - Lead Funnel record shape.
@@ -147,34 +156,24 @@ A first sellable MVP means:
 
 ## Next
 
-### CP17B — Control + Design Reconciliation
+### CP20C — Persisted Lead Funnel Read Model
 
-- Documentation/control checkpoint only.
-- Retire stale protected prose authority and old design-system branch references.
-- Delete stale competing design authority and keep token values owned by live code.
-- Keep `docs/ROADMAP.md`, `docs/PRODUCT_CONTEXT.md`, and
-  `docs/CLEANUP_PLAN.md` changes to current-state alignment.
-- No schema, package, provider/runtime, UI/routes, migrations, CI, or branch
-  cleanup work.
-
-### CPSEC1 — Parallel Security Checkpoint
-
-- Standalone package/security checkpoint.
-- Must pin a specific Next.js remediation target and prove residual advisory
-  status.
-- Do not bundle into CP17B.
-
-### CP18 — First Live Commercial Cleaning Runtime Slice
-
-- First product proof after cleanup/security.
-- Render one real Commercial Cleaning opportunity on an internal page with
-  evidence-backed source lineage, provider run IDs/source URLs, score and
-  why-now reason.
-- Use live SerpApi/Firecrawl keys if ready, otherwise recorded-real provider
-  runs. Never fake data.
-- Passing smoke scripts alone does not count.
-- CP17's split checkpoint plan remains planning context, but CP18 is the next
-  product proof gate.
+- Internal/read-model proof only unless separately scoped.
+- Convert persisted DB rows into a normalized, lane-safe Lead Funnel view model.
+- Preserve product laws:
+  - no opportunity without signal
+  - no prospect without evidence
+  - no score without reason
+  - no explanation without action
+  - UI-visible labels and actions must come from approved playbooks/taxonomy only
+- Strip urgency, signal, and freshness claims from Prospect Pool views even if bad persisted row data carries them.
+- Adapt Scout's read-model pattern; do not port Scout as a replacement app.
+- Scout reference files for CP20C planning:
+  - `src/lib/view.ts`
+  - `src/lib/ui.ts`
+  - `LeadKind` / `LeadState` taxonomy from `src/lib/types.ts`
+  - `prospectNoUrgency.test.ts`
+- No persistence schema expansion, Promotion Wire, Signal Watch, customer dashboard integration, outreach sending, CRM/export, scheduler, provider runtime, or CP20A UX cleanup unless separately approved.
 
 ## Later
 

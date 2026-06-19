@@ -18,16 +18,24 @@ Cleanup should remove stale artifacts, archive old context safely, and make acti
   or checkpoint authority.
 - Keep app code changes separate from docs/hygiene changes.
 
-## Current Cleanup State — CP17B
+## Current Cleanup State — CP20B-CLOSEOUT
 
-- CP17 Lead Funnel Runtime Implementation Plan is closed.
-- CP17B Control + Design Reconciliation is the current cleanup/control
-  checkpoint.
+- CP17B and CP18 are historical checkpoints, not the active current center.
+- CP20B is closed. PR #44 merged at main HEAD
+  `2a99b97c73c42a49bdb22c269ced0d15bbf527c2`.
+- The merged branch `cp20b-persisted-cp20a-opportunity` was deleted.
+- CP20B proof passed with caveat: runtime persistence and DB readback were
+  proven through direct `getCp20bPersistedOpportunityProof(userId)` invocation
+  via `tsx`, not through full authenticated HTTP/browser-route proof because
+  automated Clerk auth was blocked.
+- The next recommended checkpoint is CP20C — Persisted Lead Funnel Read Model.
+- CP20C should adapt Scout's read-model pattern as an executable blueprint,
+  not replace Fetchi's production base.
 - PR #2 / PR #3 cleanup instructions below are historical/superseded. They are
   retained for context only and must not be used as active branch, PR, or
   checkpoint instructions.
 - `cleanup/repo-hygiene` is stale/diverged/parked. Do not delete, rebase, reset,
-  or merge it in CP17B.
+  or merge it in this closeout checkpoint.
 - Replit remains the current/default post-merge proof environment for merged
   `main`; old Replit-primary build instructions are historical.
 
@@ -415,8 +423,45 @@ State:
 - no schema, package, provider/runtime, UI/routes, migrations, CI, branch
   cleanup, or CP18 implementation changes
 
+## Product Proof CP20B - Persisted CP20A Opportunity Proof
+
+State:
+- persisted one accepted CP20A-style opportunity with replayable lineage and DB
+  readback
+- PR #44 merged at main HEAD
+  `2a99b97c73c42a49bdb22c269ced0d15bbf527c2`
+- branch `cp20b-persisted-cp20a-opportunity` deleted after merge
+- proof passed with caveat: runtime persistence and DB readback were proven
+  through direct `getCp20bPersistedOpportunityProof(userId)` invocation via
+  `tsx`, not through full authenticated HTTP/browser-route proof because
+  automated Clerk auth was blocked
+- no Promotion Wire, Signal Watch, customer dashboard integration, outreach
+  sending, CRM/export, scheduler, provider rewrite, or CP20A UX cleanup
+
+## CP20C Planning Direction - Persisted Lead Funnel Read Model
+
+State:
+- CP20C is the next recommended checkpoint after CP20B
+- goal: persisted DB rows -> normalized, lane-safe Lead Funnel view model
+- must strip urgency, signal, and freshness from Prospect Pool views even if
+  bad row data carries it
+- should adapt Scout's read-model pattern, not port Scout as a replacement app
+- Scout reference files:
+  - `src/lib/view.ts`
+  - `src/lib/ui.ts`
+  - `LeadKind` / `LeadState` taxonomy from `src/lib/types.ts`
+  - `prospectNoUrgency.test.ts`
+- preserve product laws:
+  - no opportunity without signal
+  - no prospect without evidence
+  - no score without reason
+  - no explanation without action
+  - UI-visible labels/actions from approved playbooks/taxonomy only
+- internal/read-model proof only unless separately scoped
+
 ## Current Status
 
-CP17B control/design reconciliation is active.
+CP20B is closed. CP20C — Persisted Lead Funnel Read Model is the next
+recommended checkpoint.
 
 Current-tree artifact de-tracking complete (see completed entry above).

@@ -23,7 +23,7 @@ Signal -> Prospect + Enrichment -> Opportunity -> Contact Route -> Outreach Play
 ## Product Laws
 
 1. No opportunity without signal.
-2. No lead without evidence.
+2. No prospect without evidence.
 3. No score without reason.
 4. No explanation without action.
 
@@ -102,7 +102,29 @@ One app. One codebase. Vertical-specific playbooks.
 
 ## Current Product State
 
-Fetchi is still in product-proof mode.
+Fetchi remains in product-proof mode after CP20B.
 
-The current focus is clean control/design authority, the parallel security
-target, then the first live Commercial Cleaning runtime slice.
+CP20B is closed. PR #44 merged at main HEAD
+`2a99b97c73c42a49bdb22c269ced0d15bbf527c2`, persisted one accepted
+CP20A-style opportunity with replayable lineage, and rendered/read it back from
+DB storage. The proof passed with a caveat: runtime persistence and DB readback
+were proven through direct `getCp20bPersistedOpportunityProof(userId)`
+invocation via `tsx`, not through a full authenticated HTTP/browser route
+because automated Clerk auth was blocked.
+
+CP17B and CP18 are no longer the active current center. The next recommended
+checkpoint is CP20C — Persisted Lead Funnel Read Model.
+
+Scout should not replace Fetchi. Fetchi keeps its production base: Postgres,
+Clerk, billing, provider proofs, and current repo architecture. For CP20C,
+Scout is an executable blueprint for read-model planning only, especially:
+
+- `src/lib/view.ts`
+- `src/lib/ui.ts`
+- `LeadKind` / `LeadState` taxonomy from `src/lib/types.ts`
+- `prospectNoUrgency.test.ts`
+
+CP20C should turn persisted DB rows into a normalized, lane-safe Lead Funnel
+view model. Prospect Pool views must strip urgency, signal, and freshness
+claims even if bad row data carries them. CP20C remains internal/read-model
+proof only unless separately scoped.
