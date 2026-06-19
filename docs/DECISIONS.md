@@ -180,3 +180,39 @@ Related docs:
 
 - `docs/infra/github-publishing-path.md`
 - `docs/PM_OPERATING_SYSTEM.md`
+
+### 2026-06 — CP20B closed; CP20C read-model checkpoint next
+
+Decision: CP20B is closed after PR #44 merged. The current main HEAD is
+`2a99b97c73c42a49bdb22c269ced0d15bbf527c2`, and the merged branch
+`cp20b-persisted-cp20a-opportunity` was deleted. The next recommended
+checkpoint is CP20C — Persisted Lead Funnel Read Model.
+
+Rationale: CP20B proved the persistence seam for one accepted CP20A-style
+opportunity, including replayable provider/source lineage and DB readback.
+Before Promotion Wire, Signal Watch, customer dashboard integration, outreach,
+CRM/export, scheduler, or broader runtime work, Fetchi needs a lane-safe read
+model that renders persisted rows without leaking opportunity urgency into
+Prospect Pool views.
+
+Proof caveat: Runtime persistence and DB readback were proven through direct
+`getCp20bPersistedOpportunityProof(userId)` invocation via a `tsx` runner. Full
+authenticated HTTP/browser-route behavior was not proven because automated
+Clerk auth was blocked.
+
+Scout boundary: Scout does not replace Fetchi. Fetchi keeps Postgres, Clerk,
+billing, current provider proofs, and current repo architecture. For CP20C,
+Scout is an executable blueprint for read-model shape only, especially
+`src/lib/view.ts`, `src/lib/ui.ts`, `LeadKind` / `LeadState` from
+`src/lib/types.ts`, and `prospectNoUrgency.test.ts`.
+
+Scope: Docs/control state and next-checkpoint sequencing. CP20C should remain
+an internal/read-model proof unless separately scoped.
+
+Status: Approved checkpoint state.
+
+Related docs:
+
+- `docs/ROADMAP.md`
+- `docs/PRODUCT_CONTEXT.md`
+- `docs/CLEANUP_PLAN.md`
