@@ -228,6 +228,21 @@ function ContactRoutes({ item }: { item: LeadFunnelViewItem }) {
   )
 }
 
+function ScoreBadge({ item }: { item: LeadFunnelViewItem }) {
+  const score = item.view.score
+
+  return (
+    <div className={`rounded-lg bg-blue/10 px-4 py-3 text-right ${item.view.theme.score}`}>
+      <div className="text-[11px] font-bold uppercase tracking-[0.08em]">
+        {score.trusted ? 'Score' : 'Score review'}
+      </div>
+      <div className={`mt-1 font-outfit font-bold leading-none ${score.trusted ? 'text-[34px]' : 'text-[20px]'}`}>
+        {score.trusted ? score.total : 'Review'}
+      </div>
+    </div>
+  )
+}
+
 function LeadCard({ item }: { item: LeadFunnelViewItem }) {
   const firstEvidence = item.view.evidence[0] ?? null
 
@@ -245,14 +260,7 @@ function LeadCard({ item }: { item: LeadFunnelViewItem }) {
             {[item.view.city, item.view.stateCode].filter(Boolean).join(', ') || item.view.market}
           </p>
         </div>
-        <div className={`rounded-lg bg-blue/10 px-4 py-3 text-right ${item.view.theme.score}`}>
-          <div className="text-[11px] font-bold uppercase tracking-[0.08em]">
-            Score
-          </div>
-          <div className="mt-1 font-outfit text-[34px] font-bold leading-none">
-            {item.view.score.total}
-          </div>
-        </div>
+        <ScoreBadge item={item} />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
