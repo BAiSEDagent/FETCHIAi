@@ -154,6 +154,7 @@ export interface LeadFunnelScore {
   fit: number | null
   freshness: number | null
   contact: number | null
+  trusted: boolean
   reasons: LeadFunnelScoreReason[]
 }
 
@@ -258,6 +259,7 @@ export interface ProspectFunnelView {
     total: number
     fit: number | null
     contact: number | null
+    trusted: boolean
     reasons: LeadFunnelScoreReason[]
   }
   lineage: LeadFunnelLineage
@@ -380,27 +382,52 @@ function contactRouteNeedsReview(contact: LeadFunnelContactRoute): boolean {
   return !contact.verified || contact.confidence < 70
 }
 
+function scoreReasonsCiteEvidence(reasons: LeadFunnelScoreReason[]): boolean {
+  return reasons.length > 0 && reasons.every((reason) =>
+    reason.evidenceId.trim().length > 0 && reason.reason.trim().length > 0
+  )
+}
+
 function stateFromRows({
   leadKind,
   opportunity,
   signal,
   evidence,
+  scoreReasons,
 }: {
   leadKind: LeadKind
   opportunity: Opportunity | null
   signal: Signal | null
   evidence: EvidenceSource | null
+  scoreReasons: LeadFunnelScoreReason[]
 }): LeadState {
   if (leadKind === 'exploratory_prospect') return 'exploratory'
   if (!evidence?.sourceUrl) return 'missing_evidence'
   if (opportunity?.status && ['skipped', 'expired', 'lost'].includes(opportunity.status)) {
     return 'weak_fit'
   }
-  if (signal?.status && signal.status !== 'valid') return 'needs_review'
+  if (leadKind === 'signal_backed_opportunity') {
+    if (!opportunity || !opportunity.signalId || !signal) return 'needs_review'
+    if (signal.status !== 'valid') return 'needs_review'
+  }
+  if (!scoreReasonsCiteEvidence(scoreReasons)) return 'needs_review'
   return 'active'
 }
 
-export function laneForItem(item: Pick<LeadFunnelItem, 'leadKind' | 'state' | 'contactRoutes'>): LeadFunnelLaneId {
+function activeSignalBackedOpportunityIsSafe(
+  item: Pick<LeadFunnelItem, 'leadKind' | 'state' | 'evidence' | 'score' | 'lifecycle'>,
+): boolean {
+  if (item.leadKind !== 'signal_backed_opportunity') return true
+  if (item.state !== 'active') return false
+  if (!item.lifecycle.opportunityStatus) return false
+  if (item.lifecycle.signalStatus !== 'valid') return false
+  if (!item.evidence.some((evidence) => evidence.sourceUrl.trim().length > 0)) return false
+  return item.score.trusted
+}
+
+export function laneForItem(
+  item: Pick<LeadFunnelItem, 'leadKind' | 'state' | 'contactRoutes' | 'evidence' | 'score' | 'lifecycle'>,
+): LeadFunnelLaneId {
   if (item.state === 'weak_fit') return 'discarded_weak_fit'
   if (
     item.state === 'needs_review' ||
@@ -409,6 +436,9 @@ export function laneForItem(item: Pick<LeadFunnelItem, 'leadKind' | 'state' | 'c
   ) {
     return 'needs_review'
   }
+
+  if (!activeSignalBackedOpportunityIsSafe(item)) return 'needs_review'
+  if (!item.score.trusted) return 'needs_review'
 
   const hasContactRouteReview = item.contactRoutes.some(contactRouteNeedsReview)
   if (hasContactRouteReview) return 'contact_route_review'
@@ -447,6 +477,7 @@ function prospectScore(item: LeadFunnelItem): ProspectFunnelView['score'] {
     total,
     fit,
     contact,
+    trusted: item.score.trusted && scoreReasonsCiteEvidence(nonFreshnessReasons),
     reasons: nonFreshnessReasons,
   }
 }
@@ -585,7 +616,6 @@ function mapRowsToItem(
   const signal = opportunity?.signalId ? rows.signalsById.get(opportunity.signalId) ?? null : null
   const evidenceSource = rows.evidenceById.get(proof.evidenceSourceId) ?? null
   const leadKind = leadKindFrom(proof.leadKind)
-  const state = stateFromRows({ leadKind, opportunity, signal, evidence: evidenceSource })
   const contactRoutes = (opportunity?.prospectId
     ? rows.contactsByProspectId.get(opportunity.prospectId)
     : null) ?? []
@@ -620,7 +650,7 @@ function mapRowsToItem(
   const runtimeLineageRuns = (rows.lineageByEvidenceId.get(proof.evidenceSourceId) ?? [])
     .slice()
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-  const evidence = evidenceSource
+  const evidence = evidenceSource?.sourceUrl
     ? [
         {
           id: evidenceSource.id,
@@ -635,21 +665,30 @@ function mapRowsToItem(
     : []
   const scoreReasonSubscore =
     leadKind === 'signal_backed_opportunity' ? 'opportunity_urgency' : 'prospect_fit'
+  const scoreReasons: LeadFunnelScoreReason[] = evidenceSource?.sourceUrl && proof.scoreReason.trim().length > 0
+    ? [
+        {
+          subscore: scoreReasonSubscore,
+          points: proof.score,
+          reason: proof.scoreReason,
+          evidenceId: evidenceSource.id,
+        },
+      ]
+    : []
+  const state = stateFromRows({
+    leadKind,
+    opportunity,
+    signal,
+    evidence: evidenceSource,
+    scoreReasons,
+  })
   const score: LeadFunnelScore = {
     total: proof.score,
     fit: leadKind === 'signal_backed_opportunity' ? null : proof.score,
     freshness: leadKind === 'signal_backed_opportunity' ? proof.score : null,
     contact: null,
-    reasons: evidenceSource
-      ? [
-          {
-            subscore: scoreReasonSubscore,
-            points: proof.score,
-            reason: proof.scoreReason,
-            evidenceId: evidenceSource.id,
-          },
-        ]
-      : [],
+    trusted: scoreReasonsCiteEvidence(scoreReasons),
+    reasons: scoreReasons,
   }
   const item: LeadFunnelItem = {
     id: opportunity?.id ?? proof.id,
