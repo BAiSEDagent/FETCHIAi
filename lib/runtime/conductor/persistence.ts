@@ -10,7 +10,7 @@ import type {
   Cp21aStage,
 } from './types'
 
-const CP21A_TABLES_PLANNED = [
+export const CP21A_TABLES_PLANNED = [
   'scout_runs',
   'signals',
   'prospects',
@@ -43,13 +43,13 @@ export interface Cp21aLineagePlan {
 
 export interface Cp21aBudgetUsagePlan {
   providerCalls: 0
-  dbWrites: 0
+  dbWrites: number
   estimatedCostCents: 0
   budgetExhausted: boolean
 }
 
 export interface Cp21aConductorPersister {
-  readonly mode: 'noop'
+  readonly mode: 'noop' | 'postgres'
   recordRunStarted(request: Cp21aRunRequest): Promise<void>
   recordRunCompleted(report: Cp21aConductorRunReport): Promise<void>
   recordRunFailed(input: {

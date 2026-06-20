@@ -2,7 +2,7 @@ import type { FallbackState, SignalType } from '@/lib/providers/contracts'
 
 export type Cp21aConductorMode = 'cp21a_fixture_conductor'
 export type Cp21aRunStatus = 'completed' | 'failed'
-export type Cp21aProviderMode = 'fixture' | 'noop' | 'mock'
+export type Cp21aProviderMode = 'fixture' | 'noop' | 'mock' | 'postgres'
 
 export type Cp21aStage =
   | 'discover'
@@ -178,15 +178,15 @@ export interface Cp21aStageCounts {
   }
   persistence: {
     plans: number
-    writes: 0
+    writes: number
   }
 }
 
 export type Cp21aLaneCounts = Record<Cp21aLaneId, number>
 
 export interface Cp21aPersistenceReport {
-  mode: 'noop'
-  dbWrites: 0
+  mode: 'noop' | 'postgres'
+  dbWrites: number
   plansCaptured: number
   tablesPlanned: string[]
 }
@@ -214,7 +214,7 @@ export interface Cp21aConductorRunReport {
   demotedCandidates: Cp21aProspectPlan[]
   blockedOrReviewItems: Cp21aBlockedOrReviewItem[]
   providerCalls: 0
-  dbWrites: 0
+  dbWrites: number
   estimatedCostCents: 0
   budgetExhausted: boolean
   badCandidateDidNotAbortRun: boolean
