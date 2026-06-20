@@ -21,6 +21,8 @@ import {
 const MAIN_WORKSPACE_ID = 'cp21b-fixture-main'
 const ROLLBACK_WORKSPACE_ID = 'cp21b-fixture-rollback'
 const RUN_FAILURE_WORKSPACE_ID = 'cp21b-fixture-run-failure'
+const PROOF_DB_APPROVAL_ENV = 'CP21B_POSTGRES_PROOF_DB_APPROVED'
+const PROOF_DB_APPROVAL_VALUE = 'fetchi-cp21-proof'
 
 const EXPECTED_CORE_TABLES = [
   'workspace_settings',
@@ -57,6 +59,12 @@ type WorkspaceCounts = {
 }
 
 function sanitizedDatabaseMetadata() {
+  assert.equal(
+    process.env[PROOF_DB_APPROVAL_ENV],
+    PROOF_DB_APPROVAL_VALUE,
+    `${PROOF_DB_APPROVAL_ENV} must equal ${PROOF_DB_APPROVAL_VALUE}`,
+  )
+
   const raw = process.env.DATABASE_URL
   assert(raw, 'DATABASE_URL is not available')
 
@@ -74,6 +82,7 @@ function sanitizedDatabaseMetadata() {
     databaseName,
     hostClassification,
     production: false,
+    proofDbApproval: PROOF_DB_APPROVAL_VALUE,
   }
 }
 
@@ -172,22 +181,54 @@ async function fixtureRunningScoutRows(db: DbClient): Promise<number> {
   return numberValue(row?.running_count)
 }
 
-async function prospectUrgencyLeakCount(db: DbClient, workspaceId: string): Promise<number> {
+async function prospectUrgencyProof(db: DbClient, workspaceId: string) {
   const result = await db.execute(sql`
-    SELECT count(*)::int AS leak_count
+    SELECT
+      proof.id AS proof_id,
+      proof.proof_metadata->>'candidateId' AS candidate_id,
+      opportunity.signal_id AS opportunity_signal_id,
+      opportunity.why_now AS opportunity_why_now,
+      proof.signal_type,
+      proof.signal_label,
+      proof.why_now AS proof_why_now,
+      proof.proof_metadata->>'claimsUrgency' AS claims_urgency
     FROM opportunity_evidence_proofs proof
     INNER JOIN opportunities opportunity
       ON opportunity.id = proof.opportunity_id
     WHERE proof.workspace_id = ${workspaceId}
       AND proof.lead_kind <> 'signal_backed_opportunity'
-      AND (
-        opportunity.signal_id IS NOT NULL
-        OR opportunity.why_now IS NOT NULL
-        OR proof.proof_metadata->>'claimsUrgency' = 'true'
-      )
+    ORDER BY proof.id
   `)
-  const [row] = rows<{ leak_count: number }>(result)
-  return numberValue(row?.leak_count)
+  const proofRows = rows<{
+    proof_id: string
+    candidate_id: string | null
+    opportunity_signal_id: string | null
+    opportunity_why_now: string | null
+    signal_type: string
+    signal_label: string
+    proof_why_now: string
+    claims_urgency: string | null
+  }>(result)
+  assert(proofRows.length > 0, 'Expected non-signal-backed proof rows.')
+
+  for (const row of proofRows) {
+    const label = row.candidate_id ?? row.proof_id
+    assert.equal(row.opportunity_signal_id, null, `${label} leaked opportunity.signal_id`)
+    assert.equal(row.opportunity_why_now, null, `${label} leaked opportunity.why_now`)
+    assert.equal(row.signal_type, 'no_fresh_signal', `${label} stored wrong signal_type`)
+    assert.equal(row.signal_label, 'No fresh signal', `${label} stored wrong signal_label`)
+    assert.equal(
+      row.proof_why_now,
+      'No fresh signal; evidence-backed prospect only.',
+      `${label} stored wrong proof why_now`,
+    )
+    assert.notEqual(row.claims_urgency, 'true', `${label} stored claimsUrgency=true`)
+  }
+
+  return {
+    checkedRows: proofRows.length,
+    leaksPersisted: 0,
+  }
 }
 
 function runRequest(workspaceId: string) {
@@ -341,7 +382,8 @@ async function main() {
   const strandedRunningRows = await fixtureRunningScoutRows(db)
   assert.equal(strandedRunningRows, 0)
 
-  const prospectUrgencyLeaksPersisted = await prospectUrgencyLeakCount(db, MAIN_WORKSPACE_ID)
+  const prospectUrgencyRows = await prospectUrgencyProof(db, MAIN_WORKSPACE_ID)
+  const prospectUrgencyLeaksPersisted = prospectUrgencyRows.leaksPersisted
   assert.equal(prospectUrgencyLeaksPersisted, 0)
 
   const displayProof = await cp20cDisplayProof(MAIN_WORKSPACE_ID)
@@ -374,6 +416,7 @@ async function main() {
     persistedProspects: displayProof.cp20cLaneCounts.prospect_pool,
     persistedNeedsReview: displayProof.cp20cLaneCounts.needs_review,
     readBackMatchesWritten: true,
+    prospectUrgencyRowsChecked: prospectUrgencyRows.checkedRows,
     prospectUrgencyLeaksPersisted,
     transactionRollbackCleanOnFault:
       rollbackCounts.proofs === 0 &&

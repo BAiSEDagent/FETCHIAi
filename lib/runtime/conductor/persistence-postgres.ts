@@ -46,8 +46,16 @@ export interface PostgresCp21aConductorPersisterOptions {
 const DEFAULT_FIXTURE_PREFIX = 'cp21b-fixture-' as const
 const OWNER_USER_ID = 'cp21b-fixture-owner'
 const PROVIDER_MODE = 'fixture'
+const PROOF_DB_APPROVAL_ENV = 'CP21B_POSTGRES_PROOF_DB_APPROVED'
+const PROOF_DB_APPROVAL_VALUE = 'fetchi-cp21-proof'
 
 function assertSafeDatabaseUrl() {
+  if (process.env[PROOF_DB_APPROVAL_ENV] !== PROOF_DB_APPROVAL_VALUE) {
+    throw new Error(
+      `${PROOF_DB_APPROVAL_ENV} must equal ${PROOF_DB_APPROVAL_VALUE} before CP21B fixture writes.`,
+    )
+  }
+
   const raw = process.env.DATABASE_URL
   if (!raw) {
     throw new Error('DATABASE_URL is not available to the CP21B Postgres persister.')
