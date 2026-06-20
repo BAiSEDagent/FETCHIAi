@@ -38,6 +38,7 @@ export type {
   Cp21aFailedCandidate,
 } from './types'
 export { createNoopCp21aConductorPersister } from './persistence'
+export { createPostgresCp21aConductorPersister } from './persistence-postgres'
 
 const APPROVED_ACTION_LABELS = [
   'Review source and contact route',
@@ -95,6 +96,17 @@ function emptyLaneCounts(): Cp21aLaneCounts {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Candidate stage failed.'
+}
+
+function recordStageFailure(
+  stageCounts: Cp21aStageCounts,
+  stage: Cp21aStage,
+) {
+  if (stage === 'hydrate') stageCounts.hydrate.failed += 1
+  if (stage === 'evidence_gate') stageCounts.evidenceGate.blocked += 1
+  if (stage === 'classify') stageCounts.classification.failed += 1
+  if (stage === 'score') stageCounts.scoring.failed += 1
+  if (stage === 'claim_guard') stageCounts.claimGuard.blocked += 1
 }
 
 function evidencePlanFor(
@@ -431,7 +443,6 @@ async function processCandidate({
       evidence: [evidence],
     })
     if (!gate.ok) {
-      stageCounts.evidenceGate.blocked += 1
       throw new Error(gate.gateReasons.join(' '))
     }
     stageCounts.evidenceGate.passed += 1
@@ -460,7 +471,6 @@ async function processCandidate({
       whyNowReasons: fixture.whyNowReasons,
     })
     if (!classification.ok) {
-      stageCounts.classification.failed += 1
       throw new Error(classification.gateReasons.join(' '))
     }
     stageCounts.classification.passed += 1
@@ -492,7 +502,6 @@ async function processCandidate({
         },
       })
       if (!validation.ok) {
-        stageCounts.scoring.failed += 1
         throw new Error(validation.reasons.join(' '))
       }
       const prospectScore = prospectScoreFor(fixture, evidencePlan)
@@ -619,11 +628,7 @@ async function processCandidate({
     await persister.recordBlockedOrReviewPlan(demotedPlan)
     return demotedPlan
   } catch (error) {
-    if (currentStage === 'hydrate') stageCounts.hydrate.failed += 1
-    if (currentStage === 'evidence_gate') stageCounts.evidenceGate.blocked += 1
-    if (currentStage === 'classify') stageCounts.classification.failed += 1
-    if (currentStage === 'score') stageCounts.scoring.failed += 1
-    if (currentStage === 'claim_guard') stageCounts.claimGuard.blocked += 1
+    recordStageFailure(stageCounts, currentStage)
 
     const failed = failedCandidateFor({
       fixture,
@@ -656,107 +661,119 @@ export async function runCp21aFixtureConductor(
 
   await persister.recordRunStarted(request)
 
-  const discovered = cp21aFixtureCandidates(request)
-  const candidates = discovered.slice(0, request.budget.maxCandidates)
-  const budgetExhausted = discovered.length > candidates.length
-  stageCounts.discovery.discovered = candidates.length
-  stageCounts.discovery.deduped = discovered.length - candidates.length
+  try {
+    const discovered = cp21aFixtureCandidates(request)
+    const candidates = discovered.slice(0, request.budget.maxCandidates)
+    const budgetExhausted = discovered.length > candidates.length
+    stageCounts.discovery.discovered = candidates.length
+    stageCounts.discovery.deduped = discovered.length - candidates.length
 
-  const opportunities: Cp21aOpportunityPlan[] = []
-  const prospects: Cp21aProspectPlan[] = []
-  const failedCandidates: Cp21aFailedCandidate[] = []
-  const demotedCandidates: Cp21aProspectPlan[] = []
+    const opportunities: Cp21aOpportunityPlan[] = []
+    const prospects: Cp21aProspectPlan[] = []
+    const failedCandidates: Cp21aFailedCandidate[] = []
+    const demotedCandidates: Cp21aProspectPlan[] = []
 
-  for (const fixture of candidates) {
-    try {
-      const result = await processCandidate({
-        request,
-        fixture,
-        stageCounts,
-        laneCounts,
-        persister,
-      })
-      if (result.leadKind === 'signal_backed_opportunity') {
-        opportunities.push(result)
-      } else {
-        prospects.push(result)
-        if (result.demotedFromSignal) demotedCandidates.push(result)
+    for (const fixture of candidates) {
+      try {
+        const result = await processCandidate({
+          request,
+          fixture,
+          stageCounts,
+          laneCounts,
+          persister,
+        })
+        if (result.leadKind === 'signal_backed_opportunity') {
+          opportunities.push(result)
+        } else {
+          prospects.push(result)
+          if (result.demotedFromSignal) demotedCandidates.push(result)
+        }
+      } catch (error) {
+        if (typeof error === 'object' && error !== null && 'status' in error) {
+          failedCandidates.push(error as Cp21aFailedCandidate)
+          continue
+        }
+        throw error
       }
-    } catch (error) {
-      if (typeof error === 'object' && error !== null && 'status' in error) {
-        failedCandidates.push(error as Cp21aFailedCandidate)
-        continue
-      }
-      throw error
     }
-  }
 
-  await persister.recordBudgetUsage({
-    providerCalls: ZERO_PROVIDER_CALLS,
-    dbWrites: ZERO_DB_WRITES,
-    estimatedCostCents: ZERO_COST_CENTS,
-    budgetExhausted,
-  })
+    await persister.recordBudgetUsage({
+      providerCalls: ZERO_PROVIDER_CALLS,
+      dbWrites: ZERO_DB_WRITES,
+      estimatedCostCents: ZERO_COST_CENTS,
+      budgetExhausted,
+    })
 
-  let persistence = persister.report()
-  stageCounts.persistence.plans = persistence.plansCaptured
+    let persistence = persister.report()
+    stageCounts.persistence.plans = persistence.plansCaptured
+    stageCounts.persistence.writes = persistence.dbWrites
 
-  const blockedOrReviewItems = [
-    ...failedCandidates,
-    ...prospects.filter((prospect) => prospect.laneId === 'needs_review'),
-  ]
-  const allItems = [...opportunities, ...prospects]
-  const labelsApproved = allItems.every((item) => item.labelApproved)
-  const prospectUrgencyLeaks = prospects.filter((prospect) => {
-    return (
-      prospect.signal !== null ||
-      prospect.whyNow !== null ||
-      prospect.claimsUrgency !== false ||
-      prospect.score.opportunityUrgencyScore !== null
+    const blockedOrReviewItems = [
+      ...failedCandidates,
+      ...prospects.filter((prospect) => prospect.laneId === 'needs_review'),
+    ]
+    const allItems = [...opportunities, ...prospects]
+    const labelsApproved = allItems.every((item) => item.labelApproved)
+    const prospectUrgencyLeaks = prospects.filter((prospect) => {
+      return (
+        prospect.signal !== null ||
+        prospect.whyNow !== null ||
+        prospect.claimsUrgency !== false ||
+        prospect.score.opportunityUrgencyScore !== null
+      )
+    }).length
+    const scoreReasonsAreEvidenceCited = allItems.every((item) =>
+      scoreReasonsCiteEvidence(item.score.reasons),
     )
-  }).length
-  const scoreReasonsAreEvidenceCited = allItems.every((item) =>
-    scoreReasonsCiteEvidence(item.score.reasons),
-  )
 
-  const report: Cp21aConductorRunReport = {
-    ok: true,
-    mode: 'cp21a_fixture_conductor',
-    status: 'completed',
-    runId,
-    workspaceId: request.workspaceId,
-    startedAt,
-    completedAt: request.requestedAt,
-    durationMs: 0,
-    providerMode: {
-      discovery: 'fixture',
-      evidence: 'fixture',
-      reasoning: 'mock',
-      persistence: 'noop',
-    },
-    stageCounts,
-    laneCounts,
-    opportunities,
-    prospects,
-    failedCandidates,
-    demotedCandidates,
-    blockedOrReviewItems,
-    providerCalls: ZERO_PROVIDER_CALLS,
-    dbWrites: ZERO_DB_WRITES,
-    estimatedCostCents: ZERO_COST_CENTS,
-    budgetExhausted,
-    badCandidateDidNotAbortRun:
-      failedCandidates.some((candidate) => candidate.candidateId === 'cp21a-bad-candidate') &&
-      (opportunities.length > 0 || prospects.length > 0),
-    labelsApproved,
-    prospectUrgencyLeaks,
-    scoreReasonsCiteEvidence: scoreReasonsAreEvidenceCited,
-    persistence,
+    const report: Cp21aConductorRunReport = {
+      ok: true,
+      mode: 'cp21a_fixture_conductor',
+      status: 'completed',
+      runId,
+      workspaceId: request.workspaceId,
+      startedAt,
+      completedAt: request.requestedAt,
+      durationMs: 0,
+      providerMode: {
+        discovery: 'fixture',
+        evidence: 'fixture',
+        reasoning: 'mock',
+        persistence: persistence.mode === 'postgres' ? 'postgres' : 'noop',
+      },
+      stageCounts,
+      laneCounts,
+      opportunities,
+      prospects,
+      failedCandidates,
+      demotedCandidates,
+      blockedOrReviewItems,
+      providerCalls: ZERO_PROVIDER_CALLS,
+      dbWrites: persistence.dbWrites,
+      estimatedCostCents: ZERO_COST_CENTS,
+      budgetExhausted,
+      badCandidateDidNotAbortRun:
+        failedCandidates.some((candidate) => candidate.candidateId === 'cp21a-bad-candidate') &&
+        (opportunities.length > 0 || prospects.length > 0),
+      labelsApproved,
+      prospectUrgencyLeaks,
+      scoreReasonsCiteEvidence: scoreReasonsAreEvidenceCited,
+      persistence,
+    }
+
+    await persister.recordRunCompleted(report)
+    persistence = persister.report()
+    report.persistence = persistence
+    report.stageCounts.persistence.plans = persistence.plansCaptured
+    report.stageCounts.persistence.writes = persistence.dbWrites
+    report.dbWrites = persistence.dbWrites
+    report.providerMode.persistence = persistence.mode === 'postgres' ? 'postgres' : 'noop'
+    return report
+  } catch (error) {
+    await persister.recordRunFailed({
+      request,
+      reason: errorMessage(error),
+    })
+    throw error
   }
-
-  await persister.recordRunCompleted(report)
-  persistence = persister.report()
-  report.persistence = persistence
-  report.stageCounts.persistence.plans = persistence.plansCaptured
-  return report
 }
