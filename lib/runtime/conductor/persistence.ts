@@ -33,18 +33,26 @@ export interface Cp21aCandidateStageResultPlan {
 
 export interface Cp21aLineagePlan {
   candidateId: string
-  provider: 'fixture'
+  provider: 'fixture' | 'tdlr-tabs' | 'firecrawl'
   providerRunId: string | null
-  runRole: 'fixture_discovery' | 'fixture_evidence'
+  runRole:
+    | 'fixture_discovery'
+    | 'fixture_evidence'
+    | 'source_adapter_listing'
+    | 'evidence_hydration'
   status: 'ok' | 'error' | 'skipped'
   sourceUrl: string | null
-  estimatedCostCents: 0
+  estimatedCostCents: number
+  query?: string | null
+  engine?: string | null
+  requestMetadata?: Record<string, unknown>
+  responseMetadata?: Record<string, unknown>
 }
 
 export interface Cp21aBudgetUsagePlan {
-  providerCalls: 0
+  providerCalls: number
   dbWrites: number
-  estimatedCostCents: 0
+  estimatedCostCents: number
   budgetExhausted: boolean
 }
 

@@ -39,6 +39,18 @@ export type {
 } from './types'
 export { createNoopCp21aConductorPersister } from './persistence'
 export { createPostgresCp21aConductorPersister } from './persistence-postgres'
+export {
+  CP21C_MARKET,
+  CP21C_SOURCE_PATH,
+  CP21C_VERTICAL,
+  CP21C_WORKSPACE_PREFIX,
+  runCp21cLiveTdlrConductor,
+  type Cp21cCachedCandidateSet,
+  type Cp21cCandidateDisposition,
+  type Cp21cLiveConductorResult,
+  type Cp21cLiveMetrics,
+  type Cp21cPersistedItemAudit,
+} from './live-tdlr'
 
 const APPROVED_ACTION_LABELS = [
   'Review source and contact route',

@@ -27,10 +27,11 @@ type DbExecutor = {
 
 export interface PostgresCp21aConductorPersisterOptions {
   /**
-   * Fixture-only guard. CP21B writes must stay under workspace IDs prefixed
-   * with this value.
+   * Workspace guard. Defaults to CP21B fixture-only writes; CP21C must opt into
+   * the live TDLR proof prefix explicitly.
    */
-  fixtureWorkspacePrefix?: `cp21b-fixture-${string}`
+  fixtureWorkspacePrefix?: `cp21b-fixture-${string}` | `cp21c-live-tdlr-dfw-${string}`
+  checkpoint?: 'CP21B' | 'CP21C'
   /**
    * Test hook used by the smoke proof to force a top-level conductor failure
    * after recordRunStarted has created the running scout row.
@@ -44,21 +45,78 @@ export interface PostgresCp21aConductorPersisterOptions {
 }
 
 const DEFAULT_FIXTURE_PREFIX = 'cp21b-fixture-' as const
-const OWNER_USER_ID = 'cp21b-fixture-owner'
-const PROVIDER_MODE = 'fixture'
+const DEFAULT_CP21C_PREFIX = 'cp21c-live-tdlr-dfw-' as const
 const PROOF_DB_APPROVAL_ENV = 'CP21B_POSTGRES_PROOF_DB_APPROVED'
+const CP21C_PROOF_DB_APPROVAL_ENV = 'CP21C_LIVE_TDLR_DFW_APPROVED'
 const PROOF_DB_APPROVAL_VALUE = 'fetchi-cp21-proof'
 
-function assertSafeDatabaseUrl() {
-  if (process.env[PROOF_DB_APPROVAL_ENV] !== PROOF_DB_APPROVAL_VALUE) {
+type PersisterConfig = {
+  checkpoint: 'CP21B' | 'CP21C'
+  workspacePrefix: string
+  ownerUserId: string
+  providerMode: 'fixture' | 'LIVE'
+  proofDbApprovalEnv: string
+  sourceType: string
+  sourceAuthority: string
+  idNamespace: string
+  providerRunNamespace: string
+  businessName: string
+  signupMethod: string
+  fixtureOnly: boolean
+  writeContactRoutes: boolean
+  writeOutreachPlays: boolean
+}
+
+function configFor(options: PostgresCp21aConductorPersisterOptions): PersisterConfig {
+  const checkpoint = options.checkpoint ?? 'CP21B'
+
+  if (checkpoint === 'CP21C') {
+    return {
+      checkpoint,
+      workspacePrefix: options.fixtureWorkspacePrefix ?? DEFAULT_CP21C_PREFIX,
+      ownerUserId: 'cp21c-live-tdlr-dfw-owner',
+      providerMode: 'LIVE',
+      proofDbApprovalEnv: CP21C_PROOF_DB_APPROVAL_ENV,
+      sourceType: 'tdlr_tabs_project',
+      sourceAuthority: 'tdlr',
+      idNamespace: 'cp21c-live-tdlr-dfw',
+      providerRunNamespace: 'cp21c-live-tdlr-dfw',
+      businessName: 'CP21C live TDLR proof workspace',
+      signupMethod: 'cp21c_live_tdlr_proof',
+      fixtureOnly: false,
+      writeContactRoutes: false,
+      writeOutreachPlays: false,
+    }
+  }
+
+  return {
+    checkpoint,
+    workspacePrefix: options.fixtureWorkspacePrefix ?? DEFAULT_FIXTURE_PREFIX,
+    ownerUserId: 'cp21b-fixture-owner',
+    providerMode: 'fixture',
+    proofDbApprovalEnv: PROOF_DB_APPROVAL_ENV,
+    sourceType: 'cp21b_fixture_evidence',
+    sourceAuthority: 'fetchi_fixture',
+    idNamespace: 'cp21b',
+    providerRunNamespace: 'cp21b-fixture',
+    businessName: 'CP21B fixture workspace',
+    signupMethod: 'cp21b_fixture',
+    fixtureOnly: true,
+    writeContactRoutes: true,
+    writeOutreachPlays: true,
+  }
+}
+
+function assertSafeDatabaseUrl(config: PersisterConfig) {
+  if (process.env[config.proofDbApprovalEnv] !== PROOF_DB_APPROVAL_VALUE) {
     throw new Error(
-      `${PROOF_DB_APPROVAL_ENV} must equal ${PROOF_DB_APPROVAL_VALUE} before CP21B fixture writes.`,
+      `${config.proofDbApprovalEnv} must equal ${PROOF_DB_APPROVAL_VALUE} before ${config.checkpoint} Postgres writes.`,
     )
   }
 
   const raw = process.env.DATABASE_URL
   if (!raw) {
-    throw new Error('DATABASE_URL is not available to the CP21B Postgres persister.')
+    throw new Error(`DATABASE_URL is not available to the ${config.checkpoint} Postgres persister.`)
   }
 
   let parsed: URL
@@ -69,24 +127,25 @@ function assertSafeDatabaseUrl() {
   }
 
   if (!parsed.hostname.endsWith('.neon.tech')) {
-    throw new Error('DATABASE_URL host is not classified as Neon; refusing CP21B fixture writes.')
+    throw new Error(`DATABASE_URL host is not classified as Neon; refusing ${config.checkpoint} writes.`)
   }
   if (parsed.pathname.replace(/^\//, '') !== 'neondb') {
-    throw new Error('DATABASE_URL database is not the approved CP21B proof database name.')
+    throw new Error(`DATABASE_URL database is not the approved ${config.checkpoint} proof database name.`)
   }
 }
 
-async function loadDb(): Promise<DbModule> {
-  assertSafeDatabaseUrl()
+async function loadDb(config: PersisterConfig): Promise<DbModule> {
+  assertSafeDatabaseUrl(config)
   return import('@/db')
 }
 
 function assertFixtureWorkspace(
   workspaceId: string,
   fixtureWorkspacePrefix: string,
+  checkpoint: PersisterConfig['checkpoint'],
 ) {
   if (!workspaceId.startsWith(fixtureWorkspacePrefix)) {
-    throw new Error(`CP21B Postgres persister only writes ${fixtureWorkspacePrefix} workspaces.`)
+    throw new Error(`${checkpoint} Postgres persister only writes ${fixtureWorkspacePrefix} workspaces.`)
   }
 }
 
@@ -132,7 +191,7 @@ function dateFrom(value: string | null | undefined, fallback: Date): Date {
 function firstEvidence(plan: PersistableLeadPlan): Cp21aEvidencePlan {
   const evidence = plan.evidence[0]
   if (!evidence) {
-    throw new Error(`CP21B refuses to persist ${plan.candidateId} without evidence.`)
+    throw new Error(`Postgres conductor persister refuses to persist ${plan.candidateId} without evidence.`)
   }
   return evidence
 }
@@ -141,14 +200,17 @@ function namespacedSourceUrl({
   evidence,
   workspaceId,
   candidateId,
+  config,
 }: {
   evidence: Cp21aEvidencePlan
   workspaceId: string
   candidateId: string
+  config: PersisterConfig
 }): string {
   const base = evidence.sourceUrl.trim().length > 0
     ? evidence.sourceUrl
     : `https://fetchi.fixture.local/cp21b/${workspaceId}/${candidateId}`
+  if (!config.fixtureOnly) return base
   const separator = base.includes('?') ? '&' : '?'
   return `${base}${separator}cp21bWorkspace=${encodeURIComponent(workspaceId)}&candidate=${encodeURIComponent(candidateId)}`
 }
@@ -165,7 +227,9 @@ function originalProviderRunId(
   plan: PersistableLeadPlan,
   role: Cp21aLineagePlan['runRole'],
 ): string | null {
-  if (role === 'fixture_discovery') return plan.lineage.searchProviderRunId
+  if (role === 'fixture_discovery' || role === 'source_adapter_listing') {
+    return plan.lineage.searchProviderRunId
+  }
   return plan.lineage.evidenceProviderRunId
 }
 
@@ -174,14 +238,16 @@ function namespacedProviderRunId({
   candidateId,
   role,
   original,
+  config,
 }: {
   workspaceId: string
   candidateId: string
   role: Cp21aLineagePlan['runRole']
   original: string | null
+  config: PersisterConfig
 }): string {
   return [
-    'cp21b-fixture',
+    config.providerRunNamespace,
     workspaceId,
     candidateId,
     role,
@@ -193,12 +259,17 @@ function scoreReason(plan: PersistableLeadPlan): string {
   return plan.score.reasons[0]?.text ?? 'Fixture score reason cites persisted evidence.'
 }
 
-function runRowId(workspaceId: string): string {
-  return uuidFor(`cp21b:scout_run:${workspaceId}`)
+function runRowId(workspaceId: string, config: PersisterConfig): string {
+  return uuidFor(`${config.idNamespace}:scout_run:${workspaceId}`)
 }
 
-function idFor(workspaceId: string, candidateId: string, table: string): string {
-  return uuidFor(`cp21b:${table}:${workspaceId}:${candidateId}`)
+function idFor(
+  workspaceId: string,
+  candidateId: string,
+  table: string,
+  config: PersisterConfig,
+): string {
+  return uuidFor(`${config.idNamespace}:${table}:${workspaceId}:${candidateId}`)
 }
 
 function completedAtFor(request: Cp21aRunRequest): Date {
@@ -216,7 +287,7 @@ function tableNames(): string[] {
 export class PostgresCp21aConductorPersister implements Cp21aConductorPersister {
   readonly mode = 'postgres' as const
 
-  private readonly fixtureWorkspacePrefix: string
+  private readonly config: PersisterConfig
   private readonly failOnBudgetUsage: boolean
   private readonly faultAfterLeadPlans: number | null
   private runRequest: Cp21aRunRequest | null = null
@@ -235,16 +306,20 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
   private readonly failedRuns: { request: Cp21aRunRequest; reason: string }[] = []
 
   constructor(options: PostgresCp21aConductorPersisterOptions = {}) {
-    this.fixtureWorkspacePrefix = options.fixtureWorkspacePrefix ?? DEFAULT_FIXTURE_PREFIX
+    this.config = configFor(options)
     this.failOnBudgetUsage = options.failOnBudgetUsage ?? false
     this.faultAfterLeadPlans = options.faultAfterLeadPlans ?? null
   }
 
   async recordRunStarted(request: Cp21aRunRequest): Promise<void> {
-    assertFixtureWorkspace(request.workspaceId, this.fixtureWorkspacePrefix)
+    assertFixtureWorkspace(
+      request.workspaceId,
+      this.config.workspacePrefix,
+      this.config.checkpoint,
+    )
     this.runRequest = request
 
-    const { db } = await loadDb()
+    const { db } = await loadDb(this.config)
     const startedAt = runStartedAtFor(request)
     await this.ensureWorkspace(db as unknown as DbExecutor, request.workspaceId, startedAt)
     await this.exec(db as unknown as DbExecutor, sql`
@@ -267,7 +342,7 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
         metadata
       )
       VALUES (
-        ${runRowId(request.workspaceId)},
+        ${runRowId(request.workspaceId, this.config)},
         ${request.workspaceId},
         ${'admin_test'},
         ${timestampSql(startedAt)},
@@ -283,9 +358,9 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
         NULL,
         false,
         ${jsonb({
-          checkpoint: 'CP21B',
-          runId: `cp21a-${request.workspaceId}`,
-          fixtureOnly: true,
+          checkpoint: this.config.checkpoint,
+          runId: `${this.config.idNamespace}-${request.workspaceId}`,
+          fixtureOnly: this.config.fixtureOnly,
         })}
       )
       ON CONFLICT (id) DO UPDATE SET
@@ -307,9 +382,13 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
 
   async recordRunCompleted(report: Cp21aConductorRunReport): Promise<void> {
     const request = this.requireRequest()
-    assertFixtureWorkspace(report.workspaceId, this.fixtureWorkspacePrefix)
+    assertFixtureWorkspace(
+      report.workspaceId,
+      this.config.workspacePrefix,
+      this.config.checkpoint,
+    )
 
-    const { db } = await loadDb()
+    const { db } = await loadDb(this.config)
     this.leadPlansWrittenInCurrentTransaction = 0
     await (db as unknown as DbExecutor).transaction(async (tx) => {
       for (const plan of [...this.opportunityPlans, ...this.prospectPlans]) {
@@ -319,7 +398,7 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
           this.faultAfterLeadPlans !== null &&
           this.leadPlansWrittenInCurrentTransaction >= this.faultAfterLeadPlans
         ) {
-          throw new Error('CP21B injected transaction fault after fixture lead write.')
+          throw new Error(`${this.config.checkpoint} injected transaction fault after lead write.`)
         }
       }
 
@@ -331,23 +410,23 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
           sources_checked = ${report.stageCounts.discovery.discovered},
           serp_api_calls_made = 0,
           llm_tokens_used = 0,
-          estimated_cost_cents = 0,
+          estimated_cost_cents = ${report.estimatedCostCents},
           signals_found = ${report.opportunities.length},
           duplicates_filtered = ${report.stageCounts.discovery.deduped},
           leads_delivered = ${report.opportunities.length + report.prospects.length},
           empty_reason = NULL,
           credit_consumed = false,
           metadata = ${jsonb({
-            checkpoint: 'CP21B',
+            checkpoint: this.config.checkpoint,
             runId: report.runId,
-            fixtureOnly: true,
+            fixtureOnly: this.config.fixtureOnly,
             failedCandidates: report.failedCandidates.length,
             demotedCandidates: report.demotedCandidates.length,
             providerCalls: report.providerCalls,
             estimatedCostCents: report.estimatedCostCents,
             persistenceMode: 'postgres',
           })}
-        WHERE id = ${runRowId(request.workspaceId)}
+        WHERE id = ${runRowId(request.workspaceId, this.config)}
           AND workspace_id = ${request.workspaceId}
       `)
     })
@@ -359,10 +438,14 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
     request: Cp21aRunRequest
     reason: string
   }): Promise<void> {
-    assertFixtureWorkspace(input.request.workspaceId, this.fixtureWorkspacePrefix)
+    assertFixtureWorkspace(
+      input.request.workspaceId,
+      this.config.workspacePrefix,
+      this.config.checkpoint,
+    )
     this.failedRuns.push(input)
 
-    const { db } = await loadDb()
+    const { db } = await loadDb(this.config)
     const startedAt = runStartedAtFor(input.request)
     await this.ensureWorkspace(db as unknown as DbExecutor, input.request.workspaceId, startedAt)
     await this.exec(db as unknown as DbExecutor, sql`
@@ -385,7 +468,7 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
         metadata
       )
       VALUES (
-        ${runRowId(input.request.workspaceId)},
+        ${runRowId(input.request.workspaceId, this.config)},
         ${input.request.workspaceId},
         ${'admin_test'},
         ${timestampSql(startedAt)},
@@ -398,19 +481,19 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
         0,
         0,
         0,
-        ${'cp21b_fixture_failure'},
+        ${`${this.config.idNamespace}_failure`},
         false,
         ${jsonb({
-          checkpoint: 'CP21B',
-          runId: `cp21a-${input.request.workspaceId}`,
-          fixtureOnly: true,
+          checkpoint: this.config.checkpoint,
+          runId: `${this.config.idNamespace}-${input.request.workspaceId}`,
+          fixtureOnly: this.config.fixtureOnly,
           failureReason: input.reason,
         })}
       )
       ON CONFLICT (id) DO UPDATE SET
         completed_at = EXCLUDED.completed_at,
         status = 'failed',
-        empty_reason = 'cp21b_fixture_failure',
+        empty_reason = EXCLUDED.empty_reason,
         metadata = EXCLUDED.metadata
     `)
   }
@@ -444,7 +527,7 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
 
   async recordBudgetUsage(plan: Cp21aBudgetUsagePlan): Promise<void> {
     if (this.failOnBudgetUsage) {
-      throw new Error('CP21B injected top-level run failure after run start.')
+      throw new Error(`${this.config.checkpoint} injected top-level run failure after run start.`)
     }
     this.budgetUsagePlans.push(plan)
   }
@@ -460,7 +543,7 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
 
   private requireRequest(): Cp21aRunRequest {
     if (!this.runRequest) {
-      throw new Error('CP21B Postgres persister was used before recordRunStarted.')
+      throw new Error(`${this.config.checkpoint} Postgres persister was used before recordRunStarted.`)
     }
     return this.runRequest
   }
@@ -485,6 +568,47 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
     this.writeCount += 1
   }
 
+  private async rows<T extends Record<string, unknown>>(
+    executor: DbExecutor,
+    statement: SQL,
+  ): Promise<T[]> {
+    const result = await executor.execute(statement)
+    return Array.isArray(result) ? (result as T[]) : []
+  }
+
+  private async evidenceSourceIdFor({
+    executor,
+    sourceType,
+    externalId,
+    sourceUrl,
+    fallbackId,
+  }: {
+    executor: DbExecutor
+    sourceType: string
+    externalId: string
+    sourceUrl: string
+    fallbackId: string
+  }): Promise<string> {
+    const [byTypeAndExternalId] = await this.rows<{ id: string }>(executor, sql`
+      SELECT id
+      FROM evidence_sources
+      WHERE source_type = ${sourceType}
+        AND external_id = ${externalId}
+      LIMIT 1
+    `)
+    if (typeof byTypeAndExternalId?.id === 'string') return byTypeAndExternalId.id
+
+    const [bySourceUrl] = await this.rows<{ id: string }>(executor, sql`
+      SELECT id
+      FROM evidence_sources
+      WHERE source_url = ${sourceUrl}
+      LIMIT 1
+    `)
+    if (typeof bySourceUrl?.id === 'string') return bySourceUrl.id
+
+    return fallbackId
+  }
+
   private async ensureWorkspace(
     executor: DbExecutor,
     workspaceId: string,
@@ -502,11 +626,11 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
       )
       VALUES (
         ${workspaceId},
-        ${OWNER_USER_ID},
-        ${'CP21B fixture workspace'},
+        ${this.config.ownerUserId},
+        ${this.config.businessName},
         false,
         0,
-        ${'cp21b_fixture'},
+        ${this.config.signupMethod},
         ${timestampSql(timestamp)}
       )
       ON CONFLICT (workspace_id) DO UPDATE SET
@@ -551,32 +675,66 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
     const candidateId = plan.candidateId
     const evidence = firstEvidence(plan)
     const evidenceDate = dateFrom(evidence.sourceDate, completedAtFor(request))
-    const evidenceSourceId = idFor(workspaceId, candidateId, 'evidence_sources')
-    const prospectId = idFor(workspaceId, candidateId, 'prospects')
+    const sourceUrl = namespacedSourceUrl({
+      evidence,
+      workspaceId,
+      candidateId,
+      config: this.config,
+    })
+    const sourceType = evidence.sourceType ?? this.config.sourceType
+    const sourceAuthority = evidence.sourceAuthority ?? this.config.sourceAuthority
+    const sourceExternalId =
+      evidence.sourceExternalId ?? `${this.config.providerRunNamespace}-${workspaceId}-${candidateId}`
+    const evidenceSourceId = await this.evidenceSourceIdFor({
+      executor: tx,
+      sourceType,
+      externalId: sourceExternalId,
+      sourceUrl,
+      fallbackId: idFor(workspaceId, candidateId, 'evidence_sources', this.config),
+    })
+    const prospectId = idFor(workspaceId, candidateId, 'prospects', this.config)
     const signalId = plan.leadKind === 'signal_backed_opportunity'
-      ? idFor(workspaceId, candidateId, 'signals')
+      ? idFor(workspaceId, candidateId, 'signals', this.config)
       : null
-    const opportunityId = idFor(workspaceId, candidateId, 'opportunities')
-    const proofId = idFor(workspaceId, candidateId, 'opportunity_evidence_proofs')
-    const contactRouteId = idFor(workspaceId, candidateId, 'contact_routes')
-    const outreachPlayId = idFor(workspaceId, candidateId, 'outreach_plays')
-    const sourceUrl = namespacedSourceUrl({ evidence, workspaceId, candidateId })
+    const opportunityId = idFor(workspaceId, candidateId, 'opportunities', this.config)
+    const proofId = idFor(
+      workspaceId,
+      candidateId,
+      'opportunity_evidence_proofs',
+      this.config,
+    )
+    const contactRouteId = idFor(workspaceId, candidateId, 'contact_routes', this.config)
+    const outreachPlayId = idFor(workspaceId, candidateId, 'outreach_plays', this.config)
     const lineage = this.lineageFor(plan)
+    const discoveryRole: Cp21aLineagePlan['runRole'] = this.config.fixtureOnly
+      ? 'fixture_discovery'
+      : 'source_adapter_listing'
+    const evidenceRole: Cp21aLineagePlan['runRole'] = this.config.fixtureOnly
+      ? 'fixture_evidence'
+      : 'evidence_hydration'
     const searchProviderRunId = namespacedProviderRunId({
       workspaceId,
       candidateId,
-      role: 'fixture_discovery',
-      original: originalProviderRunId(plan, 'fixture_discovery'),
+      role: discoveryRole,
+      original: originalProviderRunId(plan, discoveryRole),
+      config: this.config,
     })
     const evidenceProviderRunId = namespacedProviderRunId({
       workspaceId,
       candidateId,
-      role: 'fixture_evidence',
-      original: originalProviderRunId(plan, 'fixture_evidence'),
+      role: evidenceRole,
+      original: originalProviderRunId(plan, evidenceRole),
+      config: this.config,
     })
     const now = completedAtFor(request)
     const isOpportunity = plan.leadKind === 'signal_backed_opportunity'
     const storedLeadKind = leadKindForStorage(plan)
+    const sourceAdapterRunIds = evidence.sourceAdapterRunIds ?? []
+    const sourceAdapterListingUrls = evidence.sourceAdapterListingUrls ?? []
+    const checkpointMetadata = {
+      checkpoint: this.config.checkpoint,
+      fixtureOnly: this.config.fixtureOnly,
+    }
 
     await this.exec(tx, sql`
       INSERT INTO evidence_sources (
@@ -594,20 +752,20 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
       )
       VALUES (
         ${evidenceSourceId},
-        ${'cp21b_fixture_evidence'},
-        ${'fetchi_fixture'},
-        ${`cp21b-fixture-${workspaceId}-${candidateId}`},
+        ${sourceType},
+        ${sourceAuthority},
+        ${sourceExternalId},
         ${sourceUrl},
         ${evidence.sourceTitle},
         ${timestampSql(evidenceDate)},
-        ${sha256(`cp21b:evidence:${workspaceId}:${candidateId}:${evidence.sourceFingerprint}`)},
+        ${sha256(`${this.config.idNamespace}:evidence:${sourceExternalId}:${evidence.sourceFingerprint}`)},
         ${jsonb({
-          checkpoint: 'CP21B',
-          fixtureOnly: true,
+          ...checkpointMetadata,
           originalEvidenceId: evidence.id,
           originalSourceUrl: evidence.sourceUrl,
-          sourceAdapterRunIds: [],
-          sourceAdapterListingUrls: [],
+          sourceAdapterRunIds,
+          sourceAdapterListingUrls,
+          ...(evidence.proofMetadata ?? {}),
         })},
         ${timestampSql(now)},
         ${timestampSql(now)}
@@ -672,16 +830,17 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
           ${signalId},
           ${workspaceId},
           ${plan.signal.signalType},
-          ${sha256(`cp21b:signal:${workspaceId}:${candidateId}:${plan.signal.signalType}`)},
+          ${sha256(`${this.config.idNamespace}:signal:${workspaceId}:${candidateId}:${plan.signal.signalType}`)},
           ${jsonb({
-            checkpoint: 'CP21B',
-            fixtureOnly: true,
+            ...checkpointMetadata,
             candidateId,
+            sourceExternalId,
           })},
           ${jsonb({
             signalLabel: plan.signal.signalLabel,
             freshnessWindow: plan.signal.freshnessWindow,
             sourceUrl,
+            sourceExternalId,
           })},
           ${plan.signal.whyNow},
           ${timestampSql(evidenceDate)},
@@ -737,6 +896,7 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
         candidateId,
         role: lineagePlan.runRole,
         original,
+        config: this.config,
       })
       await this.exec(tx, sql`
         INSERT INTO runtime_lineage_runs (
@@ -756,26 +916,31 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
           response_metadata
         )
         VALUES (
-          ${idFor(workspaceId, `${candidateId}:${lineagePlan.runRole}`, 'runtime_lineage_runs')},
+          ${idFor(
+            workspaceId,
+            `${candidateId}:${lineagePlan.runRole}`,
+            'runtime_lineage_runs',
+            this.config,
+          )},
           ${lineagePlan.provider},
           ${providerRunId},
           ${lineagePlan.runRole},
           ${lineagePlan.status},
           ${evidenceSourceId},
-          ${sourceUrl},
-          NULL,
-          ${'fixture'},
-          0,
+          ${lineagePlan.sourceUrl ?? sourceUrl},
+          ${lineagePlan.query ?? null},
+          ${lineagePlan.engine ?? (this.config.fixtureOnly ? 'fixture' : null)},
+          ${lineagePlan.estimatedCostCents},
           ${timestampSql(now)},
           ${timestampSql(now)},
           ${jsonb({
-            checkpoint: 'CP21B',
-            fixtureOnly: true,
+            ...checkpointMetadata,
             originalProviderRunId: original,
+            ...(lineagePlan.requestMetadata ?? {}),
           })},
           ${jsonb({
-            providerCalls: 0,
-            liveProviders: false,
+            liveProviders: !this.config.fixtureOnly,
+            ...(lineagePlan.responseMetadata ?? {}),
           })}
         )
         ON CONFLICT (provider_run_id) DO UPDATE SET
@@ -829,9 +994,9 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
         ${workspaceId},
         ${opportunityId},
         ${evidenceSourceId},
-        ${sha256(`cp21b:proof:${workspaceId}:${candidateId}:${storedLeadKind}`)},
+        ${sha256(`${this.config.idNamespace}:proof:${workspaceId}:${candidateId}:${storedLeadKind}:${sourceExternalId}`)},
         ${storedLeadKind},
-        ${PROVIDER_MODE},
+        ${evidence.providerMode ?? this.config.providerMode},
         ${plan.market},
         ${plan.vertical},
         ${isOpportunity && plan.signal ? plan.signal.signalType : 'no_fresh_signal'},
@@ -847,31 +1012,34 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
         ${evidence.sourceFingerprint},
         ${searchProviderRunId},
         ${evidenceProviderRunId},
-        ${textArray([])},
-        ${textArray([])},
-        ${jsonb({
+        ${textArray(sourceAdapterRunIds)},
+        ${textArray(sourceAdapterListingUrls)},
+        ${jsonb(evidence.gateReasons ?? {
           claimGuardDisposition: plan.claimGuardDisposition,
           labelApproved: plan.labelApproved,
           demotionReason: 'demotionReason' in plan ? plan.demotionReason : null,
         })},
-        ${jsonb({
+        ${jsonb(evidence.providerLineage ?? {
           searchProviderRunId,
           evidenceProviderRunId,
+          sourceAdapterRunIds,
+          sourceAdapterListingUrls,
           originalSearchProviderRunId: plan.lineage.searchProviderRunId,
           originalEvidenceProviderRunId: plan.lineage.evidenceProviderRunId,
         })},
         ${jsonb({
-          checkpoint: 'CP21B',
-          fixtureOnly: true,
+          ...checkpointMetadata,
           candidateId,
+          sourceExternalId,
           originalLeadKind: plan.leadKind,
           storedLeadKind,
           state: plan.state,
           laneId: plan.laneId,
           claimsUrgency: plan.claimsUrgency,
           demotedFromSignal: 'demotedFromSignal' in plan ? plan.demotedFromSignal : false,
-          providerCalls: 0,
-          liveProviders: false,
+          providerCalls: this.config.fixtureOnly ? 0 : sourceAdapterRunIds.length + (plan.lineage.evidenceProviderRunId ? 1 : 0),
+          liveProviders: !this.config.fixtureOnly,
+          ...(evidence.proofMetadata ?? {}),
         })},
         ${timestampSql(now)}
       )
@@ -906,73 +1074,77 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
     `)
 
     const routeNeedsReview = plan.laneId === 'needs_review'
-    await this.exec(tx, sql`
-      INSERT INTO contact_routes (
-        id,
-        workspace_id,
-        prospect_id,
-        contact_name,
-        contact_title,
-        contact_email,
-        route_type,
-        confidence,
-        verified
-      )
-      VALUES (
-        ${contactRouteId},
-        ${workspaceId},
-        ${prospectId},
-        ${`${plan.businessName} Facilities`},
-        ${'Operations contact'},
-        ${`cp21b-fixture-${sha256(`${workspaceId}:${candidateId}`).slice(0, 12)}@example.invalid`},
-        ${'email'},
-        ${routeNeedsReview ? 55 : 90},
-        ${!routeNeedsReview}
-      )
-      ON CONFLICT (id) DO UPDATE SET
-        workspace_id = EXCLUDED.workspace_id,
-        prospect_id = EXCLUDED.prospect_id,
-        contact_name = EXCLUDED.contact_name,
-        contact_title = EXCLUDED.contact_title,
-        contact_email = EXCLUDED.contact_email,
-        route_type = EXCLUDED.route_type,
-        confidence = EXCLUDED.confidence,
-        verified = EXCLUDED.verified
-    `)
+    if (this.config.writeContactRoutes) {
+      await this.exec(tx, sql`
+        INSERT INTO contact_routes (
+          id,
+          workspace_id,
+          prospect_id,
+          contact_name,
+          contact_title,
+          contact_email,
+          route_type,
+          confidence,
+          verified
+        )
+        VALUES (
+          ${contactRouteId},
+          ${workspaceId},
+          ${prospectId},
+          ${`${plan.businessName} Facilities`},
+          ${'Operations contact'},
+          ${`cp21b-fixture-${sha256(`${workspaceId}:${candidateId}`).slice(0, 12)}@example.invalid`},
+          ${'email'},
+          ${routeNeedsReview ? 55 : 90},
+          ${!routeNeedsReview}
+        )
+        ON CONFLICT (id) DO UPDATE SET
+          workspace_id = EXCLUDED.workspace_id,
+          prospect_id = EXCLUDED.prospect_id,
+          contact_name = EXCLUDED.contact_name,
+          contact_title = EXCLUDED.contact_title,
+          contact_email = EXCLUDED.contact_email,
+          route_type = EXCLUDED.route_type,
+          confidence = EXCLUDED.confidence,
+          verified = EXCLUDED.verified
+      `)
+    }
 
-    await this.exec(tx, sql`
-      INSERT INTO outreach_plays (
-        id,
-        workspace_id,
-        opportunity_id,
-        contact_route_id,
-        subject_line,
-        body,
-        signal_reference,
-        status,
-        updated_at
-      )
-      VALUES (
-        ${outreachPlayId},
-        ${workspaceId},
-        ${opportunityId},
-        ${contactRouteId},
-        ${isOpportunity ? `Fixture follow-up for ${plan.businessName}` : `Fixture prospect note for ${plan.businessName}`},
-        ${`Fixture-only CP21B draft for ${plan.businessName}. No provider or LLM generated this content.`},
-        ${isOpportunity && plan.signal ? plan.signal.signalLabel : null},
-        ${'draft'},
-        ${timestampSql(now)}
-      )
-      ON CONFLICT (id) DO UPDATE SET
-        workspace_id = EXCLUDED.workspace_id,
-        opportunity_id = EXCLUDED.opportunity_id,
-        contact_route_id = EXCLUDED.contact_route_id,
-        subject_line = EXCLUDED.subject_line,
-        body = EXCLUDED.body,
-        signal_reference = EXCLUDED.signal_reference,
-        status = EXCLUDED.status,
-        updated_at = EXCLUDED.updated_at
-    `)
+    if (this.config.writeOutreachPlays) {
+      await this.exec(tx, sql`
+        INSERT INTO outreach_plays (
+          id,
+          workspace_id,
+          opportunity_id,
+          contact_route_id,
+          subject_line,
+          body,
+          signal_reference,
+          status,
+          updated_at
+        )
+        VALUES (
+          ${outreachPlayId},
+          ${workspaceId},
+          ${opportunityId},
+          ${this.config.writeContactRoutes ? contactRouteId : null},
+          ${isOpportunity ? `Fixture follow-up for ${plan.businessName}` : `Fixture prospect note for ${plan.businessName}`},
+          ${`Fixture-only CP21B draft for ${plan.businessName}. No provider or LLM generated this content.`},
+          ${isOpportunity && plan.signal ? plan.signal.signalLabel : null},
+          ${'draft'},
+          ${timestampSql(now)}
+        )
+        ON CONFLICT (id) DO UPDATE SET
+          workspace_id = EXCLUDED.workspace_id,
+          opportunity_id = EXCLUDED.opportunity_id,
+          contact_route_id = EXCLUDED.contact_route_id,
+          subject_line = EXCLUDED.subject_line,
+          body = EXCLUDED.body,
+          signal_reference = EXCLUDED.signal_reference,
+          status = EXCLUDED.status,
+          updated_at = EXCLUDED.updated_at
+      `)
+    }
 
     if (isOpportunity) {
       await this.exec(tx, sql`
@@ -986,13 +1158,13 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
           outreach_play_id
         )
         VALUES (
-          ${idFor(workspaceId, candidateId, 'todays_run_items')},
+          ${idFor(workspaceId, candidateId, 'todays_run_items', this.config)},
           ${workspaceId},
           ${opportunityId},
           ${timestampSql(dateFrom(request.requestedAt.slice(0, 10), now))},
           1,
           ${'drafted'},
-          ${outreachPlayId}
+          ${this.config.writeOutreachPlays ? outreachPlayId : null}
         )
         ON CONFLICT (id) DO UPDATE SET
           workspace_id = EXCLUDED.workspace_id,
@@ -1015,12 +1187,12 @@ export class PostgresCp21aConductorPersister implements Cp21aConductorPersister 
           source
         )
         VALUES (
-          ${idFor(workspaceId, candidateId, 'lead_pass_reasons')},
+          ${idFor(workspaceId, candidateId, 'lead_pass_reasons', this.config)},
           ${workspaceId},
           ${opportunityId},
           ${'bad_signal'},
-          ${'CP21B fixture demotion or review state; not a customer action.'},
-          ${'cp21b_fixture'}
+          ${`${this.config.checkpoint} demotion or review state; not a customer action.`},
+          ${this.config.signupMethod}
         )
         ON CONFLICT (id) DO UPDATE SET
           workspace_id = EXCLUDED.workspace_id,

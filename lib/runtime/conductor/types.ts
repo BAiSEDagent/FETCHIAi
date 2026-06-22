@@ -1,8 +1,17 @@
 import type { FallbackState, SignalType } from '@/lib/providers/contracts'
 
-export type Cp21aConductorMode = 'cp21a_fixture_conductor'
+export type Cp21aConductorMode =
+  | 'cp21a_fixture_conductor'
+  | 'cp21c_live_tdlr_conductor'
 export type Cp21aRunStatus = 'completed' | 'failed'
-export type Cp21aProviderMode = 'fixture' | 'noop' | 'mock' | 'postgres'
+export type Cp21aProviderMode =
+  | 'fixture'
+  | 'noop'
+  | 'mock'
+  | 'postgres'
+  | 'tdlr_tabs_source_adapter'
+  | 'firecrawl'
+  | 'none'
 
 export type Cp21aStage =
   | 'discover'
@@ -35,8 +44,8 @@ export type Cp21aLeadState =
 export type Cp21aClaimGuardDisposition = 'passed' | 'revised' | 'blocked'
 
 export interface Cp21aBudgetEnvelope {
-  maxProviderCalls: 0
-  maxEstimatedCostCents: 0
+  maxProviderCalls: number
+  maxEstimatedCostCents: number
   maxCandidates: number
 }
 
@@ -65,6 +74,15 @@ export interface Cp21aEvidencePlan {
   evidenceSummary: string
   sourceExcerpt: string
   sourceFingerprint: string
+  sourceType?: string
+  sourceAuthority?: string
+  sourceExternalId?: string
+  sourceAdapterRunIds?: string[]
+  sourceAdapterListingUrls?: string[]
+  providerMode?: 'fixture' | 'LIVE'
+  proofMetadata?: Record<string, unknown>
+  gateReasons?: Record<string, unknown>
+  providerLineage?: Record<string, unknown>
 }
 
 export interface Cp21aSignalPlan {
@@ -213,9 +231,9 @@ export interface Cp21aConductorRunReport {
   failedCandidates: Cp21aFailedCandidate[]
   demotedCandidates: Cp21aProspectPlan[]
   blockedOrReviewItems: Cp21aBlockedOrReviewItem[]
-  providerCalls: 0
+  providerCalls: number
   dbWrites: number
-  estimatedCostCents: 0
+  estimatedCostCents: number
   budgetExhausted: boolean
   badCandidateDidNotAbortRun: boolean
   labelsApproved: boolean
