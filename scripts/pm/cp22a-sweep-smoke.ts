@@ -365,9 +365,12 @@ async function main() {
   assert.deepEqual(cleaningCompanyBuyers.map((lead) => lead.businessName), ['Sparkle Cleaning Co'])
 
   const csv = exportSweepCsv(deduped)
-  assert(csv.startsWith('business,website,phone,address,market,source,email,owner,hook'))
+  const csvHeader = csv.split('\n')[0]
+  assert.equal(csvHeader, 'business,website,phone,address,market,source,latitude,longitude,email,owner,hook')
   assert(csv.includes('Bluebird Cafe'))
-  assert(csv.includes('Phone Only Shop,,(303) 555-6666,,"Denver, CO",Google Maps,,'))
+  const phoneOnlyCsvRow = csv.split('\n').find((row) => row.startsWith('Phone Only Shop,'))
+  assert(phoneOnlyCsvRow)
+  assert(phoneOnlyCsvRow.startsWith('Phone Only Shop,,(303) 555-6666,,"Denver, CO",Google Maps,,,,'))
 
   const json = exportSweepJson(deduped)
   const parsed = JSON.parse(json) as Array<{ business: string; website: string | null; address: string | null }>
@@ -457,7 +460,7 @@ async function main() {
     roofingSellerRowsDropped: true,
     dumpsterSellerRowsDropped: true,
     overlapFalsePositiveProtected: true,
-    csvHeader: csv.split('\n')[0],
+    csvHeader,
     jsonRows: parsed.length,
     missingSerpApiKeyHandled: true,
     liveSerpApiMapsProof: liveProof ?? 'blocked_missing_serpapi_key',
