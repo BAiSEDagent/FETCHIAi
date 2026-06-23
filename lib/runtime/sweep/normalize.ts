@@ -196,6 +196,25 @@ function cleanTypeList(value: unknown): string | null {
   return types.length > 0 ? types.join(', ') : null
 }
 
+function parseCoordinate(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value !== 'string') return null
+
+  const trimmed = value.trim()
+  if (!/^-?\d+(?:\.\d+)?$/.test(trimmed)) return null
+
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function coordinateFromGps(
+  value: unknown,
+  key: 'latitude' | 'longitude',
+): number | null {
+  if (!value || typeof value !== 'object') return null
+  return parseCoordinate((value as Record<string, unknown>)[key])
+}
+
 function isSellerSideResult(input: {
   service: string
   icp: string
@@ -243,6 +262,8 @@ export function normalizeSerpApiMapsResults(input: NormalizeMapsInput): SweepLea
     const normalizedWebsite = website ? normalizeWebsite(website) : null
 
     const category = clean(result.type) ?? cleanTypeList(result.types)
+    const latitude = coordinateFromGps(result.gps_coordinates, 'latitude')
+    const longitude = coordinateFromGps(result.gps_coordinates, 'longitude')
     if (isSellerSideResult({
       service: input.service,
       icp: input.icp,
@@ -267,6 +288,8 @@ export function normalizeSerpApiMapsResults(input: NormalizeMapsInput): SweepLea
       source: 'Google Maps',
       sourceUrl: input.sourceUrl,
       category,
+      latitude,
+      longitude,
       email: null,
       owner: null,
       hook: category ? `${category} listed on Google Maps for "${input.query}".` : null,

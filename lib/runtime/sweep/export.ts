@@ -7,13 +7,15 @@ const EXPORT_FIELDS = [
   'address',
   'market',
   'source',
+  'latitude',
+  'longitude',
   'email',
   'owner',
   'hook',
 ] as const
 
-function csvCell(value: string | null): string {
-  const text = value ?? ''
+function csvCell(value: string | number | null): string {
+  const text = value === null ? '' : String(value)
   if (!/[",\n\r]/.test(text)) return text
   return `"${text.replace(/"/g, '""')}"`
 }
@@ -26,6 +28,8 @@ export function exportSweepCsv(leads: readonly SweepLead[]): string {
     lead.address,
     lead.market,
     lead.source,
+    lead.latitude,
+    lead.longitude,
     lead.email,
     lead.owner,
     lead.hook,
@@ -43,6 +47,8 @@ export function exportSweepJson(leads: readonly SweepLead[]): string {
       address: lead.address,
       market: lead.market,
       source: lead.source,
+      latitude: lead.latitude,
+      longitude: lead.longitude,
       email: lead.email,
       owner: lead.owner,
       hook: lead.hook,

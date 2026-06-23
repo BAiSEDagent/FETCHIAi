@@ -1,6 +1,11 @@
 export const CP22A_DEFAULT_MAX_SERPAPI_CALLS = 80
 export const CP22A_DEFAULT_MAX_PAGES_PER_QUERY = 3
 export const CP22A_DEFAULT_CONCURRENCY = 6
+export const CP22B_DEFAULT_MAX_FIRECRAWL_SCRAPES = 50
+export const CP22B_HARD_MAX_FIRECRAWL_SCRAPES = 100
+export const CP22B_DEFAULT_FIRECRAWL_CONCURRENCY = 4
+export const CP22B_HARD_MAX_FIRECRAWL_CONCURRENCY = 5
+export const CP22B_DEFAULT_FIRECRAWL_TIMEOUT_MS = 12000
 
 export type SweepMarketKind = 'city_metro' | 'state' | 'nationwide'
 
@@ -37,6 +42,8 @@ export type SweepLead = {
   source: 'Google Maps'
   sourceUrl: string
   category: string | null
+  latitude: number | null
+  longitude: number | null
   email: string | null
   owner: string | null
   hook: string | null
@@ -59,6 +66,39 @@ export type SweepError = {
   message: string
 }
 
+export type SweepEnrichmentStats = {
+  eligibleWebsiteRows: number
+  skippedNoWebsiteRows: number
+  scrapeBudget: number
+  attemptedScrapes: number
+  successfulScrapes: number
+  failedScrapes: number
+  emailsFound: number
+  ownersFound: number
+  hooksFound: number
+}
+
+export type SweepEnrichmentError = {
+  code: 'missing_firecrawl_key' | 'invalid_input'
+  message: string
+}
+
+export type SweepEnrichmentInput = {
+  leads: SweepLead[]
+  apiKey?: string
+  maxScrapes?: number
+  concurrency?: number
+  timeoutMs?: number
+  fetchImpl?: typeof fetch
+}
+
+export type SweepEnrichmentResult = {
+  ok: boolean
+  leads: SweepLead[]
+  stats: SweepEnrichmentStats
+  error?: SweepEnrichmentError
+}
+
 export type SweepRunResult = {
   ok: boolean
   leads: SweepLead[]
@@ -75,6 +115,7 @@ export type SerpApiMapsLocalResult = {
   address?: unknown
   type?: unknown
   types?: unknown
+  gps_coordinates?: unknown
 }
 
 export type SerpApiMapsPayload = {

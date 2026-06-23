@@ -8,17 +8,20 @@ import {
   FileJson,
   Globe2,
   Loader2,
+  Mail,
   MapPin,
   Phone,
   Search,
+  Sparkles,
   Table2,
+  UserRound,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { exportSweepCsv, exportSweepJson } from '@/lib/runtime/sweep/export'
-import type { SweepLead, SweepRunResult } from '@/lib/runtime/sweep'
-import { runSweep } from './actions'
+import type { SweepEnrichmentStats, SweepLead, SweepRunResult } from '@/lib/runtime/sweep'
+import { enrichSweep, runSweep } from './actions'
 
 type Example = {
   service: string
@@ -108,6 +111,22 @@ function ResultRow({ lead }: { lead: SweepLead }) {
           {lead.phone}
         </a>
       </td>
+      <td className="px-4 py-3 min-w-[180px]">
+        {lead.email && (
+          <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 text-ok font-medium">
+            <Mail className="h-3.5 w-3.5" />
+            <span className="break-all">{lead.email}</span>
+          </a>
+        )}
+      </td>
+      <td className="px-4 py-3 min-w-[150px] text-text/70">
+        {lead.owner && (
+          <span className="inline-flex items-center gap-1.5">
+            <UserRound className="h-3.5 w-3.5 text-text/38" />
+            {lead.owner}
+          </span>
+        )}
+      </td>
       <td className="px-4 py-3 min-w-[260px]">
         {lead.address && (
           <div className="flex gap-1.5 text-text/75 leading-snug">
@@ -130,8 +149,11 @@ export function SweepClient() {
   const [icp, setIcp] = React.useState('')
   const [market, setMarket] = React.useState('')
   const [pending, startTransition] = React.useTransition()
+  const [enrichmentPending, startEnrichmentTransition] = React.useTransition()
   const [result, setResult] = React.useState<SweepRunResult | null>(null)
   const [error, setError] = React.useState<string | null>(null)
+  const [enrichmentMessage, setEnrichmentMessage] = React.useState<string | null>(null)
+  const [enrichmentStats, setEnrichmentStats] = React.useState<SweepEnrichmentStats | null>(null)
   const [progressIndex, setProgressIndex] = React.useState(0)
 
   React.useEffect(() => {
@@ -150,11 +172,15 @@ export function SweepClient() {
     setIcp(example.icp)
     setMarket(example.market)
     setError(null)
+    setEnrichmentMessage(null)
+    setEnrichmentStats(null)
   }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
+    setEnrichmentMessage(null)
+    setEnrichmentStats(null)
     setResult(null)
     startTransition(async () => {
       const response = await runSweep({ service, icp, market })
@@ -162,6 +188,35 @@ export function SweepClient() {
       if (!response.ok) {
         setError(response.error?.message ?? 'The sweep could not run.')
       }
+    })
+  }
+
+  function enrichResults() {
+    if (!hasResults || enrichmentPending) return
+    setError(null)
+    setEnrichmentMessage(null)
+    startEnrichmentTransition(async () => {
+      const response = await enrichSweep({ leads, maxScrapes: 50 })
+      setEnrichmentStats(response.stats)
+      setResult((current) => current
+        ? {
+          ...current,
+          leads: response.leads,
+          stats: {
+            ...current.stats,
+            exportCount: response.leads.length,
+          },
+        }
+        : current)
+
+      if (!response.ok) {
+        setEnrichmentMessage(response.error?.message ?? 'Website enrichment is unavailable.')
+        return
+      }
+
+      setEnrichmentMessage(
+        `Checked ${response.stats.attemptedScrapes} websites and found ${response.stats.emailsFound} emails.`,
+      )
     })
   }
 
@@ -263,7 +318,17 @@ export function SweepClient() {
                   Fetchi fans out deterministic Maps searches across city, state, or national markets, then merges overlapping listings into one exportable lead list.
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!hasResults || pending || enrichmentPending}
+                  onClick={enrichResults}
+                  className="gap-2"
+                >
+                  {enrichmentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Find emails
+                </Button>
                 <Button type="button" variant="outline" disabled={!hasResults} onClick={exportCsv} className="gap-2">
                   <ArrowDownToLine className="h-4 w-4" />
                   CSV
@@ -274,6 +339,19 @@ export function SweepClient() {
                 </Button>
               </div>
             </div>
+
+            {hasResults && (
+              <div className="mt-4 rounded-lg border border-text/8 bg-bg px-4 py-3 text-[13px] text-text/55">
+                {enrichmentPending
+                  ? 'Checking websites for emails and context'
+                  : enrichmentMessage ?? 'Enrich up to 50 websites'}
+                {enrichmentStats && !enrichmentPending && (
+                  <span className="ml-2 text-text/38">
+                    {enrichmentStats.successfulScrapes} checked
+                  </span>
+                )}
+              </div>
+            )}
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <StatTile label="sources hit" value={result?.stats.sourcesHit.join(', ') || 'Maps'} />
@@ -345,6 +423,8 @@ export function SweepClient() {
                     <th className="px-4 py-3 font-bold">Business</th>
                     <th className="px-4 py-3 font-bold">Website</th>
                     <th className="px-4 py-3 font-bold">Phone</th>
+                    <th className="px-4 py-3 font-bold">Email</th>
+                    <th className="px-4 py-3 font-bold">Contact</th>
                     <th className="px-4 py-3 font-bold">Address / market</th>
                     <th className="px-4 py-3 font-bold">Source</th>
                     <th className="px-4 py-3 font-bold">Context</th>
