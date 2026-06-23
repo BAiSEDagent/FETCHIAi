@@ -84,6 +84,8 @@ export type SerpApiMapsPayload = {
 
 export type NormalizeMapsInput = {
   payload: SerpApiMapsPayload
+  service: string
+  icp: string
   market: string
   query: string
   sourceUrl: string

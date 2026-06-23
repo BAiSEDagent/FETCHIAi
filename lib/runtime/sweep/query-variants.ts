@@ -20,14 +20,13 @@ export function buildSweepQueries(input: {
   icp: string
   market: string
 }): string[] {
-  const service = compact(input.service)
   const icp = compact(input.icp)
   const market = compact(input.market)
 
   return [
     `${icp} ${market}`,
     `${icp} near ${market}`,
-    `${service} for ${icp} ${market}`,
+    `${icp} in ${market}`,
     `${icp} businesses ${market}`,
   ]
 }
