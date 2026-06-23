@@ -256,7 +256,7 @@ export function SweepClient() {
                   Find businesses with phones, websites, and addresses.
                 </h2>
                 <p className="mt-2 max-w-[720px] text-[14px] leading-relaxed text-text/58">
-                  Fetchi fans out deterministic Maps searches across city, state, or national markets, then quietly merges duplicate and broken records into one exportable list.
+                  Fetchi fans out deterministic Maps searches across city, state, or national markets, then merges overlapping listings into one exportable lead list.
                 </p>
               </div>
               <div className="flex gap-2">
