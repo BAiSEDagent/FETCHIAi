@@ -182,6 +182,8 @@ export async function runSerpApiMapsSweep(request: SweepRequest): Promise<SweepR
     if (!item.payload) return []
     return normalizeSerpApiMapsResults({
       payload: item.payload,
+      service,
+      icp,
       market: item.call.market,
       query: item.call.query,
       sourceUrl: publicSourceUrl(item.call),

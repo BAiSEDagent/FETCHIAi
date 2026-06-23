@@ -1,12 +1,12 @@
 /**
- * CP22A.1 - Sweep abundance patch smoke proof.
+ * CP22A.2 - Sweep buyer query tightening smoke proof.
  *
- * Covers dataset-driven market planning, SerpApi Maps normalization with phone
- * as the contact floor, quiet garbage filtering, richer-row dedupe, export
- * shape, call ceiling behavior, and missing SERPAPI_KEY handling. If
- * SERPAPI_KEY is present it also runs a bounded live Maps proof. It does not
- * call Firecrawl, LLMs, DB writes, migrations, seeds, CRM, outreach, or
- * scheduler paths.
+ * Covers ICP-first SerpApi Maps query variants, service-derived seller-side
+ * exclusion, CP22A.1 phone-floor abundance behavior, dataset-driven market
+ * planning, richer-row dedupe, export shape, call ceiling behavior, and
+ * missing SERPAPI_KEY handling. If SERPAPI_KEY is present it also runs a
+ * bounded live Maps proof. It does not call Firecrawl, LLMs, DB writes,
+ * migrations, seeds, CRM, outreach, or scheduler paths.
  */
 
 import assert from 'node:assert/strict'
@@ -25,7 +25,7 @@ import {
 } from '@/lib/runtime/sweep'
 import { US_SWEEP_CITIES, US_SWEEP_CITY_DATASET } from '@/lib/runtime/sweep/us-cities'
 
-const sampleMapsPayload: SerpApiMapsPayload = {
+const abundancePayload: SerpApiMapsPayload = {
   local_results: [
     {
       position: 1,
@@ -58,10 +58,10 @@ const sampleMapsPayload: SerpApiMapsPayload = {
     },
     {
       position: 5,
-      title: 'Service Area Cleaners',
+      title: 'Service Area Caterers',
       phone: '(303) 555-5555',
       website: 'service-area.example.com',
-      type: 'Cleaning service',
+      type: 'Restaurant',
     },
     {
       position: 6,
@@ -103,8 +103,123 @@ const sampleMapsPayload: SerpApiMapsPayload = {
   ],
 }
 
+const cleaningBuyerPayload: SerpApiMapsPayload = {
+  local_results: [
+    {
+      position: 1,
+      title: 'Bluebird Cafe',
+      phone: '(303) 555-0101',
+      type: 'Restaurant',
+    },
+    {
+      position: 2,
+      title: 'Jani-King Commercial Cleaning & Janitorial Service',
+      phone: '(303) 555-2222',
+      type: 'Janitorial service',
+    },
+    {
+      position: 3,
+      title: 'Stratus Clean',
+      phone: '(303) 555-3333',
+      type: 'Commercial cleaning service',
+    },
+  ],
+}
+
+const roofingBuyerPayload: SerpApiMapsPayload = {
+  local_results: [
+    {
+      position: 1,
+      title: 'Mile High Property Management',
+      phone: '(303) 555-1000',
+      type: 'Property management company',
+    },
+    {
+      position: 2,
+      title: 'Peak Roofing Co',
+      phone: '(303) 555-2000',
+      type: 'Roofing contractor',
+    },
+    {
+      position: 3,
+      title: 'Rocky Mountain Roofer',
+      phone: '(303) 555-3000',
+      type: 'Contractor',
+    },
+  ],
+}
+
+const dumpsterBuyerPayload: SerpApiMapsPayload = {
+  local_results: [
+    {
+      position: 1,
+      title: 'Tenant Build Group',
+      phone: '(214) 555-1000',
+      type: 'General contractor',
+    },
+    {
+      position: 2,
+      title: 'Roll Off Express',
+      phone: '(214) 555-2000',
+      type: 'Dumpster rental service',
+    },
+    {
+      position: 3,
+      title: 'Waste Away',
+      phone: '(214) 555-3000',
+      type: 'Waste management service',
+    },
+    {
+      position: 4,
+      title: 'Junk King',
+      phone: '(214) 555-4000',
+      type: 'Junk removal service',
+    },
+  ],
+}
+
+const cleaningSuppliesOverlapPayload: SerpApiMapsPayload = {
+  local_results: [
+    {
+      position: 1,
+      title: 'Sparkle Cleaning Co',
+      phone: '(512) 555-1000',
+      type: 'Cleaning service',
+    },
+    {
+      position: 2,
+      title: 'Janitorial Depot',
+      phone: '(512) 555-2000',
+      type: 'Janitorial supply store',
+    },
+    {
+      position: 3,
+      title: 'Cleaning Products Supplier',
+      phone: '(512) 555-3000',
+      type: 'Cleaning products supplier',
+    },
+  ],
+}
+
 function phoneKey(lead: SweepLead): string {
   return lead.phone.replace(/\D/g, '')
+}
+
+function normalizeFixture(input: {
+  payload: SerpApiMapsPayload
+  service: string
+  icp: string
+  market?: string
+  query?: string
+}) {
+  return normalizeSerpApiMapsResults({
+    payload: input.payload,
+    service: input.service,
+    icp: input.icp,
+    market: input.market ?? 'Denver, CO',
+    query: input.query ?? `${input.icp} ${input.market ?? 'Denver, CO'}`,
+    sourceUrl: 'https://serpapi.com/search?engine=google_maps',
+  })
 }
 
 async function main() {
@@ -146,6 +261,10 @@ async function main() {
   assert.equal(district.kind, 'state')
   assert.deepEqual(district.markets, ['Washington, DC'])
 
+  const unknown = interpretSweepMarket('Phoenix metro')
+  assert.equal(unknown.kind, 'city_metro')
+  assert.deepEqual(unknown.markets, ['Phoenix metro'])
+
   const national = interpretSweepMarket('nationwide')
   assert.equal(national.kind, 'nationwide')
   assert.equal(national.markets.length, 10)
@@ -159,9 +278,11 @@ async function main() {
   assert.deepEqual(queries, [
     'restaurants Denver, CO',
     'restaurants near Denver, CO',
-    'commercial cleaning for restaurants Denver, CO',
+    'restaurants in Denver, CO',
     'restaurants businesses Denver, CO',
   ])
+  assert(queries.every((query) => /restaurants/i.test(query)))
+  assert(queries.every((query) => !/commercial cleaning/i.test(query)))
 
   const planned = planSerpApiMapsCalls({
     service: 'dumpster rental',
@@ -172,12 +293,12 @@ async function main() {
   assert(planned.every((call) => call.engine === 'google_maps'))
   assert(planned.some((call) => call.market === 'New York, NY'))
   assert(planned.some((call) => call.market === 'Houston, TX'))
+  assert(planned.every((call) => !/dumpster rental/i.test(call.query)))
 
-  const normalized = normalizeSerpApiMapsResults({
-    payload: sampleMapsPayload,
-    market: 'Denver, CO',
-    query: 'restaurants Denver, CO',
-    sourceUrl: 'https://serpapi.com/search?engine=google_maps',
+  const normalized = normalizeFixture({
+    payload: abundancePayload,
+    service: 'commercial cleaning',
+    icp: 'restaurants',
   })
   assert.equal(normalized.length, 8)
   assert(normalized.every((lead) => lead.businessName && lead.phone))
@@ -189,7 +310,7 @@ async function main() {
   assert.equal(noSiteDiner.website, null)
   assert.equal(noSiteDiner.address, '444 Missing Site Rd, Denver, CO')
 
-  const serviceArea = normalized.find((lead) => lead.businessName === 'Service Area Cleaners')
+  const serviceArea = normalized.find((lead) => lead.businessName === 'Service Area Caterers')
   assert(serviceArea)
   assert.equal(serviceArea.website, 'https://service-area.example.com/')
   assert.equal(serviceArea.address, null)
@@ -213,6 +334,36 @@ async function main() {
   assert(primaryBluebird.website?.includes('bluebird.example.com'))
   assert.equal(primaryBluebird.address, '1200 Larimer Street, Denver, CO 80202')
 
+  const cleaningBuyers = normalizeFixture({
+    payload: cleaningBuyerPayload,
+    service: 'commercial cleaning',
+    icp: 'restaurants',
+  })
+  assert.deepEqual(cleaningBuyers.map((lead) => lead.businessName), ['Bluebird Cafe'])
+
+  const roofingBuyers = normalizeFixture({
+    payload: roofingBuyerPayload,
+    service: 'roofing',
+    icp: 'commercial property managers',
+  })
+  assert.deepEqual(roofingBuyers.map((lead) => lead.businessName), ['Mile High Property Management'])
+
+  const dumpsterBuyers = normalizeFixture({
+    payload: dumpsterBuyerPayload,
+    service: 'dumpster rental',
+    icp: 'tenant improvement contractors',
+    market: 'Dallas, TX',
+  })
+  assert.deepEqual(dumpsterBuyers.map((lead) => lead.businessName), ['Tenant Build Group'])
+
+  const cleaningCompanyBuyers = normalizeFixture({
+    payload: cleaningSuppliesOverlapPayload,
+    service: 'cleaning supplies',
+    icp: 'cleaning companies',
+    market: 'Austin, TX',
+  })
+  assert.deepEqual(cleaningCompanyBuyers.map((lead) => lead.businessName), ['Sparkle Cleaning Co'])
+
   const csv = exportSweepCsv(deduped)
   assert(csv.startsWith('business,website,phone,address,market,source,email,owner,hook'))
   assert(csv.includes('Bluebird Cafe'))
@@ -233,6 +384,7 @@ async function main() {
   assert.equal(missingKey.ok, false)
   assert.equal(missingKey.error?.code, 'missing_serpapi_key')
   assert.equal(missingKey.stats.queriesRun, 0)
+  assert(missingKey.calls.every((call) => !/commercial cleaning/i.test(call.query)))
 
   let liveProof: null | {
     ok: boolean
@@ -274,7 +426,7 @@ async function main() {
 
   console.log(JSON.stringify({
     ok: true,
-    mode: 'cp22a1_sweep_abundance_patch',
+    mode: 'cp22a2_sweep_buyer_query_tightening',
     datasetSource: US_SWEEP_CITY_DATASET.source,
     datasetRows: US_SWEEP_CITIES.length,
     datasetStateCoverage: datasetStates.size,
@@ -284,7 +436,11 @@ async function main() {
     ohioMarket: ohio,
     wyomingMarket: wyoming,
     dcMarket: district,
+    unknownMarket: unknown,
     nationwideMarkets: national.markets,
+    queryVariants: queries,
+    queryVariantsIcpFirst: true,
+    serviceTermRemovedFromQueries: true,
     plannedNationwideCalls: planned.length,
     callCeiling: CP22A_DEFAULT_MAX_SERPAPI_CALLS,
     normalizedRows: normalized.length,
@@ -297,6 +453,10 @@ async function main() {
     dedupedRows: deduped.length,
     richerDuplicateKept: Boolean(primaryBluebird?.website && primaryBluebird.address),
     differentPhoneRoutesRemainSeparate: bluebirds.length === 2,
+    cleaningVendorRowsDropped: true,
+    roofingSellerRowsDropped: true,
+    dumpsterSellerRowsDropped: true,
+    overlapFalsePositiveProtected: true,
     csvHeader: csv.split('\n')[0],
     jsonRows: parsed.length,
     missingSerpApiKeyHandled: true,
@@ -308,7 +468,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('CP22A.1 sweep smoke FAILED:')
+  console.error('CP22A.2 sweep smoke FAILED:')
   console.error(error)
   process.exit(1)
 })

@@ -13,6 +13,57 @@ const FIELD_SALAD_PATTERNS = [
   /estimated\s*cost/i,
 ]
 
+const SERVICE_FILLER_WORDS = new Set([
+  'commercial',
+  'residential',
+  'local',
+  'business',
+  'service',
+  'company',
+  'contractor',
+  'provider',
+  'for',
+  'and',
+  'the',
+  'rental',
+  'rent',
+  'control',
+])
+
+const SERVICE_SYNONYMS: Record<string, string[]> = {
+  cleaning: ['cleaning', 'cleaner', 'cleaners', 'janitorial', 'janitor', 'maid'],
+  janitorial: ['janitorial', 'janitor', 'cleaning'],
+  roof: ['roof', 'roofing', 'roofer', 'roof contractor', 'roofing contractor'],
+  roofing: ['roofing', 'roofer', 'roof contractor', 'roofing contractor'],
+  dumpster: ['dumpster', 'roll off', 'roll-off', 'waste management', 'junk removal', 'junk', 'debris'],
+  waste: ['waste', 'waste management', 'junk removal'],
+  junk: ['junk', 'junk removal', 'hauling'],
+  pest: ['pest', 'pest control', 'exterminator', 'exterminators'],
+  plumbing: ['plumbing', 'plumber', 'plumbers'],
+  electrical: ['electrical', 'electrician', 'electricians', 'electrical contractor'],
+  electrician: ['electrician', 'electrical contractor'],
+  landscaping: ['landscaping', 'landscaper', 'landscapers', 'lawn care', 'lawn service'],
+  lawn: ['lawn care', 'lawn service', 'landscaping'],
+  painting: ['painting', 'painter', 'painters'],
+  hvac: ['hvac', 'heating and air', 'air conditioning', 'heating contractor', 'air conditioning contractor'],
+  heating: ['heating and air', 'heating contractor', 'hvac'],
+  supply: ['supply', 'supplies', 'supplier', 'suppliers', 'products', 'product'],
+  supplier: ['supplier', 'suppliers', 'supply', 'products'],
+  product: ['product', 'products', 'supplier', 'supply'],
+}
+
+const AMBIGUOUS_NAME_TERMS = new Set([
+  'control',
+  'debris',
+  'product',
+  'products',
+  'roof',
+  'service',
+  'supply',
+  'supplies',
+  'waste',
+])
+
 function isString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
@@ -70,6 +121,97 @@ function nameKey(value: string): string {
     .trim()
 }
 
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function singularizeToken(value: string): string {
+  if (value.endsWith('ies') && value.length > 4) return `${value.slice(0, -3)}y`
+  if (/(ches|shes|sses|xes|zes)$/.test(value) && value.length > 4) return value.slice(0, -2)
+  if (value.endsWith('s') && !value.endsWith('ss') && value.length > 3) return value.slice(0, -1)
+  return value
+}
+
+function tokenizeMeaningful(value: string): string[] {
+  return normalizeText(value)
+    .split(' ')
+    .map(singularizeToken)
+    .filter((token) => token.length > 1 && !SERVICE_FILLER_WORDS.has(token))
+}
+
+function normalizeMatchText(value: string): string {
+  return normalizeText(value)
+    .split(' ')
+    .map(singularizeToken)
+    .join(' ')
+}
+
+function normalizedTerm(value: string): string {
+  return normalizeMatchText(value)
+}
+
+function hasTerm(text: string, term: string): boolean {
+  const normalized = normalizeMatchText(text)
+  const normalizedNeedle = normalizedTerm(term)
+  if (!normalized || !normalizedNeedle) return false
+  return new RegExp(`(^| )${normalizedNeedle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}( |$)`).test(normalized)
+}
+
+function sellerExclusionTerms(service: string, icp: string): Array<{
+  term: string
+  nameSafe: boolean
+}> {
+  const icpTokens = new Set(tokenizeMeaningful(icp))
+  const terms = new Map<string, { term: string; nameSafe: boolean }>()
+
+  for (const token of tokenizeMeaningful(service)) {
+    if (icpTokens.has(token)) continue
+    for (const term of [token, ...(SERVICE_SYNONYMS[token] ?? [])]) {
+      const normalized = normalizedTerm(term)
+      if (!normalized || SERVICE_FILLER_WORDS.has(normalized)) continue
+      const isPhrase = normalized.includes(' ')
+      const nameSafe = isPhrase || !AMBIGUOUS_NAME_TERMS.has(normalized)
+      const existing = terms.get(normalized)
+      terms.set(normalized, {
+        term: normalized,
+        nameSafe: existing?.nameSafe || nameSafe,
+      })
+    }
+  }
+
+  return [...terms.values()]
+}
+
+function cleanTypeList(value: unknown): string | null {
+  if (!Array.isArray(value)) return null
+  const types = value
+    .filter(isString)
+    .map((item) => clean(item))
+    .filter(isString)
+  return types.length > 0 ? types.join(', ') : null
+}
+
+function isSellerSideResult(input: {
+  service: string
+  icp: string
+  businessName: string
+  category: string | null
+}): boolean {
+  const terms = sellerExclusionTerms(input.service, input.icp)
+  if (terms.length === 0) return false
+
+  if (input.category && terms.some((term) => hasTerm(input.category!, term.term))) {
+    return true
+  }
+
+  return terms.some((term) => term.nameSafe && hasTerm(input.businessName, term.term))
+}
+
 function isMalformedBusinessName(value: string): boolean {
   if (value.length < 2) return true
   if (/https?:\/\//i.test(value)) return true
@@ -100,7 +242,16 @@ export function normalizeSerpApiMapsResults(input: NormalizeMapsInput): SweepLea
 
     const normalizedWebsite = website ? normalizeWebsite(website) : null
 
-    const category = clean(result.type)
+    const category = clean(result.type) ?? cleanTypeList(result.types)
+    if (isSellerSideResult({
+      service: input.service,
+      icp: input.icp,
+      businessName,
+      category,
+    })) {
+      continue
+    }
+
     const key = [
       nameKey(businessName),
       normalizedPhoneKey(normalizedPhone),
