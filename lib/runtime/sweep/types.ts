@@ -30,9 +30,9 @@ export type SerpApiMapsCallPlan = {
 export type SweepLead = {
   id: string
   businessName: string
-  website: string
+  website: string | null
   phone: string
-  address: string
+  address: string | null
   market: string
   source: 'Google Maps'
   sourceUrl: string

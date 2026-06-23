@@ -34,7 +34,7 @@ const EXAMPLES: Example[] = [
 
 const PROGRESS_LINES = [
   'Spreading query variants across the market',
-  'Pulling Maps records with phones and websites',
+  'Pulling Maps records with phone contact routes',
   'Merging duplicates into one clean lead list',
   'Preparing export rows',
 ]
@@ -89,16 +89,18 @@ function ResultRow({ lead }: { lead: SweepLead }) {
         )}
       </td>
       <td className="px-4 py-3 min-w-[180px]">
-        <a
-          href={lead.website}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-ok hover:text-ok/80 font-medium"
-        >
-          <Globe2 className="h-3.5 w-3.5" />
-          <span className="break-all">{displayUrl(lead.website)}</span>
-          <ExternalLink className="h-3 w-3 opacity-60" />
-        </a>
+        {lead.website && (
+          <a
+            href={lead.website}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-ok hover:text-ok/80 font-medium"
+          >
+            <Globe2 className="h-3.5 w-3.5" />
+            <span className="break-all">{displayUrl(lead.website)}</span>
+            <ExternalLink className="h-3 w-3 opacity-60" />
+          </a>
+        )}
       </td>
       <td className="px-4 py-3 min-w-[140px]">
         <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 text-text font-medium">
@@ -107,10 +109,12 @@ function ResultRow({ lead }: { lead: SweepLead }) {
         </a>
       </td>
       <td className="px-4 py-3 min-w-[260px]">
-        <div className="flex gap-1.5 text-text/75 leading-snug">
-          <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-text/38" />
-          <span>{lead.address}</span>
-        </div>
+        {lead.address && (
+          <div className="flex gap-1.5 text-text/75 leading-snug">
+            <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-text/38" />
+            <span>{lead.address}</span>
+          </div>
+        )}
         <div className="mt-1 text-[12px] text-text/38">{lead.market}</div>
       </td>
       <td className="px-4 py-3 min-w-[120px] text-text/65">{lead.source}</td>
@@ -253,7 +257,7 @@ export function SweepClient() {
                   Maps-first contact sweep
                 </div>
                 <h2 className="mt-3 font-outfit text-[28px] leading-tight">
-                  Find businesses with phones, websites, and addresses.
+                  Find businesses with phone contact routes and richer Maps details.
                 </h2>
                 <p className="mt-2 max-w-[720px] text-[14px] leading-relaxed text-text/58">
                   Fetchi fans out deterministic Maps searches across city, state, or national markets, then merges overlapping listings into one exportable lead list.
@@ -330,7 +334,7 @@ export function SweepClient() {
               </div>
               <h3 className="mt-4 font-outfit text-[24px]">Run a sweep to fill the list.</h3>
               <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-relaxed text-text/50">
-                Results appear as a single table focused on business, website, phone, address, market, and source.
+                Results appear as a single table focused on business, phone, website, address, market, and source.
               </p>
             </div>
           ) : (
