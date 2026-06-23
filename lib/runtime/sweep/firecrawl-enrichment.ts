@@ -237,7 +237,7 @@ async function scrapeWebsite(input: {
       body: JSON.stringify({
         url: input.url,
         formats: ['markdown'],
-        onlyMainContent: true,
+        onlyMainContent: false,
         timeout: input.timeoutMs,
       }),
       signal: controller.signal,

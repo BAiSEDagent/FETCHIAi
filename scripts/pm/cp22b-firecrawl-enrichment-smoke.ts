@@ -19,6 +19,11 @@ import {
   type SweepLead,
 } from '@/lib/runtime/sweep'
 
+type MockFirecrawlRequest = {
+  url?: string
+  onlyMainContent?: unknown
+}
+
 function lead(input: Partial<SweepLead> & Pick<SweepLead, 'id' | 'businessName' | 'phone'>): SweepLead {
   return {
     website: null,
@@ -45,8 +50,10 @@ function jsonResponse(payload: unknown, status = 200): Response {
 
 async function main() {
   const requestedUrls: string[] = []
+  const firecrawlRequestBodies: MockFirecrawlRequest[] = []
   const mockFetch: typeof fetch = async (_url, init) => {
-    const body = JSON.parse(String(init?.body ?? '{}')) as { url?: string }
+    const body = JSON.parse(String(init?.body ?? '{}')) as MockFirecrawlRequest
+    firecrawlRequestBodies.push(body)
     requestedUrls.push(body.url ?? '')
 
     if (body.url === 'https://fail.example.com/') {
@@ -172,6 +179,7 @@ async function main() {
   assert(enriched.stats.hooksFound >= 1)
   assert(!requestedUrls.includes(''))
   assert(!requestedUrls.some((url) => url === inputLeads[2].website))
+  assert(firecrawlRequestBodies.every((body) => body.onlyMainContent !== true))
 
   const alpha = enriched.leads.find((item) => item.id === 'alpha')
   assert(alpha)
@@ -292,6 +300,7 @@ async function main() {
   const csvHeader = csv.split('\n')[0]
   assert(csvHeader.includes('latitude'))
   assert(csvHeader.includes('longitude'))
+  assert.equal(csvHeader, 'business,website,phone,address,market,source,latitude,longitude,email,owner,hook')
   assert(csv.includes('32.7767'))
   assert(csv.includes('-96.797'))
 
@@ -351,6 +360,8 @@ async function main() {
     coordinatesCaptured: coordinateLeads[0].latitude === 32.7767 && coordinateLeads[0].longitude === -96.797,
     invalidCoordinatesRemainNull: coordinateLeads[1].latitude === null && coordinateLeads[1].longitude === null,
     exportIncludesCoordinates: csvHeader.includes('latitude') && csvHeader.includes('longitude'),
+    exportOrderFixed: csvHeader === 'business,website,phone,address,market,source,latitude,longitude,email,owner,hook',
+    onlyMainContentNotForcedTrue: firecrawlRequestBodies.every((body) => body.onlyMainContent !== true),
     firecrawlCallsMocked: true,
     liveFirecrawlProof,
     serpApiCalls: 0,

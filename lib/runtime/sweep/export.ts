@@ -7,11 +7,11 @@ const EXPORT_FIELDS = [
   'address',
   'market',
   'source',
+  'latitude',
+  'longitude',
   'email',
   'owner',
   'hook',
-  'latitude',
-  'longitude',
 ] as const
 
 function csvCell(value: string | number | null): string {
@@ -28,11 +28,11 @@ export function exportSweepCsv(leads: readonly SweepLead[]): string {
     lead.address,
     lead.market,
     lead.source,
+    lead.latitude,
+    lead.longitude,
     lead.email,
     lead.owner,
     lead.hook,
-    lead.latitude,
-    lead.longitude,
   ].map(csvCell).join(','))
 
   return [EXPORT_FIELDS.join(','), ...rows].join('\n')
@@ -47,11 +47,11 @@ export function exportSweepJson(leads: readonly SweepLead[]): string {
       address: lead.address,
       market: lead.market,
       source: lead.source,
+      latitude: lead.latitude,
+      longitude: lead.longitude,
       email: lead.email,
       owner: lead.owner,
       hook: lead.hook,
-      latitude: lead.latitude,
-      longitude: lead.longitude,
     })),
     null,
     2,
