@@ -41,10 +41,6 @@ function normalizedPhoneKey(value: string): string {
   return value.replace(/\D/g, '')
 }
 
-function normalizeDomain(hostname: string): string {
-  return hostname.toLowerCase().replace(/^www\./, '')
-}
-
 function normalizeWebsite(value: string): string | null {
   const candidate = value.trim()
   const recoverable = /^[a-z0-9.-]+\.[a-z]{2,}(?:\/.*)?$/i.test(candidate)
@@ -64,31 +60,12 @@ function normalizeWebsite(value: string): string | null {
   }
 }
 
-function domainKey(value: string): string {
-  try {
-    return normalizeDomain(new URL(value).hostname)
-  } catch {
-    return value.toLowerCase()
-  }
-}
-
 function nameKey(value: string): string {
   return value
     .toLowerCase()
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\b(llc|inc|co|company|corp|corporation)\b/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function addressKey(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/\bstreet\b/g, 'st')
-    .replace(/\bavenue\b/g, 'ave')
-    .replace(/\broad\b/g, 'rd')
-    .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 }
@@ -115,19 +92,18 @@ export function normalizeSerpApiMapsResults(input: NormalizeMapsInput): SweepLea
     const website = clean(result.website)
     const address = clean(result.address)
 
-    if (!businessName || !phone || !website || !address) continue
+    if (!businessName || !phone) continue
     if (isMalformedBusinessName(businessName)) continue
 
     const normalizedPhone = normalizePhone(phone)
-    const normalizedWebsite = normalizeWebsite(website)
-    if (!normalizedPhone || !normalizedWebsite) continue
+    if (!normalizedPhone) continue
+
+    const normalizedWebsite = website ? normalizeWebsite(website) : null
 
     const category = clean(result.type)
     const key = [
       nameKey(businessName),
-      domainKey(normalizedWebsite),
       normalizedPhoneKey(normalizedPhone),
-      addressKey(address),
     ].join('|')
 
     leads.push({
@@ -149,21 +125,27 @@ export function normalizeSerpApiMapsResults(input: NormalizeMapsInput): SweepLea
   return leads
 }
 
+function richnessScore(lead: SweepLead): number {
+  return [
+    lead.website ? 4 : 0,
+    lead.address ? 2 : 0,
+    lead.category || lead.hook ? 1 : 0,
+  ].reduce((sum, value) => sum + value, 0)
+}
+
 export function dedupeSweepLeads(leads: readonly SweepLead[]): SweepLead[] {
-  const seen = new Set<string>()
-  const deduped: SweepLead[] = []
+  const byContactRoute = new Map<string, SweepLead>()
 
   for (const lead of leads) {
     const key = [
       nameKey(lead.businessName),
-      domainKey(lead.website),
       normalizedPhoneKey(lead.phone),
-      addressKey(lead.address),
     ].join('|')
-    if (seen.has(key)) continue
-    seen.add(key)
-    deduped.push(lead)
+    const existing = byContactRoute.get(key)
+    if (!existing || richnessScore(lead) > richnessScore(existing)) {
+      byContactRoute.set(key, lead)
+    }
   }
 
-  return deduped
+  return [...byContactRoute.values()]
 }
