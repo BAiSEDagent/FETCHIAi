@@ -30,6 +30,33 @@ type ScrapeOutcome = {
   hook: string | null
 }
 
+const FREE_MAIL_DOMAINS = new Set([
+  'gmail.com',
+  'googlemail.com',
+  'yahoo.com',
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'msn.com',
+  'aol.com',
+  'icloud.com',
+  'me.com',
+  'mac.com',
+  'proton.me',
+  'protonmail.com',
+  'ymail.com',
+])
+
+const COMMON_COUNTRY_CODE_SECOND_LEVEL_DOMAINS = new Set([
+  'ac',
+  'co',
+  'com',
+  'edu',
+  'gov',
+  'net',
+  'org',
+])
+
 function clampInteger(value: number | undefined, fallback: number, min: number, max: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
   return Math.min(max, Math.max(min, Math.floor(value)))
@@ -83,6 +110,62 @@ function cleanText(value: string): string {
     .trim()
 }
 
+function normalizedHostname(value: string): string | null {
+  const hostname = value.toLowerCase().replace(/\.+$/, '').replace(/^www\./, '')
+  const labels = hostname.split('.').filter(Boolean)
+  if (labels.length < 2) return null
+  if (labels.some((label) => !/^[a-z0-9-]+$/.test(label) || label.startsWith('-') || label.endsWith('-'))) {
+    return null
+  }
+  return labels.join('.')
+}
+
+function rootishDomainFromHostname(value: string): string | null {
+  const hostname = normalizedHostname(value)
+  if (!hostname) return null
+
+  const labels = hostname.split('.')
+  const suffix = labels[labels.length - 1]
+  const secondLevel = labels[labels.length - 2]
+
+  if (
+    labels.length >= 3 &&
+    suffix.length === 2 &&
+    COMMON_COUNTRY_CODE_SECOND_LEVEL_DOMAINS.has(secondLevel)
+  ) {
+    return labels.slice(-3).join('.')
+  }
+
+  return labels.slice(-2).join('.')
+}
+
+function rootishDomainFromUrl(value: string): string | null {
+  try {
+    return rootishDomainFromHostname(new URL(value).hostname)
+  } catch {
+    return null
+  }
+}
+
+function emailHostname(value: string): string | null {
+  const parts = value.split('@')
+  if (parts.length !== 2) return null
+  return normalizedHostname(parts[1])
+}
+
+function isFreeMailEmail(value: string): boolean {
+  const hostname = emailHostname(value)
+  return hostname ? FREE_MAIL_DOMAINS.has(hostname) : false
+}
+
+function isSameDomainEmail(value: string, websiteUrl: string): boolean {
+  const websiteDomain = rootishDomainFromUrl(websiteUrl)
+  const hostname = emailHostname(value)
+  const emailDomain = hostname ? rootishDomainFromHostname(hostname) : null
+
+  return Boolean(websiteDomain && emailDomain && websiteDomain === emailDomain)
+}
+
 function sanitizeEmail(value: string): string | null {
   const cleaned = value
     .trim()
@@ -105,18 +188,24 @@ function sanitizeEmail(value: string): string | null {
   return cleaned
 }
 
-function extractEmail(markdown: string, metadata: FirecrawlMetadata): string | null {
+function extractEmail(markdown: string, metadata: FirecrawlMetadata, websiteUrl: string): string | null {
   const text = [
     markdown,
     metadataString(metadata, ['description', 'ogDescription', 'twitterDescription']) ?? '',
   ].join('\n')
 
   const matches = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? []
+  const emails = new Set<string>()
+
   for (const match of matches) {
     const email = sanitizeEmail(match)
-    if (email) return email
+    if (email) emails.add(email)
   }
-  return null
+
+  const candidates = [...emails]
+  return candidates.find((email) => isSameDomainEmail(email, websiteUrl))
+    ?? candidates.find(isFreeMailEmail)
+    ?? null
 }
 
 function cleanOwnerCandidate(value: string): string | null {
@@ -194,7 +283,7 @@ function extractHook(markdown: string, metadata: FirecrawlMetadata): string | nu
   return null
 }
 
-function parseScrapePayload(payload: FirecrawlScrapePayload): ScrapeOutcome {
+function parseScrapePayload(payload: FirecrawlScrapePayload, websiteUrl: string): ScrapeOutcome {
   if (payload.success === false) {
     return { ok: false, email: null, owner: null, hook: null }
   }
@@ -211,7 +300,7 @@ function parseScrapePayload(payload: FirecrawlScrapePayload): ScrapeOutcome {
 
   return {
     ok: true,
-    email: extractEmail(markdown, metadata),
+    email: extractEmail(markdown, metadata, websiteUrl),
     owner: extractOwner(markdown),
     hook: extractHook(markdown, metadata),
   }
@@ -248,7 +337,7 @@ async function scrapeWebsite(input: {
     }
 
     const payload = await response.json() as FirecrawlScrapePayload
-    return parseScrapePayload(payload)
+    return parseScrapePayload(payload, input.url)
   } catch {
     return { ok: false, email: null, owner: null, hook: null }
   } finally {
