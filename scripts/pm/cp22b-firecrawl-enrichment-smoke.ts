@@ -60,14 +60,14 @@ async function main() {
       return jsonResponse({ success: false, error: 'blocked' }, 502)
     }
 
-    if (body.url === 'https://alpha.example.com/') {
+    if (body.url === 'https://alpha-smoke.invalid/') {
       return jsonResponse({
         success: true,
         data: {
           markdown: [
             '# Alpha Bistro',
             'Owner: Maria Lopez',
-            'Email us at hello@alphabistro.com for catering and private dining.',
+            'Email us at hello@alpha-smoke.invalid for catering and private dining.',
           ].join('\n'),
           metadata: {
             title: 'Alpha Bistro',
@@ -120,7 +120,7 @@ async function main() {
     lead({
       id: 'alpha',
       businessName: 'Alpha Bistro',
-      website: 'https://alpha.example.com/',
+      website: 'https://alpha-smoke.invalid/',
       phone: '(303) 555-0101',
       address: '100 Main St, Denver, CO',
       latitude: 39.7392,
@@ -183,7 +183,7 @@ async function main() {
 
   const alpha = enriched.leads.find((item) => item.id === 'alpha')
   assert(alpha)
-  assert.equal(alpha.email, 'hello@alphabistro.com')
+  assert.equal(alpha.email, 'hello@alpha-smoke.invalid')
   assert.equal(alpha.owner, 'Maria Lopez')
   assert(alpha.hook && alpha.hook.length <= 140)
   assert.equal(alpha.businessName, 'Alpha Bistro')
@@ -214,6 +214,137 @@ async function main() {
   const weakOwner = enriched.leads.find((item) => item.id === 'weak-owner')
   assert(weakOwner)
   assert.equal(weakOwner.owner, null)
+
+  const domainHygieneLeads = [
+    lead({
+      id: 'same-domain',
+      businessName: 'Alpha Restaurant',
+      website: 'https://alpha.example-restaurant.com/',
+      phone: '(303) 555-0201',
+    }),
+    lead({
+      id: 'free-mail',
+      businessName: 'Small Cafe',
+      website: 'https://small-cafe.example/',
+      phone: '(303) 555-0202',
+    }),
+    lead({
+      id: 'third-party-platform',
+      businessName: 'Actual Restaurant',
+      website: 'https://actualrestaurant.com/platform',
+      phone: '(303) 555-0203',
+    }),
+    lead({
+      id: 'unrelated-institution',
+      businessName: 'Actual Restaurant Annex',
+      website: 'https://actualrestaurant.com/institution',
+      phone: '(303) 555-0204',
+    }),
+    lead({
+      id: 'priority',
+      businessName: 'Priority Bistro',
+      website: 'https://prioritybistro.com/',
+      phone: '(303) 555-0205',
+    }),
+    lead({
+      id: 'free-mail-fallback',
+      businessName: 'Fallback Bistro',
+      website: 'https://fallbackbistro.com/',
+      phone: '(303) 555-0206',
+    }),
+  ]
+
+  const domainHygiene = await enrichSweepLeadsWithFirecrawl({
+    leads: domainHygieneLeads,
+    apiKey: 'test-firecrawl-key',
+    maxScrapes: 10,
+    fetchImpl: async (_url, init) => {
+      const body = JSON.parse(String(init?.body ?? '{}')) as { url?: string }
+
+      if (body.url === 'https://alpha.example-restaurant.com/') {
+        return jsonResponse({
+          success: true,
+          data: { markdown: 'Reach us at hello@example-restaurant.com.', metadata: {} },
+        })
+      }
+
+      if (body.url === 'https://small-cafe.example/') {
+        return jsonResponse({
+          success: true,
+          data: { markdown: 'Contact smallcafe@gmail.com for group orders.', metadata: {} },
+        })
+      }
+
+      if (body.url === 'https://actualrestaurant.com/platform') {
+        return jsonResponse({
+          success: true,
+          data: { markdown: 'Powered by Bento. Support: support@getbento.com.', metadata: {} },
+        })
+      }
+
+      if (body.url === 'https://actualrestaurant.com/institution') {
+        return jsonResponse({
+          success: true,
+          data: { markdown: 'Bio credit: jennifer-brown-2@uiowa.edu.', metadata: {} },
+        })
+      }
+
+      if (body.url === 'https://prioritybistro.com/') {
+        return jsonResponse({
+          success: true,
+          data: {
+            markdown: [
+              'Platform help: support@getbento.com.',
+              'General mailbox: prioritybistro@gmail.com.',
+              'Restaurant team: hello@prioritybistro.com.',
+            ].join('\n'),
+            metadata: {},
+          },
+        })
+      }
+
+      if (body.url === 'https://fallbackbistro.com/') {
+        return jsonResponse({
+          success: true,
+          data: {
+            markdown: [
+              'Platform help: support@getbento.com.',
+              'General mailbox: fallbackbistro@gmail.com.',
+            ].join('\n'),
+            metadata: {},
+          },
+        })
+      }
+
+      return jsonResponse({ success: true, data: { markdown: '', metadata: {} } })
+    },
+  })
+  assert.equal(domainHygiene.ok, true)
+  assert.equal(domainHygiene.leads.length, domainHygieneLeads.length)
+
+  const sameDomain = domainHygiene.leads.find((item) => item.id === 'same-domain')
+  assert(sameDomain)
+  assert.equal(sameDomain.email, 'hello@example-restaurant.com')
+
+  const freeMail = domainHygiene.leads.find((item) => item.id === 'free-mail')
+  assert(freeMail)
+  assert.equal(freeMail.email, 'smallcafe@gmail.com')
+
+  const thirdPartyPlatform = domainHygiene.leads.find((item) => item.id === 'third-party-platform')
+  assert(thirdPartyPlatform)
+  assert.equal(thirdPartyPlatform.email, null)
+
+  const unrelatedInstitution = domainHygiene.leads.find((item) => item.id === 'unrelated-institution')
+  assert(unrelatedInstitution)
+  assert.equal(unrelatedInstitution.email, null)
+
+  const priority = domainHygiene.leads.find((item) => item.id === 'priority')
+  assert(priority)
+  assert.equal(priority.email, 'hello@prioritybistro.com')
+
+  const freeMailFallback = domainHygiene.leads.find((item) => item.id === 'free-mail-fallback')
+  assert(freeMailFallback)
+  assert.equal(freeMailFallback.email, 'fallbackbistro@gmail.com')
 
   const budgetCalls: string[] = []
   const budgeted = await enrichSweepLeadsWithFirecrawl({
@@ -362,6 +493,13 @@ async function main() {
     exportIncludesCoordinates: csvHeader.includes('latitude') && csvHeader.includes('longitude'),
     exportOrderFixed: csvHeader === 'business,website,phone,address,market,source,latitude,longitude,email,owner,hook',
     onlyMainContentNotForcedTrue: firecrawlRequestBodies.every((body) => body.onlyMainContent !== true),
+    sameDomainEmailAccepted: sameDomain.email === 'hello@example-restaurant.com',
+    freeMailEmailAccepted: freeMail.email === 'smallcafe@gmail.com',
+    thirdPartyPlatformEmailRejected: thirdPartyPlatform.email === null,
+    unrelatedInstitutionEmailRejected: unrelatedInstitution.email === null,
+    sameDomainPreferredOverFreeMail: priority.email === 'hello@prioritybistro.com',
+    freeMailFallbackAccepted: freeMailFallback.email === 'fallbackbistro@gmail.com',
+    otherDomainEmailsRejected: thirdPartyPlatform.email === null && unrelatedInstitution.email === null,
     firecrawlCallsMocked: true,
     liveFirecrawlProof,
     serpApiCalls: 0,
