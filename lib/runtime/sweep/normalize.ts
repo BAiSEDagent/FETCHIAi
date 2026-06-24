@@ -121,6 +121,26 @@ function nameKey(value: string): string {
     .trim()
 }
 
+export type SweepLeadDedupeInput = {
+  businessName?: string | null
+  phone?: string | null
+}
+
+export function buildSweepLeadDedupeKey(input: SweepLeadDedupeInput): string | null {
+  const businessName = clean(input.businessName)
+  const phone = clean(input.phone)
+  if (!businessName || !phone) return null
+
+  const normalizedPhoneValue = normalizePhone(phone)
+  if (!normalizedPhoneValue) return null
+
+  const normalizedName = nameKey(businessName)
+  const normalizedPhone = normalizedPhoneKey(normalizedPhoneValue)
+  if (!normalizedName || !normalizedPhone) return null
+
+  return [normalizedName, normalizedPhone].join('|')
+}
+
 function normalizeText(value: string): string {
   return value
     .toLowerCase()
@@ -273,10 +293,8 @@ export function normalizeSerpApiMapsResults(input: NormalizeMapsInput): SweepLea
       continue
     }
 
-    const key = [
-      nameKey(businessName),
-      normalizedPhoneKey(normalizedPhone),
-    ].join('|')
+    const key = buildSweepLeadDedupeKey({ businessName, phone: normalizedPhone })
+    if (!key) continue
 
     leads.push({
       id: stableId(key),
@@ -311,10 +329,8 @@ export function dedupeSweepLeads(leads: readonly SweepLead[]): SweepLead[] {
   const byContactRoute = new Map<string, SweepLead>()
 
   for (const lead of leads) {
-    const key = [
-      nameKey(lead.businessName),
-      normalizedPhoneKey(lead.phone),
-    ].join('|')
+    const key = buildSweepLeadDedupeKey(lead)
+    if (!key) continue
     const existing = byContactRoute.get(key)
     if (!existing || richnessScore(lead) > richnessScore(existing)) {
       byContactRoute.set(key, lead)

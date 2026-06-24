@@ -11,6 +11,7 @@ import {
   Mail,
   MapPin,
   Phone,
+  Save,
   Search,
   Sparkles,
   Table2,
@@ -21,7 +22,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { exportSweepCsv, exportSweepJson } from '@/lib/runtime/sweep/export'
 import type { SweepEnrichmentStats, SweepLead, SweepRunResult } from '@/lib/runtime/sweep'
-import { enrichSweep, runSweep } from './actions'
+import type { SaveSweepLeadsResult } from '@/lib/runtime/sweep/saved-leads'
+import { enrichSweep, runSweep, saveSweepLeads } from './actions'
 
 type Example = {
   service: string
@@ -82,9 +84,26 @@ function StatTile({
   )
 }
 
-function ResultRow({ lead }: { lead: SweepLead }) {
+function ResultRow({
+  lead,
+  selected,
+  onToggle,
+}: {
+  lead: SweepLead
+  selected: boolean
+  onToggle: () => void
+}) {
   return (
     <tr className="border-t border-text/8 align-top">
+      <td className="px-4 py-3 w-[52px]">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggle}
+          aria-label={`Select ${lead.businessName}`}
+          className="h-4 w-4 rounded border-text/20 bg-bg accent-ok"
+        />
+      </td>
       <td className="px-4 py-3 min-w-[210px]">
         <div className="font-semibold text-text leading-snug">{lead.businessName}</div>
         {lead.category && (
@@ -150,10 +169,13 @@ export function SweepClient() {
   const [market, setMarket] = React.useState('')
   const [pending, startTransition] = React.useTransition()
   const [enrichmentPending, startEnrichmentTransition] = React.useTransition()
+  const [savePending, startSaveTransition] = React.useTransition()
   const [result, setResult] = React.useState<SweepRunResult | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [enrichmentMessage, setEnrichmentMessage] = React.useState<string | null>(null)
   const [enrichmentStats, setEnrichmentStats] = React.useState<SweepEnrichmentStats | null>(null)
+  const [saveMessage, setSaveMessage] = React.useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(() => new Set())
   const [progressIndex, setProgressIndex] = React.useState(0)
 
   React.useEffect(() => {
@@ -166,6 +188,17 @@ export function SweepClient() {
 
   const leads = result?.leads ?? []
   const hasResults = leads.length > 0
+  const selectedCount = selectedIds.size
+  const allSelected = hasResults && selectedCount === leads.length
+
+  React.useEffect(() => {
+    setSelectedIds((current) => {
+      if (current.size === 0) return current
+      const validIds = new Set(leads.map((lead) => lead.id))
+      const next = new Set([...current].filter((id) => validIds.has(id)))
+      return next.size === current.size ? current : next
+    })
+  }, [leads])
 
   function applyExample(example: Example) {
     setService(example.service)
@@ -174,6 +207,7 @@ export function SweepClient() {
     setError(null)
     setEnrichmentMessage(null)
     setEnrichmentStats(null)
+    setSaveMessage(null)
   }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -181,6 +215,8 @@ export function SweepClient() {
     setError(null)
     setEnrichmentMessage(null)
     setEnrichmentStats(null)
+    setSaveMessage(null)
+    setSelectedIds(new Set())
     setResult(null)
     startTransition(async () => {
       const response = await runSweep({ service, icp, market })
@@ -195,6 +231,7 @@ export function SweepClient() {
     if (!hasResults || enrichmentPending) return
     setError(null)
     setEnrichmentMessage(null)
+    setSaveMessage(null)
     startEnrichmentTransition(async () => {
       const response = await enrichSweep({ leads, maxScrapes: 50 })
       setEnrichmentStats(response.stats)
@@ -218,6 +255,75 @@ export function SweepClient() {
         `Checked ${response.stats.attemptedScrapes} websites and found ${response.stats.emailsFound} emails.`,
       )
     })
+  }
+
+  function toggleLeadSelection(leadId: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (next.has(leadId)) {
+        next.delete(leadId)
+      } else {
+        next.add(leadId)
+      }
+      return next
+    })
+  }
+
+  function toggleAllSelection() {
+    setSelectedIds((current) => {
+      if (hasResults && current.size === leads.length) return new Set()
+      return new Set(leads.map((lead) => lead.id))
+    })
+  }
+
+  function saveResultMessage(response: SaveSweepLeadsResult): string {
+    const parts = [
+      `Saved ${response.savedNew} lead${response.savedNew === 1 ? '' : 's'}`,
+    ]
+    if (response.alreadySaved > 0) {
+      parts.push(`${response.alreadySaved} already in your list`)
+    }
+    if (response.dismissedSkipped > 0) {
+      parts.push(`${response.dismissedSkipped} dismissed/known`)
+    }
+    if (response.skippedInvalid > 0) {
+      parts.push(`${response.skippedInvalid} skipped`)
+    }
+    return parts.join(' · ')
+  }
+
+  function sourceSweepRef(): string {
+    return [
+      service.trim(),
+      icp.trim(),
+      market.trim(),
+    ].filter(Boolean).join(' | ')
+  }
+
+  function saveLeads(leadsToSave: SweepLead[]) {
+    if (leadsToSave.length === 0 || savePending) return
+    setError(null)
+    setSaveMessage(null)
+    startSaveTransition(async () => {
+      const response = await saveSweepLeads({
+        leads: leadsToSave,
+        sourceSweepRef: sourceSweepRef() || null,
+      })
+      if (!response.ok) {
+        setSaveMessage(response.error ?? 'No valid leads were saved.')
+        return
+      }
+      setSaveMessage(saveResultMessage(response))
+    })
+  }
+
+  function saveSelected() {
+    const selected = leads.filter((lead) => selectedIds.has(lead.id))
+    saveLeads(selected)
+  }
+
+  function saveAll() {
+    saveLeads(leads)
   }
 
   function exportCsv() {
@@ -329,6 +435,26 @@ export function SweepClient() {
                   {enrichmentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   Find emails
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!hasResults || selectedCount === 0 || savePending}
+                  onClick={saveSelected}
+                  className="gap-2"
+                >
+                  {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save selected
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!hasResults || savePending}
+                  onClick={saveAll}
+                  className="gap-2"
+                >
+                  {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save all
+                </Button>
                 <Button type="button" variant="outline" disabled={!hasResults} onClick={exportCsv} className="gap-2">
                   <ArrowDownToLine className="h-4 w-4" />
                   CSV
@@ -342,9 +468,13 @@ export function SweepClient() {
 
             {hasResults && (
               <div className="mt-4 rounded-lg border border-text/8 bg-bg px-4 py-3 text-[13px] text-text/55">
-                {enrichmentPending
-                  ? 'Checking websites for emails and context'
-                  : enrichmentMessage ?? 'Enrich up to 50 websites'}
+                {savePending
+                  ? 'Saving leads to your pipeline'
+                  : saveMessage
+                    ? saveMessage
+                    : enrichmentPending
+                      ? 'Checking websites for emails and context'
+                      : enrichmentMessage ?? 'Enrich up to 50 websites'}
                 {enrichmentStats && !enrichmentPending && (
                   <span className="ml-2 text-text/38">
                     {enrichmentStats.successfulScrapes} checked
@@ -420,6 +550,15 @@ export function SweepClient() {
               <table className="w-full border-collapse text-left text-[13.5px]">
                 <thead className="sticky top-0 z-10 bg-raised text-[11px] uppercase tracking-[0.9px] text-text/42">
                   <tr>
+                    <th className="px-4 py-3 font-bold w-[52px]">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleAllSelection}
+                        aria-label="Select all sweep leads"
+                        className="h-4 w-4 rounded border-text/20 bg-bg accent-ok"
+                      />
+                    </th>
                     <th className="px-4 py-3 font-bold">Business</th>
                     <th className="px-4 py-3 font-bold">Website</th>
                     <th className="px-4 py-3 font-bold">Phone</th>
@@ -432,7 +571,12 @@ export function SweepClient() {
                 </thead>
                 <tbody>
                   {leads.map((lead) => (
-                    <ResultRow key={lead.id} lead={lead} />
+                    <ResultRow
+                      key={lead.id}
+                      lead={lead}
+                      selected={selectedIds.has(lead.id)}
+                      onToggle={() => toggleLeadSelection(lead.id)}
+                    />
                   ))}
                 </tbody>
               </table>
