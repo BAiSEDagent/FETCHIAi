@@ -1,6 +1,7 @@
 'use server'
 
 import { auth } from '@clerk/nextjs/server'
+import { revalidatePath } from 'next/cache'
 import {
   CP22B_DEFAULT_MAX_FIRECRAWL_SCRAPES,
   CP22B_HARD_MAX_FIRECRAWL_SCRAPES,
@@ -11,6 +12,16 @@ import {
   type SweepLead,
   type SweepRunResult,
 } from '@/lib/runtime/sweep'
+import {
+  saveSweepLeadsForWorkspace,
+  updateSavedLeadNoteForWorkspace,
+  updateSavedLeadStatusForWorkspace,
+  type SaveSweepLeadsInput,
+  type SaveSweepLeadsResult,
+  type UpdateSavedLeadNoteInput,
+  type UpdateSavedLeadStatusInput,
+} from '@/lib/runtime/sweep/saved-leads'
+import { requireWorkspaceContext } from '@/lib/workspace'
 
 type RunSweepInput = {
   service: string
@@ -94,4 +105,38 @@ export async function enrichSweep(input: EnrichSweepInput): Promise<SweepEnrichm
     maxScrapes: input.maxScrapes,
     apiKey: process.env.FIRECRAWL_API_KEY || process.env.FIRECRAWL_KEY,
   })
+}
+
+export async function saveSweepLeads(input: SaveSweepLeadsInput): Promise<SaveSweepLeadsResult> {
+  const ctx = await requireWorkspaceContext()
+  const result = await saveSweepLeadsForWorkspace(input, {
+    workspaceId: ctx.workspaceId,
+    userId: ctx.userId,
+  })
+  revalidatePath('/app/leads')
+  return result
+}
+
+export async function updateSavedLeadStatus(
+  input: UpdateSavedLeadStatusInput,
+): Promise<{ ok: boolean; updated: number; error?: string }> {
+  const ctx = await requireWorkspaceContext()
+  const result = await updateSavedLeadStatusForWorkspace(input, {
+    workspaceId: ctx.workspaceId,
+    userId: ctx.userId,
+  })
+  revalidatePath('/app/leads')
+  return result
+}
+
+export async function updateSavedLeadNote(
+  input: UpdateSavedLeadNoteInput,
+): Promise<{ ok: boolean; updated: number; error?: string }> {
+  const ctx = await requireWorkspaceContext()
+  const result = await updateSavedLeadNoteForWorkspace(input, {
+    workspaceId: ctx.workspaceId,
+    userId: ctx.userId,
+  })
+  revalidatePath('/app/leads')
+  return result
 }

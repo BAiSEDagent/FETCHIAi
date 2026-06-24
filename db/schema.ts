@@ -5,6 +5,7 @@
 
 import {
   pgTable,
+  pgEnum,
   text,
   integer,
   boolean,
@@ -13,6 +14,7 @@ import {
   jsonb,
   index,
   uniqueIndex,
+  doublePrecision,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -198,6 +200,58 @@ export const opportunities = pgTable('opportunities', {
   workspaceStatusIdx:    index('opportunities_workspace_status_idx')
                            .on(table.workspaceId, table.status),
   scoreIdx:              index('opportunities_score_idx').on(table.score),
+}))
+
+// ─────────────────────────────────────────────
+// SAVED LEADS
+// Workspace-private Sweep leads and dismissed-lead memory.
+// Lifecycle status is user-set, not an opportunity score or signal label.
+// ─────────────────────────────────────────────
+export const savedLeadLifecycleStatus = pgEnum('saved_lead_lifecycle_status', [
+  'saved',
+  'contacted',
+  'won',
+  'lost',
+  'dismissed',
+])
+
+export const savedLeads = pgTable('saved_leads', {
+  id:              uuid('id').defaultRandom().primaryKey(),
+  workspaceId:     text('workspace_id').notNull()
+                     .references(() => workspaceSettings.workspaceId),
+  userId:          text('user_id').notNull(),
+  dedupeKey:       text('dedupe_key').notNull(),
+  businessName:    text('business_name').notNull(),
+  website:         text('website'),
+  phone:           text('phone').notNull(),
+  address:         text('address'),
+  market:          text('market'),
+  source:          text('source').default('Google Maps').notNull(),
+  sourceUrl:       text('source_url'),
+  category:        text('category'),
+  email:           text('email'),
+  owner:           text('owner'),
+  hook:            text('hook'),
+  latitude:        doublePrecision('latitude'),
+  longitude:       doublePrecision('longitude'),
+  lifecycleStatus: savedLeadLifecycleStatus('lifecycle_status').default('saved').notNull(),
+  note:            text('note'),
+  sourceSweepRef:  text('source_sweep_ref'),
+  firstSeenAt:     timestamp('first_seen_at').defaultNow().notNull(),
+  lastSeenAt:      timestamp('last_seen_at').defaultNow().notNull(),
+  savedAt:         timestamp('saved_at').defaultNow().notNull(),
+  updatedAt:       timestamp('updated_at').defaultNow().notNull(),
+  dismissedAt:     timestamp('dismissed_at'),
+  rawLead:         jsonb('raw_lead').default({}).notNull(),
+}, (table) => ({
+  workspaceDedupeUnique: uniqueIndex('saved_leads_workspace_dedupe_unique')
+                           .on(table.workspaceId, table.dedupeKey),
+  workspaceStatusIdx:    index('saved_leads_workspace_status_idx')
+                           .on(table.workspaceId, table.lifecycleStatus),
+  workspaceUpdatedIdx:   index('saved_leads_workspace_updated_idx')
+                           .on(table.workspaceId, table.updatedAt),
+  workspaceMarketIdx:    index('saved_leads_workspace_market_idx')
+                           .on(table.workspaceId, table.market),
 }))
 
 // ─────────────────────────────────────────────
@@ -811,6 +865,7 @@ export const workspaceSettingsRelations = relations(workspaceSettings, ({ one, m
   signals:                 many(signals),
   prospects:               many(prospects),
   opportunities:           many(opportunities),
+  savedLeads:              many(savedLeads),
   agentRuns:               many(agentRuns),
   events:                  many(events),
   opportunityEvidenceProofs: many(opportunityEvidenceProofs),
@@ -848,6 +903,13 @@ export const opportunitiesRelations = relations(opportunities, ({ one, many }) =
   }),
   outreachPlays: many(outreachPlays),
   evidenceProofs: many(opportunityEvidenceProofs),
+}))
+
+export const savedLeadsRelations = relations(savedLeads, ({ one }) => ({
+  workspace: one(workspaceSettings, {
+    fields: [savedLeads.workspaceId],
+    references: [workspaceSettings.workspaceId],
+  }),
 }))
 
 export const evidenceSourcesRelations = relations(evidenceSources, ({ many }) => ({
@@ -919,6 +981,9 @@ export type NewProspect  = typeof prospects.$inferInsert
 
 export type Opportunity     = typeof opportunities.$inferSelect
 export type NewOpportunity  = typeof opportunities.$inferInsert
+
+export type SavedLead     = typeof savedLeads.$inferSelect
+export type NewSavedLead  = typeof savedLeads.$inferInsert
 
 export type EvidenceSource     = typeof evidenceSources.$inferSelect
 export type NewEvidenceSource  = typeof evidenceSources.$inferInsert
