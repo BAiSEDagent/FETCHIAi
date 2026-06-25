@@ -11,6 +11,27 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is not set. Replit should auto-inject this.')
 }
 
+export function shouldRequireDatabaseSsl(
+  databaseUrl: string | undefined = process.env.DATABASE_URL,
+  nodeEnv: string | undefined = process.env.NODE_ENV,
+): boolean {
+  if (nodeEnv === 'production') return true
+
+  const rawUrl = databaseUrl ?? ''
+  const hasRequiredSslMode = rawUrl.toLowerCase().includes('sslmode=require')
+  let hostname = ''
+
+  try {
+    hostname = new URL(rawUrl).hostname.toLowerCase()
+  } catch {
+    // Keep local/dev behavior for non-URL connection strings unless sslmode is explicit.
+  }
+
+  return hostname.includes('.neon.tech') || hasRequiredSslMode
+}
+
+const shouldRequireSsl = shouldRequireDatabaseSsl(process.env.DATABASE_URL)
+
 // Connection pool — postgres-js handles pooling automatically
 const client = postgres(process.env.DATABASE_URL, {
   // Max connections in pool
@@ -20,7 +41,7 @@ const client = postgres(process.env.DATABASE_URL, {
   // Connection timeout
   connect_timeout: 10,
   // SSL required for Replit's Neon-backed production database
-  ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
+  ssl: shouldRequireSsl ? 'require' : false,
 })
 
 export const db = drizzle(client, { schema })
