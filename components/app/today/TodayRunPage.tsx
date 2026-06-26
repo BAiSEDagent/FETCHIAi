@@ -157,7 +157,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
         } else if (e.key === 'ArrowRight') {
           e.preventDefault()
           commitAdd()
-        } else if (e.key === 'Enter' && current) {
+        } else if (e.key === 'Enter' && current && !isDemo) {
           e.preventDefault()
           router.push(`/app/leads/${current.opportunityId}`)
         } else if (e.key === 'Escape') {
@@ -173,7 +173,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [beginPass, cancelPass, commitAdd, current, phase, router, stopRun])
+  }, [beginPass, cancelPass, commitAdd, current, isDemo, phase, router, stopRun])
 
   // ─────────────────────────────────────────
   // Pointer / swipe — horizontal only, lets vertical pass through to internal scroll
@@ -285,7 +285,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
           dragX={dragX}
           exitDirection={exitDirection}
         >
-          {current && <TodayRunCard card={current} />}
+          {current && <TodayRunCard card={current} isDemo={isDemo} />}
         </TodayRunDeck>
       </div>
 

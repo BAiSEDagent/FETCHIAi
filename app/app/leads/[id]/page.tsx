@@ -1,4 +1,3 @@
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { and, eq } from 'drizzle-orm'
 import { db, opportunities, contactRoutes, outreachPlays } from '@/db'
@@ -11,6 +10,8 @@ import { GlyphTile, glyphForSignalType, type GlyphKey } from '@/components/app/G
 import { formatSignalToken } from '@/lib/signals/token'
 
 export const dynamic = 'force-dynamic'
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 const SIGNAL_TYPE_LABEL: Record<string, string> = {
   storm_damage: 'Storm damage',
@@ -53,10 +54,14 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
   const { id } = await params
   const ctx = await requireWorkspaceContext()
 
+  if (!UUID_PATTERN.test(id)) {
+    return <LeadNotFoundState />
+  }
+
   const opp = await db.query.opportunities.findFirst({
     where: (t, { eq: e, and: a }) => a(e(t.id, id), e(t.workspaceId, ctx.workspaceId)),
   })
-  if (!opp) notFound()
+  if (!opp) return <LeadNotFoundState />
 
   const [prospect, signal, contacts, drafts] = await Promise.all([
     opp.prospectId
@@ -200,6 +205,35 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
         </div>
 
         <OutcomeForm opportunityId={opp.id} currentStatus={opp.status} currentNotes={opp.outcomeNotes} />
+      </div>
+    </div>
+  )
+}
+
+function LeadNotFoundState() {
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center justify-between px-4 lg:px-7 pt-5 lg:pt-7 pb-2">
+        <Link href="/app/leads" className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-surface shadow-fetchi-soft text-text/75 hover:text-text" aria-label="Back to leads">
+          <ChevronLeft className="h-5 w-5" />
+        </Link>
+        <div className="flex-1 text-center min-w-0 px-4">
+          <div className="text-[11px] uppercase tracking-[1px] font-bold text-text/45">Lead detail</div>
+        </div>
+        <span className="w-11 h-11" aria-hidden />
+      </div>
+
+      <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+96px)] lg:pb-12">
+        <section className="rounded-[20px] bg-raised text-text shadow-fetchi-card px-5 py-10 lg:px-8 lg:py-12 text-center">
+          <div className="inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] bg-text/[0.06] text-text/65">
+            Lead unavailable
+          </div>
+          <h1 className="font-outfit text-h1 lg:text-[32px] text-text mt-6 px-2">This lead is not available</h1>
+          <p className="text-body text-text/65 mt-3 px-2">Return to My Leads to open a saved lead.</p>
+          <Button asChild size="lg" className="mt-7 rounded-full">
+            <Link href="/app/leads">Back to leads</Link>
+          </Button>
+        </section>
       </div>
     </div>
   )
