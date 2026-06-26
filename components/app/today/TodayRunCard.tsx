@@ -9,6 +9,7 @@ import type { EvidenceItem, TodayRunCardData } from './types'
 
 type Props = {
   card: TodayRunCardData
+  isDemo?: boolean
 }
 
 function initialsFor(name: string): string {
@@ -45,7 +46,7 @@ const KIND_GLYPH: Record<EvidenceItem['kind'], string> = {
   other: '\u25CB',
 }
 
-export function TodayRunCard({ card }: Props) {
+export function TodayRunCard({ card, isDemo = false }: Props) {
   const bestContact = card.contacts.find(c => c.isBest) ?? card.contacts[0] ?? null
   const otherContactsCount = Math.max(0, card.contacts.length - 1)
 
@@ -253,14 +254,24 @@ export function TodayRunCard({ card }: Props) {
           ) : (
             <span aria-hidden />
           )}
-          <Link
-            href={`/app/leads/${card.opportunityId}`}
-            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-text/55 hover:text-text"
-            onClick={e => e.stopPropagation()}
-          >
-            Open lead
-            <ArrowUpRight className="h-3 w-3" />
-          </Link>
+          {isDemo ? (
+            <span
+              className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-text/35 cursor-not-allowed"
+              aria-disabled="true"
+            >
+              Open lead
+              <ArrowUpRight className="h-3 w-3" />
+            </span>
+          ) : (
+            <Link
+              href={`/app/leads/${card.opportunityId}`}
+              className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-text/55 hover:text-text"
+              onClick={e => e.stopPropagation()}
+            >
+              Open lead
+              <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          )}
         </div>
       </footer>
     </article>
