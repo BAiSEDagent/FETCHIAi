@@ -28,6 +28,7 @@ export type {
 export { interpretSweepMarket } from './market'
 export {
   SWEEP_CONSUMER_BUYER_GUIDANCE,
+  applySuggestedSweepBuyerLane,
   canonicalizeMapsQueryMarket,
   isConsumerFocusedBuyerInput,
   parseSweepBuyerLanes,

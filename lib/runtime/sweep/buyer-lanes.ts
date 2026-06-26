@@ -106,6 +106,19 @@ export function isConsumerFocusedBuyerInput(icp: string): boolean {
   return CONSUMER_BUYER_PATTERNS.some((pattern) => pattern.test(icp))
 }
 
+export function applySuggestedSweepBuyerLane(currentIcp: string, suggestedLane: string): string {
+  const lane = cleanLane(suggestedLane)
+  if (!lane) return currentIcp
+
+  if (isConsumerFocusedBuyerInput(currentIcp)) {
+    return lane
+  }
+
+  const lanes = parseSweepBuyerLanes(currentIcp)
+  const exists = lanes.some((value) => laneKey(value) === laneKey(lane))
+  return exists ? currentIcp : [...lanes, lane].join(', ')
+}
+
 export function suggestedSweepBuyerLanes(service: string): string[] {
   const cleaned = compactSweepText(service)
   if (!cleaned) return []

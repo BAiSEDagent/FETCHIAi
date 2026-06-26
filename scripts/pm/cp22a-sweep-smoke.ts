@@ -13,6 +13,7 @@ import assert from 'node:assert/strict'
 import {
   CP22A_DEFAULT_MAX_SERPAPI_CALLS,
   SWEEP_CONSUMER_BUYER_GUIDANCE,
+  applySuggestedSweepBuyerLane,
   buildSweepQueries,
   canonicalizeMapsQueryMarket,
   dedupeSweepLeads,
@@ -294,6 +295,17 @@ async function main() {
   assert(SWEEP_CONSUMER_BUYER_GUIDANCE.includes('cannot directly find individual homeowners'))
   assert.deepEqual(parseSweepBuyerLanes('home owners in mesa del subdivision'), ['home owners in mesa del subdivision'])
 
+  const consumerSuggestedLaneRewrite = applySuggestedSweepBuyerLane(
+    'home owners in mesa del subdivision',
+    'auto repair shops',
+  )
+  const consumerSuggestedLaneRewriteLanes = parseSweepBuyerLanes(consumerSuggestedLaneRewrite)
+  assert.deepEqual(consumerSuggestedLaneRewriteLanes, ['auto repair shops'])
+  assert(!consumerSuggestedLaneRewriteLanes.includes('home owners in mesa del subdivision'))
+
+  const b2bSuggestedLaneAppend = applySuggestedSweepBuyerLane('gyms', 'auto repair shops')
+  assert.deepEqual(parseSweepBuyerLanes(b2bSuggestedLaneAppend), ['gyms', 'auto repair shops'])
+
   const epoxySuggestedLanes = suggestedSweepBuyerLanes('epoxy flooring')
   assert.deepEqual(epoxySuggestedLanes, [
     'auto repair shops',
@@ -514,6 +526,10 @@ async function main() {
     serviceTermRemovedFromQueries: true,
     consumerLikeIcpGuidanceShown: consumerGuidanceShown,
     consumerLikeIcpHardBlocked: false,
+    consumerSuggestedLaneRewrite,
+    consumerSuggestedLaneRewriteLanes,
+    consumerLaneRemovedAfterSuggestion: !consumerSuggestedLaneRewriteLanes.includes('home owners in mesa del subdivision'),
+    b2bSuggestedLaneAppend,
     epoxySuggestedLanes,
     plannedBuyerLanes,
     newlineBuyerLanes,

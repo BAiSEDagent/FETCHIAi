@@ -24,8 +24,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { exportSweepCsv, exportSweepJson } from '@/lib/runtime/sweep/export'
 import {
   SWEEP_CONSUMER_BUYER_GUIDANCE,
+  applySuggestedSweepBuyerLane,
   isConsumerFocusedBuyerInput,
-  parseSweepBuyerLanes,
   suggestedSweepBuyerLanes,
 } from '@/lib/runtime/sweep'
 import type { SweepEnrichmentStats, SweepLead, SweepRunResult } from '@/lib/runtime/sweep'
@@ -220,11 +220,7 @@ export function SweepClient() {
   }
 
   function addSuggestedBuyerLane(lane: string) {
-    setIcp((current) => {
-      const lanes = parseSweepBuyerLanes(current)
-      const exists = lanes.some((value) => value.toLowerCase() === lane.toLowerCase())
-      return exists ? current : [...lanes, lane].join(', ')
-    })
+    setIcp((current) => applySuggestedSweepBuyerLane(current, lane))
   }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
