@@ -28,6 +28,7 @@ export type SweepRequest = {
 export type SerpApiMapsCallPlan = {
   engine: 'google_maps'
   query: string
+  buyerLane: string
   market: string
   start: number
 }
