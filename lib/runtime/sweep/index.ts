@@ -26,7 +26,15 @@ export type {
   SweepStats,
 } from './types'
 export { interpretSweepMarket } from './market'
-export { buildSweepQueries, planSerpApiMapsCalls } from './query-variants'
+export {
+  SWEEP_CONSUMER_BUYER_GUIDANCE,
+  applySuggestedSweepBuyerLane,
+  canonicalizeMapsQueryMarket,
+  isConsumerFocusedBuyerInput,
+  parseSweepBuyerLanes,
+  suggestedSweepBuyerLanes,
+} from './buyer-lanes'
+export { buildSweepQueries, buildSweepQueryVariants, planSerpApiMapsCalls } from './query-variants'
 export { buildSweepLeadDedupeKey, dedupeSweepLeads, normalizeSerpApiMapsResults } from './normalize'
 export type { SweepLeadDedupeInput } from './normalize'
 export { exportSweepCsv, exportSweepJson } from './export'

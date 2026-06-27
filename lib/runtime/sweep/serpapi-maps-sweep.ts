@@ -183,7 +183,7 @@ export async function runSerpApiMapsSweep(request: SweepRequest): Promise<SweepR
     return normalizeSerpApiMapsResults({
       payload: item.payload,
       service,
-      icp,
+      icp: item.call.buyerLane,
       market: item.call.market,
       query: item.call.query,
       sourceUrl: publicSourceUrl(item.call),

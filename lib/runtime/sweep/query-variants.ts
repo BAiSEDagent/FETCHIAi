@@ -5,14 +5,26 @@ import {
   type SweepRequest,
 } from './types'
 import { interpretSweepMarket } from './market'
-
-function compact(value: string): string {
-  return value.replace(/\s+/g, ' ').trim()
-}
+import { canonicalizeMapsQueryMarket, compactSweepText, parseSweepBuyerLanes } from './buyer-lanes'
 
 function clampPositiveInteger(value: number | undefined, fallback: number): number {
   if (!Number.isFinite(value) || !value || value < 1) return fallback
   return Math.floor(value)
+}
+
+export function buildSweepQueryVariants(input: {
+  buyerLane: string
+  market: string
+}): string[] {
+  const buyerLane = compactSweepText(input.buyerLane)
+  const market = canonicalizeMapsQueryMarket(input.market)
+
+  return [
+    `${buyerLane} ${market}`,
+    `${buyerLane} near ${market}`,
+    `${buyerLane} in ${market}`,
+    `${buyerLane} businesses ${market}`,
+  ]
 }
 
 export function buildSweepQueries(input: {
@@ -20,15 +32,10 @@ export function buildSweepQueries(input: {
   icp: string
   market: string
 }): string[] {
-  const icp = compact(input.icp)
-  const market = compact(input.market)
-
-  return [
-    `${icp} ${market}`,
-    `${icp} near ${market}`,
-    `${icp} in ${market}`,
-    `${icp} businesses ${market}`,
-  ]
+  return parseSweepBuyerLanes(input.icp).flatMap((buyerLane) => buildSweepQueryVariants({
+    buyerLane,
+    market: input.market,
+  }))
 }
 
 export function planSerpApiMapsCalls(request: SweepRequest): SerpApiMapsCallPlan[] {
@@ -41,23 +48,23 @@ export function planSerpApiMapsCalls(request: SweepRequest): SerpApiMapsCallPlan
     CP22A_DEFAULT_MAX_PAGES_PER_QUERY,
   )
   const marketPlan = interpretSweepMarket(request.market)
+  const buyerLanes = parseSweepBuyerLanes(request.icp)
   const calls: SerpApiMapsCallPlan[] = []
 
   for (let page = 0; page < maxPagesPerQuery; page += 1) {
     for (let variantIndex = 0; variantIndex < 4; variantIndex += 1) {
       for (const market of marketPlan.markets) {
-        if (calls.length >= maxCalls) return calls
-        const variants = buildSweepQueries({
-          service: request.service,
-          icp: request.icp,
-          market,
-        })
-        calls.push({
-          engine: 'google_maps',
-          query: variants[variantIndex],
-          market,
-          start: page * 20,
-        })
+        for (const buyerLane of buyerLanes) {
+          if (calls.length >= maxCalls) return calls
+          const variants = buildSweepQueryVariants({ buyerLane, market })
+          calls.push({
+            engine: 'google_maps',
+            query: variants[variantIndex],
+            buyerLane,
+            market,
+            start: page * 20,
+          })
+        }
       }
     }
   }

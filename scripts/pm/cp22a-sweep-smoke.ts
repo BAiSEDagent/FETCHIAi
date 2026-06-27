@@ -12,14 +12,20 @@
 import assert from 'node:assert/strict'
 import {
   CP22A_DEFAULT_MAX_SERPAPI_CALLS,
+  SWEEP_CONSUMER_BUYER_GUIDANCE,
+  applySuggestedSweepBuyerLane,
   buildSweepQueries,
+  canonicalizeMapsQueryMarket,
   dedupeSweepLeads,
   exportSweepCsv,
   exportSweepJson,
   interpretSweepMarket,
+  isConsumerFocusedBuyerInput,
   normalizeSerpApiMapsResults,
   planSerpApiMapsCalls,
+  parseSweepBuyerLanes,
   runSerpApiMapsSweep,
+  suggestedSweepBuyerLanes,
   type SerpApiMapsPayload,
   type SweepLead,
 } from '@/lib/runtime/sweep'
@@ -276,13 +282,87 @@ async function main() {
     market: 'Denver, CO',
   })
   assert.deepEqual(queries, [
-    'restaurants Denver, CO',
-    'restaurants near Denver, CO',
-    'restaurants in Denver, CO',
-    'restaurants businesses Denver, CO',
+    'restaurants Denver CO',
+    'restaurants near Denver CO',
+    'restaurants in Denver CO',
+    'restaurants businesses Denver CO',
   ])
   assert(queries.every((query) => /restaurants/i.test(query)))
   assert(queries.every((query) => !/commercial cleaning/i.test(query)))
+
+  const consumerGuidanceShown = isConsumerFocusedBuyerInput('home owners in mesa del subdivision')
+  assert.equal(consumerGuidanceShown, true)
+  assert(SWEEP_CONSUMER_BUYER_GUIDANCE.includes('cannot directly find individual homeowners'))
+  assert.deepEqual(parseSweepBuyerLanes('home owners in mesa del subdivision'), ['home owners in mesa del subdivision'])
+
+  const consumerSuggestedLaneRewrite = applySuggestedSweepBuyerLane(
+    'home owners in mesa del subdivision',
+    'auto repair shops',
+  )
+  const consumerSuggestedLaneRewriteLanes = parseSweepBuyerLanes(consumerSuggestedLaneRewrite)
+  assert.deepEqual(consumerSuggestedLaneRewriteLanes, ['auto repair shops'])
+  assert(!consumerSuggestedLaneRewriteLanes.includes('home owners in mesa del subdivision'))
+
+  const b2bSuggestedLaneAppend = applySuggestedSweepBuyerLane('gyms', 'auto repair shops')
+  assert.deepEqual(parseSweepBuyerLanes(b2bSuggestedLaneAppend), ['gyms', 'auto repair shops'])
+
+  const epoxySuggestedLanes = suggestedSweepBuyerLanes('epoxy flooring')
+  assert.deepEqual(epoxySuggestedLanes, [
+    'auto repair shops',
+    'gyms',
+    'warehouses',
+    'self-storage facilities',
+    'apartment complexes',
+    'commercial property managers',
+    'restaurants',
+    'HOAs',
+  ])
+
+  const commaLaneInput = 'auto repair shops, gyms, warehouses, commercial property managers, self-storage facilities, restaurants, apartment complexes, HOAs'
+  const plannedBuyerLanes = parseSweepBuyerLanes(commaLaneInput)
+  assert.deepEqual(plannedBuyerLanes, [
+    'auto repair shops',
+    'gyms',
+    'warehouses',
+    'commercial property managers',
+    'self-storage facilities',
+    'restaurants',
+    'apartment complexes',
+    'HOAs',
+  ])
+
+  const newlineBuyerLanes = parseSweepBuyerLanes('auto repair shops\ngyms\nwarehouses')
+  assert.deepEqual(newlineBuyerLanes, ['auto repair shops', 'gyms', 'warehouses'])
+
+  const albuquerqueMarket = canonicalizeMapsQueryMarket('albuquerque, nm')
+  assert.equal(albuquerqueMarket, 'albuquerque nm')
+
+  const albuquerqueCalls = planSerpApiMapsCalls({
+    service: 'epoxy flooring',
+    icp: commaLaneInput,
+    market: 'albuquerque, nm',
+    maxPagesPerQuery: 1,
+    maxCalls: 80,
+  })
+  const albuquerquePrimaryQueries = albuquerqueCalls
+    .filter((call) => call.start === 0)
+    .slice(0, plannedBuyerLanes.length)
+    .map((call) => call.query)
+  assert.deepEqual(albuquerquePrimaryQueries, [
+    'auto repair shops albuquerque nm',
+    'gyms albuquerque nm',
+    'warehouses albuquerque nm',
+    'commercial property managers albuquerque nm',
+    'self-storage facilities albuquerque nm',
+    'restaurants albuquerque nm',
+    'apartment complexes albuquerque nm',
+    'HOAs albuquerque nm',
+  ])
+  assert(!albuquerqueCalls.some((call) => /auto repair shops,\s*gyms/i.test(call.query)))
+  assert(!albuquerqueCalls.some((call) => /businesses albuquerque nm$/i.test(call.query) && call.query.includes(',')))
+  assert(albuquerqueCalls.every((call) => !/new york|jersey city/i.test(call.query)))
+  assert(albuquerqueCalls.every((call) => !Object.prototype.hasOwnProperty.call(call, 'll')))
+  assert.deepEqual(albuquerqueCalls.slice(0, plannedBuyerLanes.length).map((call) => call.buyerLane), plannedBuyerLanes)
 
   const planned = planSerpApiMapsCalls({
     service: 'dumpster rental',
@@ -444,6 +524,19 @@ async function main() {
     queryVariants: queries,
     queryVariantsIcpFirst: true,
     serviceTermRemovedFromQueries: true,
+    consumerLikeIcpGuidanceShown: consumerGuidanceShown,
+    consumerLikeIcpHardBlocked: false,
+    consumerSuggestedLaneRewrite,
+    consumerSuggestedLaneRewriteLanes,
+    consumerLaneRemovedAfterSuggestion: !consumerSuggestedLaneRewriteLanes.includes('home owners in mesa del subdivision'),
+    b2bSuggestedLaneAppend,
+    epoxySuggestedLanes,
+    plannedBuyerLanes,
+    newlineBuyerLanes,
+    albuquerqueMarket,
+    albuquerquePrimaryQueries,
+    giantMixedQuerySent: false,
+    albuquerqueNyJerseyCityLl: false,
     plannedNationwideCalls: planned.length,
     callCeiling: CP22A_DEFAULT_MAX_SERPAPI_CALLS,
     normalizedRows: normalized.length,
@@ -464,6 +557,8 @@ async function main() {
     jsonRows: parsed.length,
     missingSerpApiKeyHandled: true,
     liveSerpApiMapsProof: liveProof ?? 'blocked_missing_serpapi_key',
+    providerCalls: liveProof?.providerCalls ?? 0,
+    serpApiCalls: liveProof?.providerCalls ?? 0,
     firecrawlCalls: 0,
     llmCalls: 0,
     dbWrites: 0,

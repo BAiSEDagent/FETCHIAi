@@ -20,7 +20,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { exportSweepCsv, exportSweepJson } from '@/lib/runtime/sweep/export'
+import {
+  SWEEP_CONSUMER_BUYER_GUIDANCE,
+  applySuggestedSweepBuyerLane,
+  isConsumerFocusedBuyerInput,
+  suggestedSweepBuyerLanes,
+} from '@/lib/runtime/sweep'
 import type { SweepEnrichmentStats, SweepLead, SweepRunResult } from '@/lib/runtime/sweep'
 import type { SaveSweepLeadsResult } from '@/lib/runtime/sweep/saved-leads'
 import { enrichSweep, runSweep, saveSweepLeads } from './actions'
@@ -190,6 +197,8 @@ export function SweepClient() {
   const hasResults = leads.length > 0
   const selectedCount = selectedIds.size
   const allSelected = hasResults && selectedCount === leads.length
+  const showConsumerGuidance = isConsumerFocusedBuyerInput(icp)
+  const suggestedBuyerLanes = React.useMemo(() => suggestedSweepBuyerLanes(service), [service])
 
   React.useEffect(() => {
     setSelectedIds((current) => {
@@ -208,6 +217,10 @@ export function SweepClient() {
     setEnrichmentMessage(null)
     setEnrichmentStats(null)
     setSaveMessage(null)
+  }
+
+  function addSuggestedBuyerLane(lane: string) {
+    setIcp((current) => applySuggestedSweepBuyerLane(current, lane))
   }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -365,14 +378,37 @@ export function SweepClient() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="icp">Who do you want?</Label>
-                <Input
+                <Label htmlFor="icp">Which business buyers should Fetchi search for?</Label>
+                <Textarea
                   id="icp"
                   value={icp}
                   onChange={(event) => setIcp(event.target.value)}
-                  placeholder="restaurants"
-                  className="h-12 bg-bg text-[15px]"
+                  placeholder="e.g., auto repair shops, gyms, self-storage facilities"
+                  aria-describedby="icp-helper"
+                  className="bg-bg text-[15px]"
                 />
+                <p id="icp-helper" className="text-[12.5px] leading-relaxed text-text/50">
+                  Sweep searches businesses and organizations on Google Maps. Use buyer types like auto repair shops, gyms, property managers, or self-storage facilities. For best results, use one buyer type per lane.
+                </p>
+                {showConsumerGuidance && (
+                  <div className="rounded-lg border border-mustard/25 bg-mustard/10 px-3 py-2 text-[12.5px] leading-relaxed text-text/70">
+                    {SWEEP_CONSUMER_BUYER_GUIDANCE}
+                  </div>
+                )}
+                {suggestedBuyerLanes.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedBuyerLanes.map((lane) => (
+                      <button
+                        key={lane}
+                        type="button"
+                        onClick={() => addSuggestedBuyerLane(lane)}
+                        className="rounded-lg bg-bg px-2.5 py-1.5 text-[12px] font-semibold text-text/65 hover:bg-text/8"
+                      >
+                        {lane}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="market">Market to target</Label>
