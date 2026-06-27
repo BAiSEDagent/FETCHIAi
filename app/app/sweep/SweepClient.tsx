@@ -82,6 +82,53 @@ function savedStatusLabel(value: SweepSavedLeadStatus | null | undefined): strin
   return `Already saved · ${value.charAt(0).toUpperCase()}${value.slice(1)}`
 }
 
+export type SweepLeadViewFilter = 'all' | 'new_to_save' | 'already_saved'
+
+export const SWEEP_LEAD_VIEW_FILTERS: readonly SweepLeadViewFilter[] = [
+  'all',
+  'new_to_save',
+  'already_saved',
+]
+
+export const SWEEP_LEAD_VIEW_FILTER_LABELS: Record<SweepLeadViewFilter, string> = {
+  all: 'All',
+  new_to_save: 'New to save',
+  already_saved: 'Already saved',
+}
+
+export function sortSweepLeadsNewFirst(leads: readonly SweepLead[]): SweepLead[] {
+  return [...leads].sort((first, second) => {
+    return Number(first.alreadySaved === true) - Number(second.alreadySaved === true)
+  })
+}
+
+export function filterSweepLeadsForView(
+  leads: readonly SweepLead[],
+  filter: SweepLeadViewFilter,
+): SweepLead[] {
+  if (filter === 'new_to_save') {
+    return leads.filter((lead) => lead.alreadySaved !== true)
+  }
+  if (filter === 'already_saved') {
+    return leads.filter((lead) => lead.alreadySaved === true)
+  }
+  return [...leads]
+}
+
+export function sweepMemorySummaryCopy(
+  foundCount: number,
+  newToSaveCount: number,
+  alreadySavedCount: number,
+): string {
+  return `${foundCount} found · ${newToSaveCount} new to save · ${alreadySavedCount} already saved`
+}
+
+export function sweepLeadViewEmptyCopy(filter: SweepLeadViewFilter): string {
+  if (filter === 'new_to_save') return 'No leads new to save in this sweep.'
+  if (filter === 'already_saved') return 'No already saved leads in this sweep.'
+  return 'No leads in this sweep.'
+}
+
 function StatTile({
   label,
   value,
@@ -200,6 +247,7 @@ export function SweepClient() {
   const [enrichmentStats, setEnrichmentStats] = React.useState<SweepEnrichmentStats | null>(null)
   const [saveMessage, setSaveMessage] = React.useState<string | null>(null)
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(() => new Set())
+  const [viewFilter, setViewFilter] = React.useState<SweepLeadViewFilter>('all')
   const [progressIndex, setProgressIndex] = React.useState(0)
 
   React.useEffect(() => {
@@ -211,24 +259,38 @@ export function SweepClient() {
   }, [pending])
 
   const leads = result?.leads ?? []
-  const hasResults = leads.length > 0
-  const selectedCount = selectedIds.size
-  const newLeadIds = React.useMemo(
-    () => leads.filter((lead) => !lead.alreadySaved).map((lead) => lead.id),
-    [leads],
+  const sortedLeads = React.useMemo(() => sortSweepLeadsNewFirst(leads), [leads])
+  const visibleLeads = React.useMemo(
+    () => filterSweepLeadsForView(sortedLeads, viewFilter),
+    [sortedLeads, viewFilter],
   )
-  const newLeadIdSet = React.useMemo(() => new Set(newLeadIds), [newLeadIds])
+  const hasResults = leads.length > 0
+  const hasVisibleResults = visibleLeads.length > 0
+  const visibleNewLeadIds = React.useMemo(
+    () => visibleLeads.filter((lead) => !lead.alreadySaved).map((lead) => lead.id),
+    [visibleLeads],
+  )
+  const visibleNewLeadIdSet = React.useMemo(() => new Set(visibleNewLeadIds), [visibleNewLeadIds])
   const alreadySavedCount = result?.savedMemory?.alreadySavedCount
     ?? leads.filter((lead) => lead.alreadySaved).length
   const newToSaveCount = result?.savedMemory?.newLeadCount
     ?? leads.filter((lead) => !lead.alreadySaved).length
   const savedMemoryUnavailable = result?.savedMemory?.available === false
-  const selectedNewCount = [...selectedIds].filter((id) => newLeadIdSet.has(id)).length
-  const allSelected = hasResults
-    && newLeadIds.length > 0
-    && newLeadIds.every((id) => selectedIds.has(id))
+  const visibleSelectedCount = visibleLeads.filter((lead) => selectedIds.has(lead.id)).length
+  const visibleSelectedNewCount = visibleLeads.filter((lead) => (
+    selectedIds.has(lead.id) && !lead.alreadySaved
+  )).length
+  const allSelected = hasVisibleResults
+    && visibleNewLeadIds.length > 0
+    && visibleNewLeadIds.every((id) => selectedIds.has(id))
   const showConsumerGuidance = isConsumerFocusedBuyerInput(icp)
   const suggestedBuyerLanes = React.useMemo(() => suggestedSweepBuyerLanes(service), [service])
+  const leadMemorySummary = sweepMemorySummaryCopy(leads.length, newToSaveCount, alreadySavedCount)
+  const viewCounts: Record<SweepLeadViewFilter, number> = {
+    all: leads.length,
+    new_to_save: newToSaveCount,
+    already_saved: alreadySavedCount,
+  }
 
   React.useEffect(() => {
     setSelectedIds((current) => {
@@ -247,6 +309,7 @@ export function SweepClient() {
     setEnrichmentMessage(null)
     setEnrichmentStats(null)
     setSaveMessage(null)
+    setViewFilter('all')
   }
 
   function addSuggestedBuyerLane(lane: string) {
@@ -260,6 +323,7 @@ export function SweepClient() {
     setEnrichmentStats(null)
     setSaveMessage(null)
     setSelectedIds(new Set())
+    setViewFilter('all')
     setResult(null)
     startTransition(async () => {
       const response = await runSweep({ service, icp, market })
@@ -315,9 +379,9 @@ export function SweepClient() {
   function toggleAllSelection() {
     setSelectedIds((current) => {
       if (allSelected) {
-        return new Set([...current].filter((id) => !newLeadIdSet.has(id)))
+        return new Set([...current].filter((id) => !visibleNewLeadIdSet.has(id)))
       }
-      return new Set([...current, ...newLeadIds])
+      return new Set([...current, ...visibleNewLeadIds])
     })
   }
 
@@ -415,7 +479,7 @@ export function SweepClient() {
   }
 
   function saveSelected() {
-    const selected = leads.filter((lead) => selectedIds.has(lead.id))
+    const selected = visibleLeads.filter((lead) => selectedIds.has(lead.id))
     saveLeads(selected)
   }
 
@@ -558,12 +622,12 @@ export function SweepClient() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={!hasResults || selectedCount === 0 || savePending}
+                  disabled={!hasVisibleResults || visibleSelectedCount === 0 || savePending}
                   onClick={saveSelected}
                   className="gap-2"
                 >
                   {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {selectedCount > 0 && selectedNewCount === 0 ? 'No new selected' : 'Save selected'}
+                  {visibleSelectedCount > 0 && visibleSelectedNewCount === 0 ? 'No new selected' : 'Save selected'}
                 </Button>
                 <Button
                   type="button"
@@ -594,7 +658,7 @@ export function SweepClient() {
                     ? saveMessage
                     : enrichmentPending
                       ? 'Checking websites for emails and context'
-                      : enrichmentMessage ?? `${leads.length} found · ${alreadySavedCount} already saved · ${newToSaveCount} new`}
+                      : enrichmentMessage ?? leadMemorySummary}
                 {enrichmentStats && !enrichmentPending && (
                   <span className="ml-2 text-text/38">
                     {enrichmentStats.successfulScrapes} checked
@@ -657,10 +721,37 @@ export function SweepClient() {
             </div>
             {hasResults && (
               <div className="text-[13px] text-text/45 tabular-nums">
-                {leads.length} found · {alreadySavedCount} already saved · {newToSaveCount} new
+                {leadMemorySummary}
               </div>
             )}
           </div>
+
+          {hasResults && (
+            <div className="flex flex-wrap gap-2 border-t border-text/8 px-4 py-3">
+              {SWEEP_LEAD_VIEW_FILTERS.map((filter) => {
+                const active = viewFilter === filter
+                return (
+                  <button
+                    key={filter}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setViewFilter(filter)}
+                    className={[
+                      'inline-flex min-h-9 items-center gap-2 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                      active
+                        ? 'bg-ok text-bg'
+                        : 'bg-bg text-text/62 hover:bg-text/8',
+                    ].join(' ')}
+                  >
+                    <span>{SWEEP_LEAD_VIEW_FILTER_LABELS[filter]}</span>
+                    <span className={active ? 'text-bg/72' : 'text-text/40'}>
+                      {viewCounts[filter]}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
           {!hasResults && !pending ? (
             <div className="min-h-[320px] px-4 py-16 text-center">
@@ -672,6 +763,16 @@ export function SweepClient() {
                 Results appear as a single table focused on business, phone, website, address, market, and source.
               </p>
             </div>
+          ) : !hasVisibleResults && !pending ? (
+            <div className="min-h-[320px] px-4 py-16 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
+                <Table2 className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 font-outfit text-[24px]">{sweepLeadViewEmptyCopy(viewFilter)}</h3>
+              <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-relaxed text-text/50">
+                {leadMemorySummary}.
+              </p>
+            </div>
           ) : (
             <div className="max-h-[680px] overflow-auto">
               <table className="w-full border-collapse text-left text-[13.5px]">
@@ -681,7 +782,7 @@ export function SweepClient() {
                       <input
                         type="checkbox"
                         checked={allSelected}
-                        disabled={newLeadIds.length === 0}
+                        disabled={visibleNewLeadIds.length === 0}
                         onChange={toggleAllSelection}
                         aria-label="Select all new sweep leads"
                         className="h-4 w-4 rounded border-text/20 bg-bg accent-ok"
@@ -698,7 +799,7 @@ export function SweepClient() {
                   </tr>
                 </thead>
                 <tbody>
-                  {leads.map((lead) => (
+                  {visibleLeads.map((lead) => (
                     <ResultRow
                       key={lead.id}
                       lead={lead}
