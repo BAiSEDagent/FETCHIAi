@@ -28,7 +28,12 @@ import {
   isConsumerFocusedBuyerInput,
   suggestedSweepBuyerLanes,
 } from '@/lib/runtime/sweep'
-import type { SweepEnrichmentStats, SweepLead, SweepRunResult } from '@/lib/runtime/sweep'
+import type {
+  SweepEnrichmentStats,
+  SweepLead,
+  SweepRunResult,
+  SweepSavedLeadStatus,
+} from '@/lib/runtime/sweep'
 import type { SaveSweepLeadsResult } from '@/lib/runtime/sweep/saved-leads'
 import { enrichSweep, runSweep, saveSweepLeads } from './actions'
 
@@ -72,6 +77,11 @@ function displayUrl(value: string): string {
   }
 }
 
+function savedStatusLabel(value: SweepSavedLeadStatus | null | undefined): string {
+  if (!value) return 'Already saved'
+  return `Already saved · ${value.charAt(0).toUpperCase()}${value.slice(1)}`
+}
+
 function StatTile({
   label,
   value,
@@ -101,7 +111,7 @@ function ResultRow({
   onToggle: () => void
 }) {
   return (
-    <tr className="border-t border-text/8 align-top">
+    <tr className={['border-t border-text/8 align-top', lead.alreadySaved ? 'bg-ok/4' : ''].join(' ')}>
       <td className="px-4 py-3 w-[52px]">
         <input
           type="checkbox"
@@ -112,7 +122,14 @@ function ResultRow({
         />
       </td>
       <td className="px-4 py-3 min-w-[210px]">
-        <div className="font-semibold text-text leading-snug">{lead.businessName}</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-text leading-snug">{lead.businessName}</span>
+          {lead.alreadySaved && (
+            <span className="rounded bg-ok/12 px-2 py-0.5 text-[11px] font-bold text-ok">
+              {savedStatusLabel(lead.savedLeadStatus)}
+            </span>
+          )}
+        </div>
         {lead.category && (
           <div className="mt-1 text-[12px] text-text/45">{lead.category}</div>
         )}
@@ -196,7 +213,20 @@ export function SweepClient() {
   const leads = result?.leads ?? []
   const hasResults = leads.length > 0
   const selectedCount = selectedIds.size
-  const allSelected = hasResults && selectedCount === leads.length
+  const newLeadIds = React.useMemo(
+    () => leads.filter((lead) => !lead.alreadySaved).map((lead) => lead.id),
+    [leads],
+  )
+  const newLeadIdSet = React.useMemo(() => new Set(newLeadIds), [newLeadIds])
+  const alreadySavedCount = result?.savedMemory?.alreadySavedCount
+    ?? leads.filter((lead) => lead.alreadySaved).length
+  const newToSaveCount = result?.savedMemory?.newLeadCount
+    ?? leads.filter((lead) => !lead.alreadySaved).length
+  const savedMemoryUnavailable = result?.savedMemory?.available === false
+  const selectedNewCount = [...selectedIds].filter((id) => newLeadIdSet.has(id)).length
+  const allSelected = hasResults
+    && newLeadIds.length > 0
+    && newLeadIds.every((id) => selectedIds.has(id))
   const showConsumerGuidance = isConsumerFocusedBuyerInput(icp)
   const suggestedBuyerLanes = React.useMemo(() => suggestedSweepBuyerLanes(service), [service])
 
@@ -284,25 +314,56 @@ export function SweepClient() {
 
   function toggleAllSelection() {
     setSelectedIds((current) => {
-      if (hasResults && current.size === leads.length) return new Set()
-      return new Set(leads.map((lead) => lead.id))
+      if (allSelected) {
+        return new Set([...current].filter((id) => !newLeadIdSet.has(id)))
+      }
+      return new Set([...current, ...newLeadIds])
     })
   }
 
   function saveResultMessage(response: SaveSweepLeadsResult): string {
-    const parts = [
-      `Saved ${response.savedNew} lead${response.savedNew === 1 ? '' : 's'}`,
-    ]
+    const parts = response.savedNew > 0
+      ? [`Saved ${response.savedNew} new lead${response.savedNew === 1 ? '' : 's'}.`]
+      : ['No new leads to save.']
     if (response.alreadySaved > 0) {
-      parts.push(`${response.alreadySaved} already in your list`)
+      parts.push(`Skipped ${response.alreadySaved} already saved.`)
     }
     if (response.dismissedSkipped > 0) {
-      parts.push(`${response.dismissedSkipped} dismissed/known`)
+      parts.push(`Skipped ${response.dismissedSkipped} dismissed.`)
     }
     if (response.skippedInvalid > 0) {
-      parts.push(`${response.skippedInvalid} skipped`)
+      parts.push(`Skipped ${response.skippedInvalid} invalid.`)
     }
-    return parts.join(' · ')
+    return parts.join(' ')
+  }
+
+  function markSavedInCurrentResult(savedIds: Set<string>) {
+    if (savedIds.size === 0) return
+    setResult((current) => {
+      if (!current) return current
+
+      const nextLeads = current.leads.map((lead) => savedIds.has(lead.id)
+        ? {
+          ...lead,
+          alreadySaved: true,
+          savedLeadStatus: lead.savedLeadStatus ?? 'saved',
+        }
+        : lead)
+      const nextAlreadySavedCount = nextLeads.filter((lead) => lead.alreadySaved).length
+
+      return {
+        ...current,
+        leads: nextLeads,
+        savedMemory: current.savedMemory
+          ? {
+            ...current.savedMemory,
+            totalFound: nextLeads.length,
+            alreadySavedCount: nextAlreadySavedCount,
+            newLeadCount: nextLeads.length - nextAlreadySavedCount,
+          }
+          : current.savedMemory,
+      }
+    })
   }
 
   function sourceSweepRef(): string {
@@ -317,16 +378,39 @@ export function SweepClient() {
     if (leadsToSave.length === 0 || savePending) return
     setError(null)
     setSaveMessage(null)
+    const newLeadsToSave = leadsToSave.filter((lead) => !lead.alreadySaved)
+    const skippedAlreadySaved = leadsToSave.length - newLeadsToSave.length
+    if (newLeadsToSave.length === 0) {
+      setSaveMessage(saveResultMessage({
+        ok: true,
+        attempted: leadsToSave.length,
+        savedNew: 0,
+        alreadySaved: skippedAlreadySaved,
+        skippedInvalid: 0,
+        dismissedSkipped: 0,
+        totalKnown: skippedAlreadySaved,
+      }))
+      return
+    }
+
     startSaveTransition(async () => {
       const response = await saveSweepLeads({
-        leads: leadsToSave,
+        leads: newLeadsToSave,
         sourceSweepRef: sourceSweepRef() || null,
       })
+      const mergedResponse = {
+        ...response,
+        attempted: response.attempted + skippedAlreadySaved,
+        alreadySaved: response.alreadySaved + skippedAlreadySaved,
+        totalKnown: response.totalKnown + skippedAlreadySaved,
+      }
       if (!response.ok) {
         setSaveMessage(response.error ?? 'No valid leads were saved.')
         return
       }
-      setSaveMessage(saveResultMessage(response))
+      markSavedInCurrentResult(new Set(newLeadsToSave.map((lead) => lead.id)))
+      setSelectedIds((current) => new Set([...current].filter((id) => !newLeadsToSave.some((lead) => lead.id === id))))
+      setSaveMessage(saveResultMessage(mergedResponse))
     })
   }
 
@@ -479,17 +563,17 @@ export function SweepClient() {
                   className="gap-2"
                 >
                   {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Save selected
+                  {selectedCount > 0 && selectedNewCount === 0 ? 'No new selected' : 'Save selected'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={!hasResults || savePending}
+                  disabled={!hasResults || savePending || newToSaveCount === 0}
                   onClick={saveAll}
                   className="gap-2"
                 >
                   {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Save all
+                  {hasResults && newToSaveCount === 0 ? 'No new leads to save' : 'Save all'}
                 </Button>
                 <Button type="button" variant="outline" disabled={!hasResults} onClick={exportCsv} className="gap-2">
                   <ArrowDownToLine className="h-4 w-4" />
@@ -510,20 +594,27 @@ export function SweepClient() {
                     ? saveMessage
                     : enrichmentPending
                       ? 'Checking websites for emails and context'
-                      : enrichmentMessage ?? 'Enrich up to 50 websites'}
+                      : enrichmentMessage ?? `${leads.length} found · ${alreadySavedCount} already saved · ${newToSaveCount} new`}
                 {enrichmentStats && !enrichmentPending && (
                   <span className="ml-2 text-text/38">
                     {enrichmentStats.successfulScrapes} checked
                   </span>
                 )}
+                {savedMemoryUnavailable && (
+                  <span className="ml-2 text-mustard">
+                    Saved memory unavailable
+                  </span>
+                )}
               </div>
             )}
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
               <StatTile label="sources hit" value={result?.stats.sourcesHit.join(', ') || 'Maps'} />
               <StatTile label="queries run" value={result?.stats.queriesRun ?? 0} />
               <StatTile label="raw scanned" value={result?.stats.rawScanned ?? 0} />
               <StatTile label="leads found" value={result?.stats.dedupedLeadCount ?? 0} />
+              <StatTile label="already saved" value={alreadySavedCount} />
+              <StatTile label="new to save" value={newToSaveCount} />
               <StatTile label="export count" value={result?.stats.exportCount ?? 0} />
             </div>
           </div>
@@ -566,7 +657,7 @@ export function SweepClient() {
             </div>
             {hasResults && (
               <div className="text-[13px] text-text/45 tabular-nums">
-                {leads.length} export-ready rows
+                {leads.length} found · {alreadySavedCount} already saved · {newToSaveCount} new
               </div>
             )}
           </div>
@@ -590,8 +681,9 @@ export function SweepClient() {
                       <input
                         type="checkbox"
                         checked={allSelected}
+                        disabled={newLeadIds.length === 0}
                         onChange={toggleAllSelection}
-                        aria-label="Select all sweep leads"
+                        aria-label="Select all new sweep leads"
                         className="h-4 w-4 rounded border-text/20 bg-bg accent-ok"
                       />
                     </th>

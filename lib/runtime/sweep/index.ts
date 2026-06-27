@@ -23,6 +23,8 @@ export type {
   SweepMarketPlan,
   SweepRequest,
   SweepRunResult,
+  SweepSavedLeadStatus,
+  SweepSavedMemoryResult,
   SweepStats,
 } from './types'
 export { interpretSweepMarket } from './market'
