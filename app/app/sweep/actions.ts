@@ -79,6 +79,7 @@ export async function runSweep(input: RunSweepInput): Promise<SweepRunResult> {
       },
     }
   }
+  const ctx = await requireWorkspaceContext()
 
   const sweepResult = await runSerpApiMapsSweep({
     service: input.service,
@@ -88,7 +89,7 @@ export async function runSweep(input: RunSweepInput): Promise<SweepRunResult> {
   })
 
   try {
-    const annotated = await annotateSweepLeadsWithSavedMemoryForWorkspace(sweepResult.leads, userId)
+    const annotated = await annotateSweepLeadsWithSavedMemoryForWorkspace(sweepResult.leads, ctx.workspaceId)
     return {
       ...sweepResult,
       leads: annotated.leads,

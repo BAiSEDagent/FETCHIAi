@@ -147,6 +147,15 @@ async function main() {
   assert(!memoryLookupSource.includes('.update('))
   assert(!memoryLookupSource.includes('.delete('))
 
+  const sweepActionsSource = readFileSync('app/app/sweep/actions.ts', 'utf8')
+  const runSweepSource = sweepActionsSource.slice(
+    sweepActionsSource.indexOf('export async function runSweep'),
+    sweepActionsSource.indexOf('export async function enrichSweep'),
+  )
+  assert(runSweepSource.includes('const ctx = await requireWorkspaceContext()'))
+  assert(runSweepSource.includes('annotateSweepLeadsWithSavedMemoryForWorkspace(sweepResult.leads, ctx.workspaceId)'))
+  assert(!runSweepSource.includes('annotateSweepLeadsWithSavedMemoryForWorkspace(sweepResult.leads, userId)'))
+
   console.log(JSON.stringify({
     ok: true,
     mode: 'cp22d_a_sweep_saved_lead_memory',
@@ -160,6 +169,7 @@ async function main() {
     skippedAlreadySavedCount: saveSelectedSplit.alreadySavedCount,
     existingSavedLeadUpsertIdempotencyPreserved: duplicateInputProof.duplicateInputCount === 1,
     workspaceScopedLookup: true,
+    runSweepPassesWorkspaceIdToMemoryLookup: true,
     lookupUsesExistingDedupeKey: true,
     savedMemoryUnavailableDoesNotCrash: unavailable.savedMemory.available === false,
     providerCalls: 0,
