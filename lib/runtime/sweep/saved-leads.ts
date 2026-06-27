@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
-import type { SweepLead } from './types'
+import type { SweepLead, SweepSavedLeadStatus, SweepSavedMemoryResult } from './types'
 import { buildSweepLeadDedupeKey } from './normalize'
 
 export const SAVED_LEAD_LIFECYCLE_STATUSES = [
@@ -10,7 +10,7 @@ export const SAVED_LEAD_LIFECYCLE_STATUSES = [
   'dismissed',
 ] as const
 
-export type SavedLeadLifecycleStatus = typeof SAVED_LEAD_LIFECYCLE_STATUSES[number]
+export type SavedLeadLifecycleStatus = SweepSavedLeadStatus
 
 export type SaveSweepLeadsInput = {
   leads: SweepLead[]
@@ -64,6 +64,22 @@ export type SavedLeadPipelineRow = {
   lastSeenAtIso: string
   savedAtMs: number
   updatedAtMs: number
+}
+
+export type SavedLeadMemoryRow = {
+  dedupeKey: string
+  lifecycleStatus: SavedLeadLifecycleStatus
+}
+
+export type SavedLeadMemoryAnnotationResult = {
+  leads: SweepLead[]
+  savedMemory: SweepSavedMemoryResult
+}
+
+export type SweepLeadSaveSplit = {
+  leadsToSave: SweepLead[]
+  alreadySavedLeads: SweepLead[]
+  alreadySavedCount: number
 }
 
 type SaveContext = {
@@ -157,6 +173,87 @@ export function mergeSavedLeadSnapshotsPreservingExisting(
     category: existingFirst(existing.category, incoming.category),
     sourceUrl: existingFirst(existing.sourceUrl, incoming.sourceUrl),
     market: existingFirst(existing.market, incoming.market),
+  }
+}
+
+export function annotateSweepLeadsWithSavedMemory(
+  leads: readonly SweepLead[],
+  savedRows: readonly SavedLeadMemoryRow[],
+): SavedLeadMemoryAnnotationResult {
+  const savedByDedupeKey = new Map<string, SavedLeadLifecycleStatus>()
+  for (const row of savedRows) {
+    if (row.dedupeKey && isSavedLeadLifecycleStatus(row.lifecycleStatus)) {
+      savedByDedupeKey.set(row.dedupeKey, row.lifecycleStatus)
+    }
+  }
+
+  let alreadySavedCount = 0
+  const annotated = leads.map((lead) => {
+    const dedupeKey = buildSweepLeadDedupeKey(lead)
+    const lifecycleStatus = dedupeKey ? savedByDedupeKey.get(dedupeKey) : undefined
+    if (!lifecycleStatus) {
+      return {
+        ...lead,
+        alreadySaved: false,
+        savedLeadStatus: null,
+      }
+    }
+
+    alreadySavedCount += 1
+    return {
+      ...lead,
+      alreadySaved: true,
+      savedLeadStatus: lifecycleStatus,
+    }
+  })
+
+  return {
+    leads: annotated,
+    savedMemory: {
+      available: true,
+      totalFound: leads.length,
+      alreadySavedCount,
+      newLeadCount: leads.length - alreadySavedCount,
+    },
+  }
+}
+
+export function savedLeadMemoryUnavailable(
+  leads: readonly SweepLead[],
+  unavailableReason = 'saved_lead_lookup_unavailable',
+): SavedLeadMemoryAnnotationResult {
+  return {
+    leads: leads.map((lead) => ({
+      ...lead,
+      alreadySaved: false,
+      savedLeadStatus: null,
+    })),
+    savedMemory: {
+      available: false,
+      totalFound: leads.length,
+      alreadySavedCount: 0,
+      newLeadCount: leads.length,
+      unavailableReason,
+    },
+  }
+}
+
+export function splitSweepLeadsBySavedMemory(leads: readonly SweepLead[]): SweepLeadSaveSplit {
+  const alreadySavedLeads: SweepLead[] = []
+  const leadsToSave: SweepLead[] = []
+
+  for (const lead of leads) {
+    if (lead.alreadySaved) {
+      alreadySavedLeads.push(lead)
+    } else {
+      leadsToSave.push(lead)
+    }
+  }
+
+  return {
+    leadsToSave,
+    alreadySavedLeads,
+    alreadySavedCount: alreadySavedLeads.length,
   }
 }
 
@@ -315,6 +412,39 @@ export async function listSavedLeadsForWorkspace(
     ...row,
     lifecycleStatus: row.lifecycleStatus as SavedLeadLifecycleStatus,
   }))
+}
+
+export async function annotateSweepLeadsWithSavedMemoryForWorkspace(
+  leads: readonly SweepLead[],
+  workspaceId: string,
+): Promise<SavedLeadMemoryAnnotationResult> {
+  const dedupeKeys = Array.from(new Set(leads
+    .map((lead) => buildSweepLeadDedupeKey(lead))
+    .filter((key): key is string => Boolean(key))))
+
+  if (dedupeKeys.length === 0) {
+    return annotateSweepLeadsWithSavedMemory(leads, [])
+  }
+
+  const { db, savedLeads } = await import('@/db')
+  const rows = await db
+    .select({
+      dedupeKey: savedLeads.dedupeKey,
+      lifecycleStatus: savedLeads.lifecycleStatus,
+    })
+    .from(savedLeads)
+    .where(and(
+      eq(savedLeads.workspaceId, workspaceId),
+      inArray(savedLeads.dedupeKey, dedupeKeys),
+    ))
+
+  return annotateSweepLeadsWithSavedMemory(
+    leads,
+    rows.map((row) => ({
+      dedupeKey: row.dedupeKey,
+      lifecycleStatus: row.lifecycleStatus as SavedLeadLifecycleStatus,
+    })),
+  )
 }
 
 export async function saveSweepLeadsForWorkspace(

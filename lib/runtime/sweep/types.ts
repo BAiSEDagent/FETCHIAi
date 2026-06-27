@@ -33,6 +33,8 @@ export type SerpApiMapsCallPlan = {
   start: number
 }
 
+export type SweepSavedLeadStatus = 'saved' | 'contacted' | 'won' | 'lost' | 'dismissed'
+
 export type SweepLead = {
   id: string
   businessName: string
@@ -48,6 +50,8 @@ export type SweepLead = {
   email: string | null
   owner: string | null
   hook: string | null
+  alreadySaved?: boolean
+  savedLeadStatus?: SweepSavedLeadStatus | null
 }
 
 export type SweepStats = {
@@ -105,7 +109,16 @@ export type SweepRunResult = {
   leads: SweepLead[]
   stats: SweepStats
   calls: SerpApiMapsCallPlan[]
+  savedMemory?: SweepSavedMemoryResult
   error?: SweepError
+}
+
+export type SweepSavedMemoryResult = {
+  available: boolean
+  totalFound: number
+  alreadySavedCount: number
+  newLeadCount: number
+  unavailableReason?: string
 }
 
 export type SerpApiMapsLocalResult = {

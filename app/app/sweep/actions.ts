@@ -13,7 +13,10 @@ import {
   type SweepRunResult,
 } from '@/lib/runtime/sweep'
 import {
+  annotateSweepLeadsWithSavedMemoryForWorkspace,
+  savedLeadMemoryUnavailable,
   saveSweepLeadsForWorkspace,
+  splitSweepLeadsBySavedMemory,
   updateSavedLeadNoteForWorkspace,
   updateSavedLeadStatusForWorkspace,
   type SaveSweepLeadsInput,
@@ -76,13 +79,30 @@ export async function runSweep(input: RunSweepInput): Promise<SweepRunResult> {
       },
     }
   }
+  const ctx = await requireWorkspaceContext()
 
-  return runSerpApiMapsSweep({
+  const sweepResult = await runSerpApiMapsSweep({
     service: input.service,
     icp: input.icp,
     market: input.market,
     apiKey: process.env.SERPAPI_KEY || process.env.SERPAPI_API_KEY,
   })
+
+  try {
+    const annotated = await annotateSweepLeadsWithSavedMemoryForWorkspace(sweepResult.leads, ctx.workspaceId)
+    return {
+      ...sweepResult,
+      leads: annotated.leads,
+      savedMemory: annotated.savedMemory,
+    }
+  } catch {
+    const unavailable = savedLeadMemoryUnavailable(sweepResult.leads)
+    return {
+      ...sweepResult,
+      leads: unavailable.leads,
+      savedMemory: unavailable.savedMemory,
+    }
+  }
 }
 
 export async function enrichSweep(input: EnrichSweepInput): Promise<SweepEnrichmentResult> {
@@ -109,12 +129,33 @@ export async function enrichSweep(input: EnrichSweepInput): Promise<SweepEnrichm
 
 export async function saveSweepLeads(input: SaveSweepLeadsInput): Promise<SaveSweepLeadsResult> {
   const ctx = await requireWorkspaceContext()
-  const result = await saveSweepLeadsForWorkspace(input, {
+  const split = splitSweepLeadsBySavedMemory(Array.isArray(input.leads) ? input.leads : [])
+  if (split.leadsToSave.length === 0) {
+    return {
+      ok: true,
+      attempted: Array.isArray(input.leads) ? input.leads.length : 0,
+      savedNew: 0,
+      alreadySaved: split.alreadySavedCount,
+      skippedInvalid: 0,
+      dismissedSkipped: 0,
+      totalKnown: split.alreadySavedCount,
+    }
+  }
+
+  const result = await saveSweepLeadsForWorkspace({
+    ...input,
+    leads: split.leadsToSave,
+  }, {
     workspaceId: ctx.workspaceId,
     userId: ctx.userId,
   })
   revalidatePath('/app/leads')
-  return result
+  return {
+    ...result,
+    attempted: Array.isArray(input.leads) ? input.leads.length : result.attempted,
+    alreadySaved: result.alreadySaved + split.alreadySavedCount,
+    totalKnown: result.totalKnown + split.alreadySavedCount,
+  }
 }
 
 export async function updateSavedLeadStatus(
