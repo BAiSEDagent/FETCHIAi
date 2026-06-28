@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   MessageSquare,
+  Search,
   Sun,
   ListChecks,
   Map as MapIcon,
@@ -67,6 +68,7 @@ function applyAppearanceTheme(appearance: Appearance) {
 }
 
 const workspaceNav: NavItem[] = [
+  { href: '/app/sweep', label: 'Sweep', icon: Search },
   { href: '/app/chat', label: 'Chat', icon: MessageSquare },
   { href: '/app/today', label: 'Today', icon: Sun },
   { href: '/app/leads', label: 'My Leads', icon: ListChecks },

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
+import Link from 'next/link'
 import {
   ArrowDownToLine,
   CheckCircle2,
@@ -233,7 +234,13 @@ export function MyLeadsView({ leads }: Props) {
                 </button>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button asChild className="gap-2 bg-ok text-bg hover:bg-ok/90">
+                <Link href="/app/sweep">
+                  <Search className="h-4 w-4" />
+                  Run a sweep
+                </Link>
+              </Button>
               <Button type="button" variant="outline" disabled={filtered.length === 0} onClick={exportCsv} className="gap-2">
                 <ArrowDownToLine className="h-4 w-4" />
                 CSV
@@ -283,7 +290,13 @@ export function MyLeadsView({ leads }: Props) {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
               <Search className="h-6 w-6" />
             </div>
-            <h2 className="mt-4 font-outfit text-[24px]">No saved leads yet — run a sweep and save some.</h2>
+            <h2 className="mt-4 font-outfit text-[24px]">Your pipeline is empty — run a sweep to fill it.</h2>
+            <Button asChild className="mt-5 gap-2 bg-ok text-bg hover:bg-ok/90">
+              <Link href="/app/sweep">
+                <Search className="h-4 w-4" />
+                Run a sweep
+              </Link>
+            </Button>
           </div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-text/8 bg-surface">

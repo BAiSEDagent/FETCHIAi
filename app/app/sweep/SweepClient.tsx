@@ -3,7 +3,6 @@
 import * as React from 'react'
 import {
   ArrowDownToLine,
-  Building2,
   ExternalLink,
   FileJson,
   Globe2,
@@ -129,25 +128,6 @@ export function sweepLeadViewEmptyCopy(filter: SweepLeadViewFilter): string {
   return 'No leads in this sweep.'
 }
 
-function StatTile({
-  label,
-  value,
-}: {
-  label: string
-  value: string | number
-}) {
-  return (
-    <div className="min-h-[78px] rounded-lg bg-surface border border-text/8 px-4 py-3">
-      <div className="text-[11px] font-bold uppercase tracking-[1px] text-text/38">
-        {label}
-      </div>
-      <div className="mt-2 text-[24px] leading-none font-outfit text-text tabular-nums">
-        {value}
-      </div>
-    </div>
-  )
-}
-
 function ResultRow({
   lead,
   selected,
@@ -159,7 +139,7 @@ function ResultRow({
 }) {
   return (
     <tr className={['border-t border-text/8 align-top', lead.alreadySaved ? 'bg-ok/4' : ''].join(' ')}>
-      <td className="px-4 py-3 w-[52px]">
+      <td className="w-[54px] px-4 py-3">
         <input
           type="checkbox"
           checked={selected}
@@ -168,7 +148,7 @@ function ResultRow({
           className="h-4 w-4 rounded border-text/20 bg-bg accent-ok"
         />
       </td>
-      <td className="px-4 py-3 min-w-[210px]">
+      <td className="min-w-[260px] px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-semibold text-text leading-snug">{lead.businessName}</span>
           {lead.alreadySaved && (
@@ -180,44 +160,41 @@ function ResultRow({
         {lead.category && (
           <div className="mt-1 text-[12px] text-text/45">{lead.category}</div>
         )}
+        {lead.hook && (
+          <div className="mt-2 max-w-[360px] text-[12.5px] leading-relaxed text-text/55">{lead.hook}</div>
+        )}
       </td>
-      <td className="px-4 py-3 min-w-[180px]">
+      <td className="min-w-[260px] px-4 py-3">
+        <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 text-text font-medium">
+          <Phone className="h-3.5 w-3.5 text-text/45" />
+          {lead.phone}
+        </a>
         {lead.website && (
           <a
             href={lead.website}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-ok hover:text-ok/80 font-medium"
+            className="mt-2 flex items-center gap-1.5 text-ok hover:text-ok/80 font-medium"
           >
             <Globe2 className="h-3.5 w-3.5" />
             <span className="break-all">{displayUrl(lead.website)}</span>
             <ExternalLink className="h-3 w-3 opacity-60" />
           </a>
         )}
-      </td>
-      <td className="px-4 py-3 min-w-[140px]">
-        <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 text-text font-medium">
-          <Phone className="h-3.5 w-3.5 text-text/45" />
-          {lead.phone}
-        </a>
-      </td>
-      <td className="px-4 py-3 min-w-[180px]">
         {lead.email && (
-          <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 text-ok font-medium">
+          <a href={`mailto:${lead.email}`} className="mt-2 flex items-center gap-1.5 text-ok font-medium">
             <Mail className="h-3.5 w-3.5" />
             <span className="break-all">{lead.email}</span>
           </a>
         )}
-      </td>
-      <td className="px-4 py-3 min-w-[150px] text-text/70">
         {lead.owner && (
-          <span className="inline-flex items-center gap-1.5">
+          <span className="mt-2 inline-flex items-center gap-1.5 text-text/70">
             <UserRound className="h-3.5 w-3.5 text-text/38" />
             {lead.owner}
           </span>
         )}
       </td>
-      <td className="px-4 py-3 min-w-[260px]">
+      <td className="min-w-[280px] px-4 py-3">
         {lead.address && (
           <div className="flex gap-1.5 text-text/75 leading-snug">
             <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-text/38" />
@@ -226,9 +203,19 @@ function ResultRow({
         )}
         <div className="mt-1 text-[12px] text-text/38">{lead.market}</div>
       </td>
-      <td className="px-4 py-3 min-w-[120px] text-text/65">{lead.source}</td>
-      <td className="px-4 py-3 min-w-[240px] text-text/55 leading-snug">
-        {lead.hook ?? ''}
+      <td className="min-w-[150px] px-4 py-3 text-text/65">
+        <div>{lead.source}</div>
+        {lead.sourceUrl && (
+          <a
+            href={lead.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-ok hover:text-ok/80"
+          >
+            Source
+            <ExternalLink className="h-3 w-3 opacity-60" />
+          </a>
+        )}
       </td>
     </tr>
   )
@@ -497,10 +484,20 @@ export function SweepClient() {
     downloadText('fetchi-sweep-leads.json', 'application/json;charset=utf-8', exportSweepJson(leads))
   }
 
+  const compactStats = [
+    { label: 'Sources', value: result?.stats.sourcesHit.join(', ') || 'Maps' },
+    { label: 'Queries', value: result?.stats.queriesRun ?? 0 },
+    { label: 'Scanned', value: result?.stats.rawScanned ?? 0 },
+    { label: 'Found', value: result?.stats.dedupedLeadCount ?? 0 },
+    { label: 'New to save', value: newToSaveCount },
+    { label: 'Already saved', value: alreadySavedCount },
+    { label: 'Export rows', value: result?.stats.exportCount ?? 0 },
+  ]
+
   return (
     <div className="min-h-full bg-bg text-text">
-      <div className="mx-auto flex w-full max-w-[1420px] flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-        <section className="grid gap-5 lg:grid-cols-[420px_1fr]">
+      <div className="mx-auto flex w-full max-w-[1420px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+        <section className="grid gap-5 xl:grid-cols-[390px_minmax(0,1fr)]">
           <div className="rounded-lg bg-surface border border-text/8 p-5 lg:p-6">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-ok/14 text-ok">
@@ -594,223 +591,212 @@ export function SweepClient() {
             </div>
           </div>
 
-          <div className="rounded-lg bg-surface border border-text/8 p-5 lg:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[1.2px] text-ok">
-                  <Building2 className="h-4 w-4" />
-                  Maps-first contact sweep
+          <div className="flex min-w-0 flex-col gap-4">
+            {pending && (
+              <section className="rounded-lg bg-surface border border-ok/18 p-5">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-ok" />
+                  <div>
+                    <div className="font-semibold text-text">Sweeping the market</div>
+                    <div className="mt-1 text-[13px] text-text/55">{PROGRESS_LINES[progressIndex]}</div>
+                  </div>
                 </div>
-                <h2 className="mt-3 font-outfit text-[28px] leading-tight">
-                  Find businesses with phone contact routes and richer Maps details.
-                </h2>
-                <p className="mt-2 max-w-[720px] text-[14px] leading-relaxed text-text/58">
-                  Fetchi fans out deterministic Maps searches across city, state, or national markets, then merges overlapping listings into one exportable lead list.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={!hasResults || pending || enrichmentPending}
-                  onClick={enrichResults}
-                  className="gap-2"
-                >
-                  {enrichmentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  Find emails
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={!hasVisibleResults || visibleSelectedCount === 0 || savePending}
-                  onClick={saveSelected}
-                  className="gap-2"
-                >
-                  {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {visibleSelectedCount > 0 && visibleSelectedNewCount === 0 ? 'No new selected' : 'Save selected'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={!hasResults || savePending || newToSaveCount === 0}
-                  onClick={saveAll}
-                  className="gap-2"
-                >
-                  {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {hasResults && newToSaveCount === 0 ? 'No new leads to save' : 'Save all'}
-                </Button>
-                <Button type="button" variant="outline" disabled={!hasResults} onClick={exportCsv} className="gap-2">
-                  <ArrowDownToLine className="h-4 w-4" />
-                  CSV
-                </Button>
-                <Button type="button" variant="outline" disabled={!hasResults} onClick={exportJson} className="gap-2">
-                  <FileJson className="h-4 w-4" />
-                  JSON
-                </Button>
-              </div>
-            </div>
-
-            {hasResults && (
-              <div className="mt-4 rounded-lg border border-text/8 bg-bg px-4 py-3 text-[13px] text-text/55">
-                {savePending
-                  ? 'Saving leads to your pipeline'
-                  : saveMessage
-                    ? saveMessage
-                    : enrichmentPending
-                      ? 'Checking websites for emails and context'
-                      : enrichmentMessage ?? leadMemorySummary}
-                {enrichmentStats && !enrichmentPending && (
-                  <span className="ml-2 text-text/38">
-                    {enrichmentStats.successfulScrapes} checked
-                  </span>
-                )}
-                {savedMemoryUnavailable && (
-                  <span className="ml-2 text-mustard">
-                    Saved memory unavailable
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
-              <StatTile label="sources hit" value={result?.stats.sourcesHit.join(', ') || 'Maps'} />
-              <StatTile label="queries run" value={result?.stats.queriesRun ?? 0} />
-              <StatTile label="raw scanned" value={result?.stats.rawScanned ?? 0} />
-              <StatTile label="leads found" value={result?.stats.dedupedLeadCount ?? 0} />
-              <StatTile label="already saved" value={alreadySavedCount} />
-              <StatTile label="new to save" value={newToSaveCount} />
-              <StatTile label="export count" value={result?.stats.exportCount ?? 0} />
-            </div>
-          </div>
-        </section>
-
-        {pending && (
-          <section className="rounded-lg bg-surface border border-ok/18 p-5">
-            <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-ok" />
-              <div>
-                <div className="font-semibold text-text">Sweeping the market</div>
-                <div className="mt-1 text-[13px] text-text/55">{PROGRESS_LINES[progressIndex]}</div>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-4 gap-2" aria-hidden>
-              {PROGRESS_LINES.map((line, index) => (
-                <span
-                  key={line}
-                  className={[
-                    'h-1.5 rounded-full transition-colors',
-                    index <= progressIndex ? 'bg-ok' : 'bg-text/10',
-                  ].join(' ')}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {error && (
-          <section role="alert" className="rounded-lg border border-red-400/30 bg-red-400/10 px-4 py-3 text-[14px] text-red-100">
-            {error}
-          </section>
-        )}
-
-        <section className="overflow-hidden rounded-lg bg-surface border border-text/8">
-          <div className="flex min-h-[58px] items-center justify-between gap-3 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Table2 className="h-4 w-4 text-text/45" />
-              <h2 className="font-semibold">Lead list</h2>
-            </div>
-            {hasResults && (
-              <div className="text-[13px] text-text/45 tabular-nums">
-                {leadMemorySummary}
-              </div>
-            )}
-          </div>
-
-          {hasResults && (
-            <div className="flex flex-wrap gap-2 border-t border-text/8 px-4 py-3">
-              {SWEEP_LEAD_VIEW_FILTERS.map((filter) => {
-                const active = viewFilter === filter
-                return (
-                  <button
-                    key={filter}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setViewFilter(filter)}
-                    className={[
-                      'inline-flex min-h-9 items-center gap-2 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
-                      active
-                        ? 'bg-ok text-bg'
-                        : 'bg-bg text-text/62 hover:bg-text/8',
-                    ].join(' ')}
-                  >
-                    <span>{SWEEP_LEAD_VIEW_FILTER_LABELS[filter]}</span>
-                    <span className={active ? 'text-bg/72' : 'text-text/40'}>
-                      {viewCounts[filter]}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-
-          {!hasResults && !pending ? (
-            <div className="min-h-[320px] px-4 py-16 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
-                <Search className="h-6 w-6" />
-              </div>
-              <h3 className="mt-4 font-outfit text-[24px]">Run a sweep to fill the list.</h3>
-              <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-relaxed text-text/50">
-                Results appear as a single table focused on business, phone, website, address, market, and source.
-              </p>
-            </div>
-          ) : !hasVisibleResults && !pending ? (
-            <div className="min-h-[320px] px-4 py-16 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
-                <Table2 className="h-6 w-6" />
-              </div>
-              <h3 className="mt-4 font-outfit text-[24px]">{sweepLeadViewEmptyCopy(viewFilter)}</h3>
-              <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-relaxed text-text/50">
-                {leadMemorySummary}.
-              </p>
-            </div>
-          ) : (
-            <div className="max-h-[680px] overflow-auto">
-              <table className="w-full border-collapse text-left text-[13.5px]">
-                <thead className="sticky top-0 z-10 bg-raised text-[11px] uppercase tracking-[0.9px] text-text/42">
-                  <tr>
-                    <th className="px-4 py-3 font-bold w-[52px]">
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        disabled={visibleNewLeadIds.length === 0}
-                        onChange={toggleAllSelection}
-                        aria-label="Select all new sweep leads"
-                        className="h-4 w-4 rounded border-text/20 bg-bg accent-ok"
-                      />
-                    </th>
-                    <th className="px-4 py-3 font-bold">Business</th>
-                    <th className="px-4 py-3 font-bold">Website</th>
-                    <th className="px-4 py-3 font-bold">Phone</th>
-                    <th className="px-4 py-3 font-bold">Email</th>
-                    <th className="px-4 py-3 font-bold">Contact</th>
-                    <th className="px-4 py-3 font-bold">Address / market</th>
-                    <th className="px-4 py-3 font-bold">Source</th>
-                    <th className="px-4 py-3 font-bold">Context</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleLeads.map((lead) => (
-                    <ResultRow
-                      key={lead.id}
-                      lead={lead}
-                      selected={selectedIds.has(lead.id)}
-                      onToggle={() => toggleLeadSelection(lead.id)}
+                <div className="mt-4 grid grid-cols-4 gap-2" aria-hidden>
+                  {PROGRESS_LINES.map((line, index) => (
+                    <span
+                      key={line}
+                      className={[
+                        'h-1.5 rounded-full transition-colors',
+                        index <= progressIndex ? 'bg-ok' : 'bg-text/10',
+                      ].join(' ')}
                     />
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                </div>
+              </section>
+            )}
+
+            {error && (
+              <section role="alert" className="rounded-lg border border-red-400/30 bg-red-400/10 px-4 py-3 text-[14px] text-red-100">
+                {error}
+              </section>
+            )}
+
+            <section className="overflow-hidden rounded-lg bg-surface border border-text/8">
+              <div className="flex min-h-[58px] flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <Table2 className="h-4 w-4 text-text/45" />
+                  <h2 className="font-semibold">Lead list</h2>
+                </div>
+                {hasResults && (
+                  <div className="text-[13px] text-text/45 tabular-nums">
+                    {leadMemorySummary}
+                  </div>
+                )}
+              </div>
+
+              {hasResults && (
+                <div className="grid gap-2 border-t border-text/8 bg-bg/45 px-4 py-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+                  {compactStats.map((item) => (
+                    <div key={item.label} className="min-w-0">
+                      <div className="text-[10.5px] font-bold uppercase tracking-[0.8px] text-text/35">
+                        {item.label}
+                      </div>
+                      <div className="mt-1 truncate text-[13px] font-semibold text-text tabular-nums">
+                        {item.value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {hasResults && (
+                <div className="flex flex-col gap-3 border-t border-text/8 px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="flex flex-wrap gap-2">
+                    {SWEEP_LEAD_VIEW_FILTERS.map((filter) => {
+                      const active = viewFilter === filter
+                      return (
+                        <button
+                          key={filter}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => setViewFilter(filter)}
+                          className={[
+                            'inline-flex min-h-9 items-center gap-2 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                            active
+                              ? 'bg-ok text-bg'
+                              : 'bg-bg text-text/62 hover:bg-text/8',
+                          ].join(' ')}
+                        >
+                          <span>{SWEEP_LEAD_VIEW_FILTER_LABELS[filter]}</span>
+                          <span className={active ? 'text-bg/72' : 'text-text/40'}>
+                            {viewCounts[filter]}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={pending || enrichmentPending}
+                      onClick={enrichResults}
+                      className="gap-2"
+                    >
+                      {enrichmentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      Find emails
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!hasVisibleResults || visibleSelectedCount === 0 || savePending}
+                      onClick={saveSelected}
+                      className="gap-2"
+                    >
+                      {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {visibleSelectedCount > 0 && visibleSelectedNewCount === 0 ? 'No new selected' : 'Save selected'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={savePending || newToSaveCount === 0}
+                      onClick={saveAll}
+                      className="gap-2"
+                    >
+                      {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {newToSaveCount === 0 ? 'No new leads to save' : 'Save all'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={exportCsv} className="gap-2">
+                      <ArrowDownToLine className="h-4 w-4" />
+                      CSV
+                    </Button>
+                    <Button type="button" variant="outline" onClick={exportJson} className="gap-2">
+                      <FileJson className="h-4 w-4" />
+                      JSON
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {hasResults && (
+                <div className="border-t border-text/8 bg-bg px-4 py-3 text-[13px] text-text/55">
+                  {savePending
+                    ? 'Saving leads to your pipeline'
+                    : saveMessage
+                      ? saveMessage
+                      : enrichmentPending
+                        ? 'Checking websites for emails and context'
+                        : enrichmentMessage ?? leadMemorySummary}
+                  {enrichmentStats && !enrichmentPending && (
+                    <span className="ml-2 text-text/38">
+                      {enrichmentStats.successfulScrapes} checked
+                    </span>
+                  )}
+                  {savedMemoryUnavailable && (
+                    <span className="ml-2 text-mustard">
+                      Saved memory unavailable
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {!hasResults ? (
+                <div className="min-h-[360px] px-4 py-16 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
+                    <Search className="h-6 w-6" />
+                  </div>
+                  <h3 className="mt-4 font-outfit text-[24px]">Run a sweep to fill the list.</h3>
+                  <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-relaxed text-text/50">
+                    Results appear here with filters, save actions, and export controls after the sweep finishes.
+                  </p>
+                </div>
+              ) : !hasVisibleResults ? (
+                <div className="min-h-[320px] px-4 py-16 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
+                    <Table2 className="h-6 w-6" />
+                  </div>
+                  <h3 className="mt-4 font-outfit text-[24px]">{sweepLeadViewEmptyCopy(viewFilter)}</h3>
+                  <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-relaxed text-text/50">
+                    {leadMemorySummary}.
+                  </p>
+                </div>
+              ) : (
+                <div className="max-h-[720px] overflow-auto">
+                  <table className="w-full border-collapse text-left text-[13.5px]">
+                    <thead className="sticky top-0 z-10 bg-raised text-[11px] uppercase tracking-[0.9px] text-text/42">
+                      <tr>
+                        <th className="w-[54px] px-4 py-3 font-bold">
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            disabled={visibleNewLeadIds.length === 0}
+                            onChange={toggleAllSelection}
+                            aria-label="Select all new sweep leads"
+                            className="h-4 w-4 rounded border-text/20 bg-bg accent-ok"
+                          />
+                        </th>
+                        <th className="px-4 py-3 font-bold">Business</th>
+                        <th className="px-4 py-3 font-bold">Contact routes</th>
+                        <th className="px-4 py-3 font-bold">Address / market</th>
+                        <th className="px-4 py-3 font-bold">Source</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleLeads.map((lead) => (
+                        <ResultRow
+                          key={lead.id}
+                          lead={lead}
+                          selected={selectedIds.has(lead.id)}
+                          onToggle={() => toggleLeadSelection(lead.id)}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </div>
         </section>
       </div>
     </div>
