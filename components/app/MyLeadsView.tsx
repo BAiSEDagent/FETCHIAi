@@ -650,7 +650,7 @@ export function MyLeadsView({ leads }: Props) {
                                         href={row.website}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="flex items-center gap-1.5 font-medium text-ok hover:text-ok/80"
+                                        className="flex items-center gap-1.5 font-medium text-text/70 hover:text-text"
                                       >
                                         <Globe2 className="h-3.5 w-3.5" />
                                         <span className="break-all">{displayUrl(row.website)}</span>
