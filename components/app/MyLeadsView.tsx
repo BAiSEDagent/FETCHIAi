@@ -6,7 +6,6 @@ import {
   ArrowDownToLine,
   CheckCircle2,
   ChevronRight,
-  ExternalLink,
   FileJson,
   Globe2,
   Loader2,
@@ -568,10 +567,9 @@ export function MyLeadsView({ leads }: Props) {
               const addressCount = group.rows.filter((row) => hasAddress(row)).length
 
               return (
-                <section key={group.key} className="grid grid-cols-[5px_minmax(0,1fr)] overflow-hidden rounded-xl border border-border bg-surface shadow-fetchi-card">
-                  <div className={group.railClass} aria-hidden />
+                <section key={group.key} className="rounded-[18px] border border-border/80 bg-surface/70 p-2">
                   <div className="min-w-0">
-                    <div className="flex flex-col gap-2 border-b border-border px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-col gap-2 px-2 py-2 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={cn('inline-flex rounded-full border px-2.5 py-1 text-[12px] font-bold', group.badgeClass)}>
                           {group.label}
@@ -585,7 +583,7 @@ export function MyLeadsView({ leads }: Props) {
                       </div>
                     </div>
 
-                    <div className={cn('border-l-[3px]', group.borderClass)}>
+                    <div className="space-y-2">
                       {group.rows.map((row) => {
                         const isRowPending = isPending && pendingId === row.id
                         const groupMeta = groupForStatus(row.lifecycleStatus)
@@ -596,104 +594,91 @@ export function MyLeadsView({ leads }: Props) {
                           <article
                             key={row.id}
                             className={cn(
-                              'grid gap-3 border-t border-border bg-surface p-3 transition-colors first:border-t-0 hover:bg-raised/70 sm:p-4 xl:grid-cols-[minmax(0,1fr)_minmax(220px,280px)_minmax(190px,230px)] xl:items-center',
+                              'rounded-[18px] border border-border bg-surface px-3 py-3 transition-colors hover:bg-raised/70 sm:px-4',
                               groupMeta.cardHoverClass,
                             )}
                           >
-                            <Link
-                              href={`/app/leads/${row.id}`}
-                              className="group/card flex min-w-0 items-start gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-                            >
-                              <div className={cn('flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border font-outfit text-[15px] font-extrabold', groupMeta.avatarClass)}>
-                                {initialsForName(row.businessName)}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex min-w-0 items-start gap-2">
+                            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                              <div className="min-w-0">
+                                <Link
+                                  href={`/app/leads/${row.id}`}
+                                  className="group/card flex min-w-0 items-start gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                                >
+                                  <div className={cn('flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border font-outfit text-[15px] font-extrabold shadow-fetchi-soft', groupMeta.avatarClass)}>
+                                    {initialsForName(row.businessName)}
+                                  </div>
                                   <div className="min-w-0 flex-1">
-                                    <h3 className="truncate font-outfit text-[18px] font-extrabold leading-tight text-text lg:text-[19px]">
+                                    <h3 className="truncate font-outfit text-[19px] font-extrabold leading-tight text-text lg:text-[21px]">
                                       {row.businessName}
                                     </h3>
-                                    <div className="mt-1 truncate text-[13px] font-medium text-text/52">
+                                    <div className="mt-0.5 truncate text-[12.5px] font-medium text-text/52">
                                       {supportLine(row)}
                                     </div>
+                                    {row.address && (
+                                      <div className="mt-1.5 flex gap-1.5 text-[12px] leading-snug text-text/42">
+                                        <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-text/30" />
+                                        <span className="line-clamp-1">{row.address}</span>
+                                      </div>
+                                    )}
                                   </div>
-                                  <ChevronRight className="mt-0.5 h-5 w-5 flex-shrink-0 text-text/28 transition-colors group-hover/card:text-text/55" />
-                                </div>
+                                </Link>
 
-                                {row.address && row.market && (
-                                  <div className="mt-2 flex gap-1.5 text-[12.5px] leading-snug text-text/45">
-                                    <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-text/32" />
-                                    <span className="line-clamp-2">{row.address}</span>
-                                  </div>
-                                )}
-
-                                <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-text/55">
+                                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 pl-14 text-[12px] text-text/52">
                                   {row.phone && (
-                                    <span className="inline-flex items-center gap-1.5">
+                                    <a href={`tel:${row.phone}`} className="inline-flex items-center gap-1.5 hover:text-text">
                                       <Phone className="h-3.5 w-3.5 text-text/35" />
                                       {row.phone}
-                                    </span>
+                                    </a>
                                   )}
-                                  {row.website && (
-                                    <span className="inline-flex min-w-0 items-center gap-1.5">
+                                  {row.website ? (
+                                    <a
+                                      href={externalHref(row.website)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex min-w-0 items-center gap-1.5 text-text/52 hover:text-text"
+                                    >
                                       <Globe2 className="h-3.5 w-3.5 flex-shrink-0 text-text/35" />
                                       <span className="truncate">{displayUrl(row.website)}</span>
+                                    </a>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 text-text/34">
+                                      <Globe2 className="h-3.5 w-3.5 text-text/28" />
+                                      Missing website
                                     </span>
                                   )}
-                                  <span className="text-text/38">
-                                    Updated {displayDate(row.updatedAtIso)}
-                                  </span>
                                 </div>
-                              </div>
-                            </Link>
 
-                            <div className="flex flex-col gap-3">
-                              <div className="flex flex-wrap gap-2">
-                                <a
-                                  href={`tel:${row.phone}`}
-                                  className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-border bg-bg px-2.5 text-[11.5px] font-semibold text-text/65 hover:text-text"
-                                >
-                                  <Phone className="h-3.5 w-3.5 text-text/38" />
-                                  Phone
-                                </a>
-                                {row.website ? (
-                                  <a
-                                    href={externalHref(row.website)}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-lg border border-border bg-bg px-2.5 text-[11.5px] font-semibold text-text/65 hover:text-text"
-                                  >
-                                    <Globe2 className="h-3.5 w-3.5 flex-shrink-0 text-text/38" />
-                                    <span className="truncate">Website</span>
-                                    <ExternalLink className="h-3 w-3 flex-shrink-0 text-text/35" />
-                                  </a>
-                                ) : (
-                                  <span className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-dashed border-text/14 bg-bg px-2.5 text-[11.5px] font-semibold text-text/40">
-                                    <Globe2 className="h-3.5 w-3.5 text-text/30" />
-                                    Missing website
-                                  </span>
-                                )}
-                                {hasAddress(row) && (
-                                  <span className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-border bg-bg px-2.5 text-[11.5px] font-semibold text-text/65">
-                                    <MapPin className="h-3.5 w-3.5 text-text/38" />
-                                    Address
-                                  </span>
+                                {isEditingNote ? null : (
+                                  <div className="mt-2 pl-14">
+                                    {row.note ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => startEditingNote(row)}
+                                        className="block max-w-2xl text-left text-[12px] leading-relaxed text-text/58 hover:text-text"
+                                      >
+                                        <span className="line-clamp-2">{row.note}</span>
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => startEditingNote(row)}
+                                        className="inline-flex h-7 items-center gap-1.5 rounded-full border border-dashed border-text/18 px-2.5 text-[11.5px] font-semibold text-text/42 transition-colors hover:border-text/30 hover:text-text"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                        + note
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
 
-                              <div className="text-[11px] font-bold uppercase tracking-[0.8px] text-text/34">
-                                Contact coverage
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col gap-3 xl:items-end">
-                              <label className="flex w-full flex-col gap-1 xl:max-w-[190px]">
-                                <span className="text-[11px] font-bold uppercase tracking-[0.8px] text-text/34">Status</span>
+                              <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
                                 <select
+                                  aria-label={`Lifecycle status for ${row.businessName}`}
                                   value={row.lifecycleStatus}
                                   disabled={isRowPending || row.lifecycleStatus === 'dismissed'}
                                   onChange={(event) => changeStatus(row, event.target.value as SavedLeadLifecycleStatus)}
-                                  className={cn('h-9 rounded-lg border px-3 text-[12.5px] font-bold outline-none disabled:cursor-not-allowed disabled:opacity-60', groupMeta.statusControlClass)}
+                                  className={cn('h-8 max-w-[132px] rounded-full border px-3 text-[12px] font-bold outline-none disabled:cursor-not-allowed disabled:opacity-60', groupMeta.statusControlClass)}
                                 >
                                   {STATUS_OPTIONS.map((option) => (
                                     <option key={option.key} value={option.key}>
@@ -701,70 +686,61 @@ export function MyLeadsView({ leads }: Props) {
                                     </option>
                                   ))}
                                 </select>
-                              </label>
-                              {isRowPending && (
-                                <div className="flex items-center gap-1.5 text-[12px] text-text/45">
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  Saving
+
+                                <div className="flex items-center gap-2 text-right">
+                                  {isRowPending && (
+                                    <span className="inline-flex items-center gap-1 text-[11px] text-text/45">
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                      Saving
+                                    </span>
+                                  )}
+                                  <Link
+                                    href={`/app/leads/${row.id}`}
+                                    aria-label={`Open ${row.businessName}`}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-bg text-text/35 transition-colors hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                                  >
+                                    <ChevronRight className="h-4 w-4" />
+                                  </Link>
                                 </div>
-                              )}
-                              <div className="text-[11.5px] text-text/38 xl:text-right">
-                                Saved {displayDate(row.savedAtIso)}
+
+                                <div className="text-[11.5px] leading-snug text-text/36 sm:text-right">
+                                  <div>Updated {displayDate(row.updatedAtIso)}</div>
+                                  <div>Saved {displayDate(row.savedAtIso)}</div>
+                                </div>
                               </div>
                             </div>
 
-                            <div className="xl:col-span-3">
-                              {isEditingNote ? (
-                                <div className="rounded-lg border border-border bg-bg p-3">
-                                  <textarea
-                                    value={noteDraft}
-                                    onChange={(event) => {
-                                      const value = event.target.value
-                                      setNoteDrafts((current) => ({ ...current, [row.id]: value }))
-                                    }}
-                                    className="min-h-[78px] w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-[13px] leading-relaxed text-text outline-none placeholder:text-text/35"
-                                    placeholder="Add note"
-                                  />
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    <button
-                                      type="button"
-                                      disabled={isRowPending || noteDraft === (row.note ?? '')}
-                                      onClick={() => saveNote(row)}
-                                      className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-text px-3 text-[12px] font-semibold text-bg disabled:cursor-not-allowed disabled:opacity-45"
-                                    >
-                                      <Save className="h-3.5 w-3.5" />
-                                      Save note
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setEditingNoteId(null)}
-                                      className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-[12px] font-semibold text-text/60 hover:text-text"
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
+                            {isEditingNote ? (
+                              <div className="mt-3 rounded-xl border border-border bg-bg p-3">
+                                <textarea
+                                  value={noteDraft}
+                                  onChange={(event) => {
+                                    const value = event.target.value
+                                    setNoteDrafts((current) => ({ ...current, [row.id]: value }))
+                                  }}
+                                  className="min-h-[72px] w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-[13px] leading-relaxed text-text outline-none placeholder:text-text/35"
+                                  placeholder="Add note"
+                                />
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    disabled={isRowPending || noteDraft === (row.note ?? '')}
+                                    onClick={() => saveNote(row)}
+                                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-text px-3 text-[12px] font-semibold text-bg disabled:cursor-not-allowed disabled:opacity-45"
+                                  >
+                                    <Save className="h-3.5 w-3.5" />
+                                    Save note
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingNoteId(null)}
+                                    className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-[12px] font-semibold text-text/60 hover:text-text"
+                                  >
+                                    Cancel
+                                  </button>
                                 </div>
-                              ) : row.note ? (
-                                <button
-                                  type="button"
-                                  onClick={() => startEditingNote(row)}
-                                  className="block w-full rounded-lg border border-border bg-bg px-3 py-2 text-left transition-colors hover:bg-raised"
-                                >
-                                  <span className="block text-[11px] font-bold uppercase tracking-[0.8px] text-text/34">Note</span>
-                                  <span className="mt-1 line-clamp-2 block text-[13px] leading-relaxed text-text/75">{row.note}</span>
-                                  <span className="mt-1 block text-[11px] font-semibold text-text/38">Edit note</span>
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => startEditingNote(row)}
-                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-dashed border-text/18 px-3 text-[12px] font-semibold text-text/50 transition-colors hover:border-text/30 hover:text-text"
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                  + note
-                                </button>
-                              )}
-                            </div>
+                              </div>
+                            ) : null}
                           </article>
                         )
                       })}
