@@ -605,7 +605,12 @@ export function MyLeadsView({ leads }: Props) {
                                   />
                                 </td>
                                 <td className="px-3 py-3">
-                                  <div className="font-semibold leading-snug text-text">{row.businessName}</div>
+                                  <Link
+                                    href={`/app/leads/${row.id}`}
+                                    className="font-semibold leading-snug text-text hover:underline"
+                                  >
+                                    {row.businessName}
+                                  </Link>
                                   <div className="mt-1 text-[12px] text-text/45">
                                     {[row.category, row.market ?? row.address].filter(Boolean).join(' · ')}
                                   </div>

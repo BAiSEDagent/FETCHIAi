@@ -36,8 +36,10 @@ async function main() {
   const myLeadsSource = source('components/app/MyLeadsView.tsx')
   const changed = changedFiles()
   const allowedChangedFiles = new Set([
+    'app/app/leads/[id]/page.tsx',
     'components/app/MyLeadsView.tsx',
     'scripts/pm/cp22f-a-my-leads-pipeline-surface-smoke.ts',
+    'scripts/pm/cp22g-a-saved-lead-detail-restoration-smoke.ts',
   ])
 
   for (const path of changed) {

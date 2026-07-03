@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { and, eq } from 'drizzle-orm'
-import { db, opportunities, contactRoutes, outreachPlays } from '@/db'
+import { db, opportunities, contactRoutes, outreachPlays, savedLeads } from '@/db'
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { SectionCard } from '@/components/app/SectionCard'
 import { Button } from '@/components/ui/button'
@@ -8,10 +8,12 @@ import { OutcomeForm } from './OutcomeForm'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 import { GlyphTile, glyphForSignalType, type GlyphKey } from '@/components/app/GlyphTile'
 import { formatSignalToken } from '@/lib/signals/token'
+import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+type SavedLeadDetailRow = typeof savedLeads.$inferSelect
 
 const SIGNAL_TYPE_LABEL: Record<string, string> = {
   storm_damage: 'Storm damage',
@@ -61,7 +63,17 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
   const opp = await db.query.opportunities.findFirst({
     where: (t, { eq: e, and: a }) => a(e(t.id, id), e(t.workspaceId, ctx.workspaceId)),
   })
-  if (!opp) return <LeadNotFoundState />
+  if (!opp) {
+    const [savedLead] = await db
+      .select()
+      .from(savedLeads)
+      .where(and(eq(savedLeads.workspaceId, ctx.workspaceId), eq(savedLeads.id, id)))
+      .limit(1)
+
+    if (savedLead) return <SavedLeadDetailState savedLead={savedLead} />
+
+    return <LeadNotFoundState />
+  }
 
   const [prospect, signal, contacts, drafts] = await Promise.all([
     opp.prospectId
@@ -205,6 +217,161 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
         </div>
 
         <OutcomeForm opportunityId={opp.id} currentStatus={opp.status} currentNotes={opp.outcomeNotes} />
+      </div>
+    </div>
+  )
+}
+
+function savedLeadStatusLabel(status: string): string {
+  switch (status) {
+    case 'contacted':
+      return 'Contacted'
+    case 'won':
+      return 'Won'
+    case 'lost':
+      return 'Lost'
+    case 'dismissed':
+      return 'Dismissed'
+    case 'saved':
+    default:
+      return 'Saved'
+  }
+}
+
+function savedLeadStatusClass(status: string): string {
+  switch (status) {
+    case 'contacted':
+      return 'border-blue/20 bg-blue/10 text-blue'
+    case 'won':
+      return 'border-ok/25 bg-ok/12 text-ok'
+    case 'lost':
+    case 'dismissed':
+      return 'border-bad/20 bg-bad/8 text-bad'
+    case 'saved':
+    default:
+      return 'border-text/10 bg-text/6 text-text/70'
+  }
+}
+
+function savedLeadInitials(name: string): string {
+  const parts = name
+    .replace(/[^a-z0-9\s'-]/gi, ' ')
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+  const first = parts[0]?.[0] ?? 'L'
+  const second = parts.length > 1 ? parts[1]?.[0] : parts[0]?.[1]
+  return `${first}${second ?? ''}`.toUpperCase()
+}
+
+function savedLeadDate(value: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(value)
+}
+
+function savedLeadWebsiteHref(value: string): string {
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`
+}
+
+function savedLeadWebsiteLabel(value: string): string {
+  try {
+    return new URL(savedLeadWebsiteHref(value)).hostname.replace(/^www\./, '')
+  } catch {
+    return value
+  }
+}
+
+function SavedLeadDetailState({ savedLead }: { savedLead: SavedLeadDetailRow }) {
+  const locationLine = savedLead.market ?? savedLead.address
+  const status = savedLeadStatusLabel(savedLead.lifecycleStatus)
+  const supportLine = [savedLead.category, locationLine, savedLead.source].filter(Boolean).join(' · ')
+  const hasWebsite = Boolean(savedLead.website)
+  const hasAddress = Boolean(savedLead.address ?? savedLead.market)
+
+  return (
+    <div className="mx-auto max-w-4xl">
+      <div className="flex items-center justify-between px-4 pb-2 pt-5 lg:px-7 lg:pt-7">
+        <Link href="/app/leads" className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface text-text/75 shadow-fetchi-soft hover:text-text" aria-label="Back to leads">
+          <ChevronLeft className="h-5 w-5" />
+        </Link>
+        <div className="min-w-0 flex-1 px-4 text-center">
+          <div className="text-[11px] font-bold uppercase tracking-[1px] text-text/45">Saved lead detail</div>
+        </div>
+        <span className="h-11 w-11" aria-hidden />
+      </div>
+
+      <div className="space-y-4 px-4 pb-[calc(env(safe-area-inset-bottom)+96px)] lg:px-7 lg:pb-12">
+        <section className="overflow-hidden rounded-[20px] border border-border bg-surface shadow-fetchi-card">
+          <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:p-7">
+            <div className="flex min-w-0 gap-4">
+              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl border border-border bg-raised font-outfit text-[18px] font-extrabold text-text">
+                {savedLeadInitials(savedLead.businessName)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className={cn('inline-flex rounded-full border px-2.5 py-1 text-[12px] font-bold', savedLeadStatusClass(savedLead.lifecycleStatus))}>
+                  {status}
+                </div>
+                <h1 className="mt-4 font-outfit text-[34px] font-extrabold leading-none text-text lg:text-[42px]">
+                  {savedLead.businessName}
+                </h1>
+                {supportLine && (
+                  <p className="mt-3 text-[14px] font-medium leading-relaxed text-text/58">
+                    {supportLine}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-bg p-4">
+              <div className="text-[11px] font-bold uppercase tracking-[1px] text-text/42">Saved dates</div>
+              <div className="mt-3 space-y-2 text-[13px] text-text/62">
+                <div className="flex items-center justify-between gap-3">
+                  <span>Saved</span>
+                  <span className="font-semibold text-text">{savedLeadDate(savedLead.savedAt)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>Updated</span>
+                  <span className="font-semibold text-text">{savedLeadDate(savedLead.updatedAt)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <SectionCard eyebrow="Contact coverage">
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            <InfoTile label="Phone" value={<a href={`tel:${savedLead.phone}`} className="text-text hover:underline">{savedLead.phone}</a>} />
+            <InfoTile
+              label="Website"
+              value={hasWebsite ? (
+                <a href={savedLeadWebsiteHref(savedLead.website!)} target="_blank" rel="noreferrer" className="inline-block max-w-full truncate text-text hover:underline">
+                  {savedLeadWebsiteLabel(savedLead.website!)}
+                </a>
+              ) : 'Missing website'}
+            />
+            <InfoTile label="Address" value={hasAddress ? (savedLead.address ?? savedLead.market) : '—'} />
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Saved lead fields">
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            <InfoTile label="Category" value={savedLead.category ?? '—'} />
+            <InfoTile label="Market" value={savedLead.market ?? '—'} />
+            <InfoTile label="Source" value={savedLead.source} />
+            <InfoTile label="Lifecycle" value={status} />
+          </div>
+        </SectionCard>
+
+        <SectionCard eyebrow="User note">
+          {savedLead.note ? (
+            <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-text/75">{savedLead.note}</p>
+          ) : (
+            <p className="text-[13.5px] text-text/55">No note saved.</p>
+          )}
+        </SectionCard>
       </div>
     </div>
   )
