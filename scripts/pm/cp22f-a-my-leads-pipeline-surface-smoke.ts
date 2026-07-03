@@ -39,7 +39,7 @@ async function main() {
     'app/app/leads/[id]/page.tsx',
     'components/app/MyLeadsView.tsx',
     'scripts/pm/cp22f-a-my-leads-pipeline-surface-smoke.ts',
-    'scripts/pm/cp22g-a-my-leads-visual-energy-smoke.ts',
+    'scripts/pm/cp22g-a-saved-lead-detail-restoration-smoke.ts',
   ])
 
   for (const path of changed) {

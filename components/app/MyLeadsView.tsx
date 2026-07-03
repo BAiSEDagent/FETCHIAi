@@ -5,15 +5,17 @@ import Link from 'next/link'
 import {
   ArrowDownToLine,
   CheckCircle2,
-  ChevronRight,
+  ExternalLink,
   FileJson,
   Globe2,
   Loader2,
+  Mail,
   MapPin,
   Phone,
   Plus,
   Save,
   Search,
+  UserRound,
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -39,23 +41,20 @@ type SortMode =
   | 'market_asc'
 
 type PipelineGroup = {
-  key: 'won' | 'contacted' | 'saved' | 'closed'
+  key: 'contacted' | 'saved' | 'won' | 'closed'
   label: string
   statuses: SavedLeadLifecycleStatus[]
   railClass: string
   borderClass: string
   badgeClass: string
   segmentClass: string
-  cardHoverClass: string
-  statusControlClass: string
-  avatarClass: string
 }
 
 const STATUS_FILTERS: Array<{ key: StatusFilter; label: string }> = [
   { key: 'all', label: 'All' },
-  { key: 'won', label: 'Won' },
-  { key: 'contacted', label: 'Contacted' },
   { key: 'saved', label: 'Saved' },
+  { key: 'contacted', label: 'Contacted' },
+  { key: 'won', label: 'Won' },
   { key: 'lost', label: 'Lost' },
   { key: 'dismissed', label: 'Dismissed' },
 ]
@@ -70,18 +69,6 @@ const STATUS_OPTIONS: Array<{ key: SavedLeadLifecycleStatus; label: string }> = 
 
 const PIPELINE_GROUPS: PipelineGroup[] = [
   {
-    key: 'won',
-    label: 'Won',
-    statuses: ['won'],
-    railClass: 'bg-ok',
-    borderClass: 'border-l-ok',
-    badgeClass: 'border-ok/25 bg-ok/12 text-ok',
-    segmentClass: 'bg-ok',
-    cardHoverClass: 'hover:border-ok/35',
-    statusControlClass: 'border-ok/25 bg-ok/10 text-ok',
-    avatarClass: 'border-ok/35 bg-ok/10 text-ok',
-  },
-  {
     key: 'contacted',
     label: 'Contacted',
     statuses: ['contacted'],
@@ -89,9 +76,6 @@ const PIPELINE_GROUPS: PipelineGroup[] = [
     borderClass: 'border-l-blue',
     badgeClass: 'border-blue/20 bg-blue/10 text-blue',
     segmentClass: 'bg-blue',
-    cardHoverClass: 'hover:border-blue/35',
-    statusControlClass: 'border-blue/25 bg-blue/10 text-blue',
-    avatarClass: 'border-blue/35 bg-blue/10 text-blue',
   },
   {
     key: 'saved',
@@ -101,9 +85,15 @@ const PIPELINE_GROUPS: PipelineGroup[] = [
     borderClass: 'border-l-text/25',
     badgeClass: 'border-text/10 bg-text/6 text-text/70',
     segmentClass: 'bg-text/35',
-    cardHoverClass: 'hover:border-text/20',
-    statusControlClass: 'border-text/12 bg-bg text-text/76',
-    avatarClass: 'border-border bg-raised text-text',
+  },
+  {
+    key: 'won',
+    label: 'Won',
+    statuses: ['won'],
+    railClass: 'bg-ok',
+    borderClass: 'border-l-ok',
+    badgeClass: 'border-ok/25 bg-ok/12 text-ok',
+    segmentClass: 'bg-ok',
   },
   {
     key: 'closed',
@@ -113,9 +103,6 @@ const PIPELINE_GROUPS: PipelineGroup[] = [
     borderClass: 'border-l-bad/60',
     badgeClass: 'border-bad/20 bg-bad/8 text-bad',
     segmentClass: 'bg-bad/60',
-    cardHoverClass: 'hover:border-bad/25',
-    statusControlClass: 'border-bad/20 bg-bad/8 text-bad',
-    avatarClass: 'border-bad/25 bg-bad/8 text-bad',
   },
 ]
 
@@ -129,9 +116,9 @@ const SORT_OPTIONS: Array<{ key: SortMode; label: string }> = [
 ]
 
 const STATUS_SORT_RANK: Record<SavedLeadLifecycleStatus, number> = {
-  won: 0,
-  contacted: 1,
-  saved: 2,
+  contacted: 0,
+  saved: 1,
+  won: 2,
   lost: 3,
   dismissed: 4,
 }
@@ -150,13 +137,9 @@ function downloadText(filename: string, mimeType: string, value: string) {
   URL.revokeObjectURL(url)
 }
 
-function externalHref(value: string): string {
-  return /^https?:\/\//i.test(value) ? value : `https://${value}`
-}
-
 function displayUrl(value: string): string {
   try {
-    const url = new URL(externalHref(value))
+    const url = new URL(value)
     return url.hostname.replace(/^www\./, '')
   } catch {
     return value
@@ -176,7 +159,7 @@ function statusLabel(status: SavedLeadLifecycleStatus): string {
 }
 
 function groupForStatus(status: SavedLeadLifecycleStatus): PipelineGroup {
-  return PIPELINE_GROUPS.find((group) => group.statuses.includes(status)) ?? PIPELINE_GROUPS[2]
+  return PIPELINE_GROUPS.find((group) => group.statuses.includes(status)) ?? PIPELINE_GROUPS[1]
 }
 
 function createNoteDrafts(leads: readonly SavedLeadPipelineRow[]): Record<string, string> {
@@ -238,6 +221,8 @@ function rowMatchesSearch(row: SavedLeadPipelineRow, query: string): boolean {
     row.businessName,
     row.phone,
     row.website,
+    row.email,
+    row.owner,
     row.market,
     row.address,
     row.category,
@@ -246,31 +231,12 @@ function rowMatchesSearch(row: SavedLeadPipelineRow, query: string): boolean {
   ].some((value) => (value ?? '').toLowerCase().includes(query))
 }
 
-function initialsForName(name: string): string {
-  const parts = name
-    .replace(/[^a-z0-9\s'-]/gi, ' ')
-    .split(/\s+/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-  const first = parts[0]?.[0] ?? 'L'
-  const second = parts.length > 1 ? parts[1]?.[0] : parts[0]?.[1]
-  return `${first}${second ?? ''}`.toUpperCase()
-}
-
-function supportLine(row: SavedLeadPipelineRow): string {
-  const values = [row.category, row.market ?? row.address, row.source].filter(Boolean)
-  return values.length > 0 ? values.join(' · ') : 'Saved lead'
-}
-
-function hasAddress(row: SavedLeadPipelineRow): boolean {
-  return Boolean(row.address ?? row.market)
-}
-
 export function MyLeadsView({ leads }: Props) {
   const [rows, setRows] = useState<SavedLeadPipelineRow[]>(leads)
   const [activeStatus, setActiveStatus] = useState<StatusFilter>('all')
   const [sortMode, setSortMode] = useState<SortMode>('status_pipeline')
   const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>(() => createNoteDrafts(leads))
   const [message, setMessage] = useState<string | null>(null)
@@ -279,6 +245,7 @@ export function MyLeadsView({ leads }: Props) {
 
   useEffect(() => {
     setRows(leads)
+    setSelectedIds(new Set())
     setEditingNoteId(null)
     setNoteDrafts(createNoteDrafts(leads))
   }, [leads])
@@ -308,6 +275,7 @@ export function MyLeadsView({ leads }: Props) {
       .filter((group) => group.rows.length > 0)
   }, [sortedVisibleRows])
 
+  const allVisibleSelected = visibleRows.length > 0 && visibleRows.every((row) => selectedIds.has(row.id))
   const pipelineTotal = visibleRows.length
 
   function exportCsv() {
@@ -316,6 +284,27 @@ export function MyLeadsView({ leads }: Props) {
 
   function exportJson() {
     downloadText('fetchi-saved-leads.json', 'application/json;charset=utf-8', exportSavedLeadsJson(sortedVisibleRows))
+  }
+
+  function toggleRowSelected(rowId: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (next.has(rowId)) next.delete(rowId)
+      else next.add(rowId)
+      return next
+    })
+  }
+
+  function toggleVisibleSelected() {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (allVisibleSelected) {
+        for (const row of visibleRows) next.delete(row.id)
+      } else {
+        for (const row of visibleRows) next.add(row.id)
+      }
+      return next
+    })
   }
 
   function startEditingNote(row: SavedLeadPipelineRow) {
@@ -394,10 +383,10 @@ export function MyLeadsView({ leads }: Props) {
       <div className="mx-auto flex w-full max-w-[1420px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <h1 className="font-outfit text-[32px] font-extrabold leading-none lg:text-[38px]">
+            <h1 className="font-outfit text-[30px] font-extrabold leading-tight lg:text-[34px]">
               My Leads
             </h1>
-            <div className="mt-2 text-[13.5px] font-medium text-text/55">
+            <div className="mt-1 text-[13.5px] text-text/55">
               {rows.length === 0
                 ? '0 saved leads'
                 : `${rows.length} saved lead${rows.length === 1 ? '' : 's'}`}
@@ -405,7 +394,7 @@ export function MyLeadsView({ leads }: Props) {
           </div>
 
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <div className="flex h-10 min-w-0 items-center gap-2 rounded-lg border border-border bg-surface px-3 sm:w-[300px]">
+            <div className="flex h-10 min-w-0 items-center gap-2 rounded-lg border border-text/10 bg-surface px-3 sm:w-[300px]">
               <Search className="h-4 w-4 flex-shrink-0 text-text/45" />
               <input
                 value={search}
@@ -425,7 +414,7 @@ export function MyLeadsView({ leads }: Props) {
               )}
             </div>
 
-            <label className="flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-[13px] text-text/70">
+            <label className="flex h-10 items-center gap-2 rounded-lg border border-text/10 bg-surface px-3 text-[13px] text-text/70">
               <span className="font-semibold text-text/55">Sort</span>
               <select
                 value={sortMode}
@@ -459,35 +448,30 @@ export function MyLeadsView({ leads }: Props) {
           </div>
         </div>
 
-        <section className="rounded-xl border border-border bg-surface px-4 py-4 shadow-fetchi-card">
+        <section className="rounded-lg border border-text/8 bg-surface px-4 py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="font-outfit text-[18px] font-bold text-text">
-                Status overview
+              <div className="text-[13px] font-semibold text-text">
+                {pipelineTotal} visible lead{pipelineTotal === 1 ? '' : 's'}
               </div>
               <div className="mt-1 text-[12.5px] text-text/45">
-                {pipelineTotal} visible lead{pipelineTotal === 1 ? '' : 's'} from the current view
+                Status distribution from the current view
               </div>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-2 text-[12.5px] text-text/62 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
               {PIPELINE_GROUPS.map((group) => {
                 const count = countForGroup(visibleStatusCounts, group)
                 return (
-                  <div key={group.key} className="rounded-lg border border-border bg-raised px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <span className={cn('h-2 w-2 rounded-full', group.segmentClass)} />
-                      <span className="text-[12px] font-semibold text-text/60">{group.label}</span>
-                    </div>
-                    <div className="mt-1 font-outfit text-[22px] font-extrabold leading-none text-text tabular-nums">
-                      {count}
-                    </div>
-                  </div>
+                  <span key={group.key} className="inline-flex items-center gap-1.5">
+                    <span className={cn('h-2 w-2 rounded-full', group.segmentClass)} />
+                    {group.label} <span className="tabular-nums text-text">{count}</span>
+                  </span>
                 )
               })}
             </div>
           </div>
 
-          <div className="mt-4 h-3 overflow-hidden rounded-full bg-bg">
+          <div className="mt-4 h-3 overflow-hidden rounded-full bg-raised">
             {pipelineTotal === 0 ? (
               <div className="h-full w-full bg-text/8" />
             ) : (
@@ -522,7 +506,7 @@ export function MyLeadsView({ leads }: Props) {
                   'inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-semibold transition-colors',
                   active
                     ? 'bg-text text-bg'
-                    : 'border border-border bg-surface text-text/70 hover:bg-raised hover:text-text',
+                    : 'border border-text/8 bg-surface text-text/70 hover:text-text',
                 )}
               >
                 <span>{tab.label}</span>
@@ -542,7 +526,7 @@ export function MyLeadsView({ leads }: Props) {
         )}
 
         {rows.length === 0 ? (
-          <div className="min-h-[420px] rounded-xl border border-border bg-surface px-4 py-20 text-center shadow-fetchi-card">
+          <div className="min-h-[420px] rounded-lg border border-text/8 bg-surface px-4 py-20 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
               <Search className="h-6 w-6" />
             </div>
@@ -555,7 +539,7 @@ export function MyLeadsView({ leads }: Props) {
             </Button>
           </div>
         ) : sortedVisibleRows.length === 0 ? (
-          <div className="rounded-xl border border-border bg-surface px-4 py-14 text-center shadow-fetchi-card">
+          <div className="rounded-lg border border-text/8 bg-surface px-4 py-14 text-center">
             <h2 className="font-outfit text-[22px]">No saved leads in this view.</h2>
             <p className="mt-2 text-[14px] text-text/50">Clear search or change the lifecycle filter.</p>
           </div>
@@ -564,12 +548,12 @@ export function MyLeadsView({ leads }: Props) {
             {groupedRows.map((group) => {
               const phoneCount = group.rows.filter((row) => Boolean(row.phone)).length
               const websiteCount = group.rows.filter((row) => Boolean(row.website)).length
-              const addressCount = group.rows.filter((row) => hasAddress(row)).length
 
               return (
-                <section key={group.key} className="rounded-[18px] border border-border/80 bg-surface/70 p-2">
+                <section key={group.key} className="grid grid-cols-[4px_minmax(0,1fr)] overflow-hidden rounded-lg border border-text/8 bg-surface">
+                  <div className={group.railClass} aria-hidden />
                   <div className="min-w-0">
-                    <div className="flex flex-col gap-2 px-2 py-2 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-col gap-2 border-b border-text/8 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={cn('inline-flex rounded-full border px-2.5 py-1 text-[12px] font-bold', group.badgeClass)}>
                           {group.label}
@@ -579,171 +563,179 @@ export function MyLeadsView({ leads }: Props) {
                         </span>
                       </div>
                       <div className="text-[12.5px] text-text/45">
-                        Contact coverage: {phoneCount} have phone · {websiteCount} have website · {addressCount} have address
+                        {phoneCount} have phone · {websiteCount} have website
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      {group.rows.map((row) => {
-                        const isRowPending = isPending && pendingId === row.id
-                        const groupMeta = groupForStatus(row.lifecycleStatus)
-                        const isEditingNote = editingNoteId === row.id
-                        const noteDraft = noteDrafts[row.id] ?? ''
+                    <div className={cn('overflow-auto border-l-[3px]', group.borderClass)}>
+                      <table className="w-full border-collapse text-left text-[13.5px]">
+                        <thead className="bg-raised text-[11px] uppercase tracking-[0.8px] text-text/42">
+                          <tr>
+                            <th className="w-10 px-3 py-3 font-bold">
+                              <input
+                                type="checkbox"
+                                checked={allVisibleSelected}
+                                onChange={toggleVisibleSelected}
+                                aria-label="Select visible saved leads"
+                                className="h-4 w-4 rounded border-text/20 bg-bg"
+                              />
+                            </th>
+                            <th className="min-w-[260px] px-3 py-3 font-bold">Business</th>
+                            <th className="min-w-[220px] px-3 py-3 font-bold">Contact</th>
+                            <th className="min-w-[260px] px-3 py-3 font-bold">Note</th>
+                            <th className="min-w-[170px] px-3 py-3 font-bold">Saved/Updated</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.rows.map((row) => {
+                            const isRowPending = isPending && pendingId === row.id
+                            const groupMeta = groupForStatus(row.lifecycleStatus)
+                            const isEditingNote = editingNoteId === row.id
+                            const noteDraft = noteDrafts[row.id] ?? ''
 
-                        return (
-                          <article
-                            key={row.id}
-                            className={cn(
-                              'rounded-[18px] border border-border bg-surface px-3 py-3 transition-colors hover:bg-raised/70 sm:px-4',
-                              groupMeta.cardHoverClass,
-                            )}
-                          >
-                            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-                              <div className="min-w-0">
-                                <Link
-                                  href={`/app/leads/${row.id}`}
-                                  className="group/card flex min-w-0 items-start gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-                                >
-                                  <div className={cn('flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border font-outfit text-[15px] font-extrabold shadow-fetchi-soft', groupMeta.avatarClass)}>
-                                    {initialsForName(row.businessName)}
+                            return (
+                              <tr key={row.id} className="border-t border-text/8 align-top transition-colors hover:bg-raised/65">
+                                <td className="px-3 py-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedIds.has(row.id)}
+                                    onChange={() => toggleRowSelected(row.id)}
+                                    aria-label={`Select ${row.businessName}`}
+                                    className="h-4 w-4 rounded border-text/20 bg-bg"
+                                  />
+                                </td>
+                                <td className="px-3 py-3">
+                                  <Link
+                                    href={`/app/leads/${row.id}`}
+                                    className="font-semibold leading-snug text-text hover:underline"
+                                  >
+                                    {row.businessName}
+                                  </Link>
+                                  <div className="mt-1 text-[12px] text-text/45">
+                                    {[row.category, row.market ?? row.address].filter(Boolean).join(' · ')}
                                   </div>
-                                  <div className="min-w-0 flex-1">
-                                    <h3 className="truncate font-outfit text-[19px] font-extrabold leading-tight text-text lg:text-[21px]">
-                                      {row.businessName}
-                                    </h3>
-                                    <div className="mt-0.5 truncate text-[12.5px] font-medium text-text/52">
-                                      {supportLine(row)}
+                                  {row.address && row.market && (
+                                    <div className="mt-1 flex gap-1.5 leading-snug text-[12px] text-text/45">
+                                      <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-text/35" />
+                                      <span>{row.address}</span>
                                     </div>
-                                    {row.address && (
-                                      <div className="mt-1.5 flex gap-1.5 text-[12px] leading-snug text-text/42">
-                                        <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-text/30" />
-                                        <span className="line-clamp-1">{row.address}</span>
+                                  )}
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    <span className={cn('inline-flex rounded-full border px-2 py-0.5 text-[11px] font-bold', groupMeta.badgeClass)}>
+                                      {statusLabel(row.lifecycleStatus)}
+                                    </span>
+                                    <select
+                                      value={row.lifecycleStatus}
+                                      disabled={isRowPending || row.lifecycleStatus === 'dismissed'}
+                                      onChange={(event) => changeStatus(row, event.target.value as SavedLeadLifecycleStatus)}
+                                      className="h-7 rounded-lg border border-text/10 bg-bg px-2 text-[12px] text-text outline-none disabled:opacity-60"
+                                    >
+                                      {STATUS_OPTIONS.map((option) => (
+                                        <option key={option.key} value={option.key}>
+                                          {option.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  {isRowPending && (
+                                    <div className="mt-2 flex items-center gap-1.5 text-[12px] text-text/45">
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                      Saving
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="space-y-2">
+                                    <a href={`tel:${row.phone}`} className="inline-flex items-center gap-1.5 font-medium text-text">
+                                      <Phone className="h-3.5 w-3.5 text-text/45" />
+                                      {row.phone}
+                                    </a>
+                                    {row.website && (
+                                      <a
+                                        href={row.website}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center gap-1.5 font-medium text-text/70 hover:text-text"
+                                      >
+                                        <Globe2 className="h-3.5 w-3.5" />
+                                        <span className="break-all">{displayUrl(row.website)}</span>
+                                        <ExternalLink className="h-3 w-3 opacity-60" />
+                                      </a>
+                                    )}
+                                    {row.email && (
+                                      <a href={`mailto:${row.email}`} className="flex items-center gap-1.5 text-text/70">
+                                        <Mail className="h-3.5 w-3.5 text-text/38" />
+                                        <span className="break-all">{row.email}</span>
+                                      </a>
+                                    )}
+                                    {row.owner && (
+                                      <div className="flex items-center gap-1.5 text-text/70">
+                                        <UserRound className="h-3.5 w-3.5 text-text/38" />
+                                        {row.owner}
                                       </div>
                                     )}
                                   </div>
-                                </Link>
-
-                                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 pl-14 text-[12px] text-text/52">
-                                  {row.phone && (
-                                    <a href={`tel:${row.phone}`} className="inline-flex items-center gap-1.5 hover:text-text">
-                                      <Phone className="h-3.5 w-3.5 text-text/35" />
-                                      {row.phone}
-                                    </a>
-                                  )}
-                                  {row.website ? (
-                                    <a
-                                      href={externalHref(row.website)}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="inline-flex min-w-0 items-center gap-1.5 text-text/52 hover:text-text"
+                                </td>
+                                <td className="px-3 py-3">
+                                  {isEditingNote ? (
+                                    <div className="max-w-[360px]">
+                                      <textarea
+                                        value={noteDraft}
+                                        onChange={(event) => {
+                                          const value = event.target.value
+                                          setNoteDrafts((current) => ({ ...current, [row.id]: value }))
+                                        }}
+                                        className="min-h-[78px] w-full resize-y rounded-lg border border-text/10 bg-bg px-3 py-2 text-[13px] leading-relaxed text-text outline-none placeholder:text-text/35"
+                                        placeholder="Add note"
+                                      />
+                                      <div className="mt-2 flex flex-wrap gap-2">
+                                        <button
+                                          type="button"
+                                          disabled={isRowPending || noteDraft === (row.note ?? '')}
+                                          onClick={() => saveNote(row)}
+                                          className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-text px-3 text-[12px] font-semibold text-bg disabled:cursor-not-allowed disabled:opacity-45"
+                                        >
+                                          <Save className="h-3.5 w-3.5" />
+                                          Save note
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingNoteId(null)}
+                                          className="inline-flex h-8 items-center rounded-lg border border-text/10 px-3 text-[12px] font-semibold text-text/60 hover:text-text"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : row.note ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditingNote(row)}
+                                      className="block max-w-[360px] rounded-lg border border-text/8 bg-bg px-3 py-2 text-left text-[13px] leading-relaxed text-text/75 hover:bg-raised"
                                     >
-                                      <Globe2 className="h-3.5 w-3.5 flex-shrink-0 text-text/35" />
-                                      <span className="truncate">{displayUrl(row.website)}</span>
-                                    </a>
+                                      {row.note}
+                                      <span className="mt-1 block text-[11px] font-semibold text-text/38">Edit note</span>
+                                    </button>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1.5 text-text/34">
-                                      <Globe2 className="h-3.5 w-3.5 text-text/28" />
-                                      Missing website
-                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditingNote(row)}
+                                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-dashed border-text/18 px-3 text-[12px] font-semibold text-text/50 hover:border-text/30 hover:text-text"
+                                    >
+                                      <Plus className="h-3.5 w-3.5" />
+                                      + note
+                                    </button>
                                   )}
-                                </div>
-
-                                {isEditingNote ? null : (
-                                  <div className="mt-2 pl-14">
-                                    {row.note ? (
-                                      <button
-                                        type="button"
-                                        onClick={() => startEditingNote(row)}
-                                        className="block max-w-2xl text-left text-[12px] leading-relaxed text-text/58 hover:text-text"
-                                      >
-                                        <span className="line-clamp-2">{row.note}</span>
-                                      </button>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        onClick={() => startEditingNote(row)}
-                                        className="inline-flex h-7 items-center gap-1.5 rounded-full border border-dashed border-text/18 px-2.5 text-[11.5px] font-semibold text-text/42 transition-colors hover:border-text/30 hover:text-text"
-                                      >
-                                        <Plus className="h-3.5 w-3.5" />
-                                        + note
-                                      </button>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
-                                <select
-                                  aria-label={`Lifecycle status for ${row.businessName}`}
-                                  value={row.lifecycleStatus}
-                                  disabled={isRowPending || row.lifecycleStatus === 'dismissed'}
-                                  onChange={(event) => changeStatus(row, event.target.value as SavedLeadLifecycleStatus)}
-                                  className={cn('h-8 max-w-[132px] rounded-full border px-3 text-[12px] font-bold outline-none disabled:cursor-not-allowed disabled:opacity-60', groupMeta.statusControlClass)}
-                                >
-                                  {STATUS_OPTIONS.map((option) => (
-                                    <option key={option.key} value={option.key}>
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-
-                                <div className="flex items-center gap-2 text-right">
-                                  {isRowPending && (
-                                    <span className="inline-flex items-center gap-1 text-[11px] text-text/45">
-                                      <Loader2 className="h-3 w-3 animate-spin" />
-                                      Saving
-                                    </span>
-                                  )}
-                                  <Link
-                                    href={`/app/leads/${row.id}`}
-                                    aria-label={`Open ${row.businessName}`}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-bg text-text/35 transition-colors hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-                                  >
-                                    <ChevronRight className="h-4 w-4" />
-                                  </Link>
-                                </div>
-
-                                <div className="text-[11.5px] leading-snug text-text/36 sm:text-right">
-                                  <div>Updated {displayDate(row.updatedAtIso)}</div>
-                                  <div>Saved {displayDate(row.savedAtIso)}</div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {isEditingNote ? (
-                              <div className="mt-3 rounded-xl border border-border bg-bg p-3">
-                                <textarea
-                                  value={noteDraft}
-                                  onChange={(event) => {
-                                    const value = event.target.value
-                                    setNoteDrafts((current) => ({ ...current, [row.id]: value }))
-                                  }}
-                                  className="min-h-[72px] w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-[13px] leading-relaxed text-text outline-none placeholder:text-text/35"
-                                  placeholder="Add note"
-                                />
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  <button
-                                    type="button"
-                                    disabled={isRowPending || noteDraft === (row.note ?? '')}
-                                    onClick={() => saveNote(row)}
-                                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-text px-3 text-[12px] font-semibold text-bg disabled:cursor-not-allowed disabled:opacity-45"
-                                  >
-                                    <Save className="h-3.5 w-3.5" />
-                                    Save note
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingNoteId(null)}
-                                    className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-[12px] font-semibold text-text/60 hover:text-text"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            ) : null}
-                          </article>
-                        )
-                      })}
+                                </td>
+                                <td className="px-3 py-3 text-text/55">
+                                  <div>{displayDate(row.updatedAtIso)}</div>
+                                  <div className="mt-1 text-[12px] text-text/38">Saved {displayDate(row.savedAtIso)}</div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </section>
