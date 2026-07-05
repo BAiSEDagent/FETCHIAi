@@ -14,6 +14,7 @@ import {
   Globe2,
   ListFilter,
   Loader2,
+  MapPin,
   NotebookPen,
   Phone,
   PhoneCall,
@@ -222,6 +223,10 @@ function hasWebsite(row: SavedLeadPipelineRow): boolean {
   return textValue(row.website).length > 0
 }
 
+function hasLocation(row: SavedLeadPipelineRow): boolean {
+  return textValue(row.address).length > 0 || textValue(row.market).length > 0
+}
+
 function countByStatus(rows: readonly SavedLeadPipelineRow[]): Record<SavedLeadLifecycleStatus, number> {
   return rows.reduce<Record<SavedLeadLifecycleStatus, number>>((next, row) => {
     next[row.lifecycleStatus] += 1
@@ -279,12 +284,12 @@ function detailLine(row: SavedLeadPipelineRow): string {
   return [row.category, row.market ?? row.address].filter(Boolean).join(' · ')
 }
 
-function fieldCoverageLine(row: SavedLeadPipelineRow, nowMs: number): string {
-  return [
-    hasPhone(row) ? 'Phone' : 'No phone',
-    hasWebsite(row) ? 'Website' : 'No website',
-    `${statusLabel(row.lifecycleStatus)} ${formatAge(row.updatedAtMs, nowMs)}`,
-  ].join(' · ')
+function formatCompactAge(valueMs: number, nowMs: number): string {
+  return formatAge(valueMs, nowMs).replace(' ago', '').replace('just now', 'now')
+}
+
+function statusAgeLabel(row: SavedLeadPipelineRow, nowMs: number): string {
+  return `${statusLabel(row.lifecycleStatus)} ${formatCompactAge(row.updatedAtMs, nowMs)}`
 }
 
 function statusActionsFor(row: SavedLeadPipelineRow): SavedLeadLifecycleStatus[] {
@@ -307,6 +312,73 @@ function OpenLeadLink({ row, className }: { row: SavedLeadPipelineRow; className
     >
       {row.businessName}
     </Link>
+  )
+}
+
+function FieldPresenceIcon({
+  icon: Icon,
+  available,
+  label,
+  missingLabel,
+}: {
+  icon: LucideIcon
+  available: boolean
+  label: string
+  missingLabel: string
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex h-6 w-6 items-center justify-center rounded-full',
+        available ? 'text-[#B8B0A2]' : 'text-[#4E4A43]',
+      )}
+      title={available ? label : missingLabel}
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      <span className="sr-only">{available ? label : missingLabel}</span>
+    </span>
+  )
+}
+
+function LeadIconStatusStrip({
+  row,
+  nowMs,
+}: {
+  row: SavedLeadPipelineRow
+  nowMs: number
+}) {
+  return (
+    <div
+      className="mt-1 flex min-w-0 items-center gap-1.5 text-[12px] font-semibold leading-snug text-[#7E786D]"
+      data-cp23c-icon-status-strip
+    >
+      <FieldPresenceIcon
+        icon={Phone}
+        available={hasPhone(row)}
+        label="Phone available"
+        missingLabel="No phone"
+      />
+      <FieldPresenceIcon
+        icon={Globe2}
+        available={hasWebsite(row)}
+        label="Website available"
+        missingLabel="No website"
+      />
+      <FieldPresenceIcon
+        icon={MapPin}
+        available={hasLocation(row)}
+        label="Location available"
+        missingLabel="No location"
+      />
+      <span
+        className={cn(
+          'ml-1 inline-flex min-w-0 items-center rounded-full bg-[#20241F] px-2 py-1 text-[11.5px] font-extrabold leading-none',
+          STATUS_META[row.lifecycleStatus].quietClass,
+        )}
+      >
+        <span className="truncate">{statusAgeLabel(row, nowMs)}</span>
+      </span>
+    </div>
   )
 }
 
@@ -505,35 +577,36 @@ export function MyLeadsView({ leads }: Props) {
           </div>
 
           <div
-            className="grid grid-cols-2 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,1.35fr)]"
+            className="grid grid-cols-[minmax(58px,0.72fr)_minmax(66px,0.78fr)_minmax(130px,1.45fr)] gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,1.35fr)] sm:gap-3"
             data-cp23b-action-rail
+            data-cp23c-compact-action-rail
           >
             <button
               type="button"
               disabled={visibleRows.length === 0}
               onClick={exportCsv}
-              className="inline-flex h-14 items-center justify-center gap-3 rounded-[22px] border border-[#2A2F2B] bg-[#0B0D0C] px-4 text-[15px] font-extrabold text-[#F7F3E8] transition-colors hover:border-[#F7F3E8]/25 hover:bg-[#171A18] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-[52px] min-w-0 items-center justify-center gap-1.5 rounded-[22px] border border-[#2A2F2B] bg-[#0B0D0C] px-2 text-[12.5px] font-extrabold text-[#F7F3E8] transition-colors hover:border-[#F7F3E8]/25 hover:bg-[#171A18] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:gap-3 sm:px-4 sm:text-[15px]"
             >
-              <ArrowDownToLine className="h-5 w-5" />
+              <ArrowDownToLine className="h-4 w-4 sm:h-5 sm:w-5" />
               CSV
             </button>
             <button
               type="button"
               disabled={visibleRows.length === 0}
               onClick={exportJson}
-              className="inline-flex h-14 items-center justify-center gap-3 rounded-[22px] border border-[#2A2F2B] bg-[#0B0D0C] px-4 text-[15px] font-extrabold text-[#F7F3E8] transition-colors hover:border-[#F7F3E8]/25 hover:bg-[#171A18] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-[52px] min-w-0 items-center justify-center gap-1.5 rounded-[22px] border border-[#2A2F2B] bg-[#0B0D0C] px-2 text-[12.5px] font-extrabold text-[#F7F3E8] transition-colors hover:border-[#F7F3E8]/25 hover:bg-[#171A18] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:gap-3 sm:px-4 sm:text-[15px]"
             >
-              <FileJson className="h-5 w-5" />
+              <FileJson className="h-4 w-4 sm:h-5 sm:w-5" />
               JSON
             </button>
             <Link
               href="/app/sweep"
               className={cn(
-                'col-span-2 inline-flex h-14 items-center justify-center gap-3 rounded-[22px] px-5 text-[15px] font-extrabold transition-colors sm:col-span-1',
+                'inline-flex h-[52px] min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[22px] px-2.5 text-[12.5px] font-extrabold transition-colors sm:h-14 sm:gap-3 sm:px-5 sm:text-[15px]',
                 GREEN_ACTION_CLASS,
               )}
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
               Run a sweep
             </Link>
           </div>
@@ -541,8 +614,9 @@ export function MyLeadsView({ leads }: Props) {
 
         <nav
           aria-label="Lifecycle filters"
-          className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 mt-5 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           data-cp23b-filter-rail
+          data-cp23c-mailbox-filter-rail
         >
           {LIFECYCLE_FILTERS.map((filter) => {
             const active = activeFilter === filter.key
@@ -554,15 +628,15 @@ export function MyLeadsView({ leads }: Props) {
                 type="button"
                 onClick={() => setActiveFilter(filter.key)}
                 className={cn(
-                  'inline-flex h-10 shrink-0 items-center justify-center rounded-full border text-[12.5px] font-extrabold transition-all',
+                  'inline-flex h-[58px] shrink-0 items-center justify-center rounded-[24px] border text-[13px] font-extrabold transition-all',
                   active
-                    ? cn('min-w-[88px] gap-2 px-3.5', filter.activeClass)
-                    : 'w-10 border-[#2A2F2B] bg-[#171A18] text-[#7E786D] hover:border-[#F7F3E8]/20 hover:text-[#F7F3E8]',
+                    ? cn('min-w-[140px] gap-2.5 px-5 shadow-[0_16px_35px_-26px_rgba(247,243,232,0.65)]', filter.activeClass)
+                    : 'w-10 border-[#2A2F2B] bg-[#171A18] !h-[58px] !w-[76px] rounded-[24px] text-[#9D98A3] hover:border-[#F7F3E8]/20 hover:text-[#F7F3E8]',
                 )}
                 aria-label={`${filter.label}: ${count}`}
                 title={`${filter.label}: ${count}`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-5 w-5" />
                 {active ? (
                   <>
                     <span>{filter.label}</span>
@@ -652,9 +726,7 @@ export function MyLeadsView({ leads }: Props) {
                     <div className="mt-1 truncate text-[13.5px] font-normal leading-snug text-[#B8B0A2]">
                       {detail || row.source}
                     </div>
-                    <div className="mt-1 truncate text-[12px] font-semibold leading-snug text-[#7E786D]">
-                      {fieldCoverageLine(row, nowMs)}
-                    </div>
+                    <LeadIconStatusStrip row={row} nowMs={nowMs} />
                     {row.note && (
                       <div className="mt-1 truncate text-[12px] font-medium leading-snug text-[#B8B0A2]/80">
                         {row.note}
@@ -776,7 +848,7 @@ function LeadActionSheet({
                     {detailLine(row) || row.source}
                   </SheetDescription>
                   <div className="mt-1 text-[12px] font-semibold text-[#7E786D]">
-                    {fieldCoverageLine(row, nowMs)}
+                    {statusAgeLabel(row, nowMs)}
                   </div>
                 </div>
               </div>
