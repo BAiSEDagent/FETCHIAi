@@ -35,6 +35,25 @@ function assertNoChangedPath(changed: readonly string[], predicate: (path: strin
   assert.equal(matches.length, 0, `${message}: ${matches.join(', ')}`)
 }
 
+function assertIncludesAll(source: string, values: readonly string[], message: string) {
+  for (const value of values) {
+    assert(source.includes(value), `${message}: missing ${value}`)
+  }
+}
+
+function blockAround(source: string, marker: string, before = 1000, after = 3000): string {
+  const index = source.indexOf(marker)
+  assert(index >= 0, `Missing marker: ${marker}`)
+  return source.slice(Math.max(0, index - before), index + after)
+}
+
+function classNameFor(source: string, marker: string): string {
+  const block = blockAround(source, marker, 1000, 600)
+  const match = block.match(/className="([^"]+)"/)
+  assert(match, `Missing className near ${marker}`)
+  return match[1]
+}
+
 async function main() {
   const changed = changedFiles()
   const allowedChangedFiles = new Set([
@@ -99,6 +118,16 @@ async function main() {
   assert(myLeads.includes('SheetContent'))
   assert(myLeads.includes('side="bottom"'))
   assert(myLeads.includes('data-cp23b-action-sheet'))
+  const actionSheetClassName = classNameFor(myLeads, 'data-cp23b-action-sheet')
+  assertIncludesAll(actionSheetClassName, [
+    'max-h-[88vh]',
+    'w-full',
+    'rounded-t-[28px]',
+    'overflow-y-auto',
+  ], 'Action sheet mobile bottom anchoring')
+  assert(!/(^|\s)left-1\/2(\s|$)/.test(actionSheetClassName), 'Action sheet has unprefixed desktop left positioning')
+  assert(!/(^|\s)right-auto(\s|$)/.test(actionSheetClassName), 'Action sheet has unprefixed desktop right positioning')
+  assert(!/(^|\s)-translate-x-1\/2(\s|$)/.test(actionSheetClassName), 'Action sheet has unprefixed desktop translate positioning')
   assert(myLeads.includes('statusActionsFor(row)'))
   assert(myLeads.includes('ACTION_STATUS_OPTIONS'))
   assert(myLeads.includes('undoStatusChange'))
@@ -114,16 +143,29 @@ async function main() {
   assert(myLeads.includes('updateSavedLeadStatus'))
   assert(myLeads.includes('updateSavedLeadNote'))
 
+  const actionRailBlock = blockAround(myLeads, 'data-cp23b-action-rail', 400, 2200)
   assert(myLeads.includes('exportSavedLeadsCsv'))
   assert(myLeads.includes('exportSavedLeadsJson'))
   assert(myLeads.includes('function exportCsv()'))
   assert(myLeads.includes('function exportJson()'))
-  assert(myLeads.includes('onClick={exportCsv}'))
-  assert(myLeads.includes('onClick={exportJson}'))
-  assert(myLeads.includes('CSV'))
-  assert(myLeads.includes('JSON'))
-  assert(myLeads.includes('Run a sweep'))
-  assert(myLeads.includes('href="/app/sweep"'))
+  assertIncludesAll(actionRailBlock, [
+    'onClick={exportCsv}',
+    'onClick={exportJson}',
+    'CSV',
+    'JSON',
+    'Run a sweep',
+    'href="/app/sweep"',
+    'GREEN_ACTION_CLASS',
+  ], 'Top action rail')
+
+  const sweepLinkBlocks = Array.from(myLeads.matchAll(
+    /<Link[\s\S]{0,700}?href="\/app\/sweep"[\s\S]{0,700}?Run a sweep[\s\S]{0,120}?<\/Link>/g,
+  )).map((match) => match[0])
+  assert(sweepLinkBlocks.length >= 1, 'Run a sweep link is missing')
+  const fixedMobileSweepLinks = sweepLinkBlocks.filter((block) =>
+    /\bfixed\b/.test(block) && /bottom-/.test(block) && /sm:hidden/.test(block),
+  )
+  assert.equal(fixedMobileSweepLinks.length, 0, 'Fixed mobile bottom Run a sweep CTA still exists')
 
   assert(!myLeads.includes('bg-coral'))
   assert(!myLeads.includes('text-coral'))
@@ -152,6 +194,8 @@ async function main() {
     jsonExportAccessRetained: true,
     runSweepAccessRetained: true,
     exportBehaviorStillUsesExistingFunctions: true,
+    fixedMobileRunSweepRemoved: true,
+    actionSheetMobileAnchored: true,
     swipeDeferred: true,
     coralPrimaryActionRemoved: true,
     protectedFilesChanged: false,

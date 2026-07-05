@@ -681,16 +681,6 @@ export function MyLeadsView({ leads }: Props) {
         )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-[76px] z-30 px-4 sm:hidden">
-        <Link
-          href="/app/sweep"
-          className={cn('mx-auto flex h-12 max-w-[420px] items-center justify-center gap-2 rounded-full px-6 py-3 text-[14px] font-extrabold shadow-[0_16px_40px_-18px_rgba(46,224,140,0.8)] transition-colors', GREEN_ACTION_CLASS)}
-        >
-          <Search className="h-4 w-4" />
-          Run a sweep
-        </Link>
-      </div>
-
       {undoToast && (
         <div className="fixed inset-x-4 bottom-[142px] z-40 mx-auto flex max-w-[420px] items-center gap-3 rounded-2xl border border-[#2A2F2B] bg-[#20241F] px-4 py-3 text-[13px] font-semibold text-[#F7F3E8] shadow-[0_18px_50px_-20px_rgba(0,0,0,0.9)] sm:bottom-6">
           <CheckCircle2 className={cn('h-4 w-4 flex-shrink-0', STATUS_META[undoToast.nextStatus].quietClass)} />
@@ -768,7 +758,7 @@ function LeadActionSheet({
     <Sheet open={Boolean(row)} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="left-1/2 right-auto max-h-[88vh] w-[calc(100%-24px)] max-w-[460px] -translate-x-1/2 overflow-y-auto rounded-t-[28px] border border-[#2A2F2B] bg-[#171A18] px-5 pb-6 pt-5 text-[#F7F3E8] shadow-[0_-24px_70px_-30px_rgba(0,0,0,0.9)] sm:bottom-6 sm:rounded-[28px]"
+        className="max-h-[88vh] w-full max-w-none overflow-y-auto rounded-t-[28px] border-x border-t border-[#2A2F2B] bg-[#171A18] px-5 pb-6 pt-5 text-[#F7F3E8] shadow-[0_-24px_70px_-30px_rgba(0,0,0,0.9)] sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-[min(460px,calc(100%-32px))] sm:-translate-x-1/2 sm:rounded-[28px] sm:border"
         data-cp23b-action-sheet
       >
         {row && (
