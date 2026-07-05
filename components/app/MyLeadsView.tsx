@@ -2,23 +2,34 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
+import type { LucideIcon } from 'lucide-react'
 import {
   ArrowDownToLine,
+  Bookmark,
   CheckCircle2,
+  ChevronRight,
+  CircleSlash,
   ExternalLink,
   FileJson,
   Globe2,
+  ListFilter,
   Loader2,
-  Mail,
-  MapPin,
+  NotebookPen,
   Phone,
-  Plus,
+  PhoneCall,
   Save,
   Search,
-  UserRound,
+  Trophy,
   X,
+  XCircle,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { exportSavedLeadsCsv, exportSavedLeadsJson } from '@/lib/runtime/sweep/export'
 import type {
   SavedLeadLifecycleStatus,
@@ -31,99 +42,129 @@ type Props = {
   leads: SavedLeadPipelineRow[]
 }
 
-type StatusFilter = 'all' | SavedLeadLifecycleStatus
-type SortMode =
-  | 'status_pipeline'
-  | 'date_desc'
-  | 'date_asc'
-  | 'business_asc'
-  | 'business_desc'
-  | 'market_asc'
+type FilterKey = 'all' | 'saved' | 'contacted' | 'won' | 'closed'
 
-type PipelineGroup = {
-  key: 'contacted' | 'saved' | 'won' | 'closed'
+type LifecycleMeta = {
   label: string
-  statuses: SavedLeadLifecycleStatus[]
-  railClass: string
-  borderClass: string
-  badgeClass: string
-  segmentClass: string
+  actionLabel: string
+  discClass: string
+  activeFilterClass: string
+  quietClass: string
+  actionClass: string
+  icon: LucideIcon
 }
 
-const STATUS_FILTERS: Array<{ key: StatusFilter; label: string }> = [
-  { key: 'all', label: 'All' },
-  { key: 'saved', label: 'Saved' },
-  { key: 'contacted', label: 'Contacted' },
-  { key: 'won', label: 'Won' },
-  { key: 'lost', label: 'Lost' },
-  { key: 'dismissed', label: 'Dismissed' },
-]
+type LifecycleFilter = {
+  key: FilterKey
+  label: string
+  statuses: SavedLeadLifecycleStatus[]
+  activeClass: string
+  icon: LucideIcon
+}
 
-const STATUS_OPTIONS: Array<{ key: SavedLeadLifecycleStatus; label: string }> = [
-  { key: 'saved', label: 'Saved' },
-  { key: 'contacted', label: 'Contacted' },
-  { key: 'won', label: 'Won' },
-  { key: 'lost', label: 'Lost' },
-  { key: 'dismissed', label: 'Dismissed' },
-]
+type UndoToast = {
+  id: string
+  rowId: string
+  businessName: string
+  previousStatus: SavedLeadLifecycleStatus
+  nextStatus: SavedLeadLifecycleStatus
+}
 
-const PIPELINE_GROUPS: PipelineGroup[] = [
-  {
-    key: 'contacted',
+const GREEN_ACTION_CLASS =
+  'bg-[#2EE08C] text-[#0B0D0C] hover:bg-[#29cc7f] active:bg-[#24b873]'
+
+const STATUS_META: Record<SavedLeadLifecycleStatus, LifecycleMeta> = {
+  saved: {
+    label: 'Saved',
+    actionLabel: 'Save',
+    discClass: 'bg-[#FFCC00] text-[#0B0D0C]',
+    activeFilterClass: 'border-[#FFCC00] bg-[#FFCC00] text-[#0B0D0C]',
+    quietClass: 'text-[#FFCC00]',
+    actionClass: 'bg-[#FFCC00]/10 text-[#FFCC00] hover:bg-[#FFCC00]/15',
+    icon: Bookmark,
+  },
+  contacted: {
     label: 'Contacted',
-    statuses: ['contacted'],
-    railClass: 'bg-blue',
-    borderClass: 'border-l-blue',
-    badgeClass: 'border-blue/20 bg-blue/10 text-blue',
-    segmentClass: 'bg-blue',
+    actionLabel: 'Mark as Contacted',
+    discClass: 'bg-[#38B6F5] text-[#0B0D0C]',
+    activeFilterClass: 'border-[#38B6F5] bg-[#38B6F5] text-[#0B0D0C]',
+    quietClass: 'text-[#38B6F5]',
+    actionClass: 'bg-[#38B6F5]/10 text-[#38B6F5] hover:bg-[#38B6F5]/15',
+    icon: PhoneCall,
+  },
+  won: {
+    label: 'Won',
+    actionLabel: 'Mark as Won',
+    discClass: 'bg-[#2EE08C] text-[#0B0D0C]',
+    activeFilterClass: 'border-[#2EE08C] bg-[#2EE08C] text-[#0B0D0C]',
+    quietClass: 'text-[#2EE08C]',
+    actionClass: 'bg-[#2EE08C]/10 text-[#2EE08C] hover:bg-[#2EE08C]/15',
+    icon: Trophy,
+  },
+  lost: {
+    label: 'Lost',
+    actionLabel: 'Dismiss',
+    discClass: 'bg-[#EF5A4E] text-[#0B0D0C]',
+    activeFilterClass: 'border-[#EF5A4E] bg-[#EF5A4E] text-[#0B0D0C]',
+    quietClass: 'text-[#EF5A4E]',
+    actionClass: 'bg-[#EF5A4E]/10 text-[#EF5A4E] hover:bg-[#EF5A4E]/15',
+    icon: XCircle,
+  },
+  dismissed: {
+    label: 'Dismissed',
+    actionLabel: 'Dismiss',
+    discClass: 'bg-[#EF5A4E] text-[#0B0D0C]',
+    activeFilterClass: 'border-[#EF5A4E] bg-[#EF5A4E] text-[#0B0D0C]',
+    quietClass: 'text-[#EF5A4E]',
+    actionClass: 'bg-[#EF5A4E]/10 text-[#EF5A4E] hover:bg-[#EF5A4E]/15',
+    icon: XCircle,
+  },
+}
+
+const LIFECYCLE_FILTERS: LifecycleFilter[] = [
+  {
+    key: 'all',
+    label: 'All',
+    statuses: ['saved', 'contacted', 'won', 'lost', 'dismissed'],
+    activeClass: 'border-[#F7F3E8] bg-[#F7F3E8] text-[#0B0D0C]',
+    icon: ListFilter,
   },
   {
     key: 'saved',
     label: 'Saved',
     statuses: ['saved'],
-    railClass: 'bg-text/28',
-    borderClass: 'border-l-text/25',
-    badgeClass: 'border-text/10 bg-text/6 text-text/70',
-    segmentClass: 'bg-text/35',
+    activeClass: STATUS_META.saved.activeFilterClass,
+    icon: Bookmark,
+  },
+  {
+    key: 'contacted',
+    label: 'Contacted',
+    statuses: ['contacted'],
+    activeClass: STATUS_META.contacted.activeFilterClass,
+    icon: PhoneCall,
   },
   {
     key: 'won',
     label: 'Won',
     statuses: ['won'],
-    railClass: 'bg-ok',
-    borderClass: 'border-l-ok',
-    badgeClass: 'border-ok/25 bg-ok/12 text-ok',
-    segmentClass: 'bg-ok',
+    activeClass: STATUS_META.won.activeFilterClass,
+    icon: Trophy,
   },
   {
     key: 'closed',
-    label: 'Lost/Dismissed',
+    label: 'Lost / Dismissed',
     statuses: ['lost', 'dismissed'],
-    railClass: 'bg-bad/60',
-    borderClass: 'border-l-bad/60',
-    badgeClass: 'border-bad/20 bg-bad/8 text-bad',
-    segmentClass: 'bg-bad/60',
+    activeClass: STATUS_META.dismissed.activeFilterClass,
+    icon: CircleSlash,
   },
 ]
 
-const SORT_OPTIONS: Array<{ key: SortMode; label: string }> = [
-  { key: 'status_pipeline', label: 'Lifecycle status: pipeline order' },
-  { key: 'date_desc', label: 'Saved/updated date: newest first' },
-  { key: 'date_asc', label: 'Saved/updated date: oldest first' },
-  { key: 'business_asc', label: 'Business name: A-Z' },
-  { key: 'business_desc', label: 'Business name: Z-A' },
-  { key: 'market_asc', label: 'Market: A-Z' },
+const ACTION_STATUS_OPTIONS: SavedLeadLifecycleStatus[] = [
+  'saved',
+  'contacted',
+  'won',
+  'dismissed',
 ]
-
-const STATUS_SORT_RANK: Record<SavedLeadLifecycleStatus, number> = {
-  contacted: 0,
-  saved: 1,
-  won: 2,
-  lost: 3,
-  dismissed: 4,
-}
-
-const RUN_SWEEP_PRIMARY_ACTION_CLASS = 'gap-2 bg-coral text-white hover:bg-coralDeep'
 
 function downloadText(filename: string, mimeType: string, value: string) {
   const blob = new Blob([value], { type: mimeType })
@@ -154,45 +195,31 @@ function displayDate(value: string): string {
   }).format(new Date(value))
 }
 
-function statusLabel(status: SavedLeadLifecycleStatus): string {
-  return STATUS_OPTIONS.find((option) => option.key === status)?.label ?? status
-}
-
-function groupForStatus(status: SavedLeadLifecycleStatus): PipelineGroup {
-  return PIPELINE_GROUPS.find((group) => group.statuses.includes(status)) ?? PIPELINE_GROUPS[1]
-}
-
-function createNoteDrafts(leads: readonly SavedLeadPipelineRow[]): Record<string, string> {
-  return Object.fromEntries(leads.map((lead) => [lead.id, lead.note ?? '']))
-}
-
 function textValue(value: string | null | undefined): string {
   return (value ?? '').trim()
 }
 
-function compareText(a: string | null | undefined, b: string | null | undefined): number {
-  return textValue(a).localeCompare(textValue(b), undefined, { sensitivity: 'base' })
+function statusLabel(status: SavedLeadLifecycleStatus): string {
+  return STATUS_META[status]?.label ?? status
 }
 
-function compareBySortMode(a: SavedLeadPipelineRow, b: SavedLeadPipelineRow, sortMode: SortMode): number {
-  switch (sortMode) {
-    case 'date_asc':
-      return a.updatedAtMs - b.updatedAtMs || compareText(a.businessName, b.businessName)
-    case 'date_desc':
-      return b.updatedAtMs - a.updatedAtMs || compareText(a.businessName, b.businessName)
-    case 'business_asc':
-      return compareText(a.businessName, b.businessName) || b.updatedAtMs - a.updatedAtMs
-    case 'business_desc':
-      return compareText(b.businessName, a.businessName) || b.updatedAtMs - a.updatedAtMs
-    case 'market_asc':
-      return compareText(a.market ?? a.address, b.market ?? b.address) ||
-        compareText(a.businessName, b.businessName)
-    case 'status_pipeline':
-    default:
-      return STATUS_SORT_RANK[a.lifecycleStatus] - STATUS_SORT_RANK[b.lifecycleStatus] ||
-        b.updatedAtMs - a.updatedAtMs ||
-        compareText(a.businessName, b.businessName)
-  }
+function initialsForName(value: string): string {
+  const letters = value
+    .split(/\s+/)
+    .map((part) => part.trim()[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+  return letters || 'FL'
+}
+
+function hasPhone(row: SavedLeadPipelineRow): boolean {
+  return textValue(row.phone).length > 0
+}
+
+function hasWebsite(row: SavedLeadPipelineRow): boolean {
+  return textValue(row.website).length > 0
 }
 
 function countByStatus(rows: readonly SavedLeadPipelineRow[]): Record<SavedLeadLifecycleStatus, number> {
@@ -208,11 +235,11 @@ function countByStatus(rows: readonly SavedLeadPipelineRow[]): Record<SavedLeadL
   })
 }
 
-function countForGroup(
+function countForFilter(
   counts: Record<SavedLeadLifecycleStatus, number>,
-  group: PipelineGroup,
+  filter: LifecycleFilter,
 ): number {
-  return group.statuses.reduce((total, status) => total + counts[status], 0)
+  return filter.statuses.reduce((total, status) => total + counts[status], 0)
 }
 
 function rowMatchesSearch(row: SavedLeadPipelineRow, query: string): boolean {
@@ -221,8 +248,6 @@ function rowMatchesSearch(row: SavedLeadPipelineRow, query: string): boolean {
     row.businessName,
     row.phone,
     row.website,
-    row.email,
-    row.owner,
     row.market,
     row.address,
     row.category,
@@ -231,80 +256,117 @@ function rowMatchesSearch(row: SavedLeadPipelineRow, query: string): boolean {
   ].some((value) => (value ?? '').toLowerCase().includes(query))
 }
 
+function compareBusinessName(a: SavedLeadPipelineRow, b: SavedLeadPipelineRow): number {
+  return textValue(a.businessName).localeCompare(textValue(b.businessName), undefined, { sensitivity: 'base' }) ||
+    b.updatedAtMs - a.updatedAtMs
+}
+
+function formatAge(valueMs: number, nowMs: number): string {
+  const diffMs = Math.max(0, nowMs - valueMs)
+  const minutes = Math.floor(diffMs / 60000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 14) return `${days}d ago`
+  const weeks = Math.floor(days / 7)
+  if (weeks < 8) return `${weeks}w ago`
+  return displayDate(new Date(valueMs).toISOString())
+}
+
+function detailLine(row: SavedLeadPipelineRow): string {
+  return [row.category, row.market ?? row.address].filter(Boolean).join(' · ')
+}
+
+function fieldCoverageLine(row: SavedLeadPipelineRow, nowMs: number): string {
+  return [
+    hasPhone(row) ? 'Phone' : 'No phone',
+    hasWebsite(row) ? 'Website' : 'No website',
+    `${statusLabel(row.lifecycleStatus)} ${formatAge(row.updatedAtMs, nowMs)}`,
+  ].join(' · ')
+}
+
+function statusActionsFor(row: SavedLeadPipelineRow): SavedLeadLifecycleStatus[] {
+  return ACTION_STATUS_OPTIONS.filter((status) => {
+    if (row.lifecycleStatus === status) return false
+    if ((row.lifecycleStatus === 'lost' || row.lifecycleStatus === 'dismissed') && status === 'dismissed') {
+      return false
+    }
+    return true
+  })
+}
+
+function OpenLeadLink({ row, className }: { row: SavedLeadPipelineRow; className?: string }) {
+  return (
+    <Link
+      href={`/app/leads/${row.id}`}
+      className={className}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      {row.businessName}
+    </Link>
+  )
+}
+
 export function MyLeadsView({ leads }: Props) {
   const [rows, setRows] = useState<SavedLeadPipelineRow[]>(leads)
-  const [activeStatus, setActiveStatus] = useState<StatusFilter>('all')
-  const [sortMode, setSortMode] = useState<SortMode>('status_pipeline')
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('all')
   const [search, setSearch] = useState('')
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const [activeLeadId, setActiveLeadId] = useState<string | null>(null)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>(() => createNoteDrafts(leads))
   const [message, setMessage] = useState<string | null>(null)
+  const [undoToast, setUndoToast] = useState<UndoToast | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [nowMs, setNowMs] = useState(() => Date.now())
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
     setRows(leads)
-    setSelectedIds(new Set())
+    setActiveLeadId(null)
     setEditingNoteId(null)
     setNoteDrafts(createNoteDrafts(leads))
+    setUndoToast(null)
   }, [leads])
 
+  useEffect(() => {
+    const id = window.setInterval(() => setNowMs(Date.now()), 60000)
+    return () => window.clearInterval(id)
+  }, [])
+
   const statusCounts = useMemo(() => countByStatus(rows), [rows])
+  const activeFilterMeta = LIFECYCLE_FILTERS.find((filter) => filter.key === activeFilter) ?? LIFECYCLE_FILTERS[0]
+
+  const sortedRows = useMemo(() => [...rows].sort(compareBusinessName), [rows])
 
   const visibleRows = useMemo(() => {
     const query = search.trim().toLowerCase()
-    return rows.filter((row) => {
-      if (activeStatus !== 'all' && row.lifecycleStatus !== activeStatus) return false
+    return sortedRows.filter((row) => {
+      if (activeFilter !== 'all' && !activeFilterMeta.statuses.includes(row.lifecycleStatus)) return false
       return rowMatchesSearch(row, query)
     })
-  }, [rows, activeStatus, search])
+  }, [sortedRows, activeFilter, activeFilterMeta.statuses, search])
 
-  const sortedVisibleRows = useMemo(() => {
-    return [...visibleRows].sort((a, b) => compareBySortMode(a, b, sortMode))
-  }, [visibleRows, sortMode])
+  const activeLead = useMemo(
+    () => rows.find((row) => row.id === activeLeadId) ?? null,
+    [rows, activeLeadId],
+  )
 
-  const visibleStatusCounts = useMemo(() => countByStatus(visibleRows), [visibleRows])
+  const latestUpdateMs = useMemo(() => {
+    return rows.reduce((latest, row) => Math.max(latest, row.updatedAtMs), 0)
+  }, [rows])
 
-  const groupedRows = useMemo(() => {
-    return PIPELINE_GROUPS
-      .map((group) => ({
-        ...group,
-        rows: sortedVisibleRows.filter((row) => group.statuses.includes(row.lifecycleStatus)),
-      }))
-      .filter((group) => group.rows.length > 0)
-  }, [sortedVisibleRows])
-
-  const allVisibleSelected = visibleRows.length > 0 && visibleRows.every((row) => selectedIds.has(row.id))
-  const pipelineTotal = visibleRows.length
+  const leadCountLabel = rows.length === 1 ? '1 lead' : `${rows.length} leads`
+  const updatedLabel = latestUpdateMs > 0 ? `Updated ${formatAge(latestUpdateMs, nowMs)}` : 'No saved leads yet'
 
   function exportCsv() {
-    downloadText('fetchi-saved-leads.csv', 'text/csv;charset=utf-8', exportSavedLeadsCsv(sortedVisibleRows))
+    downloadText('fetchi-saved-leads.csv', 'text/csv;charset=utf-8', exportSavedLeadsCsv(visibleRows))
   }
 
   function exportJson() {
-    downloadText('fetchi-saved-leads.json', 'application/json;charset=utf-8', exportSavedLeadsJson(sortedVisibleRows))
-  }
-
-  function toggleRowSelected(rowId: string) {
-    setSelectedIds((current) => {
-      const next = new Set(current)
-      if (next.has(rowId)) next.delete(rowId)
-      else next.add(rowId)
-      return next
-    })
-  }
-
-  function toggleVisibleSelected() {
-    setSelectedIds((current) => {
-      const next = new Set(current)
-      if (allVisibleSelected) {
-        for (const row of visibleRows) next.delete(row.id)
-      } else {
-        for (const row of visibleRows) next.add(row.id)
-      }
-      return next
-    })
+    downloadText('fetchi-saved-leads.json', 'application/json;charset=utf-8', exportSavedLeadsJson(visibleRows))
   }
 
   function startEditingNote(row: SavedLeadPipelineRow) {
@@ -312,12 +374,24 @@ export function MyLeadsView({ leads }: Props) {
     setNoteDrafts((current) => ({ ...current, [row.id]: row.note ?? '' }))
   }
 
-  function changeStatus(row: SavedLeadPipelineRow, status: SavedLeadLifecycleStatus) {
+  function closeSheet() {
+    setActiveLeadId(null)
+    setEditingNoteId(null)
+  }
+
+  function changeStatus(
+    row: SavedLeadPipelineRow,
+    status: SavedLeadLifecycleStatus,
+    options: { showUndo?: boolean; closeSheet?: boolean } = {},
+  ) {
     if (row.lifecycleStatus === status || isPending) return
-    setPendingId(row.id)
-    setMessage(null)
+    const showUndo = options.showUndo ?? true
+    const previousStatus = row.lifecycleStatus
     const before = rows
     const now = new Date().toISOString()
+    setPendingId(row.id)
+    setMessage(null)
+    if (options.closeSheet) closeSheet()
     setRows((current) => current.map((item) =>
       item.id === row.id
         ? {
@@ -336,12 +410,29 @@ export function MyLeadsView({ leads }: Props) {
       })
       if (!result.ok || result.updated === 0) {
         setRows(before)
+        setUndoToast(null)
         setMessage(result.error ?? 'Status was not updated.')
+      } else if (showUndo) {
+        setUndoToast({
+          id: `${row.id}-${Date.now()}`,
+          rowId: row.id,
+          businessName: row.businessName,
+          previousStatus,
+          nextStatus: status,
+        })
       } else {
-        setMessage(`Updated ${row.businessName} to ${statusLabel(status)}.`)
+        setUndoToast(null)
       }
       setPendingId(null)
     })
+  }
+
+  function undoStatusChange(toast: UndoToast) {
+    if (isPending) return
+    const row = rows.find((item) => item.id === toast.rowId)
+    if (!row) return
+    setUndoToast(null)
+    changeStatus(row, toast.previousStatus, { showUndo: false })
   }
 
   function saveNote(row: SavedLeadPipelineRow) {
@@ -379,371 +470,438 @@ export function MyLeadsView({ leads }: Props) {
   }
 
   return (
-    <div className="min-h-full bg-bg text-text">
-      <div className="mx-auto flex w-full max-w-[1420px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <h1 className="font-outfit text-[30px] font-extrabold leading-tight lg:text-[34px]">
-              My Leads
-            </h1>
-            <div className="mt-1 text-[13.5px] text-text/55">
-              {rows.length === 0
-                ? '0 saved leads'
-                : `${rows.length} saved lead${rows.length === 1 ? '' : 's'}`}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <div className="flex h-10 min-w-0 items-center gap-2 rounded-lg border border-text/10 bg-surface px-3 sm:w-[300px]">
-              <Search className="h-4 w-4 flex-shrink-0 text-text/45" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search saved leads"
-                className="min-w-0 flex-1 bg-transparent text-[13.5px] text-text outline-none placeholder:text-text/40"
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch('')}
-                  aria-label="Clear search"
-                  className="text-text/45 hover:text-text"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            <label className="flex h-10 items-center gap-2 rounded-lg border border-text/10 bg-surface px-3 text-[13px] text-text/70">
-              <span className="font-semibold text-text/55">Sort</span>
-              <select
-                value={sortMode}
-                onChange={(event) => setSortMode(event.target.value as SortMode)}
-                className="min-w-[210px] bg-transparent text-text outline-none"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.key} value={option.key}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" disabled={sortedVisibleRows.length === 0} onClick={exportCsv} className="gap-2">
-                <ArrowDownToLine className="h-4 w-4" />
-                CSV
-              </Button>
-              <Button type="button" variant="outline" disabled={sortedVisibleRows.length === 0} onClick={exportJson} className="gap-2">
-                <FileJson className="h-4 w-4" />
-                JSON
-              </Button>
-              <Button asChild className={RUN_SWEEP_PRIMARY_ACTION_CLASS}>
-                <Link href="/app/sweep">
-                  <Search className="h-4 w-4" />
-                  Run a sweep
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <section className="rounded-lg border border-text/8 bg-surface px-4 py-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="min-h-full bg-[#0B0D0C] text-[#F7F3E8]" data-cp23b-mailbox-surface>
+      <div className="mx-auto flex w-full max-w-[760px] flex-col px-4 pb-28 pt-5 sm:px-6 lg:pb-12 lg:pt-8">
+        <header className="flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-[13px] font-semibold text-text">
-                {pipelineTotal} visible lead{pipelineTotal === 1 ? '' : 's'}
+              <h1 className="font-outfit text-[32px] font-extrabold leading-none">
+                My Leads
+              </h1>
+              <div className="mt-2 text-[13px] font-medium text-[#B8B0A2]">
+                {leadCountLabel} · {updatedLabel}
               </div>
-              <div className="mt-1 text-[12.5px] text-text/45">
-                Status distribution from the current view
-              </div>
-            </div>
-            <div className="grid gap-2 text-[12.5px] text-text/62 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
-              {PIPELINE_GROUPS.map((group) => {
-                const count = countForGroup(visibleStatusCounts, group)
-                return (
-                  <span key={group.key} className="inline-flex items-center gap-1.5">
-                    <span className={cn('h-2 w-2 rounded-full', group.segmentClass)} />
-                    {group.label} <span className="tabular-nums text-text">{count}</span>
-                  </span>
-                )
-              })}
             </div>
           </div>
 
-          <div className="mt-4 h-3 overflow-hidden rounded-full bg-raised">
-            {pipelineTotal === 0 ? (
-              <div className="h-full w-full bg-text/8" />
-            ) : (
-              <div className="flex h-full w-full">
-                {PIPELINE_GROUPS.map((group) => {
-                  const count = countForGroup(visibleStatusCounts, group)
-                  if (count === 0) return null
-                  return (
-                    <div
-                      key={group.key}
-                      className={group.segmentClass}
-                      style={{ width: `${(count / pipelineTotal) * 100}%` }}
-                      aria-label={`${group.label} ${count}`}
-                    />
-                  )
-                })}
-              </div>
+          <div className="flex h-12 items-center gap-2 rounded-xl bg-[#171A18] px-4 text-[#B8B0A2]">
+            <Search className="h-4 w-4 flex-shrink-0 text-[#7E786D]" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search leads"
+              className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-[#F7F3E8] outline-none placeholder:text-[#7E786D]"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+                className="text-[#7E786D] transition-colors hover:text-[#F7F3E8]"
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
           </div>
-        </section>
 
-        <div className="flex flex-wrap gap-2">
-          {STATUS_FILTERS.map((tab) => {
-            const active = activeStatus === tab.key
-            const count = tab.key === 'all' ? rows.length : statusCounts[tab.key]
+          <div
+            className="grid grid-cols-2 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,1.35fr)]"
+            data-cp23b-action-rail
+          >
+            <button
+              type="button"
+              disabled={visibleRows.length === 0}
+              onClick={exportCsv}
+              className="inline-flex h-14 items-center justify-center gap-3 rounded-[22px] border border-[#2A2F2B] bg-[#0B0D0C] px-4 text-[15px] font-extrabold text-[#F7F3E8] transition-colors hover:border-[#F7F3E8]/25 hover:bg-[#171A18] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ArrowDownToLine className="h-5 w-5" />
+              CSV
+            </button>
+            <button
+              type="button"
+              disabled={visibleRows.length === 0}
+              onClick={exportJson}
+              className="inline-flex h-14 items-center justify-center gap-3 rounded-[22px] border border-[#2A2F2B] bg-[#0B0D0C] px-4 text-[15px] font-extrabold text-[#F7F3E8] transition-colors hover:border-[#F7F3E8]/25 hover:bg-[#171A18] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <FileJson className="h-5 w-5" />
+              JSON
+            </button>
+            <Link
+              href="/app/sweep"
+              className={cn(
+                'col-span-2 inline-flex h-14 items-center justify-center gap-3 rounded-[22px] px-5 text-[15px] font-extrabold transition-colors sm:col-span-1',
+                GREEN_ACTION_CLASS,
+              )}
+            >
+              <Search className="h-5 w-5" />
+              Run a sweep
+            </Link>
+          </div>
+        </header>
+
+        <nav
+          aria-label="Lifecycle filters"
+          className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          data-cp23b-filter-rail
+        >
+          {LIFECYCLE_FILTERS.map((filter) => {
+            const active = activeFilter === filter.key
+            const count = filter.key === 'all' ? rows.length : countForFilter(statusCounts, filter)
+            const Icon = filter.icon
             return (
               <button
-                key={tab.key}
+                key={filter.key}
                 type="button"
-                onClick={() => setActiveStatus(tab.key)}
+                onClick={() => setActiveFilter(filter.key)}
                 className={cn(
-                  'inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-semibold transition-colors',
+                  'inline-flex h-10 shrink-0 items-center justify-center rounded-full border text-[12.5px] font-extrabold transition-all',
                   active
-                    ? 'bg-text text-bg'
-                    : 'border border-text/8 bg-surface text-text/70 hover:text-text',
+                    ? cn('min-w-[88px] gap-2 px-3.5', filter.activeClass)
+                    : 'w-10 border-[#2A2F2B] bg-[#171A18] text-[#7E786D] hover:border-[#F7F3E8]/20 hover:text-[#F7F3E8]',
                 )}
+                aria-label={`${filter.label}: ${count}`}
+                title={`${filter.label}: ${count}`}
               >
-                <span>{tab.label}</span>
-                <span className={cn('tabular-nums', active ? 'text-bg/70' : 'text-text/45')}>
-                  {count}
-                </span>
+                <Icon className="h-4 w-4" />
+                {active ? (
+                  <>
+                    <span>{filter.label}</span>
+                    <span className="tabular-nums opacity-75">{count}</span>
+                  </>
+                ) : (
+                  <span className="sr-only">
+                    {filter.label} {count}
+                  </span>
+                )}
               </button>
             )
           })}
-        </div>
+        </nav>
 
         {message && (
-          <div className="flex items-center gap-2 rounded-lg border border-ok/20 bg-ok/10 px-4 py-3 text-[13px] text-ok">
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#2EE08C]/25 bg-[#2EE08C]/10 px-4 py-3 text-[13px] font-semibold text-[#2EE08C]">
             <CheckCircle2 className="h-4 w-4" />
             {message}
           </div>
         )}
 
         {rows.length === 0 ? (
-          <div className="min-h-[420px] rounded-lg border border-text/8 bg-surface px-4 py-20 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
-              <Search className="h-6 w-6" />
+          <div className="flex min-h-[420px] flex-col items-center justify-center px-5 py-20 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#171A18] text-[#7E786D]">
+              <Search className="h-5 w-5" />
             </div>
-            <h2 className="mt-4 font-outfit text-[24px]">Your pipeline is empty — run a sweep to fill it.</h2>
-            <Button asChild className={RUN_SWEEP_PRIMARY_ACTION_CLASS}>
-              <Link href="/app/sweep" className="mt-5">
-                <Search className="h-4 w-4" />
-                Run a sweep
-              </Link>
-            </Button>
+            <h2 className="mt-5 font-outfit text-[24px] font-extrabold leading-tight">
+              Your lead mailbox is empty.
+            </h2>
+            <p className="mt-2 max-w-[320px] text-[14px] leading-relaxed text-[#B8B0A2]">
+              Run a sweep to save leads here.
+            </p>
+            <Link
+              href="/app/sweep"
+              className={cn('mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-extrabold transition-colors', GREEN_ACTION_CLASS)}
+            >
+              <Search className="h-4 w-4" />
+              Run a sweep
+            </Link>
           </div>
-        ) : sortedVisibleRows.length === 0 ? (
-          <div className="rounded-lg border border-text/8 bg-surface px-4 py-14 text-center">
-            <h2 className="font-outfit text-[22px]">No saved leads in this view.</h2>
-            <p className="mt-2 text-[14px] text-text/50">Clear search or change the lifecycle filter.</p>
+        ) : visibleRows.length === 0 ? (
+          <div className="flex min-h-[360px] flex-col items-center justify-center px-5 py-16 text-center">
+            <h2 className="font-outfit text-[24px] font-extrabold leading-tight">
+              No leads in this view.
+            </h2>
+            <p className="mt-2 max-w-[320px] text-[14px] leading-relaxed text-[#B8B0A2]">
+              Clear search or change the lifecycle filter.
+            </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {groupedRows.map((group) => {
-              const phoneCount = group.rows.filter((row) => Boolean(row.phone)).length
-              const websiteCount = group.rows.filter((row) => Boolean(row.website)).length
-
+          <div className="mt-4 divide-y divide-[#2A2F2B]/70" data-cp23b-flat-list>
+            {visibleRows.map((row) => {
+              const meta = STATUS_META[row.lifecycleStatus]
+              const detail = detailLine(row)
+              const isRowPending = isPending && pendingId === row.id
               return (
-                <section key={group.key} className="grid grid-cols-[4px_minmax(0,1fr)] overflow-hidden rounded-lg border border-text/8 bg-surface">
-                  <div className={group.railClass} aria-hidden />
-                  <div className="min-w-0">
-                    <div className="flex flex-col gap-2 border-b border-text/8 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={cn('inline-flex rounded-full border px-2.5 py-1 text-[12px] font-bold', group.badgeClass)}>
-                          {group.label}
-                        </span>
-                        <span className="text-[13px] font-semibold text-text">
-                          {group.rows.length} lead{group.rows.length === 1 ? '' : 's'}
-                        </span>
-                      </div>
-                      <div className="text-[12.5px] text-text/45">
-                        {phoneCount} have phone · {websiteCount} have website
-                      </div>
-                    </div>
-
-                    <div className={cn('overflow-auto border-l-[3px]', group.borderClass)}>
-                      <table className="w-full border-collapse text-left text-[13.5px]">
-                        <thead className="bg-raised text-[11px] uppercase tracking-[0.8px] text-text/42">
-                          <tr>
-                            <th className="w-10 px-3 py-3 font-bold">
-                              <input
-                                type="checkbox"
-                                checked={allVisibleSelected}
-                                onChange={toggleVisibleSelected}
-                                aria-label="Select visible saved leads"
-                                className="h-4 w-4 rounded border-text/20 bg-bg"
-                              />
-                            </th>
-                            <th className="min-w-[260px] px-3 py-3 font-bold">Business</th>
-                            <th className="min-w-[220px] px-3 py-3 font-bold">Contact</th>
-                            <th className="min-w-[260px] px-3 py-3 font-bold">Note</th>
-                            <th className="min-w-[170px] px-3 py-3 font-bold">Saved/Updated</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {group.rows.map((row) => {
-                            const isRowPending = isPending && pendingId === row.id
-                            const groupMeta = groupForStatus(row.lifecycleStatus)
-                            const isEditingNote = editingNoteId === row.id
-                            const noteDraft = noteDrafts[row.id] ?? ''
-
-                            return (
-                              <tr key={row.id} className="border-t border-text/8 align-top transition-colors hover:bg-raised/65">
-                                <td className="px-3 py-3">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedIds.has(row.id)}
-                                    onChange={() => toggleRowSelected(row.id)}
-                                    aria-label={`Select ${row.businessName}`}
-                                    className="h-4 w-4 rounded border-text/20 bg-bg"
-                                  />
-                                </td>
-                                <td className="px-3 py-3">
-                                  <Link
-                                    href={`/app/leads/${row.id}`}
-                                    className="font-semibold leading-snug text-text hover:underline"
-                                  >
-                                    {row.businessName}
-                                  </Link>
-                                  <div className="mt-1 text-[12px] text-text/45">
-                                    {[row.category, row.market ?? row.address].filter(Boolean).join(' · ')}
-                                  </div>
-                                  {row.address && row.market && (
-                                    <div className="mt-1 flex gap-1.5 leading-snug text-[12px] text-text/45">
-                                      <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-text/35" />
-                                      <span>{row.address}</span>
-                                    </div>
-                                  )}
-                                  <div className="mt-2 flex flex-wrap gap-1.5">
-                                    <span className={cn('inline-flex rounded-full border px-2 py-0.5 text-[11px] font-bold', groupMeta.badgeClass)}>
-                                      {statusLabel(row.lifecycleStatus)}
-                                    </span>
-                                    <select
-                                      value={row.lifecycleStatus}
-                                      disabled={isRowPending || row.lifecycleStatus === 'dismissed'}
-                                      onChange={(event) => changeStatus(row, event.target.value as SavedLeadLifecycleStatus)}
-                                      className="h-7 rounded-lg border border-text/10 bg-bg px-2 text-[12px] text-text outline-none disabled:opacity-60"
-                                    >
-                                      {STATUS_OPTIONS.map((option) => (
-                                        <option key={option.key} value={option.key}>
-                                          {option.label}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  {isRowPending && (
-                                    <div className="mt-2 flex items-center gap-1.5 text-[12px] text-text/45">
-                                      <Loader2 className="h-3 w-3 animate-spin" />
-                                      Saving
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-3 py-3">
-                                  <div className="space-y-2">
-                                    <a href={`tel:${row.phone}`} className="inline-flex items-center gap-1.5 font-medium text-text">
-                                      <Phone className="h-3.5 w-3.5 text-text/45" />
-                                      {row.phone}
-                                    </a>
-                                    {row.website && (
-                                      <a
-                                        href={row.website}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="flex items-center gap-1.5 font-medium text-text/70 hover:text-text"
-                                      >
-                                        <Globe2 className="h-3.5 w-3.5" />
-                                        <span className="break-all">{displayUrl(row.website)}</span>
-                                        <ExternalLink className="h-3 w-3 opacity-60" />
-                                      </a>
-                                    )}
-                                    {row.email && (
-                                      <a href={`mailto:${row.email}`} className="flex items-center gap-1.5 text-text/70">
-                                        <Mail className="h-3.5 w-3.5 text-text/38" />
-                                        <span className="break-all">{row.email}</span>
-                                      </a>
-                                    )}
-                                    {row.owner && (
-                                      <div className="flex items-center gap-1.5 text-text/70">
-                                        <UserRound className="h-3.5 w-3.5 text-text/38" />
-                                        {row.owner}
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-3 py-3">
-                                  {isEditingNote ? (
-                                    <div className="max-w-[360px]">
-                                      <textarea
-                                        value={noteDraft}
-                                        onChange={(event) => {
-                                          const value = event.target.value
-                                          setNoteDrafts((current) => ({ ...current, [row.id]: value }))
-                                        }}
-                                        className="min-h-[78px] w-full resize-y rounded-lg border border-text/10 bg-bg px-3 py-2 text-[13px] leading-relaxed text-text outline-none placeholder:text-text/35"
-                                        placeholder="Add note"
-                                      />
-                                      <div className="mt-2 flex flex-wrap gap-2">
-                                        <button
-                                          type="button"
-                                          disabled={isRowPending || noteDraft === (row.note ?? '')}
-                                          onClick={() => saveNote(row)}
-                                          className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-text px-3 text-[12px] font-semibold text-bg disabled:cursor-not-allowed disabled:opacity-45"
-                                        >
-                                          <Save className="h-3.5 w-3.5" />
-                                          Save note
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => setEditingNoteId(null)}
-                                          className="inline-flex h-8 items-center rounded-lg border border-text/10 px-3 text-[12px] font-semibold text-text/60 hover:text-text"
-                                        >
-                                          Cancel
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ) : row.note ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => startEditingNote(row)}
-                                      className="block max-w-[360px] rounded-lg border border-text/8 bg-bg px-3 py-2 text-left text-[13px] leading-relaxed text-text/75 hover:bg-raised"
-                                    >
-                                      {row.note}
-                                      <span className="mt-1 block text-[11px] font-semibold text-text/38">Edit note</span>
-                                    </button>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => startEditingNote(row)}
-                                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-dashed border-text/18 px-3 text-[12px] font-semibold text-text/50 hover:border-text/30 hover:text-text"
-                                    >
-                                      <Plus className="h-3.5 w-3.5" />
-                                      + note
-                                    </button>
-                                  )}
-                                </td>
-                                <td className="px-3 py-3 text-text/55">
-                                  <div>{displayDate(row.updatedAtIso)}</div>
-                                  <div className="mt-1 text-[12px] text-text/38">Saved {displayDate(row.savedAtIso)}</div>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                <div
+                  key={row.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setActiveLeadId(row.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setActiveLeadId(row.id)
+                    }
+                  }}
+                  className="group grid cursor-pointer grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 py-4 outline-none transition-colors hover:bg-[#171A18]/55 focus-visible:bg-[#171A18]/75"
+                  data-cp23b-mailbox-row
+                >
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-extrabold',
+                      meta.discClass,
+                    )}
+                    aria-label={statusLabel(row.lifecycleStatus)}
+                  >
+                    {initialsForName(row.businessName)}
                   </div>
-                </section>
+
+                  <div className="min-w-0">
+                    <OpenLeadLink
+                      row={row}
+                      className="block truncate font-outfit text-[17.5px] font-extrabold leading-tight text-[#F7F3E8] underline-offset-4 hover:underline"
+                    />
+                    <div className="mt-1 truncate text-[13.5px] font-normal leading-snug text-[#B8B0A2]">
+                      {detail || row.source}
+                    </div>
+                    <div className="mt-1 truncate text-[12px] font-semibold leading-snug text-[#7E786D]">
+                      {fieldCoverageLine(row, nowMs)}
+                    </div>
+                    {row.note && (
+                      <div className="mt-1 truncate text-[12px] font-medium leading-snug text-[#B8B0A2]/80">
+                        {row.note}
+                      </div>
+                    )}
+                    {isRowPending && (
+                      <div className="mt-1 flex items-center gap-1.5 text-[12px] font-semibold text-[#7E786D]">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Saving
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 pl-1 text-[12px] font-semibold text-[#7E786D]">
+                    <span className="hidden tabular-nums sm:inline">
+                      {formatAge(row.updatedAtMs, nowMs)}
+                    </span>
+                    <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                </div>
               )
             })}
           </div>
         )}
       </div>
+
+      {undoToast && (
+        <div className="fixed inset-x-4 bottom-[142px] z-40 mx-auto flex max-w-[420px] items-center gap-3 rounded-2xl border border-[#2A2F2B] bg-[#20241F] px-4 py-3 text-[13px] font-semibold text-[#F7F3E8] shadow-[0_18px_50px_-20px_rgba(0,0,0,0.9)] sm:bottom-6">
+          <CheckCircle2 className={cn('h-4 w-4 flex-shrink-0', STATUS_META[undoToast.nextStatus].quietClass)} />
+          <div className="min-w-0 flex-1 truncate">
+            {undoToast.businessName} moved to {statusLabel(undoToast.nextStatus)}.
+          </div>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => undoStatusChange(undoToast)}
+            className="flex-shrink-0 rounded-full bg-[#F7F3E8] px-3 py-1.5 text-[12px] font-extrabold text-[#0B0D0C] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Undo
+          </button>
+        </div>
+      )}
+
+      <LeadActionSheet
+        row={activeLead}
+        nowMs={nowMs}
+        isPending={isPending}
+        pendingId={pendingId}
+        editingNoteId={editingNoteId}
+        noteDraft={activeLead ? noteDrafts[activeLead.id] ?? '' : ''}
+        onOpenChange={(open) => {
+          if (!open) closeSheet()
+        }}
+        onStartEditingNote={startEditingNote}
+        onCancelEditingNote={() => setEditingNoteId(null)}
+        onNoteDraftChange={(rowId, value) => {
+          setNoteDrafts((current) => ({ ...current, [rowId]: value }))
+        }}
+        onSaveNote={saveNote}
+        onChangeStatus={(row, status) => changeStatus(row, status, { closeSheet: true })}
+      />
     </div>
+  )
+}
+
+function createNoteDrafts(leads: readonly SavedLeadPipelineRow[]): Record<string, string> {
+  return Object.fromEntries(leads.map((lead) => [lead.id, lead.note ?? '']))
+}
+
+function LeadActionSheet({
+  row,
+  nowMs,
+  isPending,
+  pendingId,
+  editingNoteId,
+  noteDraft,
+  onOpenChange,
+  onStartEditingNote,
+  onCancelEditingNote,
+  onNoteDraftChange,
+  onSaveNote,
+  onChangeStatus,
+}: {
+  row: SavedLeadPipelineRow | null
+  nowMs: number
+  isPending: boolean
+  pendingId: string | null
+  editingNoteId: string | null
+  noteDraft: string
+  onOpenChange: (open: boolean) => void
+  onStartEditingNote: (row: SavedLeadPipelineRow) => void
+  onCancelEditingNote: () => void
+  onNoteDraftChange: (rowId: string, value: string) => void
+  onSaveNote: (row: SavedLeadPipelineRow) => void
+  onChangeStatus: (row: SavedLeadPipelineRow, status: SavedLeadLifecycleStatus) => void
+}) {
+  const isEditingNote = row ? editingNoteId === row.id : false
+  const isRowPending = Boolean(row && isPending && pendingId === row.id)
+
+  return (
+    <Sheet open={Boolean(row)} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="max-h-[88vh] w-full max-w-none overflow-y-auto rounded-t-[28px] border-x border-t border-[#2A2F2B] bg-[#171A18] px-5 pb-6 pt-5 text-[#F7F3E8] shadow-[0_-24px_70px_-30px_rgba(0,0,0,0.9)] sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-[min(460px,calc(100%-32px))] sm:-translate-x-1/2 sm:rounded-[28px] sm:border"
+        data-cp23b-action-sheet
+      >
+        {row && (
+          <>
+            <SheetHeader className="space-y-0 pr-8 text-left">
+              <div className="flex items-start gap-3">
+                <div className={cn('flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold', STATUS_META[row.lifecycleStatus].discClass)}>
+                  {initialsForName(row.businessName)}
+                </div>
+                <div className="min-w-0">
+                  <SheetTitle className="truncate font-outfit text-[18px] font-extrabold leading-tight text-[#F7F3E8]">
+                    {row.businessName}
+                  </SheetTitle>
+                  <SheetDescription className="mt-1 truncate text-[13px] text-[#B8B0A2]">
+                    {detailLine(row) || row.source}
+                  </SheetDescription>
+                  <div className="mt-1 text-[12px] font-semibold text-[#7E786D]">
+                    {fieldCoverageLine(row, nowMs)}
+                  </div>
+                </div>
+              </div>
+            </SheetHeader>
+
+            <div className="mt-5 grid grid-cols-4 gap-2">
+              {hasPhone(row) ? (
+                <a
+                  href={`tel:${row.phone}`}
+                  className="flex h-16 flex-col items-center justify-center gap-1 rounded-xl bg-[#20241F] text-[11px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#2A2F2B]"
+                >
+                  <Phone className="h-4 w-4" />
+                  Call
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="flex h-16 flex-col items-center justify-center gap-1 rounded-xl bg-[#20241F]/55 text-[11px] font-bold text-[#7E786D]"
+                >
+                  <Phone className="h-4 w-4" />
+                  No phone
+                </button>
+              )}
+
+              {hasWebsite(row) && row.website ? (
+                <a
+                  href={row.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-16 flex-col items-center justify-center gap-1 rounded-xl bg-[#20241F] text-[11px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#2A2F2B]"
+                >
+                  <Globe2 className="h-4 w-4" />
+                  Website
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="flex h-16 flex-col items-center justify-center gap-1 rounded-xl bg-[#20241F]/55 text-[11px] font-bold text-[#7E786D]"
+                >
+                  <Globe2 className="h-4 w-4" />
+                  No website
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => onStartEditingNote(row)}
+                className="flex h-16 flex-col items-center justify-center gap-1 rounded-xl bg-[#20241F] text-[11px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#2A2F2B]"
+              >
+                <NotebookPen className="h-4 w-4" />
+                {row.note ? 'Edit note' : 'Add note'}
+              </button>
+
+              <Link
+                href={`/app/leads/${row.id}`}
+                className="flex h-16 flex-col items-center justify-center gap-1 rounded-xl bg-[#20241F] text-[11px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#2A2F2B]"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open
+              </Link>
+            </div>
+
+            {isEditingNote && (
+              <div className="mt-4 rounded-2xl bg-[#20241F] p-3">
+                <textarea
+                  value={noteDraft}
+                  onChange={(event) => onNoteDraftChange(row.id, event.target.value)}
+                  className="min-h-[92px] w-full resize-y rounded-xl border border-[#2A2F2B] bg-[#0B0D0C] px-3 py-2 text-[14px] leading-relaxed text-[#F7F3E8] outline-none placeholder:text-[#7E786D]"
+                  placeholder="Add note"
+                />
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    disabled={isRowPending || noteDraft === (row.note ?? '')}
+                    onClick={() => onSaveNote(row)}
+                    className={cn('inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-full text-[13px] font-extrabold transition-colors disabled:cursor-not-allowed disabled:opacity-45', GREEN_ACTION_CLASS)}
+                  >
+                    <Save className="h-4 w-4" />
+                    Save note
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onCancelEditingNote}
+                    className="inline-flex h-10 items-center justify-center rounded-full border border-[#2A2F2B] px-4 text-[13px] font-bold text-[#B8B0A2] hover:text-[#F7F3E8]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 space-y-2">
+              {statusActionsFor(row).map((status) => {
+                const meta = STATUS_META[status]
+                const Icon = meta.icon
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    disabled={isRowPending}
+                    onClick={() => onChangeStatus(row, status)}
+                    className={cn(
+                      'flex h-11 w-full items-center justify-between rounded-xl px-4 text-[13px] font-extrabold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                      meta.actionClass,
+                    )}
+                  >
+                    <span>{meta.actionLabel}</span>
+                    <Icon className="h-4 w-4" />
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="mt-4 grid gap-1 text-[12px] font-medium text-[#7E786D]">
+              <span>Source: {row.source}</span>
+              <span>Saved {displayDate(row.savedAtIso)} · Updated {displayDate(row.updatedAtIso)}</span>
+              {hasWebsite(row) && row.website && (
+                <span className="truncate">Website: {displayUrl(row.website)}</span>
+              )}
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
   )
 }
