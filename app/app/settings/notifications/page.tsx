@@ -13,8 +13,8 @@ export default async function NotificationsPage() {
 
   const rows: Array<{ label: string; hint?: string; on: boolean }> = [
     { label: 'Daily digest', hint: 'Top picks of the day in one email.', on: prefs?.dailyDigestEnabled ?? true },
-    { label: 'High-score lead alerts', hint: 'Get pinged the moment a strong signal lands.', on: prefs?.pushOnHighScore ?? true },
-    { label: 'Expiring leads', hint: 'Reminder before a hot lead goes cold.', on: prefs?.pushOnExpiringLeads ?? true },
+    { label: 'Lead alerts', hint: 'Current preference shown from your workspace settings.', on: prefs?.pushOnHighScore ?? true },
+    { label: 'Lead reminders', hint: 'Current reminder preference for saved leads.', on: prefs?.pushOnExpiringLeads ?? true },
     { label: 'Weekly summary', hint: 'Sunday recap of the week.', on: prefs?.weeklySummaryEnabled ?? false },
     { label: 'Usage limit warnings', hint: 'Heads-up before you hit your monthly cap.', on: prefs?.limitWarningEnabled ?? true },
   ]
@@ -23,12 +23,12 @@ export default async function NotificationsPage() {
     <div className="max-w-3xl">
       <MobileScreenHeader
         title="Notifications"
-        description="Email-only at launch. Toggle UI for digest cadence and quiet hours lands alongside the notification agent in Checkpoint 6."
+        description="Review email preferences for this workspace. Changes are not editable from this screen yet."
       />
       <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
         <SettingsGroup
           title="Email preferences"
-          description="Read-only preview — toggles ship with Checkpoint 6."
+          description="Read-only view of the notification settings currently on file."
         >
           {rows.map(r => (
             <SettingsRow

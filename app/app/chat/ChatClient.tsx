@@ -84,7 +84,7 @@ export function ChatClient({ initialMessages, greetingName, isEmptyRun, sourcesC
 
       <div className="sticky bottom-0 bg-surface shadow-fetchi-sticky px-3 lg:px-5 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
         <div className="flex items-center gap-2">
-          <button type="button" aria-label="Voice input (coming soon)" title="Voice input lands in Checkpoint 10" className="h-11 w-11 rounded-full bg-raised border border-text/10 flex items-center justify-center text-text/45 cursor-not-allowed flex-shrink-0" disabled><Mic className="h-[18px] w-[18px]" /></button>
+          <button type="button" aria-label="Voice input (coming soon)" title="Voice input is not available yet" className="h-11 w-11 rounded-full bg-raised border border-text/10 flex items-center justify-center text-text/45 cursor-not-allowed flex-shrink-0" disabled><Mic className="h-[18px] w-[18px]" /></button>
           <div className={`flex-1 flex items-center bg-raised rounded-full border transition-colors ${hasInput ? 'border-coral/60' : 'border-text/10 focus-within:border-blue'}`}>
             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Ask ツ something…" className="flex-1 px-5 py-2.5 bg-transparent text-[14.5px] text-text placeholder:text-text/40 outline-none min-h-[44px]" aria-label="Message Fetchi" />
           </div>

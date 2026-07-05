@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { and, inArray, eq, count } from 'drizzle-orm'
-import { db, opportunities } from '@/db'
+import { eq, count } from 'drizzle-orm'
+import { db, savedLeads } from '@/db'
 import { requireWorkspaceContext } from '@/lib/workspace'
 import { Sidebar } from '@/components/app/Sidebar'
 import { MobileHeader } from '@/components/app/MobileHeader'
@@ -27,13 +27,8 @@ export default async function AppLayout({
 
   const [{ value: leadsCount }] = await db
     .select({ value: count() })
-    .from(opportunities)
-    .where(
-      and(
-        eq(opportunities.workspaceId, ctx.workspaceId),
-        inArray(opportunities.status, ['saved', 'contacted', 'responded', 'won', 'lost']),
-      ),
-    )
+    .from(savedLeads)
+    .where(eq(savedLeads.workspaceId, ctx.workspaceId))
 
   const credits = <CreditsWidget subscription={ctx.subscription} />
 
