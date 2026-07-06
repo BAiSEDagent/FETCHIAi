@@ -77,11 +77,15 @@ async function main() {
   const changed = changedFiles()
   const allowedChangedFiles = new Set([
     'app/app/chat/ChatClient.tsx',
+    'app/app/onboarding/OnboardingClient.tsx',
+    'app/app/settings/profile/ProfileForm.tsx',
+    'app/app/settings/signals/page.tsx',
     'app/app/sweep/SweepClient.tsx',
     'components/app/MobileBottomNav.tsx',
     'components/app/MyLeadsView.tsx',
     'components/app/Sidebar.tsx',
     'components/app/today/EvidenceCardBack.tsx',
+    'components/app/today/TodayRunCard.tsx',
     'scripts/pm/cp24a-fetch-ia-my-leads-hierarchy-smoke.ts',
   ])
 
@@ -114,7 +118,11 @@ async function main() {
   const myLeads = source('components/app/MyLeadsView.tsx')
   const sweep = source('app/app/sweep/SweepClient.tsx')
   const chat = source('app/app/chat/ChatClient.tsx')
+  const onboarding = source('app/app/onboarding/OnboardingClient.tsx')
+  const settingsProfile = source('app/app/settings/profile/ProfileForm.tsx')
+  const settingsSignals = source('app/app/settings/signals/page.tsx')
   const evidenceCardBack = source('components/app/today/EvidenceCardBack.tsx')
+  const todayRunCard = source('components/app/today/TodayRunCard.tsx')
   const mapPage = source('app/app/map/page.tsx')
   const todayPage = source('app/app/today/page.tsx')
 
@@ -202,12 +210,21 @@ async function main() {
     myLeads,
     sweep,
     chat,
+    onboarding,
+    settingsProfile,
+    settingsSignals,
     evidenceCardBack,
+    todayRunCard,
     mapPage,
     todayPage,
   ].join('\n'))
   const customerVisibleLeakPatterns: Array<[RegExp, string]> = [
     [/\bScouting\b/, 'Scouting'],
+    [/\bscout\b/i, 'scout'],
+    [/\bscouts\b/i, 'scouts'],
+    [/\bscouting\b/i, 'scouting'],
+    [/\bgathering\b/i, 'gathering'],
+    [/\bgatherings\b/i, 'gatherings'],
     [/\bListening for signals\b/, 'Listening for signals'],
     [/\bkeep listening\b/i, 'keep listening'],
     [/\bkeep watching\b/i, 'keep watching'],
@@ -217,6 +234,12 @@ async function main() {
     [/\bchecked overnight\b/i, 'checked overnight'],
     [/\bwhile you were away\b/i, 'while you were away'],
     [/\bnew signals today\b/i, 'new signals today'],
+    [/\bDaily Run\b/i, 'Daily Run'],
+    [/\bToday's run\b/i, "Today's run"],
+    [/\bRun a sweep\b/i, 'Run a sweep'],
+    [/\bSweep\b/, 'Sweep'],
+    [/\bCheckpoint\b/i, 'Checkpoint'],
+    [/\bCP2[234]\b/i, 'CP22/CP23/CP24'],
   ]
   for (const [pattern, label] of customerVisibleLeakPatterns) {
     assert(!pattern.test(customerVisibleLeakSurface), `Customer-visible background-work copy remains: ${label}`)

@@ -22,7 +22,7 @@ export default async function SignalSensitivityPage() {
     { key: 'permits', label: 'New permits', hint: 'Roof or HVAC permits', on: prefs?.permitsEnabled ?? true },
     { key: 'listings', label: 'New business filings', hint: 'LLCs in your area', on: prefs?.newListingsEnabled ?? true },
     { key: 'jobs', label: 'Hiring posts', hint: 'Growth-stage hiring signals', on: prefs?.jobPostingsEnabled ?? false },
-    { key: 'events', label: 'Local events', hint: 'Civic events and gatherings', on: prefs?.eventsEnabled ?? false },
+    { key: 'events', label: 'Local events', hint: 'Civic events and local happenings', on: prefs?.eventsEnabled ?? false },
   ]
 
   return (

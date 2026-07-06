@@ -85,7 +85,7 @@ export function OnboardingClient({ initial }: Props) {
           await saveOnboardingStep({ idealCustomerDescription: ideal.trim() })
           setStep(4)
         } else if (step === 4) {
-          if (!scoutMode) return setErr('Pick how often Fetchi should scout.')
+          if (!scoutMode) return setErr('Choose how you want to fetch leads.')
           await saveOnboardingStep({ scoutMode })
           setShowFinding(true)
           setTimeout(() => {
@@ -125,13 +125,13 @@ export function OnboardingClient({ initial }: Props) {
         ? 'Where do you work?'
         : step === 3
           ? "Who's your ideal customer?"
-          : 'How often should Fetchi scout?'
+          : 'How do you want to fetch leads?'
 
   const stepSubtitle =
     step === 1
       ? 'Pick the closest match. You can refine later.'
       : step === 2
-        ? 'We scout signals inside this radius.'
+        ? 'Use this radius for lead searches.'
         : step === 3
           ? 'Two or three sentences are plenty. Fetchi uses this every time it scores a signal.'
           : 'Change this anytime in Settings.'
@@ -264,7 +264,7 @@ export function OnboardingClient({ initial }: Props) {
             <Button onClick={next} disabled={pending} size="lg" className="w-full h-14 text-[16px] rounded-full">
               {pending ? 'Saving...' : (
                 <span className="inline-flex items-center gap-2">
-                  {step === 4 ? 'Start scouting' : 'Continue'}
+                  {step === 4 ? 'Start using Fetch' : 'Continue'}
                   <ArrowRight className="h-[18px] w-[18px]" />
                 </span>
               )}
