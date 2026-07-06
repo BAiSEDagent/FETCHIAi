@@ -49,10 +49,10 @@ const EXAMPLES: Example[] = [
 ]
 
 const PROGRESS_LINES = [
-  'Spreading query variants across the market',
-  'Pulling Maps records with phone contact routes',
+  'Searching across the market',
+  'Collecting contact routes',
   'Merging duplicates into one clean lead list',
-  'Preparing export rows',
+  'Preparing lead rows',
 ]
 
 function downloadText(filename: string, mimeType: string, value: string) {
@@ -119,13 +119,13 @@ export function sweepMemorySummaryCopy(
   newToSaveCount: number,
   alreadySavedCount: number,
 ): string {
-  return `${foundCount} found · ${newToSaveCount} new to save · ${alreadySavedCount} already saved`
+  return `${foundCount} leads fetched · ${newToSaveCount} new to save · ${alreadySavedCount} already saved`
 }
 
 export function sweepLeadViewEmptyCopy(filter: SweepLeadViewFilter): string {
-  if (filter === 'new_to_save') return 'No leads new to save in this sweep.'
-  if (filter === 'already_saved') return 'No already saved leads in this sweep.'
-  return 'No leads in this sweep.'
+  if (filter === 'new_to_save') return 'No leads new to save in this fetch.'
+  if (filter === 'already_saved') return 'No already saved leads in this fetch.'
+  return 'No leads in this fetch.'
 }
 
 function ResultRow({
@@ -316,7 +316,7 @@ export function SweepClient() {
       const response = await runSweep({ service, icp, market })
       setResult(response)
       if (!response.ok) {
-        setError(response.error?.message ?? 'The sweep could not run.')
+        setError(response.error?.message ?? 'Fetch could not run.')
       }
     })
   }
@@ -476,22 +476,22 @@ export function SweepClient() {
 
   function exportCsv() {
     if (!hasResults) return
-    downloadText('fetchi-sweep-leads.csv', 'text/csv;charset=utf-8', exportSweepCsv(leads))
+    downloadText('fetchi-fetched-leads.csv', 'text/csv;charset=utf-8', exportSweepCsv(leads))
   }
 
   function exportJson() {
     if (!hasResults) return
-    downloadText('fetchi-sweep-leads.json', 'application/json;charset=utf-8', exportSweepJson(leads))
+    downloadText('fetchi-fetched-leads.json', 'application/json;charset=utf-8', exportSweepJson(leads))
   }
 
   const compactStats = [
     { label: 'Sources', value: result?.stats.sourcesHit.join(', ') || 'Maps' },
-    { label: 'Queries', value: result?.stats.queriesRun ?? 0 },
-    { label: 'Scanned', value: result?.stats.rawScanned ?? 0 },
-    { label: 'Found', value: result?.stats.dedupedLeadCount ?? 0 },
+    { label: 'Searches', value: result?.stats.queriesRun ?? 0 },
+    { label: 'Reviewed', value: result?.stats.rawScanned ?? 0 },
+    { label: 'Fetched', value: result?.stats.dedupedLeadCount ?? 0 },
     { label: 'New to save', value: newToSaveCount },
     { label: 'Already saved', value: alreadySavedCount },
-    { label: 'Export rows', value: result?.stats.exportCount ?? 0 },
+    { label: 'Rows', value: result?.stats.exportCount ?? 0 },
   ]
 
   return (
@@ -504,9 +504,9 @@ export function SweepClient() {
                 <Search className="h-5 w-5" />
               </span>
               <div>
-                <h1 className="font-outfit text-[30px] leading-tight">Sweep</h1>
+                <h1 className="font-outfit text-[30px] leading-tight">Fetch</h1>
                 <p className="mt-1 text-[13px] text-text/55">
-                  Build a contactable Maps lead list from one market.
+                  Find contactable leads from one market.
                 </p>
               </div>
             </div>
@@ -533,7 +533,7 @@ export function SweepClient() {
                   className="bg-bg text-[15px]"
                 />
                 <p id="icp-helper" className="text-[12.5px] leading-relaxed text-text/50">
-                  Sweep searches businesses and organizations on Google Maps. Use buyer types like auto repair shops, gyms, property managers, or self-storage facilities. For best results, use one buyer type per lane.
+                  Fetch searches businesses and organizations in your target market. Use buyer types like auto repair shops, gyms, property managers, or self-storage facilities. For best results, use one buyer type per lane.
                 </p>
                 {showConsumerGuidance && (
                   <div className="rounded-lg border border-mustard/25 bg-mustard/10 px-3 py-2 text-[12.5px] leading-relaxed text-text/70">
@@ -572,7 +572,7 @@ export function SweepClient() {
                 className="h-12 w-full gap-2 bg-ok text-bg hover:bg-ok/90"
               >
                 {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                Run sweep
+                Fetch leads
               </Button>
             </form>
 
@@ -597,7 +597,7 @@ export function SweepClient() {
                 <div className="flex items-center gap-3">
                   <Loader2 className="h-5 w-5 animate-spin text-ok" />
                   <div>
-                    <div className="font-semibold text-text">Sweeping the market</div>
+                    <div className="font-semibold text-text">Fetching leads</div>
                     <div className="mt-1 text-[13px] text-text/55">{PROGRESS_LINES[progressIndex]}</div>
                   </div>
                 </div>
@@ -746,9 +746,9 @@ export function SweepClient() {
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
                     <Search className="h-6 w-6" />
                   </div>
-                  <h3 className="mt-4 font-outfit text-[24px]">Run a sweep to fill the list.</h3>
+                  <h3 className="mt-4 font-outfit text-[24px]">Fetch leads to fill the list.</h3>
                   <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-relaxed text-text/50">
-                    Results appear here with filters, save actions, and export controls after the sweep finishes.
+                    Results appear here with filters, save actions, and export controls after leads are fetched.
                   </p>
                 </div>
               ) : !hasVisibleResults ? (

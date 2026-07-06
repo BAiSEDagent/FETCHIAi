@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { MessageSquare, Sun, ListChecks, Map as MapIcon, Settings } from 'lucide-react'
+import { MessageSquare, Search, ListChecks, Map as MapIcon, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const items = [
-  { href: '/app/chat', label: 'Chat', icon: MessageSquare, match: '/app/chat' },
-  { href: '/app/today', label: 'Today', icon: Sun, match: '/app/today' },
+  { href: '/app/sweep', label: 'Fetch', icon: Search, match: '/app/sweep' },
   { href: '/app/leads', label: 'Leads', icon: ListChecks, match: '/app/leads' },
+  { href: '/app/chat', label: 'Chat', icon: MessageSquare, match: '/app/chat' },
   { href: '/app/map', label: 'Map', icon: MapIcon, match: '/app/map' },
   { href: '/app/settings/profile', label: 'Settings', icon: Settings, match: '/app/settings' },
 ]
