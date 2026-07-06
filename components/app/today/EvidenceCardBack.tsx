@@ -94,8 +94,7 @@ export function EvidenceCardBack({ card, onBack }: Props) {
       <ul className="mt-1 space-y-2">
         {evidence.length === 0 ? (
           <li className="text-[13px] text-text/60 italic px-1">
-            We&rsquo;re still gathering evidence for this lead. Add it to My Leads
-            to keep watching.
+            Add this lead to My Leads to review later.
           </li>
         ) : (
           evidence.map(ev => (

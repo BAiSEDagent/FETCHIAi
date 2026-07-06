@@ -76,12 +76,12 @@ function routeFilesFromWorktree(): string[] {
 async function main() {
   const changed = changedFiles()
   const allowedChangedFiles = new Set([
-    'components/app/MobileBottomNav.tsx',
-    'components/app/Sidebar.tsx',
-    'components/app/MyLeadsView.tsx',
+    'app/app/chat/ChatClient.tsx',
     'app/app/sweep/SweepClient.tsx',
-    'app/app/map/page.tsx',
-    'app/app/today/page.tsx',
+    'components/app/MobileBottomNav.tsx',
+    'components/app/MyLeadsView.tsx',
+    'components/app/Sidebar.tsx',
+    'components/app/today/EvidenceCardBack.tsx',
     'scripts/pm/cp24a-fetch-ia-my-leads-hierarchy-smoke.ts',
   ])
 
@@ -113,6 +113,8 @@ async function main() {
   const sidebar = source('components/app/Sidebar.tsx')
   const myLeads = source('components/app/MyLeadsView.tsx')
   const sweep = source('app/app/sweep/SweepClient.tsx')
+  const chat = source('app/app/chat/ChatClient.tsx')
+  const evidenceCardBack = source('components/app/today/EvidenceCardBack.tsx')
   const mapPage = source('app/app/map/page.tsx')
   const todayPage = source('app/app/today/page.tsx')
 
@@ -192,6 +194,32 @@ async function main() {
     'while you were away',
   ]) {
     assert(!approvedSurface.includes(banned), `Approved CP24A surface includes banned visible copy: ${banned}`)
+  }
+
+  const customerVisibleLeakSurface = stripComments([
+    mobile,
+    sidebar,
+    myLeads,
+    sweep,
+    chat,
+    evidenceCardBack,
+    mapPage,
+    todayPage,
+  ].join('\n'))
+  const customerVisibleLeakPatterns: Array<[RegExp, string]> = [
+    [/\bScouting\b/, 'Scouting'],
+    [/\bListening for signals\b/, 'Listening for signals'],
+    [/\bkeep listening\b/i, 'keep listening'],
+    [/\bkeep watching\b/i, 'keep watching'],
+    [/\bwatching\b/i, 'watching'],
+    [/\bmonitoring\b/i, 'monitoring'],
+    [/\bchecked\s*(?:\{[^}]+\}|\$\{[^}]+\}|[0-9]+)?\s*sources\b/i, 'checked sources'],
+    [/\bchecked overnight\b/i, 'checked overnight'],
+    [/\bwhile you were away\b/i, 'while you were away'],
+    [/\bnew signals today\b/i, 'new signals today'],
+  ]
+  for (const [pattern, label] of customerVisibleLeakPatterns) {
+    assert(!pattern.test(customerVisibleLeakSurface), `Customer-visible background-work copy remains: ${label}`)
   }
 
   const baseRoutes = routeFilesFromGit('origin/main')

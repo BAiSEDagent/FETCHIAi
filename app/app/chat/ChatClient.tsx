@@ -17,7 +17,7 @@ type Props = {
   leadsReady?: number
 }
 
-export function ChatClient({ initialMessages, greetingName, isEmptyRun, sourcesChecked, scoutingLocation, leadsReady = 0 }: Props) {
+export function ChatClient({ initialMessages, greetingName, isEmptyRun, leadsReady = 0 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [input, setInput] = useState('')
   const [pending, startTransition] = useTransition()
@@ -57,7 +57,7 @@ export function ChatClient({ initialMessages, greetingName, isEmptyRun, sourcesC
             <div className="text-[14px] font-bold text-text leading-tight">Fetchi</div>
             <div className="text-[12.5px] text-text/60 mt-0.5 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-ok" aria-label="active" />
-              {scoutingLocation ? `Scouting ${scoutingLocation}` : 'Listening for signals'}
+              Fetchi chat
               {leadsReady > 0 && <span className="text-text/45">· {leadsReady} lead{leadsReady === 1 ? '' : 's'} ready</span>}
             </div>
           </div>
@@ -65,8 +65,8 @@ export function ChatClient({ initialMessages, greetingName, isEmptyRun, sourcesC
 
         {isEmptyRun && (
           <div role="status" className="rounded-2xl bg-surface shadow-fetchi-soft px-5 py-4">
-            <div className="text-[14px] font-semibold text-text mb-1">Fetchi checked {sourcesChecked} sources</div>
-            <div className="text-[12.5px] text-text/65 leading-relaxed">Nothing strong enough to surface yet — ツ will keep listening and ping you the moment a real signal lands.</div>
+            <div className="text-[14px] font-semibold text-text mb-1">No strong lead to show yet</div>
+            <div className="text-[12.5px] text-text/65 leading-relaxed">Send another message or fetch new leads when you are ready.</div>
           </div>
         )}
 
