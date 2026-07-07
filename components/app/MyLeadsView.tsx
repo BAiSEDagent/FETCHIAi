@@ -167,6 +167,13 @@ const ACTION_STATUS_OPTIONS: SavedLeadLifecycleStatus[] = [
   'dismissed',
 ]
 
+const FILTER_MOTION_CLASS =
+  'transition-all duration-300 motion-reduce:transition-none'
+
+const FILTER_MOTION_STYLE = {
+  transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+}
+
 function downloadText(filename: string, mimeType: string, value: string) {
   const blob = new Blob([value], { type: mimeType })
   const url = URL.createObjectURL(blob)
@@ -444,6 +451,9 @@ export function MyLeadsView({ leads }: Props) {
 
   const statusCounts = useMemo(() => countByStatus(rows), [rows])
   const activeFilterMeta = LIFECYCLE_FILTERS.find((filter) => filter.key === activeFilter) ?? LIFECYCLE_FILTERS[0]
+  const activeFilterCount = activeFilterMeta.key === 'all' ? rows.length : countForFilter(statusCounts, activeFilterMeta)
+  const inactiveFilters = LIFECYCLE_FILTERS.filter((filter) => filter.key !== activeFilter)
+  const ActiveFilterIcon = activeFilterMeta.icon
 
   const sortedRows = useMemo(() => [...rows].sort(compareBusinessName), [rows])
 
@@ -583,7 +593,10 @@ export function MyLeadsView({ leads }: Props) {
     <div className="min-h-full bg-[#0B0D0C] text-[#F7F3E8]" data-cp23b-mailbox-surface>
       <div className="mx-auto flex w-full max-w-[760px] flex-col px-4 pb-28 pt-5 sm:px-6 lg:pb-12 lg:pt-8">
         <header className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-4">
+          <div
+            className="flex items-start justify-between gap-4"
+            data-cp24a-my-leads-action-row
+          >
             <div>
               <h1 className="font-outfit text-[32px] font-extrabold leading-none">
                 My Leads
@@ -591,6 +604,56 @@ export function MyLeadsView({ leads }: Props) {
               <div className="mt-2 text-[13px] font-medium text-[#B8B0A2]">
                 {leadCountLabel} · {updatedLabel}
               </div>
+            </div>
+
+            <div
+              className="relative shrink-0"
+              data-cp24a-export-utility
+              data-cp24b-export-utility
+            >
+              <button
+                type="button"
+                disabled={visibleRows.length === 0}
+                aria-haspopup="menu"
+                aria-expanded={exportMenuOpen}
+                onClick={() => setExportMenuOpen((open) => !open)}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#2A2F2B] bg-[#171A18] px-3.5 text-[12.5px] font-extrabold text-[#B8B0A2] transition-colors hover:border-[#F7F3E8]/25 hover:text-[#F7F3E8] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ArrowDownToLine className="h-4 w-4" />
+                Export
+              </button>
+
+              {exportMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+8px)] z-20 w-36 overflow-hidden rounded-2xl border border-[#2A2F2B] bg-[#171A18] p-1.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.9)]"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setExportMenuOpen(false)
+                      exportCsv()
+                    }}
+                    className="flex h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-[13px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#20241F]"
+                  >
+                    <ArrowDownToLine className="h-4 w-4 text-[#B8B0A2]" />
+                    CSV
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setExportMenuOpen(false)
+                      exportJson()
+                    }}
+                    className="flex h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-[13px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#20241F]"
+                  >
+                    <FileJson className="h-4 w-4 text-[#B8B0A2]" />
+                    JSON
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -613,112 +676,61 @@ export function MyLeadsView({ leads }: Props) {
               </button>
             )}
           </div>
-
-          {rows.length > 0 && (
-            <div
-              className="flex items-center gap-2"
-              data-cp23b-action-rail
-              data-cp24a-my-leads-action-row
-            >
-              <Link
-                href="/app/sweep"
-                data-cp24a-primary-fetch-action
-                className={cn(
-                  'inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 text-[14px] font-extrabold transition-colors',
-                  GREEN_ACTION_CLASS,
-                )}
-              >
-                <Search className="h-4 w-4 flex-shrink-0" />
-                Fetch leads
-              </Link>
-
-              <div className="relative" data-cp24a-export-utility>
-                <button
-                  type="button"
-                  disabled={visibleRows.length === 0}
-                  aria-haspopup="menu"
-                  aria-expanded={exportMenuOpen}
-                  onClick={() => setExportMenuOpen((open) => !open)}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#2A2F2B] bg-[#171A18] px-4 text-[13px] font-extrabold text-[#B8B0A2] transition-colors hover:border-[#F7F3E8]/25 hover:text-[#F7F3E8] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ArrowDownToLine className="h-4 w-4" />
-                  Export
-                </button>
-
-                {exportMenuOpen && (
-                  <div
-                    role="menu"
-                    className="absolute right-0 top-[calc(100%+8px)] z-20 w-36 overflow-hidden rounded-2xl border border-[#2A2F2B] bg-[#171A18] p-1.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.9)]"
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setExportMenuOpen(false)
-                        exportCsv()
-                      }}
-                      className="flex h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-[13px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#20241F]"
-                    >
-                      <ArrowDownToLine className="h-4 w-4 text-[#B8B0A2]" />
-                      CSV
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setExportMenuOpen(false)
-                        exportJson()
-                      }}
-                      className="flex h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-[13px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#20241F]"
-                    >
-                      <FileJson className="h-4 w-4 text-[#B8B0A2]" />
-                      JSON
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </header>
 
         <nav
           aria-label="Lifecycle filters"
-          className="-mx-4 mt-5 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 mt-5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           data-cp23b-filter-rail
           data-cp23c-mailbox-filter-rail
+          data-cp24b-overlap-filter-rail
+          data-cp24b-smooth-filter-motion
         >
-          {LIFECYCLE_FILTERS.map((filter) => {
-            const active = activeFilter === filter.key
-            const count = filter.key === 'all' ? rows.length : countForFilter(statusCounts, filter)
-            const Icon = filter.icon
-            return (
-              <button
-                key={filter.key}
-                type="button"
-                onClick={() => setActiveFilter(filter.key)}
-                className={cn(
-                  'inline-flex h-[58px] shrink-0 items-center justify-center rounded-[24px] border text-[13px] font-extrabold transition-all',
-                  active
-                    ? cn('min-w-[140px] gap-2.5 px-5 shadow-[0_16px_35px_-26px_rgba(247,243,232,0.65)]', filter.activeClass)
-                    : 'w-10 border-[#2A2F2B] bg-[#171A18] !h-[58px] !w-[76px] rounded-[24px] text-[#9D98A3] hover:border-[#F7F3E8]/20 hover:text-[#F7F3E8]',
-                )}
-                aria-label={`${filter.label}: ${count}`}
-                title={`${filter.label}: ${count}`}
-              >
-                <Icon className="h-5 w-5" />
-                {active ? (
-                  <>
-                    <span>{filter.label}</span>
-                    <span className="tabular-nums opacity-75">{count}</span>
-                  </>
-                ) : (
-                  <span className="sr-only">
-                    {filter.label} {count}
-                  </span>
-                )}
-              </button>
-            )
-          })}
+          <div className="flex min-w-max items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setActiveFilter(activeFilterMeta.key)}
+              className={cn(
+                'inline-flex h-[58px] w-[172px] shrink-0 items-center justify-center gap-2.5 rounded-[24px] border border-[#F7F3E8] bg-[#F7F3E8] px-5 text-[13px] font-extrabold text-[#0B0D0C] shadow-[0_16px_35px_-26px_rgba(247,243,232,0.65)] sm:w-[190px]',
+                FILTER_MOTION_CLASS,
+              )}
+              aria-label={`${activeFilterMeta.label}: ${activeFilterCount}`}
+              aria-pressed="true"
+              title={`${activeFilterMeta.label}: ${activeFilterCount}`}
+              style={FILTER_MOTION_STYLE}
+            >
+              <ActiveFilterIcon className="h-5 w-5 flex-shrink-0" />
+              <span className="min-w-0 truncate">{activeFilterMeta.label}</span>
+              <span className="shrink-0 tabular-nums opacity-75">{activeFilterCount}</span>
+            </button>
+
+            <div className="flex -space-x-4">
+              {inactiveFilters.map((filter, index) => {
+                const count = filter.key === 'all' ? rows.length : countForFilter(statusCounts, filter)
+                const Icon = filter.icon
+                return (
+                  <button
+                    key={filter.key}
+                    type="button"
+                    onClick={() => setActiveFilter(filter.key)}
+                    className={cn(
+                      'relative inline-flex h-[58px] w-[76px] shrink-0 items-center justify-center rounded-[24px] border border-[#2A2F2B] bg-[#171A18] text-[#9D98A3] shadow-[0_12px_24px_-24px_rgba(0,0,0,0.95)] hover:-translate-y-0.5 hover:border-[#F7F3E8]/20 hover:text-[#F7F3E8] focus-visible:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F7F3E8]/40',
+                      FILTER_MOTION_CLASS,
+                    )}
+                    style={{ ...FILTER_MOTION_STYLE, zIndex: inactiveFilters.length - index }}
+                    aria-label={`${filter.label}: ${count}`}
+                    aria-pressed="false"
+                    title={`${filter.label}: ${count}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="sr-only">
+                      {filter.label} {count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </nav>
 
         {message && (
@@ -741,11 +753,10 @@ export function MyLeadsView({ leads }: Props) {
             </p>
             <Link
               href="/app/sweep"
-              className={cn('mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-extrabold transition-colors', GREEN_ACTION_CLASS)}
-              data-cp24a-primary-fetch-action
+              aria-label="Open Fetch leads"
+              className="mt-5 inline-flex h-9 items-center justify-center rounded-full border border-[#2A2F2B] px-4 text-[12.5px] font-extrabold text-[#B8B0A2] transition-colors hover:border-[#F7F3E8]/25 hover:text-[#F7F3E8]"
             >
-              <Search className="h-4 w-4" />
-              Fetch leads
+              Open Fetch
             </Link>
           </div>
         ) : visibleRows.length === 0 ? (
