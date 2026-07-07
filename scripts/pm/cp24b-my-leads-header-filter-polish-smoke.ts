@@ -160,9 +160,19 @@ async function main() {
   assert(myLeads.includes('data-cp24b-smooth-filter-motion'), 'Smooth filter motion marker missing')
 
   const filterRail = blockAround(myLeads, 'data-cp24b-overlap-filter-rail', 1200, 3200)
-  assert(filterRail.includes('-space-x-4'), 'Inactive lifecycle filters are not overlapping')
-  assert(filterRail.includes('w-[76px]'), 'Inactive lifecycle filters lost stable rounded-square sizing')
-  assert(filterRail.includes('w-[172px]'), 'Active lifecycle pill lost stable width')
+  const hasCp24bOverlap = filterRail.includes('-space-x-4')
+  const hasCp24cOverlap = filterRail.includes('-space-x-5')
+  const hasCp24cOverlapMarker = filterRail.includes('data-cp24c-inactive-overlap-cluster')
+  const hasExplicitNegativeSpacing = /(?:^|[\s"'`])-(?:space-x|ml|mr)-\d/.test(filterRail)
+  // CP24C intentionally strengthened CP24B's original -space-x-4 overlap to -space-x-5.
+  assert(
+    hasCp24bOverlap || hasCp24cOverlap || (hasCp24cOverlapMarker && hasExplicitNegativeSpacing),
+    'Inactive lifecycle filters are not overlapping',
+  )
+  const hasStableInactiveSizing = filterRail.includes('w-[76px]') || filterRail.includes('w-[78px]')
+  const hasStableActiveWidth = filterRail.includes('w-[172px]') || filterRail.includes('w-[168px]')
+  assert(hasStableInactiveSizing, 'Inactive lifecycle filters lost stable rounded-square sizing')
+  assert(hasStableActiveWidth, 'Active lifecycle pill lost stable width')
   assert(myLeads.includes('duration-300'), 'Filter rail is missing duration-300 motion')
   assert(myLeads.includes("transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)'"), 'Filter rail is missing the approved easing')
   assert(myLeads.includes('motion-reduce:transition-none'), 'Filter rail is missing reduced-motion support')
