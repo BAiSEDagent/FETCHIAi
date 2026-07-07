@@ -58,6 +58,7 @@ type LifecycleMeta = {
 type LifecycleFilter = {
   key: FilterKey
   label: string
+  activeLabel?: string
   statuses: SavedLeadLifecycleStatus[]
   activeClass: string
   icon: LucideIcon
@@ -154,6 +155,7 @@ const LIFECYCLE_FILTERS: LifecycleFilter[] = [
   {
     key: 'closed',
     label: 'Lost / Dismissed',
+    activeLabel: 'Lost',
     statuses: ['lost', 'dismissed'],
     activeClass: STATUS_META.dismissed.activeFilterClass,
     icon: CircleSlash,
@@ -452,8 +454,6 @@ export function MyLeadsView({ leads }: Props) {
   const statusCounts = useMemo(() => countByStatus(rows), [rows])
   const activeFilterMeta = LIFECYCLE_FILTERS.find((filter) => filter.key === activeFilter) ?? LIFECYCLE_FILTERS[0]
   const activeFilterCount = activeFilterMeta.key === 'all' ? rows.length : countForFilter(statusCounts, activeFilterMeta)
-  const inactiveFilters = LIFECYCLE_FILTERS.filter((filter) => filter.key !== activeFilter)
-  const ActiveFilterIcon = activeFilterMeta.icon
 
   const sortedRows = useMemo(() => [...rows].sort(compareBusinessName), [rows])
 
@@ -680,56 +680,58 @@ export function MyLeadsView({ leads }: Props) {
 
         <nav
           aria-label="Lifecycle filters"
-          className="-mx-4 mt-5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 mt-5 overflow-x-auto overflow-y-visible px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           data-cp23b-filter-rail
           data-cp23c-mailbox-filter-rail
           data-cp24b-overlap-filter-rail
           data-cp24b-smooth-filter-motion
+          data-cp24c-filter-final-grammar
+          data-cp24c-smooth-filter-motion
+          data-cp24c-hover-edge-safe
         >
-          <div className="flex min-w-max items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setActiveFilter(activeFilterMeta.key)}
-              className={cn(
-                'inline-flex h-[58px] w-[172px] shrink-0 items-center justify-center gap-2.5 rounded-[24px] border border-[#F7F3E8] bg-[#F7F3E8] px-5 text-[13px] font-extrabold text-[#0B0D0C] shadow-[0_16px_35px_-26px_rgba(247,243,232,0.65)] sm:w-[190px]',
-                FILTER_MOTION_CLASS,
-              )}
-              aria-label={`${activeFilterMeta.label}: ${activeFilterCount}`}
-              aria-pressed="true"
-              title={`${activeFilterMeta.label}: ${activeFilterCount}`}
-              style={FILTER_MOTION_STYLE}
-            >
-              <ActiveFilterIcon className="h-5 w-5 flex-shrink-0" />
-              <span className="min-w-0 truncate">{activeFilterMeta.label}</span>
-              <span className="shrink-0 tabular-nums opacity-75">{activeFilterCount}</span>
-            </button>
+          <div
+            className="isolate flex min-w-max items-center overflow-visible -space-x-5"
+            data-cp24c-inactive-overlap-cluster
+          >
+            {LIFECYCLE_FILTERS.map((filter) => {
+              const isActive = filter.key === activeFilter
+              const count = filter.key === 'all' ? rows.length : countForFilter(statusCounts, filter)
+              const Icon = filter.icon
+              const activeLabel = filter.activeLabel ?? filter.label
 
-            <div className="flex -space-x-4">
-              {inactiveFilters.map((filter, index) => {
-                const count = filter.key === 'all' ? rows.length : countForFilter(statusCounts, filter)
-                const Icon = filter.icon
-                return (
-                  <button
-                    key={filter.key}
-                    type="button"
-                    onClick={() => setActiveFilter(filter.key)}
-                    className={cn(
-                      'relative inline-flex h-[58px] w-[76px] shrink-0 items-center justify-center rounded-[24px] border border-[#2A2F2B] bg-[#171A18] text-[#9D98A3] shadow-[0_12px_24px_-24px_rgba(0,0,0,0.95)] hover:-translate-y-0.5 hover:border-[#F7F3E8]/20 hover:text-[#F7F3E8] focus-visible:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F7F3E8]/40',
-                      FILTER_MOTION_CLASS,
-                    )}
-                    style={{ ...FILTER_MOTION_STYLE, zIndex: inactiveFilters.length - index }}
-                    aria-label={`${filter.label}: ${count}`}
-                    aria-pressed="false"
-                    title={`${filter.label}: ${count}`}
-                  >
-                    <Icon className="h-5 w-5" />
+              return (
+                <button
+                  key={filter.key}
+                  type="button"
+                  onClick={() => setActiveFilter(filter.key)}
+                  className={cn(
+                    'relative inline-flex h-[58px] shrink-0 items-center justify-center rounded-[24px] border font-extrabold leading-none shadow-[0_12px_24px_-24px_rgba(0,0,0,0.95)] hover:z-20 focus-visible:z-30 active:z-30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F7F3E8]/40',
+                    FILTER_MOTION_CLASS,
+                    isActive
+                      ? cn('z-10 w-[168px] gap-2.5 px-5 text-[13px] shadow-[0_16px_35px_-26px_rgba(247,243,232,0.65)] sm:w-[190px]', filter.activeClass)
+                      : 'w-[78px] border-[#2A2F2B] bg-[#171A18] text-[#9D98A3] hover:border-[#F7F3E8]/20 hover:bg-[#1C201D] hover:text-[#F7F3E8] focus-visible:bg-[#1C201D]',
+                  )}
+                  aria-label={`${filter.label}: ${count}`}
+                  aria-pressed={isActive}
+                  style={FILTER_MOTION_STYLE}
+                  data-cp24c-lifecycle-active-color={isActive ? true : undefined}
+                  data-cp24c-active-filter-fit={isActive ? true : undefined}
+                  data-cp24c-hover-edge-safe
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                  {isActive ? (
+                    <>
+                      <span className="whitespace-nowrap">{activeLabel}</span>
+                      <span className="shrink-0 tabular-nums opacity-75">{count}</span>
+                    </>
+                  ) : (
                     <span className="sr-only">
                       {filter.label} {count}
                     </span>
-                  </button>
-                )
-              })}
-            </div>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </nav>
 
