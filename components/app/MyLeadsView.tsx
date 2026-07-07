@@ -692,6 +692,7 @@ export function MyLeadsView({ leads }: Props) {
           <div
             className="isolate flex min-w-max items-center overflow-visible -space-x-5"
             data-cp24c-inactive-overlap-cluster
+            data-cp24d-inactive-overlap-preserved
           >
             {LIFECYCLE_FILTERS.map((filter) => {
               const isActive = filter.key === activeFilter
@@ -705,11 +706,11 @@ export function MyLeadsView({ leads }: Props) {
                   type="button"
                   onClick={() => setActiveFilter(filter.key)}
                   className={cn(
-                    'relative inline-flex h-[58px] shrink-0 items-center justify-center rounded-[24px] border font-extrabold leading-none shadow-[0_12px_24px_-24px_rgba(0,0,0,0.95)] hover:z-20 focus-visible:z-30 active:z-30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F7F3E8]/40',
+                    'relative inline-flex shrink-0 items-center justify-center rounded-[24px] border font-extrabold leading-none shadow-[0_12px_24px_-24px_rgba(0,0,0,0.95)] hover:z-20 focus-visible:z-30 active:z-30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F7F3E8]/40',
                     FILTER_MOTION_CLASS,
                     isActive
-                      ? cn('z-10 w-[168px] gap-2.5 px-5 text-[13px] shadow-[0_16px_35px_-26px_rgba(247,243,232,0.65)] sm:w-[190px]', filter.activeClass)
-                      : 'w-[78px] border-[#2A2F2B] bg-[#171A18] text-[#9D98A3] hover:border-[#F7F3E8]/20 hover:bg-[#1C201D] hover:text-[#F7F3E8] focus-visible:bg-[#1C201D]',
+                      ? cn('z-10 h-[52px] w-[148px] !ml-3 !mr-8 gap-2 px-4 text-[13px] shadow-[0_16px_32px_-26px_rgba(247,243,232,0.65)]', filter.activeClass)
+                      : 'h-[58px] w-[78px] border-[#2A2F2B] bg-[#171A18] text-[#9D98A3] hover:border-[#F7F3E8]/20 hover:bg-[#1C201D] hover:text-[#F7F3E8] focus-visible:bg-[#1C201D]',
                   )}
                   aria-label={`${filter.label}: ${count}`}
                   aria-pressed={isActive}
@@ -717,6 +718,9 @@ export function MyLeadsView({ leads }: Props) {
                   data-cp24c-lifecycle-active-color={isActive ? true : undefined}
                   data-cp24c-active-filter-fit={isActive ? true : undefined}
                   data-cp24c-hover-edge-safe
+                  data-cp24d-compact-active-pill={isActive ? true : undefined}
+                  data-cp24d-active-separation-gap={isActive ? true : undefined}
+                  data-cp24d-lifecycle-color-preserved={isActive ? true : undefined}
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                   {isActive ? (
