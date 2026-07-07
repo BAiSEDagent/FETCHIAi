@@ -19,16 +19,42 @@ function shell(command: string): string {
 }
 
 function changedFiles(): string[] {
-  const commands = [
-    'git diff --name-only origin/main..HEAD',
-    'git diff --name-only',
-    'git diff --name-only --cached',
-    'git ls-files --others --exclude-standard',
-  ]
-  return Array.from(new Set(commands.flatMap((command) => {
-    const output = shell(command)
-    return output ? output.split('\n') : []
-  }))).sort()
+  return changedFilesBySource().all
+}
+
+function changedFilesFor(command: string): string[] {
+  const output = shell(command)
+  return output ? output.split('\n') : []
+}
+
+function uniqueSorted(paths: readonly string[]): string[] {
+  return Array.from(new Set(paths)).sort()
+}
+
+function changedFilesBySource(): {
+  baseDiff: string[]
+  worktreeDiff: string[]
+  stagedDiff: string[]
+  untracked: string[]
+  all: string[]
+} {
+  const baseDiff = changedFilesFor('git diff --name-only origin/main..HEAD')
+  const worktreeDiff = changedFilesFor('git diff --name-only')
+  const stagedDiff = changedFilesFor('git diff --name-only --cached')
+  const untracked = changedFilesFor('git ls-files --others --exclude-standard')
+
+  return {
+    baseDiff: uniqueSorted(baseDiff),
+    worktreeDiff: uniqueSorted(worktreeDiff),
+    stagedDiff: uniqueSorted(stagedDiff),
+    untracked: uniqueSorted(untracked),
+    all: uniqueSorted([
+      ...baseDiff,
+      ...worktreeDiff,
+      ...stagedDiff,
+      ...untracked,
+    ]),
+  }
 }
 
 function assertNoChangedPath(changed: readonly string[], predicate: (path: string) => boolean, message: string) {
@@ -59,13 +85,24 @@ function routeFilesFromWorktree(): string[] {
 }
 
 async function main() {
+  const changedBySource = changedFilesBySource()
   const changed = changedFiles()
-  const allowedChangedFiles = new Set([
+  const allowedChangedFileList = [
     'components/app/MyLeadsView.tsx',
     'scripts/pm/cp24b-my-leads-header-filter-polish-smoke.ts',
-  ])
+  ].sort()
+  const allowedChangedFiles = new Set(allowedChangedFileList)
+  const cleanMergedMainMode = changed.length === 0
+  const unexpectedChangedFiles = changed.filter((path) => !allowedChangedFiles.has(path))
 
-  assert.deepEqual(changed, Array.from(allowedChangedFiles).sort(), 'CP24B changed files must match the approved file fence')
+  if (changedBySource.baseDiff.includes('components/app/MyLeadsView.tsx')) {
+    assert.deepEqual(
+      changedBySource.baseDiff,
+      allowedChangedFileList,
+      'CP24B PR branch changed files must match the approved file fence',
+    )
+  }
+  assert.deepEqual(unexpectedChangedFiles, [], 'CP24B changed files must stay inside the approved file fence')
 
   assertNoChangedPath(changed, (path) => path === 'replit.md', 'Protected file changed')
   assertNoChangedPath(changed, (path) => path === 'FETCHI_CLAUDE_CODE_BRIEF.md', 'Protected file changed')
@@ -158,6 +195,7 @@ async function main() {
     ok: true,
     mode: 'cp24b_my_leads_header_filter_polish',
     changedFilesAllowedOnly: true,
+    cleanMergedMainMode,
     protectedFilesChanged: false,
     packageFilesChanged: false,
     providerFilesChanged: false,
