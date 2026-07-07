@@ -200,6 +200,31 @@ function textValue(value: string | null | undefined): string {
   return (value ?? '').trim()
 }
 
+function displayTitleCase(value: string): string {
+  return value.replace(/[A-Za-z][A-Za-z']*/g, (word) => {
+    if (word.length <= 2 && word === word.toUpperCase()) return word
+    return `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`
+  })
+}
+
+function displayMarket(value: string | null | undefined): string {
+  const trimmed = textValue(value)
+  if (!trimmed) return ''
+  return trimmed
+    .split(',')
+    .map((part, index) => {
+      const next = part.trim()
+      if (index > 0 && /^[a-z]{2}$/i.test(next)) return next.toUpperCase()
+      return displayTitleCase(next)
+    })
+    .join(', ')
+}
+
+function displayCategory(value: string | null | undefined): string {
+  const trimmed = textValue(value)
+  return trimmed ? displayTitleCase(trimmed) : ''
+}
+
 function statusLabel(status: SavedLeadLifecycleStatus): string {
   return STATUS_META[status]?.label ?? status
 }
@@ -281,7 +306,10 @@ function formatAge(valueMs: number, nowMs: number): string {
 }
 
 function detailLine(row: SavedLeadPipelineRow): string {
-  return [row.category, row.market ?? row.address].filter(Boolean).join(' · ')
+  return [
+    displayCategory(row.category),
+    displayMarket(row.market ?? row.address),
+  ].filter(Boolean).join(' · ')
 }
 
 function formatCompactAge(valueMs: number, nowMs: number): string {
@@ -328,9 +356,13 @@ function FieldPresenceIcon({
 }) {
   return (
     <span
+      data-cp24a-field-presence-icon
+      data-state={available ? 'present' : 'missing'}
       className={cn(
-        'inline-flex h-6 w-6 items-center justify-center rounded-full',
-        available ? 'text-[#B8B0A2]' : 'text-[#4E4A43]',
+        'inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors',
+        available
+          ? 'bg-[#20241F] text-[#F7F3E8]'
+          : 'text-[#5E574E] opacity-45',
       )}
       title={available ? label : missingLabel}
     >
@@ -371,8 +403,9 @@ function LeadIconStatusStrip({
         missingLabel="No location"
       />
       <span
+        data-cp24a-quiet-status-age
         className={cn(
-          'ml-1 inline-flex min-w-0 items-center rounded-full bg-[#20241F] px-2 py-1 text-[11.5px] font-extrabold leading-none',
+          'ml-1 inline-flex min-w-0 items-center text-[11.5px] font-extrabold leading-none',
           STATUS_META[row.lifecycleStatus].quietClass,
         )}
       >
@@ -392,6 +425,7 @@ export function MyLeadsView({ leads }: Props) {
   const [message, setMessage] = useState<string | null>(null)
   const [undoToast, setUndoToast] = useState<UndoToast | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [exportMenuOpen, setExportMenuOpen] = useState(false)
   const [nowMs, setNowMs] = useState(() => Date.now())
   const [isPending, startTransition] = useTransition()
 
@@ -420,6 +454,10 @@ export function MyLeadsView({ leads }: Props) {
       return rowMatchesSearch(row, query)
     })
   }, [sortedRows, activeFilter, activeFilterMeta.statuses, search])
+
+  useEffect(() => {
+    if (visibleRows.length === 0) setExportMenuOpen(false)
+  }, [visibleRows.length])
 
   const activeLead = useMemo(
     () => rows.find((row) => row.id === activeLeadId) ?? null,
@@ -576,40 +614,71 @@ export function MyLeadsView({ leads }: Props) {
             )}
           </div>
 
-          <div
-            className="grid grid-cols-[minmax(58px,0.72fr)_minmax(66px,0.78fr)_minmax(130px,1.45fr)] gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,1.35fr)] sm:gap-3"
-            data-cp23b-action-rail
-            data-cp23c-compact-action-rail
-          >
-            <button
-              type="button"
-              disabled={visibleRows.length === 0}
-              onClick={exportCsv}
-              className="inline-flex h-[52px] min-w-0 items-center justify-center gap-1.5 rounded-[22px] border border-[#2A2F2B] bg-[#0B0D0C] px-2 text-[12.5px] font-extrabold text-[#F7F3E8] transition-colors hover:border-[#F7F3E8]/25 hover:bg-[#171A18] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:gap-3 sm:px-4 sm:text-[15px]"
+          {rows.length > 0 && (
+            <div
+              className="flex items-center gap-2"
+              data-cp23b-action-rail
+              data-cp24a-my-leads-action-row
             >
-              <ArrowDownToLine className="h-4 w-4 sm:h-5 sm:w-5" />
-              CSV
-            </button>
-            <button
-              type="button"
-              disabled={visibleRows.length === 0}
-              onClick={exportJson}
-              className="inline-flex h-[52px] min-w-0 items-center justify-center gap-1.5 rounded-[22px] border border-[#2A2F2B] bg-[#0B0D0C] px-2 text-[12.5px] font-extrabold text-[#F7F3E8] transition-colors hover:border-[#F7F3E8]/25 hover:bg-[#171A18] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:gap-3 sm:px-4 sm:text-[15px]"
-            >
-              <FileJson className="h-4 w-4 sm:h-5 sm:w-5" />
-              JSON
-            </button>
-            <Link
-              href="/app/sweep"
-              className={cn(
-                'inline-flex h-[52px] min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[22px] px-2.5 text-[12.5px] font-extrabold transition-colors sm:h-14 sm:gap-3 sm:px-5 sm:text-[15px]',
-                GREEN_ACTION_CLASS,
-              )}
-            >
-              <Search className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
-              Run a sweep
-            </Link>
-          </div>
+              <Link
+                href="/app/sweep"
+                data-cp24a-primary-fetch-action
+                className={cn(
+                  'inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 text-[14px] font-extrabold transition-colors',
+                  GREEN_ACTION_CLASS,
+                )}
+              >
+                <Search className="h-4 w-4 flex-shrink-0" />
+                Fetch leads
+              </Link>
+
+              <div className="relative" data-cp24a-export-utility>
+                <button
+                  type="button"
+                  disabled={visibleRows.length === 0}
+                  aria-haspopup="menu"
+                  aria-expanded={exportMenuOpen}
+                  onClick={() => setExportMenuOpen((open) => !open)}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#2A2F2B] bg-[#171A18] px-4 text-[13px] font-extrabold text-[#B8B0A2] transition-colors hover:border-[#F7F3E8]/25 hover:text-[#F7F3E8] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ArrowDownToLine className="h-4 w-4" />
+                  Export
+                </button>
+
+                {exportMenuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-[calc(100%+8px)] z-20 w-36 overflow-hidden rounded-2xl border border-[#2A2F2B] bg-[#171A18] p-1.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.9)]"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setExportMenuOpen(false)
+                        exportCsv()
+                      }}
+                      className="flex h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-[13px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#20241F]"
+                    >
+                      <ArrowDownToLine className="h-4 w-4 text-[#B8B0A2]" />
+                      CSV
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setExportMenuOpen(false)
+                        exportJson()
+                      }}
+                      className="flex h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-[13px] font-bold text-[#F7F3E8] transition-colors hover:bg-[#20241F]"
+                    >
+                      <FileJson className="h-4 w-4 text-[#B8B0A2]" />
+                      JSON
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </header>
 
         <nav
@@ -668,14 +737,15 @@ export function MyLeadsView({ leads }: Props) {
               Your lead mailbox is empty.
             </h2>
             <p className="mt-2 max-w-[320px] text-[14px] leading-relaxed text-[#B8B0A2]">
-              Run a sweep to save leads here.
+              Use Fetch to build your list.
             </p>
             <Link
               href="/app/sweep"
               className={cn('mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-extrabold transition-colors', GREEN_ACTION_CLASS)}
+              data-cp24a-primary-fetch-action
             >
               <Search className="h-4 w-4" />
-              Run a sweep
+              Fetch leads
             </Link>
           </div>
         ) : visibleRows.length === 0 ? (
@@ -705,7 +775,7 @@ export function MyLeadsView({ leads }: Props) {
                       setActiveLeadId(row.id)
                     }
                   }}
-                  className="group grid cursor-pointer grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 py-4 outline-none transition-colors hover:bg-[#171A18]/55 focus-visible:bg-[#171A18]/75"
+                  className="group grid cursor-pointer grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 py-3 outline-none transition-colors hover:bg-[#171A18]/55 focus-visible:bg-[#171A18]/75"
                   data-cp23b-mailbox-row
                 >
                   <div
@@ -721,7 +791,7 @@ export function MyLeadsView({ leads }: Props) {
                   <div className="min-w-0">
                     <OpenLeadLink
                       row={row}
-                      className="block truncate font-outfit text-[17.5px] font-extrabold leading-tight text-[#F7F3E8] underline-offset-4 hover:underline"
+                      className="block truncate font-outfit text-[17.5px] font-extrabold leading-tight text-[#F7F3E8] no-underline visited:text-[#F7F3E8] hover:no-underline"
                     />
                     <div className="mt-1 truncate text-[13.5px] font-normal leading-snug text-[#B8B0A2]">
                       {detail || row.source}

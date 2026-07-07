@@ -130,7 +130,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
 
       <SettingsGroup
         title="Service area"
-        description="Fetchi scouts signals inside this radius."
+        description="Fetch uses this radius for lead searches."
       >
         <div className="grid grid-cols-[1fr_120px] gap-3">
           <Field label="City" htmlFor="city">
@@ -190,7 +190,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           ) : err ? (
             <span className="text-coral font-semibold">{err}</span>
           ) : (
-            'Changes apply on the next scout run.'
+            'Changes apply the next time you fetch leads.'
           )}
         </div>
         <Button type="submit" disabled={pending} size="lg" className="sm:w-auto w-full">

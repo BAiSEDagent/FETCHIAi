@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 import {
   MessageSquare,
   Search,
-  Sun,
   ListChecks,
   Map as MapIcon,
   User,
@@ -68,10 +67,9 @@ function applyAppearanceTheme(appearance: Appearance) {
 }
 
 const workspaceNav: NavItem[] = [
-  { href: '/app/sweep', label: 'Sweep', icon: Search },
+  { href: '/app/sweep', label: 'Fetch', icon: Search },
+  { href: '/app/leads', label: 'Leads', icon: ListChecks },
   { href: '/app/chat', label: 'Chat', icon: MessageSquare },
-  { href: '/app/today', label: 'Today', icon: Sun },
-  { href: '/app/leads', label: 'My Leads', icon: ListChecks },
   { href: '/app/map', label: 'Map', icon: MapIcon },
 ]
 
@@ -122,7 +120,7 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
       (item.href !== '/app/chat' && pathname?.startsWith(item.href))
     const Icon = item.icon
     const badgeText =
-      item.label === 'My Leads' && leadsCount > 0 ? String(leadsCount) : item.badge
+      item.href === '/app/leads' && leadsCount > 0 ? String(leadsCount) : item.badge
     return (
       <Link
         key={item.href}

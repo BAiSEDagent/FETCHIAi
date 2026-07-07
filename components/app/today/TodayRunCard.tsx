@@ -153,7 +153,7 @@ export function TodayRunCard({ card, isDemo = false }: Props) {
 
         {evidence.length === 0 ? (
           <p className="mt-2 text-[12.5px] text-text/55 italic">
-            We&rsquo;re still gathering evidence for this lead.
+            No saved evidence is available for this lead yet.
           </p>
         ) : (
           <ul className="mt-2 space-y-1.5">
