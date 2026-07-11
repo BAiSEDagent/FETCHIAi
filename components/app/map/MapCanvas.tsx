@@ -40,7 +40,17 @@ const MAP_LOAD_TIMEOUT_MS = 12_000
 function tokenColor(name: string, fallback: string): string {
   if (typeof window === 'undefined') return fallback
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-  return value ? `rgb(${value})` : fallback
+  if (!value) return fallback
+
+  const channels = value.split(/\s+/)
+  if (channels.length !== 3) return fallback
+
+  const numericChannels = channels.map(Number)
+  if (numericChannels.some((channel) => !Number.isFinite(channel) || channel < 0 || channel > 255)) {
+    return fallback
+  }
+
+  return `rgb(${numericChannels.join(', ')})`
 }
 
 function featureCollectionToData(collection: LeadFeatureCollection) {
