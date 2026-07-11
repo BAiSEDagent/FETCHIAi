@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { AlertTriangle, ArrowRight, MapPin, RotateCcw } from 'lucide-react'
 import type { SavedLeadPipelineRow } from '@/lib/runtime/sweep/saved-leads'
 import { cn } from '@/lib/utils'
-import { MapCanvas } from './MapCanvas'
+import { MapCanvas, type MapInitFailureReason } from './MapCanvas'
 import { MapFilterSheet } from './MapFilterSheet'
 import { MapTopBar } from './MapTopBar'
 import { SelectedLeadSheet } from './SelectedLeadSheet'
@@ -19,17 +19,16 @@ import {
 
 type Props = {
   leads: SavedLeadPipelineRow[]
-  mapEnabled: boolean
   workspaceName: string
 }
 
-export function SavedLeadMapShell({ leads, mapEnabled, workspaceName }: Props) {
+export function SavedLeadMapShell({ leads, workspaceName }: Props) {
   const [query, setQuery] = useState('')
   const [filters, setFilters] = useState<MapFilters>(DEFAULT_MAP_FILTERS)
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [mapReady, setMapReady] = useState(false)
-  const [mapFailed, setMapFailed] = useState(false)
+  const [mapFailureReason, setMapFailureReason] = useState<MapInitFailureReason | null>(null)
 
   const mappableLeads = useMemo(() => getMappableSavedLeads(leads), [leads])
   const filteredLeads = useMemo(
@@ -57,11 +56,14 @@ export function SavedLeadMapShell({ leads, mapEnabled, workspaceName }: Props) {
     }
   }, [filteredLeads, selectedLeadId])
 
-  const mapUnavailable = !mapEnabled || mapFailed
+  const mapUnavailable = mapFailureReason !== null
 
   if (mapUnavailable) {
     return (
-      <MapFrame data-cp25a-map-unavailable-state>
+      <MapFrame
+        data-cp25a-map-unavailable-state
+        data-cp25a-map-failure-reason={mapFailureReason}
+      >
         <StaticMapBackdrop muted />
         <MapTopTitle />
         <CenteredState
@@ -113,8 +115,11 @@ export function SavedLeadMapShell({ leads, mapEnabled, workspaceName }: Props) {
         leads={filteredLeads}
         selectedLeadId={selectedLeadId}
         onSelectLead={setSelectedLeadId}
-        onReady={() => setMapReady(true)}
-        onError={() => setMapFailed(true)}
+        onReady={() => {
+          setMapReady(true)
+          setMapFailureReason(null)
+        }}
+        onError={setMapFailureReason}
         fitKey={fitKey}
       />
       <MapTopBar

@@ -131,23 +131,26 @@ async function main() {
   const allowedChangedFileList = [
     'app/app/map/page.tsx',
     'components/app/map/MapCanvas.tsx',
-    'components/app/map/MapFilterSheet.tsx',
     'components/app/map/MapShell.tsx',
-    'components/app/map/MapTopBar.tsx',
-    'components/app/map/SelectedLeadSheet.tsx',
     'components/app/map/map-helpers.ts',
+    'scripts/pm/cp25a-map-tab-fable-port-smoke.ts',
+  ].sort()
+  const requiredRuntimeFixFiles = [
+    'app/app/map/page.tsx',
+    'components/app/map/MapCanvas.tsx',
+    'components/app/map/MapShell.tsx',
     'scripts/pm/cp25a-map-tab-fable-port-smoke.ts',
   ].sort()
   const allowedChangedFiles = new Set(allowedChangedFileList)
   const unexpectedChangedFiles = changed.filter((path) => !allowedChangedFiles.has(path))
 
   assert.deepEqual(unexpectedChangedFiles, [], 'CP25A changed files must stay inside the approved file fence')
-  assert.deepEqual(changed.sort(), allowedChangedFileList, 'CP25A changed files must match the approved file fence')
+  assert.deepEqual(changed.sort(), requiredRuntimeFixFiles, 'CP25A runtime fix changed files must match the approved file fence')
   if (changedBySource.baseDiff.length > 0) {
     assert.deepEqual(
       changedBySource.baseDiff,
-      allowedChangedFileList,
-      'CP25A branch changed files must match the approved file fence',
+      requiredRuntimeFixFiles,
+      'CP25A runtime fix branch changed files must match the approved file fence',
     )
   }
 
@@ -180,11 +183,25 @@ async function main() {
   assert(page.includes('requireWorkspaceContext'), 'Map page must require workspace context')
   assert(page.includes('listSavedLeadsForWorkspace(ctx.workspaceId)'), 'Map page must read workspace-scoped saved leads')
   assert(page.includes('SavedLeadMapShell'), 'Map page must hand off to the client map shell')
+  assert(!page.includes('NEXT_PUBLIC_MAPBOX_TOKEN'), 'Map page must not server-gate the map on the Mapbox token')
+  assert(!page.includes('mapEnabled'), 'Map shell should let the client canvas own map init availability')
 
   assert(canvasSource.includes("'use client'"), 'Map canvas must be a client component')
   assert(canvasSource.includes("import 'mapbox-gl/dist/mapbox-gl.css'"), 'Mapbox CSS must be imported inside the map feature')
   assert(canvasSource.includes("import('mapbox-gl')"), 'Mapbox must be loaded behind a client-only dynamic import')
   assert(!/from ['"]mapbox-gl['"]/.test(canvasSource), 'Mapbox must not be statically imported')
+  assert(canvasSource.includes('mapboxgl.supported()'), 'Mapbox WebGL support must be checked before constructing the map')
+  assert(canvasSource.includes('missing_token'), 'Map init must distinguish a missing token')
+  assert(canvasSource.includes('webgl_unsupported'), 'Map init must distinguish unsupported WebGL')
+  assert(canvasSource.includes('import_failed'), 'Map init must distinguish Mapbox import failures')
+  assert(canvasSource.includes('constructor_failed'), 'Map init must distinguish constructor failures')
+  assert(canvasSource.includes('load_timeout'), 'Map init must distinguish load timeouts')
+  assert(canvasSource.includes('mapbox_error_before_load'), 'Mapbox errors before load should be diagnostic-safe')
+  assert(canvasSource.includes("console.warn('[CP25A map init]'"), 'Development diagnostics must be present')
+  assert(canvasSource.includes('access_token=[redacted]'), 'Diagnostics must redact access token query params')
+  assert(canvasSource.includes('[mapbox-token]'), 'Diagnostics must redact public token-shaped values')
+  assert(!canvasSource.includes('catch {'), 'Map init must not silently swallow errors')
+  assert(!canvasSource.includes("map.on('error', onError)"), 'Generic Mapbox errors must not directly collapse the map')
   assert(!page.includes('mapbox-gl'), 'Server page must not import Mapbox')
   assert(!/navigator\.geolocation|watchPosition|getCurrentPosition/.test(`${shellSource}\n${canvasSource}`), 'CP25A must not request browser geolocation')
   assert(!/updateSavedLead|createSavedLead|deleteSavedLead|insert|upsert|runSweep|startSweep/.test(`${shellSource}\n${selectedSheet}\n${helpersSource}`), 'Map tab must remain read-only')
@@ -201,6 +218,7 @@ async function main() {
   assert(unavailableBlock.includes('Map is unavailable in this environment.'), 'Unavailable map title must use customer-safe copy')
   assert(unavailableBlock.includes('Your saved leads are still available in Leads.'), 'Unavailable map body must point customers back to Leads')
   assert(!/provider|api key|mapbox|token|NEXT_PUBLIC|process\.env/i.test(unavailableBlock), 'Unavailable map copy must not expose provider or environment internals')
+  assert(unavailableBlock.includes('data-cp25a-map-failure-reason'), 'Unavailable map state must retain a non-secret diagnostic reason')
 
   assert(shellSource.includes('data-cp25a-map-loading-state'), 'Loading state missing')
   assert(shellSource.includes('data-cp25a-map-no-saved-state'), 'No saved leads state missing')

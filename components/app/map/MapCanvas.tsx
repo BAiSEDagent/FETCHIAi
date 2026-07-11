@@ -12,12 +12,21 @@ type MapboxGeoJSONSource = import('mapbox-gl').GeoJSONSource
 type MapboxMapLayerMouseEvent = import('mapbox-gl').MapLayerMouseEvent
 type MapboxLngLatBounds = import('mapbox-gl').LngLatBounds
 
+export type MapInitFailureReason =
+  | 'missing_token'
+  | 'webgl_unsupported'
+  | 'import_failed'
+  | 'constructor_failed'
+  | 'load_timeout'
+
+type MapDiagnosticReason = MapInitFailureReason | 'mapbox_error_before_load' | 'mapbox_error_after_load'
+
 type Props = {
   leads: MappableSavedLead[]
   selectedLeadId: string | null
   onSelectLead: (leadId: string) => void
   onReady: () => void
-  onError: () => void
+  onError: (reason: MapInitFailureReason) => void
   fitKey: string
 }
 
@@ -26,6 +35,7 @@ const CLUSTER_LAYER_ID = 'cp25a-saved-leads-clusters'
 const CLUSTER_COUNT_LAYER_ID = 'cp25a-saved-leads-cluster-count'
 const PIN_LAYER_ID = 'cp25a-saved-leads-pins'
 const PIN_LABEL_LAYER_ID = 'cp25a-saved-leads-pin-labels'
+const MAP_LOAD_TIMEOUT_MS = 12_000
 
 function tokenColor(name: string, fallback: string): string {
   if (typeof window === 'undefined') return fallback
@@ -35,6 +45,30 @@ function tokenColor(name: string, fallback: string): string {
 
 function featureCollectionToData(collection: LeadFeatureCollection) {
   return collection as unknown as GeoJSON.FeatureCollection<GeoJSON.Point>
+}
+
+function safeDiagnosticMessage(detail: unknown): string | undefined {
+  const raw =
+    detail instanceof Error
+      ? `${detail.name}: ${detail.message}`
+      : typeof detail === 'string'
+        ? detail
+        : typeof detail === 'object' && detail && 'message' in detail
+          ? String((detail as { message?: unknown }).message ?? '')
+          : undefined
+
+  if (!raw) return undefined
+
+  return raw
+    .replace(/access_token=[^&\s]+/gi, 'access_token=[redacted]')
+    .replace(/pk\.[A-Za-z0-9._-]+/g, '[mapbox-token]')
+}
+
+function warnMapDiagnostic(reason: MapDiagnosticReason, detail?: unknown) {
+  if (process.env.NODE_ENV !== 'development') return
+
+  const message = safeDiagnosticMessage(detail)
+  console.warn('[CP25A map init]', message ? { reason, message } : { reason })
 }
 
 export function MapCanvas({
@@ -57,18 +91,51 @@ export function MapCanvas({
   useEffect(() => {
     let cancelled = false
     let map: MapboxMap | null = null
+    let mapLoaded = false
+    let loadTimeout: number | null = null
+
+    const clearLoadTimeout = () => {
+      if (loadTimeout !== null) {
+        window.clearTimeout(loadTimeout)
+        loadTimeout = null
+      }
+    }
+
+    const failMap = (reason: MapInitFailureReason, detail?: unknown) => {
+      if (cancelled) return
+      clearLoadTimeout()
+      warnMapDiagnostic(reason, detail)
+      onError(reason)
+    }
 
     async function initMap() {
       const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN?.trim()
-      if (!token || !containerRef.current) {
-        onError()
+      if (!token) {
+        failMap('missing_token')
+        return
+      }
+
+      if (!containerRef.current) {
+        failMap('constructor_failed', 'container_missing')
+        return
+      }
+
+      let mapboxgl: MapboxModule['default']
+      try {
+        mapboxgl = (await import('mapbox-gl')).default
+      } catch (error) {
+        failMap('import_failed', error)
+        return
+      }
+
+      if (cancelled) return
+
+      if (typeof mapboxgl.supported === 'function' && !mapboxgl.supported()) {
+        failMap('webgl_unsupported')
         return
       }
 
       try {
-        const mapboxgl = (await import('mapbox-gl')).default
-        if (cancelled) return
-
         mapboxgl.accessToken = token
         boundsCtorRef.current = mapboxgl.LngLatBounds
         map = new mapboxgl.Map({
@@ -80,25 +147,45 @@ export function MapCanvas({
           cooperativeGestures: true,
         })
         mapRef.current = map
+      } catch (error) {
+        failMap('constructor_failed', error)
+        return
+      }
 
-        map.on('error', onError)
-        map.on('load', () => {
-          if (!map) return
+      loadTimeout = window.setTimeout(() => {
+        if (!mapLoaded) {
+          failMap('load_timeout')
+        }
+      }, MAP_LOAD_TIMEOUT_MS)
+
+      map.on('error', (event: { error?: unknown }) => {
+        warnMapDiagnostic(
+          mapLoaded ? 'mapbox_error_after_load' : 'mapbox_error_before_load',
+          event.error ?? event,
+        )
+      })
+
+      map.on('load', () => {
+        if (!map) return
+        try {
+          mapLoaded = true
+          clearLoadTimeout()
           addLayers(map)
           setSourceData(map, featureCollection)
           fitFeatures(map, boundsCtorRef.current, featureCollection, true)
           lastFitKeyRef.current = fitKey
           onReady()
-        })
-      } catch {
-        onError()
-      }
+        } catch (error) {
+          failMap('constructor_failed', error)
+        }
+      })
     }
 
     initMap()
 
     return () => {
       cancelled = true
+      clearLoadTimeout()
       if (map) {
         map.remove()
       }
