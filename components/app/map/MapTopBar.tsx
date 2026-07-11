@@ -23,6 +23,12 @@ export function MapTopBar({
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-4 lg:px-6 lg:pt-6">
       <div className="pointer-events-auto mx-auto flex max-w-5xl items-center gap-2 rounded-[24px] border border-text/10 bg-bg/88 p-2 shadow-2xl shadow-black/35 backdrop-blur-xl">
+        <div
+          data-cp25a-ready-map-label
+          className="flex h-12 shrink-0 items-center rounded-[18px] bg-raised/90 px-3 font-outfit text-[16px] font-semibold text-text"
+        >
+          Map
+        </div>
         <div className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-[18px] bg-raised/90 px-3 text-text">
           <Search className="h-4 w-4 shrink-0 text-text/55" aria-hidden="true" />
           <label className="sr-only" htmlFor="map-search">

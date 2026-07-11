@@ -172,6 +172,7 @@ async function main() {
   const page = source('app/app/map/page.tsx')
   const shellSource = source('components/app/map/MapShell.tsx')
   const canvasSource = source('components/app/map/MapCanvas.tsx')
+  const topBarSource = source('components/app/map/MapTopBar.tsx')
   const helpersSource = source('components/app/map/map-helpers.ts')
   const selectedSheet = source('components/app/map/SelectedLeadSheet.tsx')
   const filterSheet = source('components/app/map/MapFilterSheet.tsx')
@@ -181,6 +182,7 @@ async function main() {
   assert(page.includes('SavedLeadMapShell'), 'Map page must hand off to the client map shell')
 
   assert(canvasSource.includes("'use client'"), 'Map canvas must be a client component')
+  assert(canvasSource.includes("import 'mapbox-gl/dist/mapbox-gl.css'"), 'Mapbox CSS must be imported inside the map feature')
   assert(canvasSource.includes("import('mapbox-gl')"), 'Mapbox must be loaded behind a client-only dynamic import')
   assert(!/from ['"]mapbox-gl['"]/.test(canvasSource), 'Mapbox must not be statically imported')
   assert(!page.includes('mapbox-gl'), 'Server page must not import Mapbox')
@@ -192,6 +194,13 @@ async function main() {
   assert(!readyBlock.includes('Run a sweep'), 'Ready map must not render Run a sweep copy')
   assert(!readyBlock.includes('Fetch leads'), 'Ready map must not render a persistent Fetch leads CTA')
   assert(!readyBlock.includes('/app/sweep'), 'Ready map must not link to Fetch as a persistent CTA')
+  assert(topBarSource.includes('data-cp25a-ready-map-label'), 'Ready map chrome must include a compact Map label')
+  assert(topBarSource.includes('>Map<') || topBarSource.includes('>\n          Map\n        </div>'), 'Ready map label text missing')
+
+  const unavailableBlock = blockAround(shellSource, 'data-cp25a-map-unavailable-state', 0, 1400)
+  assert(unavailableBlock.includes('Map is unavailable in this environment.'), 'Unavailable map title must use customer-safe copy')
+  assert(unavailableBlock.includes('Your saved leads are still available in Leads.'), 'Unavailable map body must point customers back to Leads')
+  assert(!/provider|api key|mapbox|token|NEXT_PUBLIC|process\.env/i.test(unavailableBlock), 'Unavailable map copy must not expose provider or environment internals')
 
   assert(shellSource.includes('data-cp25a-map-loading-state'), 'Loading state missing')
   assert(shellSource.includes('data-cp25a-map-no-saved-state'), 'No saved leads state missing')

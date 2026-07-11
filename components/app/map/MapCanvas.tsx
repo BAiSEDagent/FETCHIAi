@@ -1,5 +1,7 @@
 'use client'
 
+import 'mapbox-gl/dist/mapbox-gl.css'
+
 import { useEffect, useMemo, useRef } from 'react'
 import type { LeadFeatureCollection, MappableSavedLead } from './map-helpers'
 import { buildLeadFeatureCollection } from './map-helpers'

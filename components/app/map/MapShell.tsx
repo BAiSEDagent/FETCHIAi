@@ -66,8 +66,8 @@ export function SavedLeadMapShell({ leads, mapEnabled, workspaceName }: Props) {
         <MapTopTitle />
         <CenteredState
           icon={<AlertTriangle className="h-7 w-7" aria-hidden="true" />}
-          title="Map unavailable"
-          body="Saved leads are still available while the map provider is unavailable."
+          title="Map is unavailable in this environment."
+          body="Your saved leads are still available in Leads."
           primaryHref="/app/leads"
           primaryLabel="Open lead list"
         />
