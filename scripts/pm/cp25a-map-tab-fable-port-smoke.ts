@@ -128,6 +128,7 @@ function row(overrides: Partial<SavedLeadPipelineRow>): SavedLeadPipelineRow {
 async function main() {
   const canvasSource = source('components/app/map/MapCanvas.tsx')
   const tokenColorBlock = blockAround(canvasSource, 'function tokenColor', 0, 900)
+  const mapLoadBlock = blockAround(canvasSource, "map.on('load'", 0, 1800)
 
   assert(!tokenColorBlock.includes('`rgb(${value})`'), 'Mapbox colors must not use CSS4 space-separated rgb() output')
   assert(tokenColorBlock.includes("split(/\\s+/)"), 'Mapbox token colors must split space-separated channels')
@@ -145,6 +146,12 @@ async function main() {
   tokenColorFallbacks.forEach((fallback) => {
     assert.match(fallback, /^rgb\(\d+(?:\.\d+)?,\s*\d+(?:\.\d+)?,\s*\d+(?:\.\d+)?\)$/, `Invalid Mapbox fallback color: ${fallback}`)
   })
+  assert(mapLoadBlock.includes('registerMapInteractions'), 'Map interactions must register from the Mapbox load path')
+  assert(
+    mapLoadBlock.indexOf('addLayers(map)') < mapLoadBlock.indexOf('registerMapInteractions'),
+    'Map interactions must register after CP25A layers are added',
+  )
+  assert(!canvasSource.includes('const map = mapRef.current\n    if (!map) return\n\n    const handleClusterClick'), 'Map interactions must not depend on an effect that can return before map initialization')
 
   const changedBySource = changedFilesBySource()
   const changed = changedBySource.all
@@ -152,7 +159,7 @@ async function main() {
     'components/app/map/MapCanvas.tsx',
     'scripts/pm/cp25a-map-tab-fable-port-smoke.ts',
   ].sort()
-  const requiredCanvasHeightFixFiles = [
+  const requiredMarkerInteractionFixFiles = [
     'components/app/map/MapCanvas.tsx',
     'scripts/pm/cp25a-map-tab-fable-port-smoke.ts',
   ].sort()
@@ -160,12 +167,12 @@ async function main() {
   const unexpectedChangedFiles = changed.filter((path) => !allowedChangedFiles.has(path))
 
   assert.deepEqual(unexpectedChangedFiles, [], 'CP25A changed files must stay inside the approved file fence')
-  assert.deepEqual(changed.sort(), requiredCanvasHeightFixFiles, 'CP25A canvas height fix changed files must match the approved file fence')
+  assert.deepEqual(changed.sort(), requiredMarkerInteractionFixFiles, 'CP25A marker interaction fix changed files must match the approved file fence')
   if (changedBySource.baseDiff.length > 0) {
     assert.deepEqual(
       changedBySource.baseDiff,
-      requiredCanvasHeightFixFiles,
-      'CP25A canvas height fix branch changed files must match the approved file fence',
+      requiredMarkerInteractionFixFiles,
+      'CP25A marker interaction fix branch changed files must match the approved file fence',
     )
   }
 
@@ -225,6 +232,16 @@ async function main() {
   assert(canvasWrapperBlock.includes('min-h-[560px]'), 'Mapbox canvas wrapper must have a nonzero minimum height')
   assert(canvasWrapperBlock.includes("style={{ minHeight: 'max(560px, calc(100dvh - 9rem))' }}"), 'Mapbox canvas wrapper must have a valid viewport min-height fallback')
   assert(!canvasWrapperBlock.includes('className="absolute inset-0 bg-raised"'), 'Mapbox canvas wrapper must not rely only on an absolute child inside a zero-height frame')
+  const interactionBlock = blockAround(canvasSource, 'function registerMapInteractions', 0, 4200)
+  assert(interactionBlock.includes('map.getSource(SOURCE_ID)'), 'Map interactions must verify the CP25A source exists')
+  assert(interactionBlock.includes('map.getLayer(CLUSTER_LAYER_ID)'), 'Map interactions must verify the cluster layer exists')
+  assert(interactionBlock.includes('map.getLayer(PIN_LAYER_ID)'), 'Map interactions must verify the pin layer exists')
+  assert(interactionBlock.includes("map.on('click', CLUSTER_LAYER_ID"), 'Cluster click handler registration missing')
+  assert(interactionBlock.includes("map.on('click', PIN_LAYER_ID"), 'Pin click handler registration missing')
+  assert(interactionBlock.includes('getClusterExpansionZoom'), 'Cluster clicks must use Mapbox cluster expansion zoom')
+  assert(interactionBlock.includes('onSelectLead(id)'), 'Pin clicks must select the tapped lead id')
+  assert(interactionBlock.includes("map.off('click', CLUSTER_LAYER_ID"), 'Cluster click handler cleanup missing')
+  assert(interactionBlock.includes("map.off('click', PIN_LAYER_ID"), 'Pin click handler cleanup missing')
   assert(!page.includes('mapbox-gl'), 'Server page must not import Mapbox')
   assert(!/navigator\.geolocation|watchPosition|getCurrentPosition/.test(`${shellSource}\n${canvasSource}`), 'CP25A must not request browser geolocation')
   assert(!/updateSavedLead|createSavedLead|deleteSavedLead|insert|upsert|runSweep|startSweep/.test(`${shellSource}\n${selectedSheet}\n${helpersSource}`), 'Map tab must remain read-only')
@@ -369,6 +386,9 @@ async function main() {
     actionFieldGating: true,
     featureMetadataClean: true,
     mapCanvasWrapperHeightGuard: true,
+    markerInteractionsRegisteredAfterLoad: true,
+    clusterExpansionPreserved: true,
+    pinSelectionPreserved: true,
   }, null, 2))
 }
 
