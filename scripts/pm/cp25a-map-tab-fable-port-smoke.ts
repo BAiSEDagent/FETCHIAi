@@ -126,31 +126,46 @@ function row(overrides: Partial<SavedLeadPipelineRow>): SavedLeadPipelineRow {
 }
 
 async function main() {
+  const canvasSource = source('components/app/map/MapCanvas.tsx')
+  const tokenColorBlock = blockAround(canvasSource, 'function tokenColor', 0, 900)
+
+  assert(!tokenColorBlock.includes('`rgb(${value})`'), 'Mapbox colors must not use CSS4 space-separated rgb() output')
+  assert(tokenColorBlock.includes("split(/\\s+/)"), 'Mapbox token colors must split space-separated channels')
+  assert(tokenColorBlock.includes("join(', ')"), 'Mapbox token colors must join channels with commas')
+  assert(tokenColorBlock.includes('if (!value) return fallback'), 'Missing map color tokens must use their fallback')
+  assert(tokenColorBlock.includes('channels.length !== 3'), 'Malformed map color tokens must use their fallback')
+  assert(tokenColorBlock.includes('!Number.isFinite(channel)'), 'Map color token channels must be finite numbers')
+  assert(tokenColorBlock.includes('channel < 0 || channel > 255'), 'Out-of-range map color channels must use their fallback')
+  assert(!/rgb\(\s*\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s*\)/.test(canvasSource), 'Mapbox paint colors must not contain space-separated rgb() literals')
+  const tokenColorFallbacks = Array.from(
+    canvasSource.matchAll(/tokenColor\([^,]+,\s*'([^']+)'\)/g),
+    (match) => match[1],
+  )
+  assert(tokenColorFallbacks.length > 0, 'Mapbox token colors must retain explicit fallback values')
+  tokenColorFallbacks.forEach((fallback) => {
+    assert.match(fallback, /^rgb\(\d+(?:\.\d+)?,\s*\d+(?:\.\d+)?,\s*\d+(?:\.\d+)?\)$/, `Invalid Mapbox fallback color: ${fallback}`)
+  })
+
   const changedBySource = changedFilesBySource()
   const changed = changedBySource.all
   const allowedChangedFileList = [
-    'app/app/map/page.tsx',
     'components/app/map/MapCanvas.tsx',
-    'components/app/map/MapShell.tsx',
-    'components/app/map/map-helpers.ts',
     'scripts/pm/cp25a-map-tab-fable-port-smoke.ts',
   ].sort()
-  const requiredRuntimeFixFiles = [
-    'app/app/map/page.tsx',
+  const requiredTokenColorFixFiles = [
     'components/app/map/MapCanvas.tsx',
-    'components/app/map/MapShell.tsx',
     'scripts/pm/cp25a-map-tab-fable-port-smoke.ts',
   ].sort()
   const allowedChangedFiles = new Set(allowedChangedFileList)
   const unexpectedChangedFiles = changed.filter((path) => !allowedChangedFiles.has(path))
 
   assert.deepEqual(unexpectedChangedFiles, [], 'CP25A changed files must stay inside the approved file fence')
-  assert.deepEqual(changed.sort(), requiredRuntimeFixFiles, 'CP25A runtime fix changed files must match the approved file fence')
+  assert.deepEqual(changed.sort(), requiredTokenColorFixFiles, 'CP25A token color fix changed files must match the approved file fence')
   if (changedBySource.baseDiff.length > 0) {
     assert.deepEqual(
       changedBySource.baseDiff,
-      requiredRuntimeFixFiles,
-      'CP25A runtime fix branch changed files must match the approved file fence',
+      requiredTokenColorFixFiles,
+      'CP25A token color fix branch changed files must match the approved file fence',
     )
   }
 
@@ -174,7 +189,6 @@ async function main() {
 
   const page = source('app/app/map/page.tsx')
   const shellSource = source('components/app/map/MapShell.tsx')
-  const canvasSource = source('components/app/map/MapCanvas.tsx')
   const topBarSource = source('components/app/map/MapTopBar.tsx')
   const helpersSource = source('components/app/map/map-helpers.ts')
   const selectedSheet = source('components/app/map/SelectedLeadSheet.tsx')
