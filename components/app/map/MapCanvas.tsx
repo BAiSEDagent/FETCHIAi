@@ -8,6 +8,7 @@ import { buildLeadFeatureCollection } from './map-helpers'
 
 type MapboxModule = typeof import('mapbox-gl')
 type MapboxMap = import('mapbox-gl').Map
+type MapboxMarker = import('mapbox-gl').Marker
 type MapboxGeoJSONSource = import('mapbox-gl').GeoJSONSource
 type MapboxMapLayerMouseEvent = import('mapbox-gl').MapLayerMouseEvent
 type MapboxLngLatBounds = import('mapbox-gl').LngLatBounds
@@ -36,14 +37,7 @@ const CLUSTER_COUNT_LAYER_ID = 'cp25a-saved-leads-cluster-count'
 const PIN_LAYER_ID = 'cp25a-saved-leads-pins'
 const PIN_LABEL_LAYER_ID = 'cp25a-saved-leads-pin-labels'
 const PIN_NAME_LAYER_ID = 'cp25b-saved-lead-names'
-const SELECTED_PIN_POINTER_LAYER_ID = 'cp25b-selected-pin-pointer'
-const SELECTED_PIN_OUTER_LAYER_ID = 'cp25b-selected-pin-outer'
-const SELECTED_PIN_CENTER_LAYER_ID = 'cp25b-selected-pin-center'
-const SELECTED_PIN_INITIALS_LAYER_ID = 'cp25b-selected-pin-initials'
-const SELECTED_PIN_ANCHOR_LAYER_ID = 'cp25b-selected-pin-anchor'
-const SELECTED_PIN_ANCHOR_CENTER_LAYER_ID = 'cp25b-selected-pin-anchor-center'
-const SELECTED_PIN_NAME_LAYER_ID = 'cp25b-selected-pin-name'
-const CLOSE_ZOOM_LABEL_MIN_ZOOM = 14
+const CLOSE_ZOOM_LABEL_MIN_ZOOM = 15
 const MAP_LOAD_TIMEOUT_MS = 12_000
 
 function tokenColor(name: string, fallback: string): string {
@@ -100,6 +94,8 @@ export function MapCanvas({
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<MapboxMap | null>(null)
+  const markerCtorRef = useRef<MapboxModule['Marker'] | null>(null)
+  const selectedMarkerRef = useRef<MapboxMarker | null>(null)
   const boundsCtorRef = useRef<MapboxModule['LngLatBounds'] | null>(null)
   const lastFitKeyRef = useRef<string>('')
   const onSelectLeadRef = useRef(onSelectLead)
@@ -163,6 +159,7 @@ export function MapCanvas({
       try {
         mapboxgl.accessToken = token
         boundsCtorRef.current = mapboxgl.LngLatBounds
+        markerCtorRef.current = mapboxgl.Marker
         map = new mapboxgl.Map({
           container: containerRef.current,
           style: 'mapbox://styles/mapbox/dark-v11',
@@ -200,6 +197,12 @@ export function MapCanvas({
             onSelectLeadRef.current(leadId)
           })
           setSourceData(map, featureCollection)
+          selectedMarkerRef.current = syncSelectedMarker(
+            map,
+            markerCtorRef.current,
+            selectedMarkerRef.current,
+            featureCollection,
+          )
           fitFeatures(map, boundsCtorRef.current, featureCollection, true)
           lastFitKeyRef.current = fitKey
           onReady()
@@ -215,6 +218,9 @@ export function MapCanvas({
       cancelled = true
       clearLoadTimeout()
       cleanupMapInteractions?.()
+      selectedMarkerRef.current?.remove()
+      selectedMarkerRef.current = null
+      markerCtorRef.current = null
       if (map) {
         map.remove()
       }
@@ -226,6 +232,12 @@ export function MapCanvas({
     const map = mapRef.current
     if (!map?.isStyleLoaded()) return
     setSourceData(map, featureCollection)
+    selectedMarkerRef.current = syncSelectedMarker(
+      map,
+      markerCtorRef.current,
+      selectedMarkerRef.current,
+      featureCollection,
+    )
   }, [featureCollection])
 
   useEffect(() => {
@@ -245,6 +257,73 @@ export function MapCanvas({
       aria-label="Saved lead map"
     />
   )
+}
+
+function createSelectedMarkerElement(initials: string, businessName: string): HTMLDivElement {
+  const root = document.createElement('div')
+  root.setAttribute('data-cp25b1-selected-marker', '')
+  root.setAttribute('aria-hidden', 'true')
+  root.className = 'pointer-events-none relative h-[78px] w-[66px] select-none'
+
+  const tail = document.createElement('span')
+  tail.className =
+    'absolute left-1/2 top-[39px] h-7 w-7 -translate-x-1/2 rotate-45 rounded-[6px] border-b-2 border-r-2 border-border bg-bg shadow-lg shadow-black/45'
+
+  const outer = document.createElement('span')
+  outer.className =
+    'absolute inset-x-0 top-0 grid h-[66px] w-[66px] place-items-center rounded-full border-2 border-border bg-bg shadow-xl shadow-black/55'
+
+  const center = document.createElement('span')
+  center.className =
+    'grid h-[54px] w-[54px] place-items-center rounded-full border border-text/30 bg-warn text-[15px] font-black text-bg shadow-inner'
+  center.textContent = initials
+  outer.append(center)
+
+  const anchor = document.createElement('span')
+  anchor.setAttribute('data-cp25b1-selected-marker-anchor', '')
+  anchor.className =
+    'absolute bottom-0 left-1/2 grid h-[15px] w-[15px] -translate-x-1/2 place-items-center rounded-full bg-bg shadow-md shadow-black/60'
+
+  const anchorCenter = document.createElement('span')
+  anchorCenter.className = 'h-[7px] w-[7px] rounded-full bg-warn'
+  anchor.append(anchorCenter)
+
+  const name = document.createElement('span')
+  name.setAttribute('data-cp25b1-selected-marker-name', '')
+  name.className =
+    'absolute left-1/2 top-[84px] w-max -translate-x-1/2 overflow-hidden text-center text-[14px] font-bold leading-[1.15] text-text'
+  name.style.maxWidth = '180px'
+  name.style.display = '-webkit-box'
+  name.style.webkitBoxOrient = 'vertical'
+  name.style.webkitLineClamp = '2'
+  name.style.textShadow = '0 1px 2px rgb(0 0 0 / 0.95), 0 0 5px rgb(0 0 0 / 0.9)'
+  name.textContent = businessName
+
+  root.append(tail, outer, anchor, name)
+  return root
+}
+
+function syncSelectedMarker(
+  map: MapboxMap,
+  MarkerCtor: MapboxModule['Marker'] | null,
+  currentMarker: MapboxMarker | null,
+  featureCollection: LeadFeatureCollection,
+): MapboxMarker | null {
+  currentMarker?.remove()
+
+  const selectedFeature = featureCollection.features.find((feature) => feature.properties.selected)
+  if (!MarkerCtor || !selectedFeature) return null
+
+  return new MarkerCtor({
+    element: createSelectedMarkerElement(
+      selectedFeature.properties.initials,
+      selectedFeature.properties.name,
+    ),
+    anchor: 'bottom',
+    offset: [0, -2],
+  })
+    .setLngLat(selectedFeature.geometry.coordinates)
+    .addTo(map)
 }
 
 function registerMapInteractions(
@@ -362,7 +441,7 @@ function addLayers(map: MapboxMap) {
     id: PIN_LAYER_ID,
     type: 'circle',
     source: SOURCE_ID,
-    filter: ['!', ['has', 'point_count']],
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], false]],
     paint: {
       'circle-color': [
         'match',
@@ -388,57 +467,9 @@ function addLayers(map: MapboxMap) {
         0.58,
         0.96,
       ],
-      'circle-radius': ['case', ['==', ['get', 'selected'], true], 25, 21],
-      'circle-stroke-width': ['case', ['==', ['get', 'selected'], true], 5, 4],
-      'circle-stroke-color': ['case', ['==', ['get', 'selected'], true], text, border],
-    },
-  })
-
-  map.addLayer({
-    id: SELECTED_PIN_POINTER_LAYER_ID,
-    type: 'symbol',
-    source: SOURCE_ID,
-    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
-    layout: {
-      'text-field': '▼',
-      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-      'text-size': 30,
-      'text-offset': [0, 1.12],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
-    },
-    paint: {
-      'text-color': bg,
-      'text-halo-color': border,
-      'text-halo-width': 1,
-    },
-  })
-
-  map.addLayer({
-    id: SELECTED_PIN_OUTER_LAYER_ID,
-    type: 'circle',
-    source: SOURCE_ID,
-    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
-    paint: {
-      'circle-color': bg,
-      'circle-radius': 32,
-      'circle-stroke-width': 2,
+      'circle-radius': 21,
+      'circle-stroke-width': 4,
       'circle-stroke-color': border,
-      'circle-opacity': 0.98,
-    },
-  })
-
-  map.addLayer({
-    id: SELECTED_PIN_CENTER_LAYER_ID,
-    type: 'circle',
-    source: SOURCE_ID,
-    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
-    paint: {
-      'circle-color': warn,
-      'circle-radius': 26,
-      'circle-stroke-width': 1,
-      'circle-stroke-color': text,
-      'circle-opacity': 1,
     },
   })
 
@@ -460,23 +491,6 @@ function addLayers(map: MapboxMap) {
   })
 
   map.addLayer({
-    id: SELECTED_PIN_INITIALS_LAYER_ID,
-    type: 'symbol',
-    source: SOURCE_ID,
-    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
-    layout: {
-      'text-field': ['get', 'initials'],
-      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-      'text-size': 15,
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
-    },
-    paint: {
-      'text-color': bg,
-    },
-  })
-
-  map.addLayer({
     id: PIN_NAME_LAYER_ID,
     type: 'symbol',
     source: SOURCE_ID,
@@ -485,65 +499,19 @@ function addLayers(map: MapboxMap) {
     layout: {
       'text-field': ['get', 'name'],
       'text-font': ['Open Sans Semibold', 'Arial Unicode MS Regular'],
-      'text-size': 12,
-      'text-anchor': 'top',
-      'text-offset': [0, 2.15],
-      'text-max-width': 12,
+      'text-size': 11.5,
+      'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+      'text-radial-offset': 1.9,
+      'text-justify': 'auto',
+      'text-max-width': 10,
+      'text-line-height': 1.15,
+      'text-padding': 6,
       'text-optional': true,
     },
     paint: {
       'text-color': text,
       'text-halo-color': bg,
-      'text-halo-width': 2,
-      'text-halo-blur': 0.5,
-    },
-  })
-
-  map.addLayer({
-    id: SELECTED_PIN_ANCHOR_LAYER_ID,
-    type: 'circle',
-    source: SOURCE_ID,
-    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
-    paint: {
-      'circle-color': bg,
-      'circle-radius': 8,
-      'circle-translate': [0, 43],
-      'circle-translate-anchor': 'viewport',
-    },
-  })
-
-  map.addLayer({
-    id: SELECTED_PIN_ANCHOR_CENTER_LAYER_ID,
-    type: 'circle',
-    source: SOURCE_ID,
-    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
-    paint: {
-      'circle-color': warn,
-      'circle-radius': 4.5,
-      'circle-translate': [0, 43],
-      'circle-translate-anchor': 'viewport',
-    },
-  })
-
-  map.addLayer({
-    id: SELECTED_PIN_NAME_LAYER_ID,
-    type: 'symbol',
-    source: SOURCE_ID,
-    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
-    layout: {
-      'text-field': ['get', 'name'],
-      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-      'text-size': 14,
-      'text-anchor': 'top',
-      'text-offset': [0, 4.2],
-      'text-max-width': 14,
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
-    },
-    paint: {
-      'text-color': text,
-      'text-halo-color': bg,
-      'text-halo-width': 2.5,
+      'text-halo-width': 1.5,
       'text-halo-blur': 0.5,
     },
   })
