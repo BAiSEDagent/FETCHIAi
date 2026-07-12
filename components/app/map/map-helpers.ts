@@ -147,6 +147,28 @@ export function formatLeadDate(value: string | null): string {
   }).format(date)
 }
 
+export function formatMapMarketLabel(value: string | null): string | null {
+  const market = value?.trim()
+  if (!market) return null
+
+  return market
+    .split(',')
+    .map((segment, index) => {
+      const trimmed = segment.trim()
+      if (!trimmed) return trimmed
+      if (index > 0 && /^[a-z]{2}$/i.test(trimmed)) return trimmed.toUpperCase()
+      if (!/^[a-z .'-]+$/i.test(trimmed)) return trimmed
+      if (/[a-z]/.test(trimmed) && /[A-Z]/.test(trimmed)) return trimmed
+
+      return trimmed
+        .toLowerCase()
+        .replace(/(^|[ .'-])([a-z])/g, (_, boundary: string, letter: string) => {
+          return `${boundary}${letter.toUpperCase()}`
+        })
+    })
+    .join(', ')
+}
+
 export function filterSavedLeadsForMap(
   leads: readonly MappableSavedLead[],
   filters: MapFilters,

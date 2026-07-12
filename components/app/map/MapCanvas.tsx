@@ -35,6 +35,15 @@ const CLUSTER_LAYER_ID = 'cp25a-saved-leads-clusters'
 const CLUSTER_COUNT_LAYER_ID = 'cp25a-saved-leads-cluster-count'
 const PIN_LAYER_ID = 'cp25a-saved-leads-pins'
 const PIN_LABEL_LAYER_ID = 'cp25a-saved-leads-pin-labels'
+const PIN_NAME_LAYER_ID = 'cp25b-saved-lead-names'
+const SELECTED_PIN_POINTER_LAYER_ID = 'cp25b-selected-pin-pointer'
+const SELECTED_PIN_OUTER_LAYER_ID = 'cp25b-selected-pin-outer'
+const SELECTED_PIN_CENTER_LAYER_ID = 'cp25b-selected-pin-center'
+const SELECTED_PIN_INITIALS_LAYER_ID = 'cp25b-selected-pin-initials'
+const SELECTED_PIN_ANCHOR_LAYER_ID = 'cp25b-selected-pin-anchor'
+const SELECTED_PIN_ANCHOR_CENTER_LAYER_ID = 'cp25b-selected-pin-anchor-center'
+const SELECTED_PIN_NAME_LAYER_ID = 'cp25b-selected-pin-name'
+const CLOSE_ZOOM_LABEL_MIN_ZOOM = 14
 const MAP_LOAD_TIMEOUT_MS = 12_000
 
 function tokenColor(name: string, fallback: string): string {
@@ -386,10 +395,58 @@ function addLayers(map: MapboxMap) {
   })
 
   map.addLayer({
+    id: SELECTED_PIN_POINTER_LAYER_ID,
+    type: 'symbol',
+    source: SOURCE_ID,
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+    layout: {
+      'text-field': '▼',
+      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+      'text-size': 30,
+      'text-offset': [0, 1.12],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: {
+      'text-color': bg,
+      'text-halo-color': border,
+      'text-halo-width': 1,
+    },
+  })
+
+  map.addLayer({
+    id: SELECTED_PIN_OUTER_LAYER_ID,
+    type: 'circle',
+    source: SOURCE_ID,
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+    paint: {
+      'circle-color': bg,
+      'circle-radius': 32,
+      'circle-stroke-width': 2,
+      'circle-stroke-color': border,
+      'circle-opacity': 0.98,
+    },
+  })
+
+  map.addLayer({
+    id: SELECTED_PIN_CENTER_LAYER_ID,
+    type: 'circle',
+    source: SOURCE_ID,
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+    paint: {
+      'circle-color': warn,
+      'circle-radius': 26,
+      'circle-stroke-width': 1,
+      'circle-stroke-color': text,
+      'circle-opacity': 1,
+    },
+  })
+
+  map.addLayer({
     id: PIN_LABEL_LAYER_ID,
     type: 'symbol',
     source: SOURCE_ID,
-    filter: ['!', ['has', 'point_count']],
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], false]],
     layout: {
       'text-field': ['get', 'initials'],
       'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
@@ -399,6 +456,95 @@ function addLayers(map: MapboxMap) {
     },
     paint: {
       'text-color': bg,
+    },
+  })
+
+  map.addLayer({
+    id: SELECTED_PIN_INITIALS_LAYER_ID,
+    type: 'symbol',
+    source: SOURCE_ID,
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+    layout: {
+      'text-field': ['get', 'initials'],
+      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+      'text-size': 15,
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: {
+      'text-color': bg,
+    },
+  })
+
+  map.addLayer({
+    id: PIN_NAME_LAYER_ID,
+    type: 'symbol',
+    source: SOURCE_ID,
+    minzoom: CLOSE_ZOOM_LABEL_MIN_ZOOM,
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], false]],
+    layout: {
+      'text-field': ['get', 'name'],
+      'text-font': ['Open Sans Semibold', 'Arial Unicode MS Regular'],
+      'text-size': 12,
+      'text-anchor': 'top',
+      'text-offset': [0, 2.15],
+      'text-max-width': 12,
+      'text-optional': true,
+    },
+    paint: {
+      'text-color': text,
+      'text-halo-color': bg,
+      'text-halo-width': 2,
+      'text-halo-blur': 0.5,
+    },
+  })
+
+  map.addLayer({
+    id: SELECTED_PIN_ANCHOR_LAYER_ID,
+    type: 'circle',
+    source: SOURCE_ID,
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+    paint: {
+      'circle-color': bg,
+      'circle-radius': 8,
+      'circle-translate': [0, 43],
+      'circle-translate-anchor': 'viewport',
+    },
+  })
+
+  map.addLayer({
+    id: SELECTED_PIN_ANCHOR_CENTER_LAYER_ID,
+    type: 'circle',
+    source: SOURCE_ID,
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+    paint: {
+      'circle-color': warn,
+      'circle-radius': 4.5,
+      'circle-translate': [0, 43],
+      'circle-translate-anchor': 'viewport',
+    },
+  })
+
+  map.addLayer({
+    id: SELECTED_PIN_NAME_LAYER_ID,
+    type: 'symbol',
+    source: SOURCE_ID,
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+    layout: {
+      'text-field': ['get', 'name'],
+      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+      'text-size': 14,
+      'text-anchor': 'top',
+      'text-offset': [0, 4.2],
+      'text-max-width': 14,
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: {
+      'text-color': text,
+      'text-halo-color': bg,
+      'text-halo-width': 2.5,
+      'text-halo-blur': 0.5,
     },
   })
 }
