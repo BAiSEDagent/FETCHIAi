@@ -271,7 +271,8 @@ export function MapCanvas({
     <div
       ref={containerRef}
       data-cp25a-mapbox-canvas
-      className="absolute inset-0 bg-raised"
+      className="absolute inset-0 h-full min-h-[560px] bg-raised"
+      style={{ minHeight: 'max(560px, calc(100dvh - 9rem))' }}
       aria-label="Saved lead map"
     />
   )
