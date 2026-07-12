@@ -93,16 +93,22 @@ export function MapCanvas({
   const mapRef = useRef<MapboxMap | null>(null)
   const boundsCtorRef = useRef<MapboxModule['LngLatBounds'] | null>(null)
   const lastFitKeyRef = useRef<string>('')
+  const onSelectLeadRef = useRef(onSelectLead)
   const featureCollection = useMemo(
     () => buildLeadFeatureCollection(leads, selectedLeadId),
     [leads, selectedLeadId],
   )
 
   useEffect(() => {
+    onSelectLeadRef.current = onSelectLead
+  }, [onSelectLead])
+
+  useEffect(() => {
     let cancelled = false
     let map: MapboxMap | null = null
     let mapLoaded = false
     let loadTimeout: number | null = null
+    let cleanupMapInteractions: (() => void) | null = null
 
     const clearLoadTimeout = () => {
       if (loadTimeout !== null) {
@@ -180,6 +186,10 @@ export function MapCanvas({
           mapLoaded = true
           clearLoadTimeout()
           addLayers(map)
+          cleanupMapInteractions?.()
+          cleanupMapInteractions = registerMapInteractions(map, (leadId) => {
+            onSelectLeadRef.current(leadId)
+          })
           setSourceData(map, featureCollection)
           fitFeatures(map, boundsCtorRef.current, featureCollection, true)
           lastFitKeyRef.current = fitKey
@@ -195,6 +205,7 @@ export function MapCanvas({
     return () => {
       cancelled = true
       clearLoadTimeout()
+      cleanupMapInteractions?.()
       if (map) {
         map.remove()
       }
@@ -216,57 +227,6 @@ export function MapCanvas({
     lastFitKeyRef.current = fitKey
   }, [featureCollection, fitKey])
 
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map) return
-
-    const handleClusterClick = (event: MapboxMapLayerMouseEvent) => {
-      const feature = map.queryRenderedFeatures(event.point, { layers: [CLUSTER_LAYER_ID] })[0]
-      const clusterId = feature?.properties?.cluster_id
-      if (clusterId === undefined || !feature.geometry || feature.geometry.type !== 'Point') return
-
-      const source = map.getSource(SOURCE_ID) as MapboxGeoJSONSource | undefined
-      source?.getClusterExpansionZoom(Number(clusterId), (error, zoom) => {
-        if (error || typeof zoom !== 'number' || feature.geometry.type !== 'Point') return
-        map.easeTo({
-          center: feature.geometry.coordinates as [number, number],
-          zoom,
-          duration: 450,
-        })
-      })
-    }
-
-    const handlePinClick = (event: MapboxMapLayerMouseEvent) => {
-      const id = event.features?.[0]?.properties?.id
-      if (typeof id === 'string' && id) {
-        onSelectLead(id)
-      }
-    }
-
-    const setPointer = () => {
-      map.getCanvas().style.cursor = 'pointer'
-    }
-    const resetPointer = () => {
-      map.getCanvas().style.cursor = ''
-    }
-
-    map.on('click', CLUSTER_LAYER_ID, handleClusterClick)
-    map.on('click', PIN_LAYER_ID, handlePinClick)
-    map.on('mouseenter', CLUSTER_LAYER_ID, setPointer)
-    map.on('mouseenter', PIN_LAYER_ID, setPointer)
-    map.on('mouseleave', CLUSTER_LAYER_ID, resetPointer)
-    map.on('mouseleave', PIN_LAYER_ID, resetPointer)
-
-    return () => {
-      map.off('click', CLUSTER_LAYER_ID, handleClusterClick)
-      map.off('click', PIN_LAYER_ID, handlePinClick)
-      map.off('mouseenter', CLUSTER_LAYER_ID, setPointer)
-      map.off('mouseenter', PIN_LAYER_ID, setPointer)
-      map.off('mouseleave', CLUSTER_LAYER_ID, resetPointer)
-      map.off('mouseleave', PIN_LAYER_ID, resetPointer)
-    }
-  }, [onSelectLead])
-
   return (
     <div
       ref={containerRef}
@@ -276,6 +236,65 @@ export function MapCanvas({
       aria-label="Saved lead map"
     />
   )
+}
+
+function registerMapInteractions(
+  map: MapboxMap,
+  onSelectLead: (leadId: string) => void,
+): () => void {
+  if (
+    !map.getSource(SOURCE_ID) ||
+    !map.getLayer(CLUSTER_LAYER_ID) ||
+    !map.getLayer(PIN_LAYER_ID)
+  ) {
+    return () => undefined
+  }
+
+  const handleClusterClick = (event: MapboxMapLayerMouseEvent) => {
+    const feature = map.queryRenderedFeatures(event.point, { layers: [CLUSTER_LAYER_ID] })[0]
+    const clusterId = feature?.properties?.cluster_id
+    if (clusterId === undefined || !feature.geometry || feature.geometry.type !== 'Point') return
+
+    const source = map.getSource(SOURCE_ID) as MapboxGeoJSONSource | undefined
+    source?.getClusterExpansionZoom(Number(clusterId), (error, zoom) => {
+      if (error || typeof zoom !== 'number' || feature.geometry.type !== 'Point') return
+      map.easeTo({
+        center: feature.geometry.coordinates as [number, number],
+        zoom,
+        duration: 450,
+      })
+    })
+  }
+
+  const handlePinClick = (event: MapboxMapLayerMouseEvent) => {
+    const id = event.features?.[0]?.properties?.id
+    if (typeof id === 'string' && id) {
+      onSelectLead(id)
+    }
+  }
+
+  const setPointer = () => {
+    map.getCanvas().style.cursor = 'pointer'
+  }
+  const resetPointer = () => {
+    map.getCanvas().style.cursor = ''
+  }
+
+  map.on('click', CLUSTER_LAYER_ID, handleClusterClick)
+  map.on('click', PIN_LAYER_ID, handlePinClick)
+  map.on('mouseenter', CLUSTER_LAYER_ID, setPointer)
+  map.on('mouseenter', PIN_LAYER_ID, setPointer)
+  map.on('mouseleave', CLUSTER_LAYER_ID, resetPointer)
+  map.on('mouseleave', PIN_LAYER_ID, resetPointer)
+
+  return () => {
+    map.off('click', CLUSTER_LAYER_ID, handleClusterClick)
+    map.off('click', PIN_LAYER_ID, handlePinClick)
+    map.off('mouseenter', CLUSTER_LAYER_ID, setPointer)
+    map.off('mouseenter', PIN_LAYER_ID, setPointer)
+    map.off('mouseleave', CLUSTER_LAYER_ID, resetPointer)
+    map.off('mouseleave', PIN_LAYER_ID, resetPointer)
+  }
 }
 
 function addLayers(map: MapboxMap) {
