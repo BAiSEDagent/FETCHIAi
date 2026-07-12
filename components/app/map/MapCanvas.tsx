@@ -3,6 +3,7 @@
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 import { useEffect, useMemo, useRef } from 'react'
+import { Minus, Plus } from 'lucide-react'
 import type { LeadFeatureCollection, MappableSavedLead } from './map-helpers'
 import { buildLeadFeatureCollection } from './map-helpers'
 
@@ -82,6 +83,17 @@ function warnMapDiagnostic(reason: MapDiagnosticReason, detail?: unknown) {
 
   const message = safeDiagnosticMessage(detail)
   console.warn('[CP25A map init]', message ? { reason, message } : { reason })
+}
+
+function zoomMap(map: MapboxMap | null, direction: 'in' | 'out') {
+  if (!map || !map.isStyleLoaded()) return
+
+  if (direction === 'in') {
+    map.zoomIn({ duration: 260 })
+    return
+  }
+
+  map.zoomOut({ duration: 260 })
 }
 
 export function MapCanvas({
@@ -249,13 +261,36 @@ export function MapCanvas({
   }, [featureCollection, fitKey])
 
   return (
-    <div
-      ref={containerRef}
-      data-cp25a-mapbox-canvas
-      className="absolute inset-0 h-full min-h-[560px] bg-raised"
-      style={{ minHeight: 'max(560px, calc(100dvh - 9rem))' }}
-      aria-label="Saved lead map"
-    />
+    <>
+      <div
+        ref={containerRef}
+        data-cp25a-mapbox-canvas
+        className="absolute inset-0 h-full min-h-[560px] bg-raised"
+        style={{ minHeight: 'max(560px, calc(100dvh - 9rem))' }}
+        aria-label="Saved lead map"
+      />
+      <div
+        data-cp25b2-map-zoom-controls
+        className="pointer-events-auto absolute bottom-[max(5.5rem,env(safe-area-inset-bottom))] right-4 z-10 overflow-hidden divide-y divide-text/16 rounded-[22px] border border-text/12 bg-raised/95 shadow-xl shadow-black/35 backdrop-blur-sm lg:bottom-8 lg:right-6"
+      >
+        <button
+          type="button"
+          onClick={() => zoomMap(mapRef.current, 'in')}
+          className="grid h-14 w-14 place-items-center text-text transition hover:bg-text/10 active:bg-text/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-text/65"
+          aria-label="Zoom in"
+        >
+          <Plus className="h-6 w-6 stroke-[2.5]" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={() => zoomMap(mapRef.current, 'out')}
+          className="grid h-14 w-14 place-items-center text-text transition hover:bg-text/10 active:bg-text/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-text/65"
+          aria-label="Zoom out"
+        >
+          <Minus className="h-6 w-6 stroke-[2.5]" aria-hidden="true" />
+        </button>
+      </div>
+    </>
   )
 }
 
