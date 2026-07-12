@@ -152,7 +152,7 @@ async function main() {
     'components/app/map/MapCanvas.tsx',
     'scripts/pm/cp25a-map-tab-fable-port-smoke.ts',
   ].sort()
-  const requiredTokenColorFixFiles = [
+  const requiredCanvasHeightFixFiles = [
     'components/app/map/MapCanvas.tsx',
     'scripts/pm/cp25a-map-tab-fable-port-smoke.ts',
   ].sort()
@@ -160,12 +160,12 @@ async function main() {
   const unexpectedChangedFiles = changed.filter((path) => !allowedChangedFiles.has(path))
 
   assert.deepEqual(unexpectedChangedFiles, [], 'CP25A changed files must stay inside the approved file fence')
-  assert.deepEqual(changed.sort(), requiredTokenColorFixFiles, 'CP25A token color fix changed files must match the approved file fence')
+  assert.deepEqual(changed.sort(), requiredCanvasHeightFixFiles, 'CP25A canvas height fix changed files must match the approved file fence')
   if (changedBySource.baseDiff.length > 0) {
     assert.deepEqual(
       changedBySource.baseDiff,
-      requiredTokenColorFixFiles,
-      'CP25A token color fix branch changed files must match the approved file fence',
+      requiredCanvasHeightFixFiles,
+      'CP25A canvas height fix branch changed files must match the approved file fence',
     )
   }
 
@@ -193,6 +193,8 @@ async function main() {
   const helpersSource = source('components/app/map/map-helpers.ts')
   const selectedSheet = source('components/app/map/SelectedLeadSheet.tsx')
   const filterSheet = source('components/app/map/MapFilterSheet.tsx')
+  const mapFrameBlock = blockAround(shellSource, 'function MapFrame', 0, 1300)
+  const canvasWrapperBlock = blockAround(canvasSource, 'data-cp25a-mapbox-canvas', 500, 900)
 
   assert(page.includes('requireWorkspaceContext'), 'Map page must require workspace context')
   assert(page.includes('listSavedLeadsForWorkspace(ctx.workspaceId)'), 'Map page must read workspace-scoped saved leads')
@@ -217,6 +219,12 @@ async function main() {
   assert(canvasSource.includes('[mapbox-token]'), 'Diagnostics must redact public token-shaped values')
   assert(!canvasSource.includes('catch {'), 'Map init must not silently swallow errors')
   assert(!canvasSource.includes("map.on('error', onError)"), 'Generic Mapbox errors must not directly collapse the map')
+  assert(mapFrameBlock.includes('h-[calc(100dvh-9rem)]'), 'MapFrame must retain an explicit viewport height strategy')
+  assert(mapFrameBlock.includes('min-h-[560px]'), 'MapFrame must retain a nonzero minimum map height')
+  assert(canvasWrapperBlock.includes('h-full'), 'Mapbox canvas wrapper must request the full map frame height')
+  assert(canvasWrapperBlock.includes('min-h-[560px]'), 'Mapbox canvas wrapper must have a nonzero minimum height')
+  assert(canvasWrapperBlock.includes("style={{ minHeight: 'max(560px, calc(100dvh - 9rem))' }}"), 'Mapbox canvas wrapper must have a valid viewport min-height fallback')
+  assert(!canvasWrapperBlock.includes('className="absolute inset-0 bg-raised"'), 'Mapbox canvas wrapper must not rely only on an absolute child inside a zero-height frame')
   assert(!page.includes('mapbox-gl'), 'Server page must not import Mapbox')
   assert(!/navigator\.geolocation|watchPosition|getCurrentPosition/.test(`${shellSource}\n${canvasSource}`), 'CP25A must not request browser geolocation')
   assert(!/updateSavedLead|createSavedLead|deleteSavedLead|insert|upsert|runSweep|startSweep/.test(`${shellSource}\n${selectedSheet}\n${helpersSource}`), 'Map tab must remain read-only')
@@ -360,6 +368,7 @@ async function main() {
     searchIntersectsFilters: true,
     actionFieldGating: true,
     featureMetadataClean: true,
+    mapCanvasWrapperHeightGuard: true,
   }, null, 2))
 }
 
