@@ -205,6 +205,7 @@ async function main() {
   assert(canvasSource.includes("import('mapbox-gl')"), 'Mapbox must be loaded behind a client-only dynamic import')
   assert(!/from ['"]mapbox-gl['"]/.test(canvasSource), 'Mapbox must not be statically imported')
   assert(canvasSource.includes('mapboxgl.supported()'), 'Mapbox WebGL support must be checked before constructing the map')
+  assert(!canvasSource.includes('cooperativeGestures: true'), 'CP25A MapCanvas must not enable Mapbox cooperative gestures')
   assert(canvasSource.includes('missing_token'), 'Map init must distinguish a missing token')
   assert(canvasSource.includes('webgl_unsupported'), 'Map init must distinguish unsupported WebGL')
   assert(canvasSource.includes('import_failed'), 'Map init must distinguish Mapbox import failures')
@@ -350,6 +351,7 @@ async function main() {
     protectedFilesChanged: false,
     routeCountUnchanged: currentRoutes.length,
     mapboxClientOnly: true,
+    cooperativeGesturesDisabled: true,
     geolocationAbsent: true,
     readOnlySurface: true,
     noPersistentFetchCtaInReadyMap: true,

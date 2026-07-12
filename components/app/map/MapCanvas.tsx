@@ -154,7 +154,6 @@ export function MapCanvas({
           center: [-98.5795, 39.8283],
           zoom: 3.2,
           attributionControl: true,
-          cooperativeGestures: true,
         })
         mapRef.current = map
       } catch (error) {
