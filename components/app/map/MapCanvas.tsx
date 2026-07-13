@@ -110,6 +110,7 @@ export function MapCanvas({
   const selectedMarkerRef = useRef<MapboxMarker | null>(null)
   const boundsCtorRef = useRef<MapboxModule['LngLatBounds'] | null>(null)
   const lastFitKeyRef = useRef<string>('')
+  const lastCenteredLeadIdRef = useRef<string | null>(null)
   const onSelectLeadRef = useRef(onSelectLead)
   const featureCollection = useMemo(
     () => buildLeadFeatureCollection(leads, selectedLeadId),
@@ -125,6 +126,7 @@ export function MapCanvas({
     let map: MapboxMap | null = null
     let mapLoaded = false
     let loadTimeout: number | null = null
+    let resizeObserver: ResizeObserver | null = null
     let cleanupMapInteractions: (() => void) | null = null
 
     const clearLoadTimeout = () => {
@@ -180,6 +182,10 @@ export function MapCanvas({
           attributionControl: true,
         })
         mapRef.current = map
+        if ('ResizeObserver' in window) {
+          resizeObserver = new ResizeObserver(() => map?.resize())
+          resizeObserver.observe(containerRef.current)
+        }
       } catch (error) {
         failMap('constructor_failed', error)
         return
@@ -229,6 +235,7 @@ export function MapCanvas({
     return () => {
       cancelled = true
       clearLoadTimeout()
+      resizeObserver?.disconnect()
       cleanupMapInteractions?.()
       selectedMarkerRef.current?.remove()
       selectedMarkerRef.current = null
@@ -259,6 +266,38 @@ export function MapCanvas({
     fitFeatures(map, boundsCtorRef.current, featureCollection, false)
     lastFitKeyRef.current = fitKey
   }, [featureCollection, fitKey])
+
+  // data-cp25c-selected-lead-motion
+  useEffect(() => {
+    if (!selectedLeadId) {
+      lastCenteredLeadIdRef.current = null
+      return
+    }
+    if (lastCenteredLeadIdRef.current === selectedLeadId) return
+
+    const map = mapRef.current
+    if (!map?.isStyleLoaded()) return
+
+    const lead = leads.find((candidate) => candidate.id === selectedLeadId)
+    if (!lead) return
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduceMotion) {
+      map.jumpTo({
+        center: [lead.longitude, lead.latitude],
+        zoom: Math.max(map.getZoom(), 14.5),
+      })
+      lastCenteredLeadIdRef.current = selectedLeadId
+      return
+    }
+
+    map.easeTo({
+      center: [lead.longitude, lead.latitude],
+      zoom: Math.max(map.getZoom(), 14.5),
+      duration: 560,
+    })
+    lastCenteredLeadIdRef.current = selectedLeadId
+  }, [leads, selectedLeadId])
 
   return (
     <>

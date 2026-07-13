@@ -8,6 +8,7 @@ import type { SavedLeadPipelineRow } from '@/lib/runtime/sweep/saved-leads'
 import { cn } from '@/lib/utils'
 import { MapCanvas, type MapInitFailureReason } from './MapCanvas'
 import { MapFilterSheet } from './MapFilterSheet'
+import { MapLeadRail } from './MapLeadRail'
 import { MapTopBar } from './MapTopBar'
 import { SelectedLeadSheet } from './SelectedLeadSheet'
 import {
@@ -29,6 +30,7 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [mapReady, setMapReady] = useState(false)
   const [mapFailureReason, setMapFailureReason] = useState<MapInitFailureReason | null>(null)
+  const [desktopRailActive, setDesktopRailActive] = useState(false)
 
   const mappableLeads = useMemo(() => getMappableSavedLeads(leads), [leads])
   const filteredLeads = useMemo(
@@ -55,6 +57,14 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
       setSelectedLeadId(null)
     }
   }, [filteredLeads, selectedLeadId])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)')
+    const syncDesktopRail = () => setDesktopRailActive(mediaQuery.matches)
+    syncDesktopRail()
+    mediaQuery.addEventListener('change', syncDesktopRail)
+    return () => mediaQuery.removeEventListener('change', syncDesktopRail)
+  }, [])
 
   const mapUnavailable = mapFailureReason !== null
 
@@ -111,62 +121,80 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
 
   return (
     <MapFrame data-cp25a-ready-map-shell>
-      <MapCanvas
+      <MapLeadRail
         leads={filteredLeads}
-        selectedLeadId={selectedLeadId}
-        onSelectLead={setSelectedLeadId}
-        onReady={() => {
-          setMapReady(true)
-          setMapFailureReason(null)
-        }}
-        onError={setMapFailureReason}
-        fitKey={fitKey}
-      />
-      <MapTopBar
+        totalCount={mappableLeads.length}
         query={query}
         onQueryChange={setQuery}
         onOpenFilters={() => setFiltersOpen(true)}
-        visibleCount={filteredLeads.length}
-        totalCount={mappableLeads.length}
         filtersActive={filtersActive}
+        selectedLeadId={selectedLeadId}
+        onSelectLead={setSelectedLeadId}
+        onClearSelection={() => setSelectedLeadId(null)}
       />
-
-      {!mapReady && (
-        <div
-          data-cp25a-map-loading-state
-          className="absolute inset-0 z-10 grid place-items-center bg-bg/70 text-center backdrop-blur-sm"
-        >
-          <div className="rounded-[24px] border border-text/10 bg-bg/92 px-6 py-5 shadow-2xl shadow-black/35">
-            <p className="font-outfit text-[22px] font-semibold text-text">Loading map</p>
-            <p className="mt-1 text-[14px] text-text/55">Placing saved leads.</p>
-          </div>
+      <div
+        data-cp25c-map-canvas-region
+        className="relative h-full min-w-0 flex-1 overflow-hidden"
+      >
+        <MapCanvas
+          leads={filteredLeads}
+          selectedLeadId={selectedLeadId}
+          onSelectLead={setSelectedLeadId}
+          onReady={() => {
+            setMapReady(true)
+            setMapFailureReason(null)
+          }}
+          onError={setMapFailureReason}
+          fitKey={fitKey}
+        />
+        <div className="lg:hidden">
+          <MapTopBar
+            query={query}
+            onQueryChange={setQuery}
+            onOpenFilters={() => setFiltersOpen(true)}
+            visibleCount={filteredLeads.length}
+            totalCount={mappableLeads.length}
+            filtersActive={filtersActive}
+          />
         </div>
-      )}
 
-      {mapReady && filteredLeads.length === 0 && (
-        <div
-          data-cp25a-map-no-results-state
-          className="pointer-events-none absolute inset-x-4 bottom-6 z-20 lg:left-6 lg:right-auto lg:w-[360px]"
-        >
-          <div className="pointer-events-auto rounded-[24px] border border-text/10 bg-bg/92 p-5 shadow-2xl shadow-black/35 backdrop-blur-xl">
-            <p className="font-outfit text-[24px] font-semibold leading-tight text-text">No results</p>
-            <p className="mt-2 text-[14px] leading-relaxed text-text/58">
-              Adjust filters or search to show saved leads on the map.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setQuery('')
-                setFilters(DEFAULT_MAP_FILTERS)
-              }}
-              className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-text px-4 text-[14px] font-semibold text-bg transition hover:bg-text/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/55"
-            >
-              <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              Reset
-            </button>
+        {!mapReady && (
+          <div
+            data-cp25a-map-loading-state
+            className="absolute inset-0 z-10 grid place-items-center bg-bg/70 text-center backdrop-blur-sm"
+          >
+            <div className="rounded-[24px] border border-text/10 bg-bg/92 px-6 py-5 shadow-2xl shadow-black/35">
+              <p className="font-outfit text-[22px] font-semibold text-text">Loading map</p>
+              <p className="mt-1 text-[14px] text-text/55">Placing saved leads.</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {mapReady && filteredLeads.length === 0 && (
+          <div
+            data-cp25a-map-no-results-state
+            className="pointer-events-none absolute inset-x-4 bottom-6 z-20 lg:hidden"
+          >
+            <div className="pointer-events-auto rounded-[24px] border border-text/10 bg-bg/92 p-5 shadow-2xl shadow-black/35 backdrop-blur-xl">
+              <p className="font-outfit text-[24px] font-semibold leading-tight text-text">No results</p>
+              <p className="mt-2 text-[14px] leading-relaxed text-text/58">
+                Adjust filters or search to show saved leads on the map.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery('')
+                  setFilters(DEFAULT_MAP_FILTERS)
+                }}
+                className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-text px-4 text-[14px] font-semibold text-bg transition hover:bg-text/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/55"
+              >
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                Reset
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       <MapFilterSheet
         open={filtersOpen}
@@ -177,7 +205,7 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
       />
       <SelectedLeadSheet
         lead={selectedLead}
-        open={Boolean(selectedLead)}
+        open={Boolean(selectedLead) && !desktopRailActive}
         onOpenChange={(open) => {
           if (!open) setSelectedLeadId(null)
         }}
@@ -195,7 +223,7 @@ function MapFrame({
     <section
       {...props}
       className={cn(
-        'relative h-[calc(100dvh-9rem)] min-h-[560px] overflow-hidden bg-bg text-text lg:h-screen lg:min-h-[720px]',
+        'relative h-[calc(100dvh-9rem)] min-h-[560px] overflow-hidden bg-bg text-text lg:flex lg:h-screen lg:min-h-[720px]',
         className,
       )}
     >
