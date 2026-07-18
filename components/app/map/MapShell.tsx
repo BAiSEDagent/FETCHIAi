@@ -16,6 +16,7 @@ import {
   filterSavedLeadsForMap,
   getMappableSavedLeads,
   type MapFilters,
+  type MapLifecycleStatus,
 } from './map-helpers'
 
 type Props = {
@@ -27,7 +28,8 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
   const [query, setQuery] = useState('')
   const [filters, setFilters] = useState<MapFilters>(DEFAULT_MAP_FILTERS)
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [desktopFiltersOpen, setDesktopFiltersOpen] = useState(false)
   const [mapReady, setMapReady] = useState(false)
   const [mapFailureReason, setMapFailureReason] = useState<MapInitFailureReason | null>(null)
   const [desktopRailActive, setDesktopRailActive] = useState(false)
@@ -60,11 +62,32 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 1024px)')
-    const syncDesktopRail = () => setDesktopRailActive(mediaQuery.matches)
+    const syncDesktopRail = () => {
+      setDesktopRailActive(mediaQuery.matches)
+      if (mediaQuery.matches) setMobileFiltersOpen(false)
+      else setDesktopFiltersOpen(false)
+    }
     syncDesktopRail()
     mediaQuery.addEventListener('change', syncDesktopRail)
     return () => mediaQuery.removeEventListener('change', syncDesktopRail)
   }, [])
+
+  function handleLifecycleFilterChange(status: MapLifecycleStatus | null) {
+    setFilters((current) => {
+      const statusIsOnlyActive =
+        status !== null &&
+        current.lifecycleStatuses.length === 1 &&
+        current.lifecycleStatuses[0] === status
+
+      return {
+        ...current,
+        lifecycleStatuses:
+          status === null || statusIsOnlyActive
+            ? [...DEFAULT_MAP_FILTERS.lifecycleStatuses]
+            : [status],
+      }
+    })
+  }
 
   const mapUnavailable = mapFailureReason !== null
 
@@ -126,7 +149,12 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
         totalCount={mappableLeads.length}
         query={query}
         onQueryChange={setQuery}
-        onOpenFilters={() => setFiltersOpen(true)}
+        filters={filters}
+        filtersOpen={desktopFiltersOpen}
+        onFiltersOpenChange={setDesktopFiltersOpen}
+        onApplyFilters={setFilters}
+        onResetFilters={() => setFilters(DEFAULT_MAP_FILTERS)}
+        onLifecycleFilterChange={handleLifecycleFilterChange}
         filtersActive={filtersActive}
         selectedLeadId={selectedLeadId}
         onSelectLead={setSelectedLeadId}
@@ -151,7 +179,7 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
           <MapTopBar
             query={query}
             onQueryChange={setQuery}
-            onOpenFilters={() => setFiltersOpen(true)}
+            onOpenFilters={() => setMobileFiltersOpen(true)}
             visibleCount={filteredLeads.length}
             totalCount={mappableLeads.length}
             filtersActive={filtersActive}
@@ -197,9 +225,9 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
       </div>
 
       <MapFilterSheet
-        open={filtersOpen}
+        open={mobileFiltersOpen}
         filters={filters}
-        onOpenChange={setFiltersOpen}
+        onOpenChange={setMobileFiltersOpen}
         onApply={setFilters}
         onReset={() => setFilters(DEFAULT_MAP_FILTERS)}
       />
