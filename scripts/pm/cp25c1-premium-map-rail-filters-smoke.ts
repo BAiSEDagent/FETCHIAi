@@ -53,11 +53,14 @@ function routeFiles(ref?: string): string[] {
 }
 
 async function main() {
+  const sidebarPath = 'components/app/Sidebar.tsx'
   const railPath = 'components/app/map/MapLeadRail.tsx'
   const popoverPath = 'components/app/map/MapRailFilterPopover.tsx'
+  assert(existsSync(sidebarPath), 'Global app sidebar must exist')
   assert(existsSync(railPath), 'Desktop map lead rail component must exist')
   assert(existsSync(popoverPath), 'Desktop rail-attached filter popover must exist')
 
+  const sidebar = source(sidebarPath)
   const rail = source(railPath)
   const popover = source(popoverPath)
   const mapShell = source('components/app/map/MapShell.tsx')
@@ -67,11 +70,32 @@ async function main() {
   const selectedSheet = source('components/app/map/SelectedLeadSheet.tsx')
   const helpers = source('components/app/map/map-helpers.ts')
 
+  const sidebarActiveState = blockAround(sidebar, 'const renderLink', 0, 3000)
+  assert(sidebarActiveState.includes('href={item.href}'), 'Sidebar route links must remain data-driven')
+  assert(sidebarActiveState.includes('pathname === item.href'), 'Sidebar active-route behavior must remain')
+  assert(
+    !/absolute[^"'\n]*left-0[^"'\n]*bg-ok|bg-ok[^"'\n]*left-0/.test(sidebarActiveState),
+    'Sidebar active state must not render a vertical green accent bar',
+  )
+  assert(
+    sidebarActiveState.includes('bg-raised') || sidebarActiveState.includes('bg-text/[0.'),
+    'Sidebar active state must retain a clear tonal background',
+  )
+  assert(sidebarActiveState.includes('text-ok'), 'Sidebar active icon emphasis must remain')
+  assert(sidebarActiveState.includes('duration-200'), 'Sidebar active-state transitions must stay restrained')
+  assert(sidebarActiveState.includes('motion-reduce:transition-none'), 'Sidebar navigation must respect reduced motion')
+
   assert(rail.includes('data-cp25c-map-lead-rail'), 'Desktop lead rail marker is missing')
   assert(rail.includes('data-cp25c1-premium-map-lead-rail'), 'Premium rail marker is missing')
   assert(/hidden[^"']*lg:flex/.test(rail), 'Desktop lead rail must remain hidden below lg')
   assert(/w-\[(380|390|400|410|420)px\]/.test(rail), 'Desktop lead rail must stay in the approved width range')
-  assert(rail.includes('bg-surface'), 'Desktop rail should share the sidebar surface family')
+  const railShell = blockAround(rail, 'data-cp25c1-premium-map-lead-rail', 120, 700)
+  assert(sidebar.includes('bg-surface'), 'Global sidebar must retain the approved surface token')
+  assert(railShell.includes('bg-bg'), 'Desktop rail must use a subtly differentiated token surface')
+  assert(!railShell.includes('bg-surface'), 'Sidebar and rail must not use an identical shell surface')
+  assert(railShell.includes('border-l'), 'Desktop rail needs a restrained sidebar-facing seam')
+  assert(railShell.includes('border-r'), 'Desktop rail must retain its map-facing seam')
+  assert(railShell.includes('border-text/8'), 'Rail seams must stay subtle and token-based')
   assert(rail.includes('My Leads'), 'Desktop lead rail must retain its title')
   assert(rail.includes('visibleCount'), 'Desktop lead rail must retain the real visible count')
   assert(rail.includes('totalCount'), 'Desktop lead rail must retain the real total count')
@@ -82,6 +106,23 @@ async function main() {
   assert(lifecycleRail.includes('RAIL_LIFECYCLE_STATUSES'), 'Lifecycle rail must use the approved desktop lifecycle values')
   assert(lifecycleRail.includes('onLifecycleFilterChange'), 'Lifecycle rail must update the existing filter state')
   assert(/overflow-x-auto/.test(lifecycleRail), 'Lifecycle rail must remain reachable when horizontal space is tight')
+  assert(lifecycleRail.includes('bg-surface/35'), 'Lifecycle options must share one restrained control track')
+
+  const lifecycleChip = blockAround(rail, 'function LifecycleChip', 0, 2200)
+  assert(lifecycleChip.includes('data-cp25c1-lifecycle-option'), 'Lifecycle options must share one control grammar')
+  assert(/min-h-10|min-h-11|min-h-\[4[0-4]px\]/.test(lifecycleChip), 'Lifecycle options need consistent 40-44px targets')
+  assert(lifecycleChip.includes('bg-raised'), 'Active lifecycle option must use a quiet tonal surface')
+  assert(lifecycleChip.includes('bg-transparent'), 'Inactive lifecycle options must remain visually restrained')
+  assert(lifecycleChip.includes('data-cp25c1-lifecycle-filter-dot'), 'Lifecycle color must stay in compact status dots')
+  assert(lifecycleChip.includes('markerClassName'), 'Lifecycle options must retain their compact status-dot color')
+  assert(!/absolute|left-0|border-l|bg-ok\/\[|bg-bad\/\[|bg-blue\/\[/.test(lifecycleChip), 'Lifecycle selection must not use bars or saturated full-button fills')
+  assert(!/Nearest|Newest|Sort by|sorting/i.test(lifecycleRail), 'Lifecycle rail must not introduce sorting controls')
+
+  const lifecycleValues = blockAround(popover, 'RAIL_LIFECYCLE_STATUSES', 0, 700)
+  for (const status of ["'saved'", "'contacted'", "'won'", "'lost'"]) {
+    assert(lifecycleValues.includes(status), `Lifecycle rail must retain ${status}`)
+  }
+  assert(!/dismissed/i.test(lifecycleValues), 'Lifecycle rail must not introduce Dismissed')
 
   const trigger = blockAround(rail, 'data-cp25c1-rail-filter-trigger', 700, 1800)
   assert(trigger.includes('aria-expanded={filtersOpen}'), 'Desktop filter trigger must expose expanded state')
@@ -113,6 +154,11 @@ async function main() {
   assert(row.includes('data-cp25c1-lifecycle-dot'), 'Lifecycle color must move to a compact dot')
   assert(/h-2 w-2|h-\[7px\] w-\[7px\]|h-\[8px\] w-\[8px\]|h-\[9px\] w-\[9px\]/.test(row), 'Lifecycle dot must remain compact')
   assert(row.includes('data-cp25c1-soft-selected-row'), 'Selected row must use the soft selected treatment')
+  assert(row.includes("selected ? 'bg-ok/[0.075]'"), 'Selected row must retain its soft tinted surface')
+  assert(
+    !/absolute[^"'\n]*left-0[^"'\n]*bg-ok|bg-ok[^"'\n]*left-0/.test(row),
+    'Selected row must not render a vertical green accent bar',
+  )
   assert(!row.includes('formatLeadDate'), 'Resting rows must not repeat full calendar dates')
   assert(!/shadow-\[[^\]]*(69,192,138|ok)|ring-ok|border-ok/.test(row), 'Selected row must not use a hard outline or glow')
   assert(/duration-200/.test(row), 'Row motion must stay restrained')
@@ -165,12 +211,22 @@ async function main() {
 
   const changed = changedFiles()
   const required = [
+    'components/app/Sidebar.tsx',
     'components/app/map/MapLeadRail.tsx',
     'components/app/map/MapRailFilterPopover.tsx',
     'components/app/map/MapShell.tsx',
     'scripts/pm/cp25c1-premium-map-rail-filters-smoke.ts',
   ].sort()
   assert.deepEqual(changed, required, 'CP25C.1 changed files must match the approved implementation set')
+
+  const sharedShellChanges = changed.filter((path) =>
+    path.startsWith('components/app/') && !path.startsWith('components/app/map/'),
+  )
+  assert.deepEqual(
+    sharedShellChanges,
+    ['components/app/Sidebar.tsx'],
+    'Sidebar must be the only newly approved shared-shell file',
+  )
 
   const forbidden = changed.filter((path) =>
     path === 'package.json' ||
@@ -180,7 +236,7 @@ async function main() {
     path.startsWith('lib/providers/') ||
     path.startsWith('lib/runtime/') ||
     path.startsWith('app/') ||
-    /auth|clerk|billing|stripe|admin|settings|chat|FetchView|MyLeadsView|MobileHeader|MobileBottomNav|Sidebar|CP19|PRIVE/i.test(path),
+    /auth|clerk|billing|stripe|admin|settings|chat|FetchView|MyLeadsView|MobileHeader|MobileBottomNav|CP19|PRIVE/i.test(path),
   )
   assert.deepEqual(forbidden, [], 'Protected path changed')
   assert(!changed.some((path) => /scripts\/pm\/cp25(a|b|b1|b2|c)-/i.test(path)), 'Prior CP25 smoke changed')
@@ -197,10 +253,16 @@ async function main() {
     premiumRailPresent: true,
     desktopRailMobileGated: true,
     lifecycleRailPresent: true,
+    lifecycleControlUnified: true,
+    lifecycleTargetsConsistent: true,
+    lifecycleColorDotsOnly: true,
+    lifecycleSortingAbsent: true,
     restingRowsQuiet: true,
     neutralMarkersPresent: true,
     repeatedDatesRemoved: true,
     selectedRowSoft: true,
+    sidebarRailSeparationPresent: true,
+    verticalGreenAccentBarsAbsent: true,
     desktopFilterRailAttached: true,
     desktopFilterAccessible: true,
     desktopAndMobileFiltersSeparated: true,

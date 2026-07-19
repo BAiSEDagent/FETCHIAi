@@ -96,7 +96,7 @@ export function MapLeadRail({
     <aside
       data-cp25c-map-lead-rail
       data-cp25c1-premium-map-lead-rail
-      className="relative z-20 hidden h-full w-[390px] shrink-0 flex-col overflow-hidden border-r border-text/8 bg-surface text-text shadow-[14px_0_36px_-30px_rgba(0,0,0,0.9)] lg:flex 2xl:w-[410px]"
+      className="relative z-20 hidden h-full w-[390px] shrink-0 flex-col overflow-hidden border-l border-r border-text/8 bg-bg text-text lg:flex 2xl:w-[410px]"
       aria-label="Saved leads on the map"
     >
       <header className="relative z-30 shrink-0 border-b border-text/8 px-4 pb-3 pt-5 2xl:px-5">
@@ -113,7 +113,7 @@ export function MapLeadRail({
         </div>
 
         <div className="mt-3.5 flex items-center gap-2">
-          <div className="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[12px] border border-text/8 bg-bg/45 px-3 transition-colors duration-200 focus-within:border-text/20 focus-within:bg-bg/70 motion-reduce:transition-none">
+          <div className="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[12px] border border-text/8 bg-surface/65 px-3 transition-colors duration-200 focus-within:border-text/20 focus-within:bg-surface/85 motion-reduce:transition-none">
             <Search className="h-3.5 w-3.5 shrink-0 text-text/38" aria-hidden="true" />
             <label className="sr-only" htmlFor="map-rail-search">
               Search leads
@@ -147,7 +147,7 @@ export function MapLeadRail({
                 'relative grid h-10 w-10 place-items-center rounded-[12px] border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/50 motion-reduce:transition-none',
                 filtersOpen
                   ? 'border-text/18 bg-text/[0.1] text-text'
-                  : 'border-text/8 bg-bg/45 text-text/58 hover:border-text/16 hover:bg-bg/70 hover:text-text',
+                  : 'border-text/8 bg-surface/65 text-text/58 hover:border-text/16 hover:bg-surface/85 hover:text-text',
               )}
               aria-label={filtersActive ? 'Open map filters, filters active' : 'Open map filters'}
               aria-expanded={filtersOpen}
@@ -176,7 +176,7 @@ export function MapLeadRail({
 
         <nav
           data-cp25c1-lifecycle-filter-rail
-          className="-mx-1 mt-2.5 flex gap-1 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-1 mt-3 flex gap-1 overflow-x-auto rounded-[12px] bg-surface/35 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label="Filter map leads by lifecycle"
         >
           <LifecycleChip
@@ -229,12 +229,6 @@ export function MapLeadRail({
                     selected ? 'bg-ok/[0.075]' : 'bg-transparent hover:bg-text/[0.04]',
                   )}
                 >
-                  {selected && (
-                    <span
-                      className="absolute bottom-2 left-0 top-2 w-0.5 rounded-r-full bg-ok/75"
-                      aria-hidden="true"
-                    />
-                  )}
                   <button
                     type="button"
                     onClick={() => onSelectLead(lead.id)}
@@ -253,7 +247,7 @@ export function MapLeadRail({
                       <span
                         data-cp25c1-lifecycle-dot
                         className={cn(
-                          'absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-surface',
+                          'absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-bg',
                           LIFECYCLE_PIN_CLASSES[lead.lifecycleStatus],
                         )}
                       />
@@ -371,15 +365,26 @@ function LifecycleChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      data-cp25c1-lifecycle-option
       className={cn(
-        'inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 text-[11px] font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/45 motion-reduce:transition-none',
-        active ? 'bg-text/[0.09] text-text' : 'text-text/44 hover:bg-text/[0.04] hover:text-text/78',
+        'inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-[9px] px-2.5 text-[11.5px] font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/45 motion-reduce:transition-none',
+        active
+          ? 'bg-raised/90 text-text'
+          : 'bg-transparent text-text/48 hover:bg-surface/70 hover:text-text/78',
       )}
     >
       {markerClassName ? (
-        <span className={cn('h-1.5 w-1.5 rounded-full', markerClassName)} aria-hidden="true" />
+        <span
+          data-cp25c1-lifecycle-filter-dot
+          className={cn('h-2 w-2 rounded-full', markerClassName)}
+          aria-hidden="true"
+        />
       ) : (
-        <span className="h-1.5 w-1.5 rounded-full bg-text/32" aria-hidden="true" />
+        <span
+          data-cp25c1-lifecycle-filter-dot
+          className="h-2 w-2 rounded-full bg-text/32"
+          aria-hidden="true"
+        />
       )}
       {label}
     </button>

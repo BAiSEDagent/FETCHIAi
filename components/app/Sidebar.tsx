@@ -127,18 +127,12 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
         href={item.href}
         onClick={onNavigate}
         className={[
-          'group relative flex items-center gap-3 mx-3 px-3 rounded-xl text-[13.5px] transition-colors min-h-[44px]',
+          'group relative flex min-h-[44px] items-center gap-3 mx-3 px-3 rounded-xl text-[13.5px] transition-colors duration-200 motion-reduce:transition-none',
           active
-            ? 'text-text bg-text/[0.08]'
+            ? 'text-text bg-raised/80'
             : 'text-text/60 hover:text-text hover:bg-text/[0.04]',
         ].join(' ')}
       >
-        {active && (
-          <span
-            aria-hidden
-            className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-ok"
-          />
-        )}
         <Icon
           className={`h-[16px] w-[16px] flex-shrink-0 transition-colors ${
             active ? 'text-ok' : 'text-text/55 group-hover:text-text/80'
@@ -148,7 +142,7 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
         {badgeText !== undefined && (
           <span
             className={`text-[10.5px] font-bold rounded-full px-1.5 py-0.5 ${
-              active ? 'bg-ok/30 text-text' : 'bg-text/8 text-text/55'
+              active ? 'bg-text/10 text-text/75' : 'bg-text/8 text-text/55'
             }`}
           >
             {badgeText}
