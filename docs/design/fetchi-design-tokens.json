@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "name": "Fetchi design tokens",
+  "version": "cp26a-v2",
+  "status": "documentation-only",
+  "description": "Exact custom-property values transcribed from the supplied Claude Fetchi Design System token files. This file is a migration contract, not a production stylesheet.",
+  "source": {
+    "archive": "Fetchi Design System.zip",
+    "archiveSha256": "3bea1c60e01aadb9f6149e9ee85660752cd8be24f05297dc4d5327edf2a8efa2",
+    "manifestNamespace": "FetchiDesignSystem_8db62e",
+    "manifestTokenCount": 169,
+    "tokenFiles": {
+      "tokens/colors.css": "e9b32fd6d2ff62d3e993b723834fbddb1e843a8ede78959cff09d3229c1590f0",
+      "tokens/typography.css": "cb6d3cca3eee026b634591b7c38efacd7870f580b3adc8327a5614e26a42f1a8",
+      "tokens/spacing.css": "1ab630242d70a8230519068c03c6c5daecff865dc9ddd7465dd10fcc4e96ae03",
+      "tokens/effects.css": "35fc28f1a281c93007024664195ab3bc79276a1215cbe8f2c303ec9f32c0c111",
+      "tokens/fonts.css": "74a7d0a6f45df807379f54c4232bdb9dfb49c7f92024b5f39797e99704d8d396",
+      "tokens/base.css": "45b39d60a27a4c04f5c4ea061e7e4ba803286bb2ea8e44116900b7f8bcd2b365"
+    }
+  },
+  "fontAssets": {
+    "normal": {
+      "family": "Inter",
+      "weight": "100 900",
+      "style": "normal",
+      "path": "assets/fonts/Inter[opsz,wght].ttf"
+    },
+    "italic": {
+      "family": "Inter",
+      "weight": "100 900",
+      "style": "italic",
+      "path": "assets/fonts/Inter-Italic[opsz,wght].ttf"
+    }
+  },
+  "tokens": {
+    "color": {
+      "root": {
+        "surface": {
+          "--bg": "#08090A",
+          "--bg-elevated": "#0C0D0F",
+          "--surface": "#0F1011",
+          "--raised": "#141516",
+          "--overlay": "#191A1C",
+          "--overlay-hover": "#202123",
+          "--overlay-active": "#26282B"
+        },
+        "translucentWhite": {
+          "--w-04": "rgba(255,255,255,0.04)",
+          "--w-06": "rgba(255,255,255,0.06)",
+          "--w-08": "rgba(255,255,255,0.08)",
+          "--w-10": "rgba(255,255,255,0.10)",
+          "--w-14": "rgba(255,255,255,0.14)"
+        },
+        "border": {
+          "--border": "#23252A",
+          "--border-subtle": "#191A1D",
+          "--border-strong": "#34343A"
+        },
+        "text": {
+          "--text": "#F7F8F8",
+          "--text-strong-muted": "#D0D6E0",
+          "--text-secondary": "#8A8F98",
+          "--text-tertiary": "#62666D",
+          "--text-quaternary": "#4A4E54",
+          "--text-disabled": "#3A3C42"
+        },
+        "interaction": {
+          "--accent": "#5E6AD2",
+          "--accent-hover": "#828FFF",
+          "--accent-press": "#5058C0",
+          "--accent-highlight": "#8B93E8",
+          "--accent-contrast": "#FFFFFF",
+          "--accent-subtle": "rgba(94,106,210,0.15)",
+          "--accent-tint": "rgba(94,106,210,0.09)",
+          "--accent-border": "rgba(94,106,210,0.40)"
+        },
+        "brand": {
+          "--brand-coral": "#F45B3B"
+        },
+        "semantic": {
+          "--blue": "#4C8DF6",
+          "--blue-bright": "#6FA6FF",
+          "--blue-subtle": "rgba(76,141,246,0.14)",
+          "--green": "#3FB77E",
+          "--green-bright": "#57CE95",
+          "--green-subtle": "rgba(63,183,126,0.14)",
+          "--amber": "#E0A64B",
+          "--amber-bright": "#F1BC63",
+          "--amber-subtle": "rgba(224,166,75,0.15)",
+          "--red": "#EB5C57",
+          "--red-bright": "#F5726D",
+          "--red-subtle": "rgba(235,92,87,0.14)"
+        },
+        "lifecycle": {
+          "--life-saved": "#E9B44C",
+          "--life-contacted": "#4C8DF6",
+          "--life-won": "#3FB77E",
+          "--life-lost": "#EB5C57",
+          "--life-ink": "#0B0C0E"
+        },
+        "parchment": {
+          "--parchment": "#E8E0CE",
+          "--parchment-mute": "#CFC6B0",
+          "--parchment-ink": "#26241F",
+          "--parchment-border": "#CBC1A9"
+        },
+        "aliases": {
+          "--surface-card": "var(--raised)",
+          "--surface-input": "var(--overlay)",
+          "--text-body": "var(--text)",
+          "--accent-primary": "var(--accent)",
+          "--focus": "rgba(94,106,210,0.55)",
+          "--focus-ring": "rgba(94,106,210,0.32)"
+        },
+        "colorScheme": "dark"
+      },
+      "themeLightOverrides": {
+        "surface": {
+          "--bg": "#FBFBFC",
+          "--bg-elevated": "#FFFFFF",
+          "--surface": "#FFFFFF",
+          "--raised": "#FFFFFF",
+          "--overlay": "#F3F4F6",
+          "--overlay-hover": "#ECEEF1",
+          "--overlay-active": "#E4E7EB"
+        },
+        "translucentInk": {
+          "--w-04": "rgba(9,10,12,0.04)",
+          "--w-06": "rgba(9,10,12,0.06)",
+          "--w-08": "rgba(9,10,12,0.08)",
+          "--w-10": "rgba(9,10,12,0.10)",
+          "--w-14": "rgba(9,10,12,0.14)"
+        },
+        "border": {
+          "--border": "#E6E8EB",
+          "--border-subtle": "#EEF0F2",
+          "--border-strong": "#D3D6DB"
+        },
+        "text": {
+          "--text": "#16181D",
+          "--text-secondary": "#5C6069",
+          "--text-tertiary": "#8A8F98",
+          "--text-quaternary": "#B4B8BF",
+          "--text-disabled": "#C9CCD1"
+        },
+        "interaction": {
+          "--accent-subtle": "rgba(94,106,210,0.12)",
+          "--accent-tint": "rgba(94,106,210,0.07)",
+          "--accent-border": "rgba(94,106,210,0.34)",
+          "--focus-ring": "rgba(94,106,210,0.28)"
+        },
+        "semantic": {
+          "--blue-subtle": "rgba(76,141,246,0.12)",
+          "--green-subtle": "rgba(63,183,126,0.12)",
+          "--amber-subtle": "rgba(224,166,75,0.16)",
+          "--red-subtle": "rgba(235,92,87,0.12)"
+        },
+        "colorScheme": "light"
+      }
+    },
+    "typography": {
+      "family": {
+        "--font-sans": "'Inter',system-ui,-apple-system,'Segoe UI',sans-serif",
+        "--font-display": "'Inter',system-ui,sans-serif",
+        "--font-mono": "ui-monospace,'SF Mono',Menlo,monospace"
+      },
+      "scale": {
+        "--fs-display": "40px",
+        "--lh-display": "1.08",
+        "--fs-h1": "22px",
+        "--lh-h1": "1.25",
+        "--fs-h2": "17px",
+        "--lh-h2": "1.35",
+        "--fs-h3": "15px",
+        "--lh-h3": "1.4",
+        "--fs-body-lg": "15px",
+        "--lh-body-lg": "1.55",
+        "--fs-body": "14px",
+        "--lh-body": "1.5",
+        "--fs-sm": "13px",
+        "--lh-sm": "1.45",
+        "--fs-caption": "12px",
+        "--lh-caption": "1.4",
+        "--fs-micro": "11px",
+        "--lh-micro": "1.3"
+      },
+      "weight": {
+        "--fw-regular": "400",
+        "--fw-medium": "500",
+        "--fw-semibold": "600",
+        "--fw-bold": "700"
+      },
+      "tracking": {
+        "--tracking-tight": "-0.02em",
+        "--tracking-snug": "-0.011em",
+        "--tracking-normal": "0em",
+        "--tracking-label": "0.06em",
+        "--tracking-eyebrow": "0.14em"
+      },
+      "special": {
+        "--fs-eyebrow": "10.5px",
+        "--fs-wordmark": "18px",
+        "--fw-wordmark": "800"
+      }
+    },
+    "geometry": {
+      "radius": {
+        "--radius-xs": "4px",
+        "--radius-sm": "6px",
+        "--radius-md": "8px",
+        "--radius-lg": "10px",
+        "--radius-card": "12px",
+        "--radius-xl": "16px",
+        "--radius-pill": "999px"
+      },
+      "spacing": {
+        "--sp-0": "0",
+        "--sp-1": "4px",
+        "--sp-2": "8px",
+        "--sp-3": "12px",
+        "--sp-4": "16px",
+        "--sp-5": "20px",
+        "--sp-6": "24px",
+        "--sp-7": "28px",
+        "--sp-8": "32px",
+        "--sp-10": "40px",
+        "--sp-12": "48px",
+        "--sp-16": "64px"
+      },
+      "control": {
+        "--control-h-sm": "28px",
+        "--control-h": "32px",
+        "--control-h-md": "36px",
+        "--control-h-lg": "40px",
+        "--touch-min": "44px"
+      },
+      "chip": {
+        "--chip-h": "22px",
+        "--chip-h-lg": "26px"
+      },
+      "layout": {
+        "--sidebar-w": "224px",
+        "--content-max": "840px",
+        "--reading-max": "680px",
+        "--card-pad": "16px",
+        "--card-pad-lg": "20px",
+        "--row-h": "40px",
+        "--topbar-h": "48px"
+      }
+    },
+    "effects": {
+      "shadow": {
+        "--shadow-xs": "0 1px 2px rgba(0,0,0,0.22)",
+        "--shadow-sm": "0 1px 2px rgba(0,0,0,0.28),0 2px 6px -2px rgba(0,0,0,0.24)",
+        "--shadow-card": "0 2px 4px rgba(0,0,0,0.20),0 8px 24px -12px rgba(0,0,0,0.40)",
+        "--shadow-menu": "0 8px 16px -4px rgba(0,0,0,0.30),0 16px 48px -12px rgba(0,0,0,0.55),0 0 0 1px var(--w-08)",
+        "--shadow-dialog": "0 16px 32px -8px rgba(0,0,0,0.40),0 32px 64px -16px rgba(0,0,0,0.60),0 0 0 1px var(--w-10)",
+        "--shadow-stamp": "4px 4px 0 rgba(38,36,31,0.9)",
+        "--shadow-cta": "0 1px 2px rgba(0,0,0,0.30),0 8px 20px -10px rgba(94,106,210,0.50)"
+      },
+      "hairline": {
+        "--hairline": "inset 0 0 0 1px var(--w-06)",
+        "--hairline-strong": "inset 0 0 0 1px var(--w-10)",
+        "--edge-top": "inset 0 1px 0 rgba(255,255,255,0.05)"
+      },
+      "focus": {
+        "--ring": "0 0 0 2px var(--bg),0 0 0 3.5px var(--focus)",
+        "--ring-inset": "inset 0 0 0 1px var(--focus)"
+      },
+      "motion": {
+        "--ease": "cubic-bezier(0.22,1,0.36,1)",
+        "--ease-out": "cubic-bezier(0.16,1,0.3,1)",
+        "--dur-1": "120ms",
+        "--dur-2": "180ms",
+        "--dur-3": "260ms"
+      },
+      "floatingChrome": {
+        "--blur": "blur(12px) saturate(1.4)"
+      }
+    }
+  }
+}
