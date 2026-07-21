@@ -20,6 +20,11 @@ Current product/design companions:
 - `docs/DECISIONS.md`
 - `docs/ROADMAP.md`
 - `docs/design/lead-card-taxonomy.md`
+- `docs/design/FETCHI_DESIGN_SYSTEM.md`
+- `docs/design/fetchi-design-tokens.json`
+- `docs/design/FETCHI_SEMANTIC_COLOR_CONTRACTS.md`
+- `docs/design/FETCHI_COMPONENT_CONTRACTS.md`
+- `docs/design/FETCHI_REFERENCE_PROVENANCE.md`
 - `docs/product/vertical-playbook-registry.md`
 - `docs/product/playbooks/*`
 
