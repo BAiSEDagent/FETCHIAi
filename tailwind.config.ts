@@ -18,6 +18,8 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
+        inter: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        fetchi: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         outfit: ['var(--font-outfit)', 'sans-serif'],
         'dm-sans': ['var(--font-dm-sans)', 'sans-serif'],
         sans: ['var(--font-dm-sans)', 'sans-serif'],

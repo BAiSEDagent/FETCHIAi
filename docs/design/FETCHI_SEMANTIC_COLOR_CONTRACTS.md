@@ -26,10 +26,10 @@ non-color cue.
 
 | Channel | Exported color | Allowed carrier | Required non-color cue | Forbidden use |
 | --- | --- | --- | --- | --- |
-| General interaction | Indigo `#5E6AD2` | Primary action, selected-row treatment, focus tokens, pending link decision | Button label, selected bar/structure, focus geometry | Lifecycle, score, freshness, fit, contact confidence |
+| General interaction | Indigo `#5E6AD2` | Primary action, active navigation, selected-row treatment, focus tokens, standard product link | Button/link label, navigation structure, selected bar/structure, focus geometry | Lifecycle, score, freshness, fit, contact confidence |
 | Brand mark | Coral `#F45B3B` | Authentic Fetchi mark | Mark silhouette and brand placement | Generic UI accent, status, score, category |
-| Evidence/info | Blue `#4C8DF6` | Evidence badge, source link or signal glyph pending link decision | Evidence/source label or fixed glyph | Contacted lifecycle glyph, score |
-| Fresh/go/success | Green `#3FB77E` | Fresh-evidence badge, success feedback, pending active-nav decision | “Fresh evidence”/success label, timestamp, or navigation structure | Won lifecycle glyph, score |
+| Evidence/info | Blue `#4C8DF6` | Evidence badge, evidence-source link, or signal glyph | Evidence/source label or fixed glyph | Contacted lifecycle glyph, score |
+| Fresh/go/success | Green `#3FB77E` | Fresh-evidence badge or success feedback | “Fresh evidence”/success label or timestamp | Won lifecycle glyph, score, active navigation |
 | Aging/warning | Amber `#E0A64B` | Aging badge, warning, expiring evidence | Age, expiry, or dated artifact | Saved lifecycle glyph, generic priority |
 | Destructive/error | Red `#EB5C57` | Danger action, error boundary/input message | Destructive verb or associated error text | Lost lifecycle glyph, generic negative score |
 | Saved lifecycle | `#E9B44C` | Lifecycle `StatusGlyph` and lifecycle filter only | Saved label plus exported ring/dot shape | Aging, warning, signal strength |
@@ -76,10 +76,9 @@ source link, or fixed signal glyph; Contacted uses the lifecycle ring glyph and
 the word “Contacted.” Do not render an unlabeled blue dot and expect the user to
 infer the channel.
 
-The package also assigns links to both indigo and blue in different prose.
-
-**PM decision required:** choose one link-color rule or define evidence-source
-links as a named exception. Until then, CP26B must not normalize link color.
+Standard product links use indigo. Evidence-source links are the named blue
+exception and must retain an explicit source/evidence label or surrounding
+context.
 
 ### Green fresh evidence versus success versus Won lifecycle
 
@@ -88,11 +87,10 @@ success requires a success message or completion icon; Won requires the
 lifecycle glyph and the word “Won.” They may not share an unlabeled dot, pill,
 or surface treatment.
 
-The export also assigns active navigation to green while assigning active and
-selected interaction to indigo.
+Active navigation uses indigo plus a structural surface or indicator and a
+text label. Green remains reserved for fresh evidence and success feedback.
 
-**PM decision required:** choose the active-navigation channel. Until then,
-navigation color is blocked from CP26B.
+Active navigation uses indigo; color alone never carries the active location.
 
 ### Amber Saved lifecycle versus aging and time-sensitive evidence
 

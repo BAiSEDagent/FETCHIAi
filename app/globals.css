@@ -8,6 +8,65 @@
     --coralDeep: 217 78 50;
     --warn: 227 169 54;
     --radius: 0.75rem;
+
+    /* CP26B inert design-system namespace. Existing routes opt in during later checkpoints. */
+    --fetchi-bg: #08090A;
+    --fetchi-surface: #0F1011;
+    --fetchi-raised: #141516;
+    --fetchi-overlay: #191A1C;
+    --fetchi-overlay-hover: #202123;
+    --fetchi-overlay-active: #26282B;
+    --fetchi-border: #23252A;
+    --fetchi-border-subtle: #191A1D;
+    --fetchi-border-strong: #34343A;
+    --fetchi-text: #F7F8F8;
+    --fetchi-text-secondary: #8A8F98;
+    --fetchi-text-tertiary: #62666D;
+    --fetchi-text-disabled: #3A3C42;
+    --fetchi-accent: #5E6AD2;
+    --fetchi-accent-hover: #828FFF;
+    --fetchi-accent-press: #5058C0;
+    --fetchi-accent-contrast: #FFFFFF;
+    --fetchi-accent-subtle: rgba(94, 106, 210, 0.15);
+    --fetchi-accent-tint: rgba(94, 106, 210, 0.09);
+    --fetchi-accent-border: rgba(94, 106, 210, 0.40);
+    --fetchi-focus: rgba(94, 106, 210, 0.55);
+    --fetchi-focus-ring: 0 0 0 2px var(--fetchi-bg), 0 0 0 3.5px var(--fetchi-focus);
+    --fetchi-blue: #4C8DF6;
+    --fetchi-red: #EB5C57;
+    --fetchi-red-subtle: rgba(235, 92, 87, 0.14);
+    --fetchi-radius-sm: 6px;
+    --fetchi-radius-md: 8px;
+    --fetchi-radius-lg: 10px;
+    --fetchi-radius-card: 12px;
+    --fetchi-control-sm: 28px;
+    --fetchi-control-md: 32px;
+    --fetchi-control-lg: 40px;
+    --fetchi-touch-min: 44px;
+    --fetchi-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --fetchi-duration-press: 120ms;
+    --fetchi-duration-state: 180ms;
+  }
+
+  .fetchi-theme-light {
+    --fetchi-bg: #FBFBFC;
+    --fetchi-surface: #FFFFFF;
+    --fetchi-raised: #FFFFFF;
+    --fetchi-overlay: #F3F4F6;
+    --fetchi-overlay-hover: #ECEEF1;
+    --fetchi-overlay-active: #E4E7EB;
+    --fetchi-border: #E6E8EB;
+    --fetchi-border-subtle: #EEF0F2;
+    --fetchi-border-strong: #D3D6DB;
+    --fetchi-text: #16181D;
+    --fetchi-text-secondary: #5C6069;
+    --fetchi-text-tertiary: #8A8F98;
+    --fetchi-text-disabled: #C9CCD1;
+    --fetchi-accent-subtle: rgba(94, 106, 210, 0.12);
+    --fetchi-accent-tint: rgba(94, 106, 210, 0.07);
+    --fetchi-accent-border: rgba(94, 106, 210, 0.34);
+    --fetchi-focus-ring: 0 0 0 2px var(--fetchi-bg), 0 0 0 3.5px rgba(94, 106, 210, 0.55);
+    --fetchi-red-subtle: rgba(235, 92, 87, 0.12);
   }
 
   .theme-light {

@@ -1,7 +1,13 @@
 import type { Metadata } from 'next'
-import { Outfit, DM_Sans, DM_Serif_Display } from 'next/font/google'
+import { Inter, Outfit, DM_Sans, DM_Serif_Display } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -74,7 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         },
       }}
     >
-      <html lang="en" className={`theme-light ${outfit.variable} ${dmSans.variable} ${dmSerif.variable}`}>
+      <html lang="en" className={`theme-light ${inter.variable} ${outfit.variable} ${dmSans.variable} ${dmSerif.variable}`}>
         <body className="min-h-screen bg-bg text-text antialiased">{children}</body>
       </html>
     </ClerkProvider>
