@@ -182,11 +182,12 @@ to compensate for unclear hierarchy.
 ## Interaction states
 
 - Indigo is the general interaction accent for the primary action, selection,
-  focus, and—pending the link-color decision—links.
+  focus, active navigation, and standard product links. Evidence-source links
+  use the blue evidence channel as a named exception.
 - Hover moves a surface or text treatment one quiet step upward.
-- Press moves to the press token and may apply a slight scale reduction. The
-  exported sources disagree on the exact scale; CP26B must not choose one until
-  the PM decision is recorded.
+- Press moves to the press token and uses `scale(0.98)` over `120ms`.
+  Reduced-motion preferences remove the scale while preserving the state
+  change.
 - Selected rows use a translucent indigo treatment and a `2px` indigo left
   bar. Selection must remain legible without relying on color alone.
 - Keyboard focus uses the exported indigo focus tokens and must be visible only
@@ -194,15 +195,26 @@ to compensate for unclear hierarchy.
 - Disabled controls remain identifiable, non-interactive, and unavailable to
   submission. Reduced opacity is supporting treatment, not the only cue.
 - Loading preserves the control label or accessible name, blocks duplicate
-  activation, and exposes busy state. The export contains two loader patterns;
-  pattern selection is a PM decision.
+  activation, exposes busy state, and uses one compact spinner beside the
+  visible label.
 - Errors use the red semantic channel plus plain, associated error text.
 - Missing-evidence and fallback states use muted or dashed treatment plus an
   explicit label or explanation. They never look like a loading failure.
 
-The combined focus-plus-selection treatment is unresolved. Focus must remain
-perceivable and selection must remain stable, but CP26B must not invent the
-layering or emphasis before the PM decision in the semantic contract.
+When a selected row receives keyboard focus, its selection tint and `2px` left
+bar remain stable while the indigo focus ring overlays that treatment. Focus
+never removes or substitutes for selection.
+
+### CP26B interaction decisions
+
+- Standard product links use indigo.
+- Evidence-source links use blue.
+- Active navigation uses indigo plus a structural surface or indicator.
+- Selected-plus-focused rows keep their selection treatment while the focus
+  ring overlays it.
+- Loading controls use one compact spinner and retain their visible label.
+- Pressed controls use `scale(0.98)` over `120ms`; reduced motion removes the
+  scale.
 
 ## Motion
 

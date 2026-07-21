@@ -85,11 +85,16 @@ full-width layout, loading, disabled state, and a visible label.
 - Subtle: quiet filled action.
 - Danger: explicit destructive confirmation; red plus a destructive verb.
 - Loading blocks duplicate activation, exposes busy state, and retains an
-  accessible name. Loader appearance remains a PM decision because the export
-  contains ring and three-dot patterns.
+  accessible name and visible label. It uses one compact spinner.
 - Disabled uses the native disabled state and cannot fire interaction.
-- Press-scale and exact focus geometry remain blocked by recorded source
-  conflicts.
+- Pressed controls use `scale(0.98)` over `120ms`; reduced motion removes the
+  scale. Focus-visible uses the approved indigo ring geometry.
+
+**CP26B approved behavior:** standard links use indigo, evidence-source links
+use blue, active navigation uses indigo plus structure, selected-plus-focused
+rows retain selection under an overlaid focus ring, loading uses a compact
+spinner with a visible label, and press motion is `scale(0.98)` over `120ms`
+with a reduced-motion override.
 
 ### `IconButton`
 
@@ -267,7 +272,7 @@ not exported. The only approved navigation-level requirements in CP26A are:
 - required actions remain available without hover;
 - mobile navigation provides the same destinations and state meaning with
   `44px` minimum targets;
-- indigo-versus-green active-navigation ownership is a PM decision;
+- active navigation uses indigo plus a structural surface or indicator;
 - no Linear terminology, layout, or icon identity is copied.
 
 Do not invent a navigation API or redesign the shell in CP26B unless separately
@@ -279,9 +284,9 @@ approved.
 | --- | --- | --- |
 | Rest | Correct surface and text hierarchy | Native semantics and accessible name present |
 | Hover | One quiet surface/text step; optional tiny lift for interactive cards | No required meaning or action appears only here |
-| Pressed | Press token and small scale change pending exact PM decision | Activation follows native control behavior |
+| Pressed | Press token and `scale(0.98)` over `120ms`; no scale under reduced motion | Activation follows native control behavior |
 | Selected | Indigo tint plus left bar | Selection state exposed; not confused with focus/open/lifecycle |
-| Focus-visible | Indigo focus tokens; combined selection treatment pending | Visible for keyboard use; logical focus order |
+| Focus-visible | Indigo focus ring overlays and preserves any selection tint/bar | Visible for keyboard use; logical focus order |
 | Disabled | Reduced emphasis plus unavailable state | Native disabled or equivalent; cannot activate |
 | Loading | Stable label/name plus progress treatment | Busy state exposed; duplicate activation blocked |
 | Error | Red edge/message | Error associated and announced; correction remains possible |
