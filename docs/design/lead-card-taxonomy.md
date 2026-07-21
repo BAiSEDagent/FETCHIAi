@@ -45,24 +45,15 @@ Surface should be driven by `opportunity_surface`, not by score alone.
 
 Recommended surface meanings:
 
-- `urgent_action` -> coral
+- `urgent_action` -> dark raised with an explicit dated-evidence label and action
 - `default` / `pipeline` / `history` / `preview` -> dark raised
 - `formal_record` / active permit-style record -> parchment
 - `fallback` / uncertain -> muted/dashed/dimmed treatment
 
-## Coral Rule
+## Color-Neutral Urgency Rule
 
-Coral is only for active urgent-action surfaces.
-
-Coral must not be used for:
-
-- saved/responded/won/contacted pipeline/history cards
-- generic high score cards
-- vertical identity
-- signal labels on dark cards
-- score numerals on dark cards
-
-Do not compute coral from score.
+Coral has no product-semantic role. Urgency, actions, signals, scores,
+lifecycle, vertical identity, and state must not use coral.
 
 Correct rule:
 
@@ -70,17 +61,20 @@ Correct rule:
 card surface = opportunity_surface
 score = service-fit strength
 sensitivity floor = surfacing eligibility
+urgency = dated evidence + explicit label + clear action
 ```
 
-A high-score card may still be dark if it is saved, responded, won, contacted, or otherwise part of pipeline/history.
+A high-score card remains dark unless another approved surface contract applies.
 
 ## urgent_action Evidence Rule
 
-`urgent_action` surface requires dated action-window evidence.
+`urgent_action` requires dated action-window evidence, an explicit urgency
+label, and a clear action. It does not own a surface color.
 
 Dated action-window evidence means the signal carries a specific, verifiable date or time window that creates a real deadline for the contractor — permit expiry date, job posting close date, storm event timestamp, review-response window, or similar.
 
-A card with a high score but no dated action-window evidence must remain on the default dark surface. Score does not create `urgent_action`. Evidence does.
+A high score without dated action-window evidence does not create
+`urgent_action`. Score does not create urgency. Evidence does.
 
 ## Score Rule
 

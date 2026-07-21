@@ -44,10 +44,10 @@ into a generic dashboard:
   score, contact confidence, destructive state, and interaction state are
   separate channels.
 
-The existing rule that coral is reserved for fresh-evidence urgent actions
-conflicts with the Claude v5 export, which limits coral to the brand mark. That
-conflict remains a PM decision; see the semantic contract. Do not use score,
-status, lifecycle, vertical, or a generic high-priority label to imply urgency.
+Coral is brand-mark-only and has no product-semantic or interaction role. Do
+not use coral, score, status, lifecycle, vertical, or a generic high-priority
+label to imply urgency. Urgency requires dated evidence, an explicit label, and
+a clear action.
 
 ## Design direction
 

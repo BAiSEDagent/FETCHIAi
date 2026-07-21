@@ -54,25 +54,20 @@ non-color cue.
 - Missing evidence, weak fit, review-needed, exploratory, and discarded states
   remain muted or dashed and state the limitation.
 
-The existing Fetchi taxonomy allows coral only for urgent actions supported by
-fresh, dated evidence. Claude v5 says coral appears only in the brand mark and
-never in UI. Until the PM resolves that conflict, CP26B must not add a coral
-action or urgency surface. This preserves the intersection of both rules
-without declaring either source silently obsolete.
+Coral is brand-mark-only and never a product UI semantic. Urgency is carried by
+dated evidence, an explicit label, and a clear action; it does not own a hue or
+surface. Indigo remains the interaction accent for buttons, active controls,
+selection, and focus.
 
 ## Collision analysis
 
-### Indigo interaction versus coral brand/action
+### Indigo interaction and brand-mark coral
 
 The v5 PDF, token CSS, manifest, README, and v5 brand sheet agree that indigo is
-the interaction accent and coral is the brand-mark color. Existing Fetchi law
-also permits coral for qualifying urgent actions. The package does not define
-how a coral urgent action would coexist with an indigo primary action.
-
-**PM decision required:** choose whether coral remains brand-only or whether a
-strictly gated urgent-action primitive survives. If it survives, the PM must
-define its carrier, evidence gate, coexistence with the one-primary-per-view
-rule, and test fixtures. No score-to-coral rule is permitted.
+the interaction accent and coral is the brand-mark color. The product contract
+now matches that boundary: coral may appear only inside an approved brand mark
+and must not be used for actions, urgency, signals, scores, lifecycle,
+selection, focus, or state.
 
 ### Blue evidence versus Contacted lifecycle
 
