@@ -149,7 +149,7 @@ None of these conflicts was silently merged.
 
 | Conflict | Source evidence | CP26A treatment |
 | --- | --- | --- |
-| Coral ownership | Existing Fetchi law permits evidence-backed urgent actions; Claude v5 says mark-only | **PM decision required**; no coral action in CP26B until resolved |
+| Coral ownership | Existing Fetchi law permitted evidence-backed urgent actions; Claude v5 says mark-only | **Resolved 2026-07:** coral is brand-mark-only and has no product-semantic or interaction role |
 | Accent hover | `colors.css`, manifest, README/PDF use `#828FFF`; `guidelines/colors-accent.html` paints `#6E79D9` | JSON records token/manifest value; specimen value quarantined; **PM decision required** before implementation |
 | Accent press | `colors.css`, manifest, README/PDF use `#5058C0`; accent specimen paints `#505ABF` | JSON records token/manifest value; specimen value quarantined; **PM decision required** |
 | Border ramp | CSS/manifest/PDF use `#191A1D`, `#23252A`, `#34343A`; border specimen caption and README prose include nearby alternate values | JSON records CSS/manifest values; captions quarantined; **PM decision required** |

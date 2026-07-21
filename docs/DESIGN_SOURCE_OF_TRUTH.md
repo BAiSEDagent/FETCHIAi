@@ -41,14 +41,15 @@ Fetchi Stack is the current brand mark. Retired kana, mascot, and avatar
 treatments are historical and must not appear in new UI unless Adam explicitly
 approves a future checkpoint.
 
-## Coral Rule
+## Brand Coral Boundary
 
-Coral is reserved for urgent-action and monetization moments explicitly allowed
-by current taxonomy and product docs.
+Coral has no product-semantic or interaction role. It must not encode urgency,
+actions, monetization, signals, scores, lifecycle, verticals, selection, focus,
+or state.
 
-Coral must not be derived from score alone. There is no score-to-coral logic.
-High score, vertical, lifecycle, weather category, or generic status cannot make
-a card coral.
+Coral may appear only inside an approved Fetchi brand mark. Urgency is
+communicated through dated evidence, explicit labels, and a clear action; it
+does not own a surface color.
 
 ## Lead-Card Rule
 

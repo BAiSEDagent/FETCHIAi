@@ -76,11 +76,11 @@ Related docs:
 
 ### 2026-05 — Card surface contract
 
-Decision: Score does not decide card surface color.
+Decision: Score and urgency do not decide card surface color.
 
-Coral is urgent-action surface only. Dark raised is default for previews, pipeline, history, and stable app surfaces. Parchment is for formal record/permit-style surfaces. Fallback states use muted/dashed/dimmed treatments.
+Coral has no product-semantic role and is not used for actions, urgency, signals, scores, lifecycle, or state. Coral may appear only inside an approved brand mark. Dark raised is default for previews, opportunities, pipeline, history, and stable app surfaces. Parchment is for formal record/permit-style surfaces. Fallback states use muted/dashed/dimmed treatments. Urgency is communicated with dated evidence, explicit labels, and a clear action.
 
-Status: Approved design/product rule. Implementation still needs continued QA.
+Status: Approved design/product rule. Revised 2026-07 to retire coral product semantics. Implementation still needs continued QA.
 
 Related docs:
 
