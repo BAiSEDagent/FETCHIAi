@@ -96,25 +96,25 @@ export function MapLeadRail({
     <aside
       data-cp25c-map-lead-rail
       data-cp25c1-premium-map-lead-rail
-      className="relative z-20 hidden h-full w-[390px] shrink-0 flex-col overflow-hidden border-l border-r border-text/8 bg-bg text-text lg:flex 2xl:w-[410px]"
+      className="relative z-20 hidden h-full w-[390px] shrink-0 flex-col overflow-hidden border-l border-r border-border bg-[var(--fetchi-bg-elevated)] text-text lg:flex 2xl:w-[410px]"
       aria-label="Saved leads on the map"
     >
-      <header className="relative z-30 shrink-0 border-b border-text/8 px-4 pb-3 pt-5 2xl:px-5">
+      <header className="relative z-30 shrink-0 border-b border-border px-4 pb-3 pt-5 2xl:px-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="font-outfit text-[25px] font-semibold leading-none text-text">My Leads</h1>
-            <p className="mt-1.5 truncate text-[11.5px] font-medium text-text/42">
+            <h1 className="font-fetchi text-[25px] font-semibold leading-none tracking-[-0.02em] text-text">My Leads</h1>
+            <p className="mt-1.5 truncate text-[11.5px] font-medium text-text2">
               {visibleCount} in view{marketLabel ? ` · ${marketLabel}` : ''}
             </p>
           </div>
-          <span className="shrink-0 pt-1 text-[11px] font-semibold tabular-nums text-text/38">
+          <span className="shrink-0 pt-1 text-[11px] font-semibold tabular-nums text-text2">
             {visibleCount}/{totalCount}
           </span>
         </div>
 
         <div className="mt-3.5 flex items-center gap-2">
-          <div className="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[12px] border border-text/8 bg-surface/65 px-3 transition-colors duration-200 focus-within:border-text/20 focus-within:bg-surface/85 motion-reduce:transition-none">
-            <Search className="h-3.5 w-3.5 shrink-0 text-text/38" aria-hidden="true" />
+          <div className="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-lg border border-border bg-fetchiOverlay px-3 transition-colors duration-200 focus-within:border-fetchiAccent focus-within:shadow-[var(--fetchi-focus-ring)] motion-reduce:transition-none">
+            <Search className="h-3.5 w-3.5 shrink-0 text-text2" aria-hidden="true" />
             <label className="sr-only" htmlFor="map-rail-search">
               Search leads
             </label>
@@ -123,13 +123,14 @@ export function MapLeadRail({
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
               placeholder="Search leads"
-              className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-text outline-none placeholder:text-text/34"
+              className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-text outline-none placeholder:text-textMuted"
             />
             {query.trim() && (
               <button
                 type="button"
                 onClick={() => onQueryChange('')}
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] text-text/42 transition-colors duration-200 hover:bg-text/[0.06] hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/45 motion-reduce:transition-none"
+                data-fetchi-map-rail-search-clear-target
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-text2 transition-colors duration-200 hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 motion-reduce:transition-none"
                 aria-label="Clear lead search"
               >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
@@ -143,11 +144,12 @@ export function MapLeadRail({
               type="button"
               onClick={() => onFiltersOpenChange(!filtersOpen)}
               data-cp25c1-rail-filter-trigger
+              data-fetchi-map-rail-filter-target
               className={cn(
-                'relative grid h-10 w-10 place-items-center rounded-[12px] border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/50 motion-reduce:transition-none',
+                'relative grid h-11 w-11 place-items-center rounded-lg border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 motion-reduce:transition-none',
                 filtersOpen
-                  ? 'border-text/18 bg-text/[0.1] text-text'
-                  : 'border-text/8 bg-surface/65 text-text/58 hover:border-text/16 hover:bg-surface/85 hover:text-text',
+                  ? 'border-fetchiAccent bg-[var(--fetchi-accent-subtle)] text-fetchiAccent'
+                  : 'border-border bg-fetchiOverlay text-text2 hover:bg-fetchiOverlayHover hover:text-text',
               )}
               aria-label={filtersActive ? 'Open map filters, filters active' : 'Open map filters'}
               aria-expanded={filtersOpen}
@@ -157,7 +159,7 @@ export function MapLeadRail({
               <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
               {filtersActive && (
                 <span
-                  className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-ok"
+                  className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-fetchiAccent"
                   aria-hidden="true"
                 />
               )}
@@ -176,7 +178,7 @@ export function MapLeadRail({
 
         <nav
           data-cp25c1-lifecycle-filter-rail
-          className="-mx-1 mt-3 flex gap-1 overflow-x-auto rounded-[12px] bg-surface/35 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-1 mt-3 flex gap-1 overflow-x-auto rounded-xl bg-surface p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label="Filter map leads by lifecycle"
         >
           <LifecycleChip
@@ -199,8 +201,8 @@ export function MapLeadRail({
       <div className="flex-1 overflow-y-auto overscroll-contain px-2 py-2 2xl:px-2.5">
         {visibleCount === 0 ? (
           <div className="flex min-h-[260px] flex-col items-center justify-center px-6 text-center">
-            <p className="font-outfit text-[18px] font-semibold text-text">No leads in this view</p>
-            <p className="mt-1.5 max-w-[250px] text-[12.5px] leading-relaxed text-text/44">
+            <p className="font-fetchi text-[18px] font-semibold text-text">No leads in this view</p>
+            <p className="mt-1.5 max-w-[250px] text-[12.5px] leading-relaxed text-text2">
               Clear search or adjust filters to show saved leads on the map.
             </p>
           </div>
@@ -225,21 +227,22 @@ export function MapLeadRail({
                   data-cp25c1-soft-selected-row={selected ? 'true' : 'false'}
                   data-selected={selected ? 'true' : 'false'}
                   className={cn(
-                    'relative overflow-hidden rounded-[12px] transition-colors duration-200 motion-reduce:transition-none',
-                    selected ? 'bg-ok/[0.075]' : 'bg-transparent hover:bg-text/[0.04]',
+                    'relative overflow-hidden rounded-xl border-l-2 border-transparent transition-colors duration-200 motion-reduce:transition-none',
+                    selected && 'fetchi-selected-row',
+                    !selected && 'bg-transparent hover:bg-fetchiOverlay',
                   )}
                 >
                   <button
                     type="button"
                     onClick={() => onSelectLead(lead.id)}
                     aria-pressed={selected}
-                    className="group grid w-full grid-cols-[32px_minmax(0,1fr)] items-center gap-2.5 px-2.5 py-2.5 text-left outline-none transition-[background-color,transform] duration-200 active:scale-[0.995] focus-visible:bg-text/[0.055] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-text/45 motion-reduce:transform-none motion-reduce:transition-none"
+                    className="group grid min-h-[52px] w-full grid-cols-[32px_minmax(0,1fr)] items-center gap-2.5 px-2.5 py-2.5 text-left outline-none transition-[background-color,transform] duration-200 active:scale-[0.995] focus-visible:bg-fetchiOverlayHover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fetchiAccent/55 motion-reduce:transform-none motion-reduce:transition-none"
                   >
                     <span
                       data-cp25c1-neutral-lead-marker
                       className={cn(
-                        'relative grid h-8 w-8 place-items-center rounded-full bg-raised text-[10.5px] font-black text-text/56 transition-colors duration-200 group-hover:text-text/76 motion-reduce:transition-none',
-                        selected && 'bg-text/[0.12] text-text',
+                        'relative grid h-8 w-8 place-items-center rounded-lg bg-fetchiOverlay text-[10.5px] font-black text-text2 transition-colors duration-200 group-hover:text-text motion-reduce:transition-none',
+                        selected && 'bg-[var(--fetchi-accent-subtle)] text-fetchiAccent',
                       )}
                       aria-hidden="true"
                     >
@@ -257,20 +260,20 @@ export function MapLeadRail({
                       <span className="flex min-w-0 items-center justify-between gap-2.5">
                         <span
                           className={cn(
-                            'truncate font-outfit text-[14.5px] font-semibold leading-[1.2] transition-colors duration-200 motion-reduce:transition-none',
+                            'truncate font-fetchi text-[14.5px] font-semibold leading-[1.2] transition-colors duration-200 motion-reduce:transition-none',
                             selected
                               ? 'text-text'
-                              : 'text-text/68 group-hover:text-text group-focus-visible:text-text',
+                              : 'text-text2 group-hover:text-text group-focus-visible:text-text',
                           )}
                         >
                           {lead.businessName}
                         </span>
-                        <span className="shrink-0 text-[10.5px] font-semibold text-text/46">
+                        <span className="shrink-0 text-[10.5px] font-semibold text-text2">
                           {LIFECYCLE_LABELS[lead.lifecycleStatus]}
                         </span>
                       </span>
                       <span className="mt-1 flex min-w-0 items-center gap-2">
-                        <span className="min-w-0 flex-1 truncate text-[11.5px] leading-snug text-text/42">
+                        <span className="min-w-0 flex-1 truncate text-[11.5px] leading-snug text-text2">
                           {[lead.category?.trim(), leadMarket].filter(Boolean).join(' · ') || lead.source}
                         </span>
                         <span className="flex shrink-0 items-center gap-1.5">
@@ -291,17 +294,17 @@ export function MapLeadRail({
                   {selected && (
                     <div
                       data-cp25c1-selected-details
-                      className="animate-in fade-in slide-in-from-top-1 border-t border-text/8 pb-2.5 pl-[52px] pr-2.5 pt-2 duration-200 motion-reduce:animate-none"
+                      className="animate-in fade-in slide-in-from-top-1 border-t border-border pb-2.5 pl-[52px] pr-2.5 pt-2 duration-200 motion-reduce:animate-none"
                     >
                       <div className="flex min-w-0 items-center gap-2">
-                        <MapPin className="h-3 w-3 shrink-0 text-text/32" aria-hidden="true" />
-                        <p className="min-w-0 flex-1 truncate text-[10.5px] text-text/42">
+                        <MapPin className="h-3 w-3 shrink-0 text-text2" aria-hidden="true" />
+                        <p className="min-w-0 flex-1 truncate text-[10.5px] text-text2">
                           {lead.address?.trim() || 'Coordinates available'}
                         </p>
                         <button
                           type="button"
                           onClick={onClearSelection}
-                          className="grid h-8 w-8 shrink-0 place-items-center rounded-[9px] text-text/38 transition-colors duration-200 hover:bg-text/[0.06] hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/45 motion-reduce:transition-none"
+                          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text2 transition-colors duration-200 hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 motion-reduce:transition-none"
                           aria-label="Clear selected lead"
                         >
                           <X className="h-3.5 w-3.5" aria-hidden="true" />
@@ -367,10 +370,10 @@ function LifecycleChip({
       aria-pressed={active}
       data-cp25c1-lifecycle-option
       className={cn(
-        'inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-[9px] px-2.5 text-[11.5px] font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/45 motion-reduce:transition-none',
+        'inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 text-[11.5px] font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 motion-reduce:transition-none',
         active
-          ? 'bg-raised/90 text-text'
-          : 'bg-transparent text-text/48 hover:bg-surface/70 hover:text-text/78',
+          ? 'bg-[var(--fetchi-accent-subtle)] text-fetchiAccent'
+          : 'bg-transparent text-text2 hover:bg-fetchiOverlayHover hover:text-text',
       )}
     >
       {markerClassName ? (
@@ -382,7 +385,7 @@ function LifecycleChip({
       ) : (
         <span
           data-cp25c1-lifecycle-filter-dot
-          className="h-2 w-2 rounded-full bg-text/32"
+          className="h-2 w-2 rounded-full bg-textMuted"
           aria-hidden="true"
         />
       )}
@@ -402,7 +405,7 @@ function EvidenceIcon({
 }) {
   if (!show) return null
   return (
-    <span className="text-text/28" title={label}>
+    <span className="text-evidence" title={label}>
       {children}
       <span className="sr-only">{label}</span>
     </span>
@@ -422,8 +425,10 @@ function RailAction({
   external?: boolean
   internal?: boolean
 }) {
-  const className =
-    'inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-[9px] px-2.5 text-[10.5px] font-semibold text-text/52 transition-colors duration-200 hover:bg-text/[0.06] hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/45 motion-reduce:transition-none [&_svg]:h-3.5 [&_svg]:w-3.5'
+  const className = cn(
+    'inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 text-[10.5px] font-semibold transition-colors duration-200 hover:bg-fetchiOverlayHover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 motion-reduce:transition-none [&_svg]:h-3.5 [&_svg]:w-3.5',
+    internal ? 'text-fetchiAccent hover:text-[var(--fetchi-accent-hover)]' : 'text-evidence hover:text-evidence/80',
+  )
 
   if (internal) {
     return (

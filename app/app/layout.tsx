@@ -39,7 +39,11 @@ export default async function AppLayout({
   }
 
   return (
-    <div data-fetchi-theme-root className="theme-dark min-h-screen bg-bg text-text flex flex-col">
+    <div
+      data-fetchi-theme-root
+      data-fetchi-brand-system="v5"
+      className="fetchi-app theme-dark min-h-screen bg-bg text-text flex flex-col"
+    >
       <MobileHeader leadsCount={leadsCount} creditsSlot={credits} />
       <div className="flex flex-1 min-h-0">
         <div className="hidden lg:flex flex-shrink-0">

@@ -4,14 +4,6 @@ import * as React from 'react'
 import Link from 'next/link'
 import { ArrowRight, MessageSquare, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import {
-  ACTION_BUTTON_HEIGHT,
-  CARD_RADIUS,
-  CARD_SHADOW,
-  CARD_SURFACE,
-  PRIMARY_BUTTON_SURFACE,
-  SECONDARY_BUTTON_SURFACE,
-} from './tokens'
 
 type Props = {
   saved: number
@@ -31,18 +23,16 @@ export function RunCompletion({
       : null
   return (
     <section
+      data-fetchi-flat-panel-v5
       className={cn(
-        'p-7 lg:p-8 text-center text-text',
-        CARD_SURFACE,
-        CARD_RADIUS,
-        CARD_SHADOW,
+        'rounded-xl border border-text/10 bg-raised p-7 text-center text-text lg:p-8',
       )}
     >
-      <div className="mx-auto w-14 h-14 rounded-2xl bg-ok/15 text-text2 flex items-center justify-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-semanticGreen/25 bg-semanticGreen/10 text-semanticGreen">
         <Sparkles className="h-6 w-6" />
       </div>
 
-      <h2 className="font-outfit text-[26px] lg:text-[30px] font-bold mt-4 leading-tight">
+      <h2 className="mt-4 font-fetchi text-h1 font-semibold tracking-[-0.02em]">
         Stack cleared
       </h2>
       <p className="text-[14px] text-text/65 mt-2 leading-relaxed max-w-md mx-auto">
@@ -69,9 +59,9 @@ export function RunCompletion({
         <Link
           href="/app/chat"
           className={cn(
-            'inline-flex items-center justify-center gap-2 rounded-[18px] text-[14px] font-semibold transition-all',
-            ACTION_BUTTON_HEIGHT,
-            SECONDARY_BUTTON_SURFACE,
+            'inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-lg border border-text/10 bg-fetchiOverlay px-4 text-[14px] font-semibold text-text/85 transition-colors',
+            'hover:bg-fetchiOverlayHover hover:text-text',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
           )}
         >
           <MessageSquare className="h-4 w-4" />
@@ -80,9 +70,9 @@ export function RunCompletion({
         <Link
           href="/app/leads"
           className={cn(
-            'inline-flex items-center justify-center gap-2 rounded-[18px] text-[14px] font-semibold transition-all',
-            ACTION_BUTTON_HEIGHT,
-            PRIMARY_BUTTON_SURFACE,
+            'inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-lg bg-fetchiAccent px-4 text-[14px] font-semibold text-white transition-colors',
+            'hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)]',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
           )}
         >
           See My Leads
@@ -103,14 +93,14 @@ function Stat({
   tone: 'green' | 'muted'
 }) {
   return (
-    <div className="rounded-2xl bg-surface/60 px-3 py-3">
+    <div className="rounded-lg border border-text/10 bg-fetchiOverlay px-3 py-3">
       <dt className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45">
         {label}
       </dt>
       <dd
         className={cn(
-          'font-outfit text-[24px] lg:text-[26px] font-bold tabular-nums mt-0.5',
-          tone === 'green' ? 'text-ok' : 'text-text',
+          'mt-0.5 text-[24px] font-semibold tabular-nums tracking-[-0.02em] lg:text-[26px]',
+          tone === 'green' ? 'text-semanticGreen' : 'text-text',
         )}
       >
         {value}

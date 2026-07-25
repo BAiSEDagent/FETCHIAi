@@ -20,13 +20,14 @@ export default async function NotificationsPage() {
   ]
 
   return (
-    <div className="max-w-3xl">
+    <div data-fetchi-notifications-v5 className="max-w-3xl">
       <MobileScreenHeader
         title="Notifications"
         description="Review email preferences for this workspace. Changes are not editable from this screen yet."
       />
       <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
         <SettingsGroup
+          mode="rows"
           title="Email preferences"
           description="Read-only view of the notification settings currently on file."
         >
@@ -35,12 +36,12 @@ export default async function NotificationsPage() {
               key={r.label}
               label={r.label}
               hint={r.hint}
-              value={<TogglePreview on={r.on} />}
+              value={<StatePreview label={r.label} on={r.on} />}
             />
           ))}
         </SettingsGroup>
 
-        <SettingsGroup title="Delivery schedule">
+        <SettingsGroup mode="rows" title="Delivery schedule">
           <SettingsRow
             label="Digest delivery time"
             hint="Local time, your time zone."
@@ -56,15 +57,14 @@ export default async function NotificationsPage() {
   )
 }
 
-function TogglePreview({ on }: { on: boolean }) {
+function StatePreview({ label, on }: { label: string; on: boolean }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border ${
-        on
-          ? 'bg-ok/15 text-text2 border-ok/30'
-          : 'bg-raised text-text/55 border-text/10'
-      }`}
+      data-fetchi-settings-state-v5
+      aria-label={`${label}: ${on ? 'on' : 'off'}`}
+      className="inline-flex min-h-[26px] items-center gap-1.5 rounded-full border border-text/10 bg-fetchiOverlay px-2.5 text-[11px] font-semibold text-text/60"
     >
+      <span className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-fetchiAccent' : 'bg-text/25'}`} aria-hidden />
       {on ? 'On' : 'Off'}
     </span>
   )

@@ -13,7 +13,7 @@ export default async function ProfilePage() {
   })
 
   return (
-    <div className="max-w-3xl">
+    <div data-fetchi-profile-v5 className="max-w-3xl">
       <MobileScreenHeader
         title="Business Profile"
         description="The basics Fetchi uses to know who you are and what you're hunting for."

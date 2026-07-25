@@ -128,7 +128,7 @@ export function MapRailFilterPopover({
       data-cp25c1-rail-filter-popover
       data-state={open ? 'open' : 'closed'}
       className={cn(
-        'absolute right-0 top-[calc(100%+8px)] z-50 w-[352px] max-w-[calc(100vw-2rem)] origin-top-right overflow-y-auto rounded-[16px] border border-text/10 bg-surface p-3.5 text-text shadow-[0_20px_48px_-24px_rgba(0,0,0,0.9)] transition-[opacity,transform] duration-200 motion-reduce:transform-none motion-reduce:transition-none',
+        'absolute right-0 top-[calc(100%+8px)] z-50 w-[352px] max-w-[calc(100vw-2rem)] origin-top-right overflow-y-auto rounded-xl border border-border bg-fetchiOverlay p-3.5 text-text shadow-[0_20px_48px_-24px_rgba(0,0,0,0.9)] transition-[opacity,transform] duration-200 motion-reduce:transform-none motion-reduce:transition-none',
         open
           ? 'visible translate-y-0 opacity-100'
           : 'invisible pointer-events-none -translate-y-1 opacity-0',
@@ -136,13 +136,13 @@ export function MapRailFilterPopover({
     >
       <div className="mb-3 flex items-center justify-between gap-3 px-1">
         <div>
-          <h2 className="font-outfit text-[15px] font-semibold leading-none text-text">Filters</h2>
-          <p className="mt-1 text-[11px] text-text/42">Saved leads on this map</p>
+          <h2 className="font-fetchi text-[15px] font-semibold leading-none text-text">Filters</h2>
+          <p className="mt-1 text-[11px] text-textMuted">Saved leads on this map</p>
         </div>
         <button
           type="button"
           onClick={closeAndFocusTrigger}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] text-text/48 transition-colors duration-200 hover:bg-text/[0.06] hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/45 motion-reduce:transition-none"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-text2 transition-colors duration-200 hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 motion-reduce:transition-none"
           aria-label="Close filters"
         >
           <X className="h-4 w-4" aria-hidden="true" />
@@ -152,7 +152,7 @@ export function MapRailFilterPopover({
       <section aria-labelledby={`${id}-lifecycle`}>
         <h3
           id={`${id}-lifecycle`}
-          className="px-1 text-[10px] font-bold uppercase tracking-[0.08em] text-text/36"
+          className="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-textMuted"
         >
           Lifecycle
         </h3>
@@ -170,10 +170,10 @@ export function MapRailFilterPopover({
         </div>
       </section>
 
-      <section className="mt-4 border-t border-text/8 pt-3" aria-labelledby={`${id}-availability`}>
+      <section className="mt-4 border-t border-border pt-3" aria-labelledby={`${id}-availability`}>
         <h3
           id={`${id}-availability`}
-          className="px-1 text-[10px] font-bold uppercase tracking-[0.08em] text-text/36"
+          className="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-textMuted"
         >
           Data availability
         </h3>
@@ -199,21 +199,21 @@ export function MapRailFilterPopover({
         </div>
       </section>
 
-      <div className="mt-4 grid grid-cols-[1fr_auto] gap-2 border-t border-text/8 pt-3">
+      <div className="mt-4 grid grid-cols-[1fr_auto] gap-2 border-t border-border pt-3">
         <button
           type="button"
           onClick={() => {
             onApply(draftFilters)
             closeAndFocusTrigger()
           }}
-          className="min-h-[42px] rounded-[12px] bg-text px-4 text-[12.5px] font-semibold text-bg transition-colors duration-200 hover:bg-text/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/55 motion-reduce:transition-none"
+          className="min-h-[44px] rounded-lg bg-fetchiAccent px-4 text-[12.5px] font-semibold text-white transition-colors duration-200 hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 motion-reduce:transition-none"
         >
           Apply filters
         </button>
         <button
           type="button"
           onClick={resetDraft}
-          className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-[12px] px-3 text-[12px] font-semibold text-text/58 transition-colors duration-200 hover:bg-text/[0.06] hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/45 motion-reduce:transition-none"
+          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-text2 transition-colors duration-200 hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 motion-reduce:transition-none"
         >
           <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
           Reset
@@ -245,8 +245,8 @@ function FilterOption({
       aria-pressed={checked}
       data-cp25c1-filter-autofocus={autofocus ? '' : undefined}
       className={cn(
-        'flex min-h-[40px] min-w-0 items-center gap-2.5 rounded-[10px] px-2.5 text-left text-[12px] font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/45 motion-reduce:transition-none',
-        checked ? 'bg-text/[0.08] text-text' : 'text-text/58 hover:bg-text/[0.045] hover:text-text',
+        'flex min-h-[44px] min-w-0 items-center gap-2.5 rounded-lg px-2.5 text-left text-[12px] font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 motion-reduce:transition-none',
+        checked ? 'bg-[var(--fetchi-accent-subtle)] text-text' : 'text-text2 hover:bg-fetchiOverlayHover hover:text-text',
       )}
     >
       {markerClassName ? (
@@ -255,7 +255,7 @@ function FilterOption({
           aria-hidden="true"
         />
       ) : (
-        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[8px] bg-bg text-text/62" aria-hidden="true">
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-bg text-text2" aria-hidden="true">
           {icon}
         </span>
       )}
@@ -263,7 +263,7 @@ function FilterOption({
       <span
         className={cn(
           'grid h-5 w-5 shrink-0 place-items-center rounded-[6px] border transition-colors duration-200 motion-reduce:transition-none',
-          checked ? 'border-text/70 bg-text text-bg' : 'border-text/14 text-transparent',
+          checked ? 'border-fetchiAccent bg-fetchiAccent text-white' : 'border-border text-transparent',
         )}
         aria-hidden="true"
       >

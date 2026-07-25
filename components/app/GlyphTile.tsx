@@ -47,7 +47,7 @@ export type GlyphKey =
   | 'user'
 
 type Size = 'sm' | 'md' | 'lg'
-type Tone = 'green' | 'coral' | 'muted' | 'dark' | 'blue'
+type Tone = 'green' | 'accent' | 'muted' | 'dark' | 'blue'
 
 const SIZE: Record<Size, { tile: string; icon: number }> = {
   sm: { tile: 'w-8 h-8 rounded-[9px]', icon: 16 },
@@ -57,7 +57,7 @@ const SIZE: Record<Size, { tile: string; icon: number }> = {
 
 const TONE: Record<Tone, string> = {
   green: 'bg-ok/15 text-ok',
-  coral: 'bg-coral/12 text-coral',
+  accent: 'bg-fetchiAccent/15 text-fetchiAccent',
   muted: 'bg-raised text-text/70',
   dark: 'bg-text/10 text-text',
   blue: 'bg-blue/10 text-blue',

@@ -20,14 +20,14 @@ type Props = {
 
 export function MobileHeader({ leadsCount, creditsSlot }: Props) {
   return (
-    <header className="lg:hidden sticky top-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-text/8 px-4 h-16 flex items-center justify-between">
-      <FetchiWordmark markSize={30} className="min-w-0" />
+    <header className="lg:hidden sticky top-0 z-40 bg-[var(--fetchi-bg-elevated)]/95 backdrop-blur-xl border-b border-text/[0.06] px-3 h-12 flex items-center justify-between">
+      <FetchiWordmark markSize={26} className="min-w-0" />
       <Sheet>
         <SheetTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-11 w-11 rounded-xl text-text hover:bg-text/[0.06]"
+            className="fetchi-focus-ring min-h-[44px] min-w-[44px] h-11 w-11 rounded-lg text-text hover:bg-[var(--fetchi-overlay-hover)]"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
@@ -36,7 +36,9 @@ export function MobileHeader({ leadsCount, creditsSlot }: Props) {
         <SheetContent
           side="left"
           data-fetchi-theme-root
-          className="theme-dark w-[220px] p-0 bg-surface text-text border-0"
+          data-fetchi-brand-system="v5"
+          data-fetchi-reduced-motion-sheet
+          className="fetchi-app theme-dark w-[224px] p-0 bg-[var(--fetchi-bg-elevated)] text-text border-0"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>

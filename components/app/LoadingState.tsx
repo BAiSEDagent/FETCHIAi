@@ -1,3 +1,4 @@
+import { LoaderCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function LoadingState({
@@ -16,17 +17,7 @@ export function LoadingState({
         className,
       )}
     >
-      <div className="flex gap-1.5" aria-hidden>
-        <span className="w-2 h-2 rounded-full bg-ok animate-bounce" />
-        <span
-          className="w-2 h-2 rounded-full bg-ok animate-bounce"
-          style={{ animationDelay: '120ms' }}
-        />
-        <span
-          className="w-2 h-2 rounded-full bg-ok animate-bounce"
-          style={{ animationDelay: '240ms' }}
-        />
-      </div>
+      <LoaderCircle className="h-5 w-5 animate-spin text-fetchiAccent motion-reduce:animate-none" aria-hidden />
       {label && <div className="text-[13px]">{label}</div>}
     </div>
   )

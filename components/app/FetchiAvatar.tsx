@@ -8,7 +8,7 @@ type Props = {
 export function FetchiAvatar({ size = 28, className = '' }: Props) {
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-[8px] bg-coral ${className}`}
+      className={`inline-flex items-center justify-center rounded-[8px] border border-text/[0.06] bg-[var(--fetchi-overlay)] ${className}`}
       style={{
         width: size,
         height: size,
@@ -16,7 +16,7 @@ export function FetchiAvatar({ size = 28, className = '' }: Props) {
       }}
       aria-hidden="true"
     >
-      <FetchiMark tone="coral" size={size} />
+      <FetchiMark tone="dark" size={size} />
     </span>
   )
 }

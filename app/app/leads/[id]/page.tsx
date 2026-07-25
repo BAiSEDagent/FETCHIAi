@@ -110,19 +110,19 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between px-4 lg:px-7 pt-5 lg:pt-7 pb-2">
-        <Link href="/app/leads" className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-surface shadow-fetchi-soft text-text/75 hover:text-text" aria-label="Back to leads">
+        <Link href="/app/leads" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface text-text/75 hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55" aria-label="Back to leads">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1 text-center min-w-0 px-4">
           <div className="text-[11px] uppercase tracking-[1px] font-bold text-text/45">Lead detail</div>
         </div>
-        <button type="button" className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-surface shadow-fetchi-soft text-text/75 hover:text-text" aria-label="More options">
+        <button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface text-text/75 hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55" aria-label="More options">
           <MoreHorizontal className="h-5 w-5" />
         </button>
       </div>
 
       <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+96px)] lg:pb-12 space-y-3 lg:space-y-4">
-        <section className="rounded-[20px] bg-raised text-text shadow-fetchi-card px-5 py-7 lg:px-8 lg:py-9 text-center">
+        <section className="rounded-xl border border-border bg-raised px-5 py-7 text-center text-text lg:px-8 lg:py-9">
           <div className="flex items-center justify-center flex-wrap gap-1.5">
             <span className="inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] tabular-nums bg-text/[0.06] text-text/75" aria-label={`Signal ${signalToken ?? signalTypeLabel}`}>
               {signalToken ?? signalTypeLabel.toUpperCase()}
@@ -134,11 +134,11 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
             )}
           </div>
 
-          <div className="font-outfit text-[72px] lg:text-[86px] leading-none font-bold tabular-nums mt-6 text-text">
+          <div className="font-fetchi text-[72px] lg:text-[86px] leading-none font-bold tabular-nums mt-6 text-text">
             {opp.score}
           </div>
           <p className="text-body-lg text-text/65 mt-3 px-2">{summaryLine}</p>
-          <h1 className="font-outfit text-h1 lg:text-[32px] text-text mt-6 px-2">{businessName}</h1>
+          <h1 className="font-fetchi text-h1 text-text mt-6 px-2">{businessName}</h1>
           {locationLine && <div className="text-caption text-text/55 mt-1.5">{locationLine}</div>}
         </section>
 
@@ -148,7 +148,7 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
           </SectionCard>
         )}
 
-        <SectionCard eyebrow="Evidence" actions={<span className="text-[12px] font-semibold text-blue">{evidenceCount} source{evidenceCount === 1 ? '' : 's'}</span>}>
+        <SectionCard eyebrow="Evidence" actions={<span className="text-[12px] font-semibold text-evidence">{evidenceCount} source{evidenceCount === 1 ? '' : 's'}</span>}>
           <div className="space-y-0 -mx-1">
             {signal?.whyRelevant && <EvidenceRow glyph={glyphForSignalType(signal?.signalType ?? null)} title={`${signalTypeLabel} report`} meta={signal.detectedAt ? `${signal.detectedAt.toLocaleDateString()} · ${signal.detectedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Signal detected'} />}
             {prospect?.address && <EvidenceRow glyph="house" title="Property record" meta={`${prospect.address}, ${prospect.city ?? ''} ${prospect.state ?? ''}`.trim()} />}
@@ -167,7 +167,7 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
         <SectionCard title="Contact routes">
           <div className="grid grid-cols-2 gap-2.5">
             <InfoTile label="Phone" value={prospect?.phone ?? '—'} />
-            <InfoTile label="Website" value={prospect?.website ? <a href={`https://${prospect.website}`} target="_blank" rel="noreferrer" className="text-blue hover:underline truncate inline-block max-w-full">{prospect.website}</a> : '—'} />
+            <InfoTile label="Website" value={prospect?.website ? <a href={`https://${prospect.website}`} target="_blank" rel="noreferrer" className="inline-flex min-h-[44px] max-w-full items-center truncate rounded-sm text-evidence hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55">{prospect.website}</a> : '—'} />
             <InfoTile label="Address" value={prospect?.address ? `${prospect.address}, ${prospect.city}, ${prospect.state}` : '—'} wide />
           </div>
 
@@ -182,7 +182,7 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
                     <div className="w-9 h-9 rounded-lg bg-raised flex items-center justify-center text-[13px] font-semibold text-text/60 flex-shrink-0">{c.contactName?.[0] ?? '?'}</div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[13.5px] font-semibold text-text truncate">{c.contactName ?? 'Unknown contact'}</div>
-                      <div className="text-[12px] text-text/55 truncate">{c.contactTitle ?? '—'}{c.contactEmail && <span className="text-blue"> · {c.contactEmail}</span>}</div>
+                      <div className="text-[12px] text-text/55 truncate">{c.contactTitle ?? '—'}{c.contactEmail && <span className="text-evidence"> · {c.contactEmail}</span>}</div>
                     </div>
                   </div>
                 ))}
@@ -200,7 +200,7 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
                 <div key={d.id} className="space-y-2.5">
                   {d.subjectLine && <div className="text-[13px] font-semibold text-text">{d.subjectLine}</div>}
                   <p className="text-[13px] text-text/75 leading-[1.65] whitespace-pre-wrap">{d.body}</p>
-                  <div className="flex flex-wrap gap-2 pt-1"><Button size="sm" variant="secondary">Edit</Button></div>
+                  <div className="flex flex-wrap gap-2 pt-1"><Button size="sm" variant="secondary" className="min-h-[44px]">Edit</Button></div>
                 </div>
               ))}
             </div>
@@ -212,7 +212,7 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
           <div className="flex items-center justify-center gap-3 text-[13px] font-semibold text-text/55">
             <button type="button" className="min-h-[44px] px-2 hover:text-text">Save for later</button>
             <span aria-hidden>·</span>
-            <button type="button" className="min-h-[44px] px-2 hover:text-coral">Pass</button>
+            <button type="button" className="min-h-[44px] rounded-md px-2 hover:text-bad focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55">Pass</button>
           </div>
         </div>
 
@@ -241,15 +241,15 @@ function savedLeadStatusLabel(status: string): string {
 function savedLeadStatusClass(status: string): string {
   switch (status) {
     case 'contacted':
-      return 'border-blue/20 bg-blue/10 text-blue'
+      return 'border-lifecycleContacted/25 bg-lifecycleContacted/12 text-lifecycleContacted'
     case 'won':
-      return 'border-ok/25 bg-ok/12 text-ok'
+      return 'border-lifecycleWon/25 bg-lifecycleWon/12 text-lifecycleWon'
     case 'lost':
     case 'dismissed':
-      return 'border-bad/20 bg-bad/8 text-bad'
+      return 'border-lifecycleLost/25 bg-lifecycleLost/12 text-lifecycleLost'
     case 'saved':
     default:
-      return 'border-text/10 bg-text/6 text-text/70'
+      return 'border-lifecycleSaved/25 bg-lifecycleSaved/12 text-lifecycleSaved'
   }
 }
 
@@ -294,7 +294,7 @@ function SavedLeadDetailState({ savedLead }: { savedLead: SavedLeadDetailRow }) 
   return (
     <div className="mx-auto max-w-4xl">
       <div className="flex items-center justify-between px-4 pb-2 pt-5 lg:px-7 lg:pt-7">
-        <Link href="/app/leads" className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface text-text/75 shadow-fetchi-soft hover:text-text" aria-label="Back to leads">
+        <Link href="/app/leads" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface text-text/75 hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55" aria-label="Back to leads">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0 flex-1 px-4 text-center">
@@ -304,17 +304,17 @@ function SavedLeadDetailState({ savedLead }: { savedLead: SavedLeadDetailRow }) 
       </div>
 
       <div className="space-y-4 px-4 pb-[calc(env(safe-area-inset-bottom)+96px)] lg:px-7 lg:pb-12">
-        <section className="overflow-hidden rounded-[20px] border border-border bg-surface shadow-fetchi-card">
+        <section className="overflow-hidden rounded-xl border border-border bg-surface">
           <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:p-7">
             <div className="flex min-w-0 gap-4">
-              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl border border-border bg-raised font-outfit text-[18px] font-extrabold text-text">
+              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-raised font-fetchi text-[18px] font-semibold text-text">
                 {savedLeadInitials(savedLead.businessName)}
               </div>
               <div className="min-w-0 flex-1">
                 <div className={cn('inline-flex rounded-full border px-2.5 py-1 text-[12px] font-bold', savedLeadStatusClass(savedLead.lifecycleStatus))}>
                   {status}
                 </div>
-                <h1 className="mt-4 font-outfit text-[34px] font-extrabold leading-none text-text lg:text-[42px]">
+                <h1 className="mt-4 font-fetchi text-[34px] font-semibold leading-none text-text lg:text-[42px]">
                   {savedLead.businessName}
                 </h1>
                 {supportLine && (
@@ -343,11 +343,11 @@ function SavedLeadDetailState({ savedLead }: { savedLead: SavedLeadDetailRow }) 
 
         <SectionCard eyebrow="Contact coverage">
           <div className="grid gap-2.5 sm:grid-cols-3">
-            <InfoTile label="Phone" value={<a href={`tel:${savedLead.phone}`} className="text-text hover:underline">{savedLead.phone}</a>} />
+            <InfoTile label="Phone" value={<a href={`tel:${savedLead.phone}`} className="inline-flex min-h-[44px] items-center rounded-sm text-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55">{savedLead.phone}</a>} />
             <InfoTile
               label="Website"
               value={hasWebsite ? (
-                <a href={savedLeadWebsiteHref(savedLead.website!)} target="_blank" rel="noreferrer" className="inline-block max-w-full truncate text-text hover:underline">
+                <a href={savedLeadWebsiteHref(savedLead.website!)} target="_blank" rel="noreferrer" className="inline-flex min-h-[44px] max-w-full items-center truncate rounded-sm text-evidence hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55">
                   {savedLeadWebsiteLabel(savedLead.website!)}
                 </a>
               ) : 'Missing website'}
@@ -381,7 +381,7 @@ function LeadNotFoundState() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between px-4 lg:px-7 pt-5 lg:pt-7 pb-2">
-        <Link href="/app/leads" className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-surface shadow-fetchi-soft text-text/75 hover:text-text" aria-label="Back to leads">
+        <Link href="/app/leads" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface text-text/75 hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55" aria-label="Back to leads">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1 text-center min-w-0 px-4">
@@ -391,11 +391,11 @@ function LeadNotFoundState() {
       </div>
 
       <div className="px-4 lg:px-7 pb-[calc(env(safe-area-inset-bottom)+96px)] lg:pb-12">
-        <section className="rounded-[20px] bg-raised text-text shadow-fetchi-card px-5 py-10 lg:px-8 lg:py-12 text-center">
+        <section className="rounded-xl border border-border bg-raised px-5 py-10 text-center text-text lg:px-8 lg:py-12">
           <div className="inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] bg-text/[0.06] text-text/65">
             Lead unavailable
           </div>
-          <h1 className="font-outfit text-h1 lg:text-[32px] text-text mt-6 px-2">This lead is not available</h1>
+          <h1 className="font-fetchi text-h1 lg:text-[32px] text-text mt-6 px-2">This lead is not available</h1>
           <p className="text-body text-text/65 mt-3 px-2">Return to My Leads to open a saved lead.</p>
           <Button asChild size="lg" className="mt-7 rounded-full">
             <Link href="/app/leads">Back to leads</Link>

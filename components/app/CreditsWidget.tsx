@@ -11,7 +11,7 @@ const NEEDS_PLAN_STATUSES = new Set([
 
 function WidgetShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-3 mt-4 mb-2 rounded-xl bg-text/[0.04] px-3.5 py-3">
+    <div className="mx-3 mt-4 mb-2 rounded-xl border border-text/[0.06] bg-[var(--fetchi-surface)] px-3.5 py-3">
       <div className="text-[10px] font-bold uppercase tracking-[1.2px] text-text/40 mb-1">
         Opportunities
       </div>
@@ -71,7 +71,7 @@ export function CreditsWidget({ subscription }: { subscription: Sub }) {
       </div>
       <div className="h-1.5 bg-text/10 rounded-full overflow-hidden">
         <div
-          className="h-full bg-ok rounded-full transition-all"
+          className="h-full bg-fetchiAccent rounded-full transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>

@@ -2,9 +2,19 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { ArrowUpRight, Check, FileText } from 'lucide-react'
+import {
+  ArrowUpRight,
+  Building2,
+  Check,
+  CircleDot,
+  CloudLightning,
+  FileCheck2,
+  FileText,
+  TrendingUp,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { CARD_RADIUS, CARD_SURFACE } from './tokens'
 import type { EvidenceItem, TodayRunCardData } from './types'
 
 type Props = {
@@ -26,24 +36,22 @@ const EVIDENCE_KIND_LABEL: Record<EvidenceItem['kind'], string> = {
   other: 'Source',
 }
 
-// v2.3 evidence tones use the Evidence Blue semantic for source-of-truth
-// chips. Coral is reserved for primary CTA only — never spent on evidence.
 const KIND_ACCENT_BG: Record<EvidenceItem['kind'], string> = {
-  storm: 'bg-blue/15 text-blue',
-  property: 'bg-blue/12 text-blue',
-  permit: 'bg-mustard/15 text-mustard',
-  ownership: 'bg-text/10 text-text/75',
-  market: 'bg-ok/12 text-ok',
-  other: 'bg-text/10 text-text/65',
+  storm: 'bg-evidence/10 text-evidence',
+  property: 'bg-evidence/10 text-evidence',
+  permit: 'bg-parchMute text-[#26241F]',
+  ownership: 'bg-evidence/10 text-evidence',
+  market: 'bg-evidence/10 text-evidence',
+  other: 'bg-evidence/10 text-evidence',
 }
 
-const KIND_GLYPH: Record<EvidenceItem['kind'], string> = {
-  storm: '\u26A1',
-  property: '\u25C6',
-  permit: '\u2630',
-  ownership: '\u00A7',
-  market: '\u25D4',
-  other: '\u25CB',
+const KIND_ICON: Record<EvidenceItem['kind'], LucideIcon> = {
+  storm: CloudLightning,
+  property: Building2,
+  permit: FileCheck2,
+  ownership: UserRound,
+  market: TrendingUp,
+  other: CircleDot,
 }
 
 export function TodayRunCard({ card, isDemo = false }: Props) {
@@ -60,10 +68,9 @@ export function TodayRunCard({ card, isDemo = false }: Props) {
 
   return (
     <article
+      data-fetchi-today-card-v5
       className={cn(
-        'relative h-full w-full flex flex-col text-text overflow-hidden',
-        CARD_SURFACE,
-        CARD_RADIUS,
+        'relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-text/10 bg-raised text-text',
       )}
     >
       {/* Header — fixed at top */}
@@ -103,7 +110,7 @@ export function TodayRunCard({ card, isDemo = false }: Props) {
               className={cn(
                 'inline-flex items-center gap-1 rounded-full px-2 h-[24px] ml-auto',
                 'text-[10.5px] font-bold uppercase tracking-wide',
-                'text-blue bg-blue/10 shadow-[inset_0_0_0_1px_rgba(60,130,246,0.40)]',
+                'border border-evidence/25 bg-evidence/10 text-evidence',
               )}
             >
               <Check className="h-3 w-3" />
@@ -115,7 +122,7 @@ export function TodayRunCard({ card, isDemo = false }: Props) {
         {/* Title + score row */}
         <div className="mt-3.5 flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h2 className="font-outfit text-[22px] lg:text-[26px] font-bold leading-[1.15]">
+            <h2 className="text-[22px] font-semibold leading-[1.15] tracking-[-0.02em] lg:text-[26px]">
               {card.businessName}
             </h2>
             {(card.cityState || subline) && (
@@ -131,7 +138,7 @@ export function TodayRunCard({ card, isDemo = false }: Props) {
 
         {/* Reason ribbon — neutral elevated chip; coral spend reserved. */}
         {card.reason && (
-          <div className="mt-3.5 rounded-2xl bg-text/5 px-3.5 py-2.5 text-[13px] lg:text-[13.5px] leading-[1.5] text-text/85 font-medium">
+          <div className="mt-3.5 rounded-lg border border-text/10 bg-fetchiOverlay px-3.5 py-2.5 text-[13px] font-medium leading-[1.5] text-text/85 lg:text-[13.5px]">
             {card.reason}
           </div>
         )}
@@ -157,58 +164,82 @@ export function TodayRunCard({ card, isDemo = false }: Props) {
           </p>
         ) : (
           <ul className="mt-2 space-y-1.5">
-            {evidence.map(ev => (
-              <li
-                key={ev.id}
-                className={cn(
-                  'flex items-start gap-2.5 rounded-2xl px-3 py-2',
-                  'bg-text/[0.04] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]',
-                )}
-              >
-                <span
+            {evidence.map(ev => {
+              const KindIcon = KIND_ICON[ev.kind]
+              const isFormalPermit = ev.kind === 'permit'
+              return (
+                <li
+                  key={ev.id}
                   className={cn(
-                    'inline-flex items-center justify-center w-8 h-8 rounded-xl mt-0.5 flex-shrink-0 text-[12px] font-bold',
-                    KIND_ACCENT_BG[ev.kind],
+                    'flex items-start gap-2.5 rounded-lg border px-3 py-2',
+                    isFormalPermit
+                      ? 'border-parchMute bg-parch text-[#26241F]'
+                      : 'border-text/10 bg-fetchiOverlay',
                   )}
-                  aria-hidden
                 >
-                  {KIND_GLYPH[ev.kind]}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-text/45 leading-none">
-                      {EVIDENCE_KIND_LABEL[ev.kind]}
-                    </p>
-                    {ev.confidence >= 75 ? (
-                      <span
-                        className="inline-flex items-center gap-0.5 text-[9px] uppercase tracking-wide font-bold text-blue"
-                        title={`Confidence ${ev.confidence}%`}
+                  <span
+                    className={cn(
+                      'mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg',
+                      KIND_ACCENT_BG[ev.kind],
+                    )}
+                    aria-hidden
+                  >
+                    <KindIcon className="h-4 w-4" strokeWidth={1.8} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p
+                        className={cn(
+                          'text-[10px] font-bold uppercase leading-none tracking-[0.12em]',
+                          isFormalPermit ? 'text-[#26241F]/60' : 'text-text/45',
+                        )}
                       >
-                        <Check className="h-2.5 w-2.5" />
-                        Verified
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-1 text-[13px] font-semibold text-text leading-snug">
-                    {ev.title}
-                  </p>
-                  {(ev.sourceDomain || ev.recencyLabel) && (
-                    <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-text/55">
-                      {ev.sourceDomain && <span className="truncate">{ev.sourceDomain}</span>}
-                      {ev.sourceDomain && ev.recencyLabel && <span>·</span>}
-                      {ev.recencyLabel && <span className="tabular-nums">{ev.recencyLabel}</span>}
+                        {EVIDENCE_KIND_LABEL[ev.kind]}
+                      </p>
+                      {ev.confidence >= 75 ? (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide',
+                            isFormalPermit ? 'text-[#26241F]/70' : 'text-evidence',
+                          )}
+                          title={`Confidence ${ev.confidence}%`}
+                        >
+                          <Check className="h-2.5 w-2.5" />
+                          Verified
+                        </span>
+                      ) : null}
+                    </div>
+                    <p
+                      className={cn(
+                        'mt-1 text-[13px] font-semibold leading-snug',
+                        isFormalPermit ? 'text-[#26241F]' : 'text-text',
+                      )}
+                    >
+                      {ev.title}
                     </p>
-                  )}
-                </div>
-              </li>
-            ))}
+                    {(ev.sourceDomain || ev.recencyLabel) && (
+                      <p
+                        className={cn(
+                          'mt-0.5 flex items-center gap-1.5 text-[11px]',
+                          isFormalPermit ? 'text-[#26241F]/65' : 'text-text/55',
+                        )}
+                      >
+                        {ev.sourceDomain && <span className="truncate">{ev.sourceDomain}</span>}
+                        {ev.sourceDomain && ev.recencyLabel && <span>·</span>}
+                        {ev.recencyLabel && <span className="tabular-nums">{ev.recencyLabel}</span>}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>
 
       {/* Footer */}
       <footer className="flex-shrink-0 px-5 lg:px-6 pt-2 pb-5 lg:pb-6">
-        <div className="rounded-2xl bg-text/[0.06] px-3.5 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+        <div className="rounded-lg border border-text/10 bg-fetchiOverlay px-3.5 py-3">
           {bestContact ? (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-text/[0.08] text-text/75 text-[12.5px] font-bold flex items-center justify-center flex-shrink-0">
@@ -220,7 +251,7 @@ export function TodayRunCard({ card, isDemo = false }: Props) {
                     {bestContact.name}
                   </span>
                   {bestContact.isBest && (
-                    <span className="inline-flex items-center rounded-full bg-ok px-1.5 h-[16px] text-[9.5px] font-bold tracking-wide text-white">
+                    <span className="inline-flex h-[16px] items-center rounded-full bg-fetchiAccent px-1.5 text-[9.5px] font-bold tracking-wide text-white">
                       BEST
                     </span>
                   )}
@@ -256,7 +287,7 @@ export function TodayRunCard({ card, isDemo = false }: Props) {
           )}
           {isDemo ? (
             <span
-              className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-text/35 cursor-not-allowed"
+              className="inline-flex min-h-[44px] cursor-not-allowed items-center gap-1 text-[11.5px] font-semibold text-text/35"
               aria-disabled="true"
             >
               Open lead
@@ -265,7 +296,7 @@ export function TodayRunCard({ card, isDemo = false }: Props) {
           ) : (
             <Link
               href={`/app/leads/${card.opportunityId}`}
-              className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-text/55 hover:text-text"
+              className="inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-[11.5px] font-semibold text-fetchiAccent hover:bg-fetchiOverlayHover hover:text-[var(--fetchi-accent-hover)] active:text-[var(--fetchi-accent-press)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               onClick={e => e.stopPropagation()}
             >
               Open lead
@@ -284,11 +315,11 @@ function FitBadge({ score }: { score: number }) {
       className={cn(
         'flex flex-col items-center justify-center rounded-full flex-shrink-0',
         'w-[64px] h-[64px] lg:w-[72px] lg:h-[72px]',
-        'bg-text/[0.06] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.10),0_2px_4px_rgba(0,0,0,0.20)]',
+        'border border-text/10 bg-fetchiOverlay',
       )}
       aria-label={`Fit score ${score} out of 100`}
     >
-      <div className="font-outfit text-[24px] lg:text-[28px] font-bold leading-none tabular-nums text-text">
+      <div className="text-[24px] font-semibold leading-none tabular-nums tracking-[-0.02em] text-text lg:text-[28px]">
         {score}
       </div>
       <div className="text-[8.5px] uppercase tracking-[0.18em] font-bold text-text/55 mt-0.5">
@@ -310,7 +341,7 @@ function ConfidenceDots({ confidence }: { confidence: number }) {
           key={i}
           className={cn(
             'w-[7px] h-[7px] rounded-full',
-            i < filled ? 'bg-ok' : 'bg-text/15',
+            i < filled ? 'bg-evidence' : 'bg-text/15',
           )}
         />
       ))}
