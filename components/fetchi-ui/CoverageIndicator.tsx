@@ -50,11 +50,12 @@ const CoverageIndicator = React.forwardRef<
           <span
             aria-label={`${label} ${available ? 'available' : 'unavailable'}`}
             className={cn(
-              'relative shrink-0',
+              'relative h-[15px] w-[15px] shrink-0',
               available
                 ? 'text-[var(--fetchi-text-secondary)]'
                 : 'text-[#4A4E54]',
             )}
+            data-fetchi-coverage-item={label.toLowerCase()}
             data-fetchi-coverage-state={available ? 'available' : 'unavailable'}
             key={label}
             role="img"
@@ -65,11 +66,24 @@ const CoverageIndicator = React.forwardRef<
               strokeWidth={2}
             />
             {!available ? (
-              <span
+              <svg
                 aria-hidden="true"
-                className="absolute left-[-2px] top-1/2 h-[1.5px] w-5 origin-center -rotate-45 rounded-[1px] bg-[#4A4E54]"
+                className="pointer-events-none absolute inset-0 block h-[15px] w-[15px]"
                 data-fetchi-coverage-strike
-              />
+                data-fetchi-coverage-strike-angle="-45"
+                focusable="false"
+                viewBox="0 0 15 15"
+              >
+                <line
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="1.5"
+                  x1="2"
+                  y1="13"
+                  x2="13"
+                  y2="2"
+                />
+              </svg>
             ) : null}
           </span>
         ))}
