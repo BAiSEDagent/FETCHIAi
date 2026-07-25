@@ -510,7 +510,7 @@ export function SweepClient() {
                 <Search className="h-5 w-5" />
               </span>
               <div>
-                <h1 className="font-fetchi text-[30px] font-semibold leading-tight tracking-[-0.02em]">Fetch</h1>
+                <h1 className="font-fetchi text-h1 font-semibold tracking-[-0.02em]">Fetch</h1>
                 <p className="mt-1 text-[13px] text-text/55">
                   Find contactable leads from one market.
                 </p>

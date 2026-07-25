@@ -286,11 +286,11 @@ function CenteredState({
 }) {
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center px-5 py-24">
-      <div className="w-full max-w-[420px] rounded-2xl border border-border bg-fetchiOverlay p-6 text-center shadow-[0_20px_48px_-26px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+      <div className="w-full max-w-[420px] rounded-xl border border-border bg-fetchiOverlay p-6 text-center shadow-[0_20px_48px_-26px_rgba(0,0,0,0.9)] backdrop-blur-xl">
         <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-xl bg-[var(--fetchi-accent-subtle)] text-fetchiAccent">
           {icon}
         </div>
-        <h1 className="font-fetchi text-[30px] font-semibold leading-[1.02] tracking-[-0.02em] text-text">{title}</h1>
+        <h1 className="font-fetchi text-h1 font-semibold tracking-[-0.02em] text-text">{title}</h1>
         <p className="mx-auto mt-3 max-w-[320px] text-[15px] leading-relaxed text-text2">{body}</p>
         <Link
           href={primaryHref}

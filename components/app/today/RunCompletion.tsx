@@ -32,7 +32,7 @@ export function RunCompletion({
         <Sparkles className="h-6 w-6" />
       </div>
 
-      <h2 className="mt-4 text-[26px] font-semibold leading-tight tracking-[-0.02em] lg:text-[30px]">
+      <h2 className="mt-4 font-fetchi text-h1 font-semibold tracking-[-0.02em]">
         Stack cleared
       </h2>
       <p className="text-[14px] text-text/65 mt-2 leading-relaxed max-w-md mx-auto">

@@ -311,6 +311,12 @@ async function main() {
   assert(!filterFitSource.includes('shadow-[0_12px_28px'), 'My Leads filter pills must not use the old elevated glow')
   assert(!myLeads.includes('-space-x-5') && !myLeads.includes('data-cp24b-overlap-filter-rail'), 'My Leads must not retain the overlapping icon-pill rail')
   assert(myLeads.includes('data-fetchi-lifecycle-glyph'), 'My Leads rows must use lifecycle ring glyphs instead of filled initial avatars')
+  const lifecycleGlyphWrapper = myLeads.split('data-fetchi-lifecycle-glyph')[0]?.slice(-700) ?? ''
+  assert(
+    lifecycleGlyphWrapper.includes('role="img"') &&
+      lifecycleGlyphWrapper.includes('aria-label={statusLabel(row.lifecycleStatus)}'),
+    'My Leads lifecycle glyph wrapper must expose the truthful lifecycle label through explicit image semantics',
+  )
   assert(
     myLeads.includes("import { StatusGlyph } from '@/components/fetchi-ui/StatusGlyph'") &&
       myLeads.includes('<StatusGlyph') &&
@@ -389,6 +395,11 @@ async function main() {
   }
 
   assert(sweep.includes('bg-fetchiAccent') && sweep.includes('accent-fetchiAccent'), 'Fetch primary actions and selection controls must use indigo')
+  assert(
+    sweep.includes('font-fetchi text-h1 font-semibold') &&
+      !sweep.includes('font-fetchi text-[30px] font-semibold'),
+    'Fetch must use the canonical compact authenticated v5 H1',
+  )
   assert(sweep.includes("selected && 'fetchi-selected-row'"), 'Fetch selected rows must use the indigo selected-row contract')
   assert.equal((sweep.match(/data-fetchi-sweep-checkbox-target/g) ?? []).length, 2, 'Fetch result and select-all checkboxes must each expose a 44px target')
   assert(sweep.includes('inline-flex min-h-[44px] min-w-[44px]'), 'Fetch checkbox target contract must be at least 44px square')
@@ -400,6 +411,11 @@ async function main() {
   assert(!/bg-coral|text-coral|border-coral/.test(leadCard), 'Lead cards must not assign coral to product UI')
   assert(!/\bcoral\b/.test(glyphTile), 'Shared glyph tiles must not expose a coral product tone')
   assert(leadDetail.includes('text-evidence') && leadDetail.includes('focus-visible:ring-fetchiAccent'), 'Lead detail must separate evidence links from indigo focus')
+  assert(
+    leadDetail.includes('className="font-fetchi text-h1 text-text mt-6 px-2">{businessName}</h1>') &&
+      !leadDetail.includes('text-h1 lg:text-[32px] text-text mt-6 px-2">{businessName}</h1>'),
+    'Lead-detail business name must remain the canonical compact authenticated v5 H1 at every viewport',
+  )
   assert(!/text-coral|bg-coral|border-coral/.test(leadDetail), 'Lead detail must not assign coral to product UI')
   assert(outcomeForm.includes("'bg-fetchiAccent text-white border-fetchiAccent'"), 'Neutral outcome selection must use indigo')
   assert(outcomeForm.includes("'bg-lifecycleWon text-[#08090A] border-lifecycleWon'"), 'Won outcome must use near-black text on lifecycle green for normal-text AA contrast')
@@ -452,6 +468,16 @@ async function main() {
   // Task 3: Chat and Map presentation with behavior-bearing hooks held stable.
   assert(chatClient.includes('data-fetchi-chat-v5'), 'Chat must declare its v5 surface contract')
   assert(chatClient.includes('data-fetchi-chat-composer-v5'), 'Chat must declare its v5 composer contract')
+  assert(
+    chatClient.includes('placeholder="Ask Fetchi something…"') &&
+      !chatClient.includes('Ask ツ something…'),
+    'Chat composer placeholder must use plain Fetchi product copy without improvised glyphs',
+  )
+  assert(
+    chatClient.includes('font-fetchi text-h1 tracking-[-0.02em] text-text') &&
+      !chatClient.includes('text-h1 tracking-[-0.02em] text-text lg:text-[32px]'),
+    'Chat must keep the canonical compact authenticated v5 H1 at every viewport',
+  )
   assert(chatClient.includes('bg-fetchiAccent') && chatClient.includes('focus-within:border-fetchiAccent'), 'Chat send and composer focus must use indigo')
   assert(chatClient.includes('<FetchiAvatar size={36}'), 'Chat header must retain the authentic Fetchi avatar')
   assert(chatBubble.includes('data-fetchi-chat-bubble-v5'), 'Chat bubbles must declare the v5 message-surface contract')
@@ -482,6 +508,17 @@ async function main() {
   assert(!/\bfont-outfit\b/.test(chatAndMapPresentation), 'Authenticated Chat and Map surfaces must use Inter without explicit Outfit overrides')
   assert(chatAndMapPresentation.includes('font-fetchi'), 'Authenticated Chat and Map surfaces must explicitly retain the Inter utility contract')
   assert(mapShell.includes('data-fetchi-map-v5'), 'Map shell must declare its v5 chrome contract')
+  const mapFallbackSource = mapShell.split('function CenteredState')[1] ?? ''
+  assert(
+    mapFallbackSource.includes('max-w-[420px] rounded-xl border') &&
+      !mapFallbackSource.includes('max-w-[420px] rounded-2xl border'),
+    'Shared centered map fallbacks must use the canonical 12px card radius',
+  )
+  assert(
+    mapFallbackSource.includes('font-fetchi text-h1 font-semibold') &&
+      !mapFallbackSource.includes('font-fetchi text-[30px] font-semibold'),
+    'Shared centered map fallbacks must use the canonical compact authenticated v5 H1',
+  )
   assert(mapLeadRail.includes("selected && 'fetchi-selected-row'"), 'Selected map rail rows must use the indigo tint and 2px accent-bar contract')
   assert(!mapLeadRail.includes("selected ? 'bg-ok/"), 'Selected map rail rows must not use success green as selection')
   assert(mapLeadRail.includes('text-evidence') && selectedLeadSheet.includes('text-evidence'), 'Map evidence actions must retain evidence-blue ownership')
@@ -566,6 +603,11 @@ async function main() {
   assert(!/font-outfit|bg-white|bg-coral|text-coral|border-coral/.test(todayPresentation), "Today's Run must not retain legacy typography, white slabs, or coral product UI")
   assert(!/\bbg-ok\b|\btext-ok\b/.test(todayPresentation), "Today's Run must use explicit semantic green ownership rather than the legacy ok alias")
   assert(todayPresentation.includes('min-h-[44px]'), "Today's Run interactive controls must preserve 44px touch targets")
+  assert(
+    runCompletion.includes('font-fetchi text-h1 font-semibold') &&
+      !runCompletion.includes('text-[26px] font-semibold leading-tight tracking-[-0.02em] lg:text-[30px]'),
+    'Run completion must use the canonical compact authenticated v5 heading',
+  )
   const openLeadLinkIndex = todayRunCard.indexOf('href={`/app/leads/${card.opportunityId}`}')
   assert.notEqual(openLeadLinkIndex, -1, "Today's Run Open lead navigation must remain present")
   const openLeadLinkSource = todayRunCard.slice(openLeadLinkIndex, openLeadLinkIndex + 900)

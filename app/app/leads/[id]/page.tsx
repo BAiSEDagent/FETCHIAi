@@ -138,7 +138,7 @@ export default async function LeadProfilePage({ params }: { params: Promise<{ id
             {opp.score}
           </div>
           <p className="text-body-lg text-text/65 mt-3 px-2">{summaryLine}</p>
-          <h1 className="font-fetchi text-h1 lg:text-[32px] text-text mt-6 px-2">{businessName}</h1>
+          <h1 className="font-fetchi text-h1 text-text mt-6 px-2">{businessName}</h1>
           {locationLine && <div className="text-caption text-text/55 mt-1.5">{locationLine}</div>}
         </section>
 
