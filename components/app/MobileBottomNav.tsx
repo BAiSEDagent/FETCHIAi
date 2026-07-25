@@ -20,7 +20,7 @@ export function MobileBottomNav() {
       aria-label="Primary"
       className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-bg pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="bg-bg shadow-fetchi-sticky px-1 pt-2 pb-1 flex items-stretch gap-0.5">
+      <div className="bg-bg shadow-fetchi-sticky px-1 pt-1.5 pb-1 flex items-stretch gap-0.5">
         {items.map(item => {
           const Icon = item.icon
           const active = pathname === item.href || pathname.startsWith(item.match)
@@ -30,15 +30,14 @@ export function MobileBottomNav() {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'group relative flex-1 flex flex-col items-center justify-center gap-1 min-h-[64px] rounded-xl outline-none transition-colors',
-                'focus-visible:ring-2 focus-visible:ring-blue/40',
-                active ? 'text-text' : 'text-text/55',
+                'fetchi-focus-ring group relative flex-1 flex flex-col items-center justify-center gap-1 min-h-[64px] min-w-[44px] rounded-lg outline-none transition-colors',
+                active ? 'text-fetchiAccent' : 'text-text/55 hover:text-text',
               )}
             >
               {active && (
                 <span
                   aria-hidden
-                  className="absolute top-1.5 left-1/2 -translate-x-1/2 h-1 w-7 rounded-full bg-ok"
+                  className="absolute top-1 left-1/2 -translate-x-1/2 h-0.5 w-7 rounded-full bg-fetchiAccent"
                 />
               )}
               <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.2 : 1.8} />

@@ -8,6 +8,7 @@ type Props = {
   actions?: React.ReactNode
   children: React.ReactNode
   className?: string
+  mode?: 'form' | 'rows'
 }
 
 /**
@@ -21,17 +22,21 @@ export function SettingsGroup({
   actions,
   children,
   className,
+  mode = 'form',
 }: Props) {
   return (
-    <SectionCard
-      title={title}
-      description={description}
-      actions={actions}
-      className={cn(className)}
-      bodyClassName="space-y-4"
-    >
-      {children}
-    </SectionCard>
+    <div data-fetchi-settings-group-v5 data-fetchi-settings-mode={mode}>
+      <SectionCard
+        title={title}
+        description={description}
+        actions={actions}
+        className={cn(className)}
+        density="compact"
+        bodyClassName={mode === 'rows' ? 'space-y-0' : 'space-y-4'}
+      >
+        {children}
+      </SectionCard>
+    </div>
   )
 }
 
@@ -45,11 +50,14 @@ export function SettingsRow({
   hint?: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-1.5">
+    <div
+      data-fetchi-settings-row-v5
+      className="flex min-h-[44px] items-center justify-between gap-3 py-3 border-t border-text/10 first:border-t-0"
+    >
       <div className="min-w-0">
-        <div className="text-[13.5px] text-text">{label}</div>
+        <div className="text-[14px] font-medium leading-5 text-text">{label}</div>
         {hint && (
-          <div className="text-[12px] text-text/55 mt-0.5">
+          <div className="mt-0.5 text-[12px] leading-[1.4] text-text/55">
             {hint}
           </div>
         )}

@@ -15,10 +15,10 @@ export function ChatBubble({
 }) {
   const isUser = role === 'user'
   return (
-    <div className={cn('flex gap-2.5 items-start', isUser && 'flex-row-reverse')}>
+    <div data-fetchi-chat-bubble-v5 className={cn('flex items-start gap-2.5', isUser && 'flex-row-reverse')}>
       {isUser ? (
         <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0 mt-0.5 bg-text/10 text-text"
+          className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--fetchi-accent-subtle)] text-[11px] font-semibold text-fetchiAccent"
           aria-hidden
         >
           You
@@ -29,10 +29,10 @@ export function ChatBubble({
       <div className={cn('flex flex-col gap-2 max-w-[82%] lg:max-w-[68%]', isUser && 'items-end')}>
         <div
           className={cn(
-            'px-4 py-2.5 whitespace-pre-wrap',
+            'whitespace-pre-wrap rounded-xl border px-4 py-2.5',
             isUser
-              ? 'bg-text/10 text-text rounded-2xl rounded-tr-md text-[14px] leading-[1.55]'
-              : 'bg-raised text-text rounded-2xl rounded-tl-md text-[14.5px] leading-[1.65]',
+              ? 'border-[var(--fetchi-accent-border)] bg-[var(--fetchi-accent-subtle)] text-[14px] leading-[1.55] text-text'
+              : 'border-border bg-fetchiOverlay text-[14.5px] leading-[1.65] text-text',
           )}
         >
           {children}
@@ -45,13 +45,14 @@ export function ChatBubble({
 
 export function ChatTypingIndicator() {
   return (
-    <div className="flex gap-2.5 items-start">
+    <div className="flex gap-2.5 items-start" role="status" aria-live="polite">
       <FetchiAvatar size={32} className="flex-shrink-0" />
-      <div className="bg-raised rounded-2xl rounded-tl-md px-4 py-3 flex gap-1.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-ok animate-bounce" />
-        <span className="w-1.5 h-1.5 rounded-full bg-ok animate-bounce" style={{ animationDelay: '120ms' }} />
-        <span className="w-1.5 h-1.5 rounded-full bg-ok animate-bounce" style={{ animationDelay: '240ms' }} />
+      <div className="flex gap-1.5 rounded-xl border border-border bg-fetchiOverlay px-4 py-3" aria-hidden="true">
+        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-fetchiAccent motion-reduce:animate-none" />
+        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-fetchiAccent motion-reduce:animate-none" style={{ animationDelay: '120ms' }} />
+        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-fetchiAccent motion-reduce:animate-none" style={{ animationDelay: '240ms' }} />
       </div>
+      <span className="sr-only">Fetchi is typing</span>
     </div>
   )
 }

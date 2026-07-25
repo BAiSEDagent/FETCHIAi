@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { Check } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { updateLeadOutcome } from '@/app/app/leads/[id]/actions'
 import type { TodaysRunPassReason } from '@/lib/today/pass-reasons'
@@ -219,7 +219,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
 
   if (total === 0) {
     return (
-      <div className="mt-2">
+      <div data-fetchi-today-v5 className="mt-2">
         <RunCompletion saved={0} skipped={0} draftsPrepared={0} />
       </div>
     )
@@ -227,7 +227,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
 
   if (completed) {
     return (
-      <div className="space-y-4">
+      <div data-fetchi-today-v5 className="space-y-4">
         <RunProgress
           index={Math.min(index, total)}
           total={total}
@@ -245,7 +245,7 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
 
   if (phase.kind === 'pass-reason' && current) {
     return (
-      <div className="space-y-4">
+      <div data-fetchi-today-v5 className="space-y-4">
         <RunProgress
           index={index}
           total={total}
@@ -263,9 +263,10 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
   }
 
   const remaining = total - index
+  const toastIsSaved = toast?.startsWith('Added to My Leads') ?? false
 
   return (
-    <div className="space-y-4">
+    <div data-fetchi-today-v5 className="space-y-4">
       <RunProgress
         index={index}
         total={total}
@@ -321,12 +322,16 @@ export function TodayRunPage({ queue, isDemo = false }: Props) {
           className={cn(
             'fixed left-1/2 -translate-x-1/2 z-50',
             'bottom-[calc(env(safe-area-inset-bottom)+130px)] lg:bottom-10',
-            'inline-flex items-center gap-2 rounded-full px-4 h-[40px]',
-            'bg-text/10 text-text text-[13px] font-semibold',
-            'shadow-[0_12px_28px_-12px_rgba(45,43,42,0.45)]',
+            'inline-flex min-h-[44px] items-center gap-2 rounded-lg border px-4 text-[13px] font-semibold',
+            'bg-fetchiOverlay text-text shadow-[0_12px_28px_-18px_rgba(0,0,0,0.8)]',
+            toastIsSaved ? 'border-semanticGreen/30' : 'border-semanticRed/30',
           )}
         >
-          <Check className="h-3.5 w-3.5 text-ok" />
+          {toastIsSaved ? (
+            <Check className="h-3.5 w-3.5 text-semanticGreen" />
+          ) : (
+            <X className="h-3.5 w-3.5 text-semanticRed" />
+          )}
           {toast}
         </div>
       )}

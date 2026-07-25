@@ -4,9 +4,9 @@ import { useState, useTransition } from 'react'
 import { saveBusinessProfile } from './actions'
 import { errorMessage } from '@/lib/enums'
 import { SettingsGroup } from '@/components/app/SettingsGroup'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { FetchiButton } from '@/components/fetchi-ui/button'
+import { FetchiInput } from '@/components/fetchi-ui/input'
+import { FetchiTextarea } from '@/components/fetchi-ui/textarea'
 
 type Initial = {
   businessName: string
@@ -65,26 +65,29 @@ export function ProfileForm({ initial }: { initial: Initial }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 lg:space-y-4">
+    <form data-fetchi-profile-form-v5 onSubmit={submit} className="space-y-3 lg:space-y-4">
       <SettingsGroup
         title="Business details"
         description="The basics Fetchi uses to know who you are."
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
           <Field label="Business name" htmlFor="biz">
-            <Input
+            <FetchiInput
               id="biz"
               value={businessName}
               onChange={e => setBusinessName(e.target.value)}
               required
+              controlSize="lg"
+              className="h-11"
             />
           </Field>
           <Field label="Service vertical" htmlFor="vertical">
             <select
               id="vertical"
+              data-fetchi-select-v5
               value={vertical}
               onChange={e => setVertical(e.target.value as Initial['vertical'])}
-              className="flex h-11 w-full rounded-xl border border-text/10 bg-raised px-3.5 text-[14px] text-text focus:border-blue focus:ring-2 focus:ring-blue/30 focus:outline-none"
+              className="fetchi-focus-ring flex h-11 w-full rounded-lg border border-[var(--fetchi-border)] bg-fetchiOverlay px-3.5 font-fetchi text-[14px] text-text transition-colors hover:border-[var(--fetchi-border-strong)] focus-visible:border-[var(--fetchi-accent-border)] focus-visible:outline-none"
             >
               {VERTICALS.map(v => (
                 <option key={v.id} value={v.id}>
@@ -95,11 +98,12 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           </Field>
         </div>
         <Field label="Service description" htmlFor="desc">
-          <Textarea
+          <FetchiTextarea
             id="desc"
             value={serviceDescription}
             onChange={e => setServiceDescription(e.target.value)}
             rows={3}
+            controlSize="md"
             placeholder="Commercial and residential roofing — repairs, replacements, storm damage restoration."
           />
         </Field>
@@ -112,7 +116,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           }
           htmlFor="website"
         >
-          <Input
+          <FetchiInput
             id="website"
             type="url"
             inputMode="url"
@@ -120,6 +124,8 @@ export function ProfileForm({ initial }: { initial: Initial }) {
             value={website}
             onChange={e => setWebsite(e.target.value)}
             placeholder="example.com"
+            controlSize="lg"
+            className="h-11"
           />
           <p className="text-[12px] text-text/50 mt-1.5 leading-snug">
             If you have one, Fetchi reads it for extra context when scoring
@@ -134,21 +140,24 @@ export function ProfileForm({ initial }: { initial: Initial }) {
       >
         <div className="grid grid-cols-[1fr_120px] gap-3">
           <Field label="City" htmlFor="city">
-            <Input
+            <FetchiInput
               id="city"
               value={city}
               onChange={e => setCity(e.target.value)}
               required
+              controlSize="lg"
+              className="h-11"
             />
           </Field>
           <Field label="State" htmlFor="state">
-            <Input
+            <FetchiInput
               id="state"
               value={stateCode}
               onChange={e => setStateCode(e.target.value)}
               maxLength={4}
               required
-              className="uppercase"
+              controlSize="lg"
+              className="h-11 uppercase"
             />
           </Field>
         </div>
@@ -161,10 +170,10 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               step={5}
               value={radius}
               onChange={e => setRadius(Number(e.target.value))}
-              className="flex-1 accent-ok h-2"
+              className="min-h-[44px] flex-1 accent-fetchiAccent"
               aria-label="Service radius in miles"
             />
-            <span className="text-[14px] font-bold text-text2 bg-ok/15 rounded-lg px-3 py-1.5 min-w-[72px] text-center tabular-nums">
+            <span className="min-w-[72px] rounded-lg border border-[var(--fetchi-accent-border)] bg-[var(--fetchi-accent-tint)] px-3 py-1.5 text-center text-[14px] font-semibold tabular-nums text-text">
               {radius} mi
             </span>
           </div>
@@ -175,27 +184,29 @@ export function ProfileForm({ initial }: { initial: Initial }) {
         title="Ideal customer"
         description="Fetchi reads this every time it scores a signal."
       >
-        <Textarea
+        <FetchiTextarea
           value={ideal}
           onChange={e => setIdeal(e.target.value)}
           rows={4}
+          controlSize="lg"
+          aria-label="Ideal customer description"
           placeholder="Commercial property managers and HOA boards. Buildings 5,000–50,000 sq ft. Minimum job size $5,000."
         />
       </SettingsGroup>
 
-      <div className="rounded-2xl bg-surface shadow-fetchi-soft px-5 py-4 lg:px-6 lg:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="text-[13px] text-text/60">
+      <div data-fetchi-profile-save-v5 className="flex flex-col gap-3 rounded-xl border border-[var(--fetchi-border-subtle)] bg-[var(--fetchi-surface)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-5">
+        <div data-fetchi-profile-feedback-v5 role={err ? 'alert' : 'status'} className="text-[13px] text-text/60">
           {msg ? (
-            <span className="text-ok font-semibold">{msg}</span>
+            <span className="font-semibold text-semanticGreen">{msg}</span>
           ) : err ? (
-            <span className="text-coral font-semibold">{err}</span>
+            <span className="font-semibold text-semanticRed">{err}</span>
           ) : (
             'Changes apply the next time you fetch leads.'
           )}
         </div>
-        <Button type="submit" disabled={pending} size="lg" className="sm:w-auto w-full">
+        <FetchiButton type="submit" disabled={pending} size="lg" className="h-11 w-full sm:w-auto">
           {pending ? 'Saving…' : 'Save changes'}
-        </Button>
+        </FetchiButton>
       </div>
     </form>
   )

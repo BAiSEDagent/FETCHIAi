@@ -3,9 +3,6 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import {
-  CARD_RADIUS,
-  CARD_SHADOW,
-  CARD_SURFACE,
   DECK_VIEWPORT_FRAME,
   GHOST_1_TRANSFORM,
   GHOST_2_TRANSFORM,
@@ -75,15 +72,13 @@ export function TodayRunDeck({
     // Fixed-height deck viewport. Ghost layers and active card are all
     // absolutely positioned inside; the frame clips anything that overflows
     // so ghosts never bleed into the page below.
-    <div className={cn(DECK_VIEWPORT_FRAME)}>
+    <div className={cn(DECK_VIEWPORT_FRAME, 'rounded-xl')}>
       {/* Ghost layers — decorative only, clipped by the viewport. */}
       {remaining >= 3 && (
         <div
           aria-hidden
           className={cn(
-            'pointer-events-none absolute inset-x-3 top-3 h-full z-0',
-            CARD_SURFACE,
-            CARD_RADIUS,
+            'pointer-events-none absolute inset-x-3 top-3 z-0 h-full rounded-xl border border-text/10 bg-raised',
             'opacity-30',
             GHOST_2_TRANSFORM,
           )}
@@ -93,9 +88,7 @@ export function TodayRunDeck({
         <div
           aria-hidden
           className={cn(
-            'pointer-events-none absolute inset-x-2 top-2 h-full z-[1]',
-            CARD_SURFACE,
-            CARD_RADIUS,
+            'pointer-events-none absolute inset-x-2 top-2 z-[1] h-full rounded-xl border border-text/10 bg-raised',
             'opacity-50',
             GHOST_1_TRANSFORM,
           )}
@@ -132,9 +125,8 @@ export function TodayRunDeck({
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-0 z-[5]',
-          CARD_RADIUS,
-          CARD_SHADOW,
+          'pointer-events-none absolute inset-0 z-[5] rounded-xl',
+          'shadow-[0_16px_32px_-22px_rgba(0,0,0,0.85)]',
         )}
       />
     </div>
@@ -154,11 +146,10 @@ function Stamp({
       aria-hidden
       className={cn(
         'pointer-events-none absolute top-8 inline-flex items-center justify-center z-20',
-        'rounded-[14px] px-4 h-[44px] text-[16px] font-extrabold uppercase tracking-[0.15em]',
-        'shadow-[0_4px_12px_-2px_rgba(45,43,42,0.25)]',
+        'h-[44px] rounded-lg border px-4 text-[16px] font-extrabold uppercase tracking-[0.15em]',
         isAdd
-          ? 'right-6 bg-ok text-text border-2 border-white/40 -rotate-[10deg]'
-          : 'left-6 bg-text/10 text-text border-2 border-white/30 rotate-[10deg]',
+          ? 'right-6 -rotate-[10deg] border-semanticGreen/35 bg-semanticGreen text-white'
+          : 'left-6 rotate-[10deg] border-semanticRed/35 bg-semanticRed text-white',
       )}
       style={{
         animation: reduceMotion
@@ -193,8 +184,8 @@ function SwipeHint({
         'pointer-events-none absolute top-6 inline-flex items-center rounded-full px-3 h-[28px] z-20',
         'text-[12px] font-bold uppercase tracking-[0.1em]',
         direction === 'right'
-          ? 'right-6 bg-ok text-text -rotate-[8deg]'
-          : 'left-6 bg-text/10 text-text rotate-[8deg]',
+          ? 'right-6 -rotate-[8deg] bg-semanticGreen text-white'
+          : 'left-6 rotate-[8deg] bg-semanticRed text-white',
       )}
       style={{ opacity: intensity }}
     >

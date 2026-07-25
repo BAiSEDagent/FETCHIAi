@@ -4,7 +4,7 @@ import { requireWorkspaceContext } from '@/lib/workspace'
 import { db } from '@/db'
 import { MobileScreenHeader } from '@/components/app/MobileScreenHeader'
 import { SectionCard } from '@/components/app/SectionCard'
-import { buttonVariants } from '@/components/ui/button'
+import { fetchiButtonVariants } from '@/components/fetchi-ui/button'
 import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -27,14 +27,14 @@ function Meter({ used, cap, atLimit }: { used: number; cap: number; atLimit: boo
   return (
     <>
       <div className="flex items-baseline gap-2 mb-3">
-        <div className="font-outfit text-[40px] lg:text-[44px] leading-none font-bold text-text tabular-nums">
+        <div className="font-fetchi text-[40px] font-bold leading-none tracking-[-0.02em] text-text tabular-nums lg:text-[44px]">
           {used}
         </div>
         <div className="text-[16px] text-text/45 tabular-nums">/ {cap}</div>
       </div>
       <div className="h-2 rounded-full bg-text/8 overflow-hidden" role="presentation">
         <div
-          className={cn('h-full transition-all', atLimit ? 'bg-warn' : 'bg-ok')}
+          className={cn('h-full transition-all', atLimit ? 'bg-semanticAmber' : 'bg-fetchiAccent')}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -44,7 +44,7 @@ function Meter({ used, cap, atLimit }: { used: number; cap: number; atLimit: boo
 
 function RemainingBadge({ atLimit, label }: { atLimit: boolean; label: string }) {
   return (
-    <div className={cn('text-[13px] font-bold tabular-nums', atLimit ? 'text-warn' : 'text-text2')}>
+    <div className={cn('text-[13px] font-semibold tabular-nums', atLimit ? 'text-semanticAmber' : 'text-text2')}>
       {label}
     </div>
   )
@@ -54,7 +54,7 @@ function BillingCta({ label }: { label: string }) {
   return (
     <Link
       href={BILLING_HREF}
-      className={cn(buttonVariants({ variant: 'default', size: 'default' }), 'w-full sm:w-auto')}
+      className={cn(fetchiButtonVariants({ variant: 'primary', size: 'lg' }), 'min-h-[44px] w-full sm:w-auto')}
     >
       {label}
     </Link>
@@ -63,7 +63,7 @@ function BillingCta({ label }: { label: string }) {
 
 function Shell({ children }: { children: ReactNode }) {
   return (
-    <div className="max-w-3xl">
+    <div data-fetchi-usage-v5 className="max-w-3xl">
       <MobileScreenHeader
         title="Usage"
         description="Track opportunities used, your plan limit, and reset timing."
@@ -83,12 +83,12 @@ export default async function UsagePage() {
   if (!sub) {
     return (
       <Shell>
-        <SectionCard eyebrow="Usage" title="Usage is syncing">
+        <SectionCard density="compact" eyebrow="Usage" title="Usage is syncing">
           <p className="text-[14px] text-text/65 leading-relaxed">
             {'Usage is syncing — check back shortly.'}
           </p>
         </SectionCard>
-        <SectionCard eyebrow="What happens next">
+        <SectionCard density="compact" eyebrow="What happens next">
           <p className="text-[14px] text-text/65 leading-relaxed">
             {'Your workspace is still finishing setup. Once it syncs, your opportunity usage and reset timing will appear here.'}
           </p>
@@ -106,7 +106,7 @@ export default async function UsagePage() {
   if (status === 'past_due') {
     return (
       <Shell>
-        <SectionCard eyebrow="Usage" title="Payment needs attention">
+        <SectionCard density="compact" eyebrow="Usage" title="Payment needs attention">
           <p className="text-[14px] text-text/65 leading-relaxed">
             {'Update your plan to keep opportunities flowing.'}
           </p>
@@ -127,12 +127,12 @@ export default async function UsagePage() {
     if (limit === null || limit === undefined) {
       return (
         <Shell>
-          <SectionCard eyebrow="Usage limit syncing" title="Custom limit pending">
+          <SectionCard density="compact" eyebrow="Usage limit syncing" title="Custom limit pending">
             <p className="text-[14px] text-text/65 leading-relaxed">
               {"Your plan's opportunity limit isn't configured yet. This can happen while billing finishes syncing, or when your workspace is on a custom capped agreement."}
             </p>
           </SectionCard>
-          <SectionCard eyebrow="What happens next">
+          <SectionCard density="compact" eyebrow="What happens next">
             <p className="text-[14px] text-text/65 leading-relaxed">
               {"We'll show your usage meter here as soon as your limit is confirmed. If this persists, review your plan from Plan & Billing."}
             </p>
@@ -154,6 +154,7 @@ export default async function UsagePage() {
     return (
       <Shell>
         <SectionCard
+          density="compact"
           eyebrow="Opportunities this cycle"
           actions={<RemainingBadge atLimit={atLimit} label={atLimit ? 'Limit reached' : `${remaining} left`} />}
         >
@@ -162,7 +163,7 @@ export default async function UsagePage() {
             {resetAt ? `Resets ${resetAt}` : 'Reset date pending'}
           </div>
         </SectionCard>
-        <SectionCard eyebrow="What happens next">
+        <SectionCard density="compact" eyebrow="What happens next">
           <p className="text-[14px] text-text/65 leading-relaxed">
             {atLimit
               ? "You've hit your opportunity limit. Add a top-up or upgrade your plan to keep finding buyers this cycle."
@@ -183,7 +184,7 @@ export default async function UsagePage() {
   // Treated as plan-required in customer-facing UI — no trial framing.
   return (
     <Shell>
-      <SectionCard eyebrow="Usage" title="Plan required">
+      <SectionCard density="compact" eyebrow="Usage" title="Plan required">
         <p className="text-[14px] text-text/65 leading-relaxed">
           {'Choose a plan to start receiving opportunities.'}
         </p>

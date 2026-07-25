@@ -127,15 +127,15 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
         href={item.href}
         onClick={onNavigate}
         className={[
-          'group relative flex min-h-[44px] items-center gap-3 mx-3 px-3 rounded-xl text-[13.5px] transition-colors duration-200 motion-reduce:transition-none',
+          'fetchi-focus-ring group relative flex min-h-[44px] items-center gap-3 mx-3 px-3 rounded-lg text-[13px] outline-none transition-colors duration-200 motion-reduce:transition-none',
           active
-            ? 'text-text bg-raised/80'
-            : 'text-text/60 hover:text-text hover:bg-text/[0.04]',
+            ? 'text-text bg-[var(--fetchi-accent-tint)] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-fetchiAccent'
+            : 'text-text/60 hover:text-text hover:bg-[var(--fetchi-overlay-hover)]',
         ].join(' ')}
       >
         <Icon
           className={`h-[16px] w-[16px] flex-shrink-0 transition-colors ${
-            active ? 'text-ok' : 'text-text/55 group-hover:text-text/80'
+            active ? 'text-fetchiAccent' : 'text-text/55 group-hover:text-text/80'
           }`}
         />
         <span className="flex-1 font-medium">{item.label}</span>
@@ -153,11 +153,11 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
   }
 
   return (
-    <aside className="h-full w-[220px] bg-surface flex flex-col py-5">
+    <aside className="h-full w-[224px] bg-[var(--fetchi-bg-elevated)] border-r border-text/[0.06] flex flex-col py-3">
       <Link
         href="/app/chat"
         onClick={onNavigate}
-        className="flex items-center gap-2.5 px-5 pb-5 mb-3 border-b border-text/8 hover:opacity-90 transition-opacity"
+        className="fetchi-focus-ring flex min-h-12 items-center gap-2.5 px-5 mb-3 border-b border-text/[0.06] outline-none hover:opacity-90 transition-opacity"
       >
         <FetchiWordmark markSize={28} />
       </Link>
@@ -174,7 +174,7 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
 
       <div className="mt-auto">
         {creditsSlot}
-        <div className="mx-3 mb-2 rounded-xl bg-text/[0.04] px-3 py-2.5">
+        <div className="mx-3 mb-2 rounded-xl border border-text/[0.06] bg-[var(--fetchi-surface)] px-3 py-2.5">
           <div className="flex items-center gap-2 min-h-[44px]">
             <span className="w-8 h-8 rounded-lg bg-raised text-text/70 flex items-center justify-center flex-shrink-0" aria-hidden>
               <Monitor className="h-4 w-4" />
@@ -190,10 +190,10 @@ export function Sidebar({ leadsCount, creditsSlot, onNavigate }: Props) {
                 key={option}
                 type="button"
                 onClick={() => setAppearance(option)}
-                className={`min-h-[44px] rounded-lg text-[11px] font-semibold capitalize transition-colors ${
+                className={`fetchi-focus-ring min-h-[44px] rounded-lg text-[11px] font-semibold capitalize outline-none transition-colors ${
                   appearance === option
-                    ? 'bg-text text-bg'
-                    : 'bg-raised text-text/60 hover:text-text'
+                    ? 'bg-fetchiAccent text-white'
+                    : 'bg-[var(--fetchi-overlay)] text-text/60 hover:bg-[var(--fetchi-overlay-hover)] hover:text-text'
                 }`}
               >
                 {option}

@@ -3,14 +3,6 @@
 import * as React from 'react'
 import { ArrowRight, Check, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import {
-  ACTION_BUTTON_HEIGHT,
-  CARD_RADIUS,
-  CARD_SHADOW,
-  CARD_SURFACE,
-  PRIMARY_BUTTON_SURFACE,
-  SECONDARY_BUTTON_SURFACE,
-} from './tokens'
 import type { DraftPreview } from './types'
 
 const UNDO_WINDOW_MS = 10_000
@@ -53,21 +45,19 @@ export function AfterAddConfirmation({
 
   return (
     <section
+      data-fetchi-flat-panel-v5
       aria-live="polite"
       className={cn(
-        'relative p-6 lg:p-7 text-text',
-        CARD_SURFACE,
-        CARD_RADIUS,
-        CARD_SHADOW,
+        'relative rounded-xl border border-text/10 bg-raised p-6 text-text lg:p-7',
       )}
     >
-      {/* Brand-green "Added" stamp */}
+      {/* Success-green saved state. */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-ok">
+          <div className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-semanticGreen">
             Added to My Leads
           </div>
-          <h3 className="font-outfit text-[22px] lg:text-[24px] font-bold mt-1 leading-tight">
+          <h3 className="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.02em] lg:text-[24px]">
             {businessName}
           </h3>
           <p className="text-[13px] text-text/65 mt-1.5">
@@ -75,7 +65,7 @@ export function AfterAddConfirmation({
           </p>
         </div>
         <span
-          className="flex items-center gap-1.5 rounded-full bg-ok px-3 h-[34px] text-[12px] font-bold uppercase tracking-[0.08em] text-white -rotate-[9deg] shadow-[0_8px_18px_-10px_rgba(88,147,126,0.7)] flex-shrink-0"
+          className="flex h-[32px] flex-shrink-0 items-center gap-1.5 rounded-full border border-semanticGreen/25 bg-semanticGreen/10 px-3 text-[12px] font-bold uppercase tracking-[0.08em] text-semanticGreen"
           aria-hidden
         >
           <Check className="h-3.5 w-3.5" />
@@ -84,7 +74,7 @@ export function AfterAddConfirmation({
       </div>
 
       {/* Draft preview (read-only) */}
-      <div className="mt-5 rounded-2xl bg-surface/70 p-4">
+      <div className="mt-5 rounded-lg border border-text/10 bg-fetchiOverlay p-4">
         <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45">
           Draft prepared, not sent
         </div>
@@ -118,9 +108,9 @@ export function AfterAddConfirmation({
               : 'TODO: undo unavailable — previous state could not be captured.'
           }
           className={cn(
-            'inline-flex items-center justify-center gap-2 rounded-[18px] text-[13.5px] font-semibold transition-all px-4 disabled:opacity-55 disabled:cursor-not-allowed',
-            ACTION_BUTTON_HEIGHT,
-            SECONDARY_BUTTON_SURFACE,
+            'inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-lg border border-text/10 bg-fetchiOverlay px-4 text-[13.5px] font-semibold text-text/85 transition-colors',
+            'hover:bg-fetchiOverlayHover hover:text-text disabled:cursor-not-allowed disabled:opacity-55',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
           )}
         >
           <RotateCcw className="h-4 w-4" />
@@ -131,9 +121,9 @@ export function AfterAddConfirmation({
           onClick={onStop}
           disabled={pending}
           className={cn(
-            'inline-flex items-center justify-center rounded-[18px] text-[14px] font-semibold transition-all disabled:opacity-60',
-            ACTION_BUTTON_HEIGHT,
-            SECONDARY_BUTTON_SURFACE,
+            'inline-flex h-11 min-h-[44px] items-center justify-center rounded-lg border border-text/10 bg-fetchiOverlay px-4 text-[14px] font-semibold text-text/85 transition-colors',
+            'hover:bg-fetchiOverlayHover hover:text-text disabled:opacity-60',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
           )}
         >
           Stop run
@@ -143,9 +133,9 @@ export function AfterAddConfirmation({
           onClick={onNext}
           disabled={pending}
           className={cn(
-            'inline-flex items-center justify-center gap-2 rounded-[18px] text-[14px] font-semibold transition-all px-5 disabled:opacity-60',
-            ACTION_BUTTON_HEIGHT,
-            PRIMARY_BUTTON_SURFACE,
+            'inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-lg bg-fetchiAccent px-5 text-[14px] font-semibold text-white transition-colors',
+            'hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)] disabled:opacity-60',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
           )}
         >
           Next lead

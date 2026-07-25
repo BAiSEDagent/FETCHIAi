@@ -30,7 +30,7 @@ export function SignOutControl({ variant = 'sidebar' }: { variant?: Variant }) {
         <button
           type="button"
           aria-label="Sign out"
-          className="h-11 w-11 flex items-center justify-center text-text/75 hover:text-text rounded-xl hover:bg-text/5 transition-colors"
+          className="fetchi-focus-ring h-11 w-11 flex items-center justify-center text-text/75 hover:text-text rounded-lg hover:bg-[var(--fetchi-overlay-hover)] outline-none transition-colors"
         >
           <LogOut className="h-[18px] w-[18px]" />
         </button>
@@ -39,9 +39,9 @@ export function SignOutControl({ variant = 'sidebar' }: { variant?: Variant }) {
   }
 
   return (
-    <div className="mx-3 mt-3 rounded-xl bg-text/[0.04] px-3 py-2.5 flex items-center gap-2.5 min-h-[52px]">
+    <div className="mx-3 mt-3 rounded-xl border border-text/[0.06] bg-[var(--fetchi-surface)] px-3 py-2.5 flex items-center gap-2.5 min-h-[52px]">
       <div
-        className="w-8 h-8 rounded-full bg-ok text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0"
+        className="w-8 h-8 rounded-lg bg-[var(--fetchi-accent-subtle)] text-fetchiAccent text-[12px] font-bold flex items-center justify-center flex-shrink-0"
         aria-hidden
       >
         {initial}
@@ -53,7 +53,7 @@ export function SignOutControl({ variant = 'sidebar' }: { variant?: Variant }) {
         <SignOutButton>
           <button
             type="button"
-            className="text-[11.5px] text-text/55 hover:text-text inline-flex items-center gap-1 mt-0.5 min-h-[24px]"
+            className="fetchi-focus-ring -my-2.5 mt-0.5 inline-flex min-h-[44px] items-center gap-1 rounded-sm py-2.5 text-[11.5px] text-text/55 outline-none hover:text-text"
           >
             <LogOut className="h-3 w-3" />
             Sign out

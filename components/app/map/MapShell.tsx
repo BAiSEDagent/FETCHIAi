@@ -191,9 +191,9 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
             data-cp25a-map-loading-state
             className="absolute inset-0 z-10 grid place-items-center bg-bg/70 text-center backdrop-blur-sm"
           >
-            <div className="rounded-[24px] border border-text/10 bg-bg/92 px-6 py-5 shadow-2xl shadow-black/35">
-              <p className="font-outfit text-[22px] font-semibold text-text">Loading map</p>
-              <p className="mt-1 text-[14px] text-text/55">Placing saved leads.</p>
+            <div className="rounded-xl border border-border bg-fetchiOverlay px-6 py-5 shadow-[0_18px_44px_-28px_rgba(0,0,0,0.9)]">
+              <p className="font-fetchi text-[22px] font-semibold tracking-[-0.02em] text-text">Loading map</p>
+              <p className="mt-1 text-[14px] text-text2">Placing saved leads.</p>
             </div>
           </div>
         )}
@@ -203,9 +203,9 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
             data-cp25a-map-no-results-state
             className="pointer-events-none absolute inset-x-4 bottom-6 z-20 lg:hidden"
           >
-            <div className="pointer-events-auto rounded-[24px] border border-text/10 bg-bg/92 p-5 shadow-2xl shadow-black/35 backdrop-blur-xl">
-              <p className="font-outfit text-[24px] font-semibold leading-tight text-text">No results</p>
-              <p className="mt-2 text-[14px] leading-relaxed text-text/58">
+            <div className="pointer-events-auto rounded-xl border border-border bg-fetchiOverlay p-5 shadow-[0_18px_44px_-28px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+              <p className="font-fetchi text-[24px] font-semibold leading-tight tracking-[-0.02em] text-text">No results</p>
+              <p className="mt-2 text-[14px] leading-relaxed text-text2">
                 Adjust filters or search to show saved leads on the map.
               </p>
               <button
@@ -214,7 +214,7 @@ export function SavedLeadMapShell({ leads, workspaceName }: Props) {
                   setQuery('')
                   setFilters(DEFAULT_MAP_FILTERS)
                 }}
-                className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-text px-4 text-[14px] font-semibold text-bg transition hover:bg-text/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/55"
+                className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-fetchiAccent px-4 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55"
               >
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
                 Reset
@@ -250,6 +250,7 @@ function MapFrame({
   return (
     <section
       {...props}
+      data-fetchi-map-v5
       className={cn(
         'relative h-[calc(100dvh-9rem)] min-h-[560px] overflow-hidden bg-bg text-text lg:flex lg:h-screen lg:min-h-[720px]',
         className,
@@ -263,8 +264,8 @@ function MapFrame({
 function MapTopTitle() {
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-4 pt-4 lg:px-6 lg:pt-6">
-      <div className="mx-auto max-w-5xl rounded-[24px] border border-text/10 bg-bg/88 px-5 py-4 shadow-2xl shadow-black/35 backdrop-blur-xl">
-        <p className="font-outfit text-[22px] font-semibold leading-none text-text">Map</p>
+      <div className="mx-auto max-w-5xl rounded-xl border border-border bg-fetchiOverlay px-5 py-4 shadow-[0_18px_44px_-28px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+        <p className="font-fetchi text-[22px] font-semibold leading-none tracking-[-0.02em] text-text">Map</p>
       </div>
     </div>
   )
@@ -285,15 +286,15 @@ function CenteredState({
 }) {
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center px-5 py-24">
-      <div className="w-full max-w-[420px] rounded-[28px] border border-text/10 bg-bg/92 p-6 text-center shadow-2xl shadow-black/35 backdrop-blur-xl">
-        <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full bg-raised text-text">
+      <div className="w-full max-w-[420px] rounded-2xl border border-border bg-fetchiOverlay p-6 text-center shadow-[0_20px_48px_-26px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+        <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-xl bg-[var(--fetchi-accent-subtle)] text-fetchiAccent">
           {icon}
         </div>
-        <h1 className="font-outfit text-[30px] font-semibold leading-[1.02] text-text">{title}</h1>
-        <p className="mx-auto mt-3 max-w-[320px] text-[15px] leading-relaxed text-text/58">{body}</p>
+        <h1 className="font-fetchi text-[30px] font-semibold leading-[1.02] tracking-[-0.02em] text-text">{title}</h1>
+        <p className="mx-auto mt-3 max-w-[320px] text-[15px] leading-relaxed text-text2">{body}</p>
         <Link
           href={primaryHref}
-          className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-text px-5 text-[15px] font-semibold text-bg transition hover:bg-text/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/55"
+          className="mt-6 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-fetchiAccent px-5 text-[15px] font-semibold text-white transition-colors hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55"
         >
           {primaryLabel}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

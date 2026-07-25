@@ -23,8 +23,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
   return (
     <div
       className={cn(
-        'rounded-[18px] bg-raised px-4 py-3.5 lg:px-5 lg:py-4',
-        'border border-text/10 shadow-fetchi-soft',
+        'rounded-xl border border-text/10 bg-raised px-4 py-3.5 lg:px-5 lg:py-4',
       )}
     >
       <div className="flex items-baseline justify-between gap-3">
@@ -40,7 +39,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
           className={cn(
             'inline-flex items-center justify-center rounded-full px-2.5 h-[26px] min-w-[44px]',
             'text-[11px] uppercase tracking-[0.1em] font-bold tabular-nums',
-            'bg-ok/20 text-ok',
+            'border border-fetchiAccent/25 bg-[var(--fetchi-accent-subtle)] text-fetchiAccent',
           )}
           aria-hidden
         >
@@ -62,7 +61,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
             key={i}
             className={cn(
               'h-1.5 flex-1 rounded-full transition-colors',
-              i < reviewed ? 'bg-ok' : 'bg-text/15',
+              i < reviewed ? 'bg-fetchiAccent' : 'bg-text/15',
             )}
           />
         ))}
@@ -77,7 +76,7 @@ export function RunProgress({ index, total, savedCount, skippedCount }: Props) {
         </span>
         {savedCount > 0 || skippedCount > 0 ? (
           <span className="text-text/60 normal-case tracking-normal font-medium">
-            <span className="text-ok">{savedCount} saved</span>
+            <span className="text-semanticGreen">{savedCount} saved</span>
             <span className="mx-1.5">·</span>
             <span>{skippedCount} passed</span>
           </span>

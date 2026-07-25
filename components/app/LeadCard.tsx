@@ -52,7 +52,7 @@ type Props = {
   ageLabel?: string | null
   contactName?: string | null
   contactConfidence?: number | null
-  evidenceChips?: Array<{ label: string; tone?: 'coral' | 'neutral' }>
+  evidenceChips?: Array<{ label: string; tone?: 'accent' | 'neutral' }>
   variant?: Variant
   verticalFitLabel?: string | null
   freshnessLabel?: string | null
@@ -86,24 +86,49 @@ function statusTone(status: string | null | undefined, surface: CardSurface = 'd
   }
 
   switch (status) {
-    case 'responded':
     case 'won':
-      return 'bg-ok/12 text-ok border border-ok/25'
+      return 'bg-lifecycleWon/12 text-lifecycleWon border border-lifecycleWon/25'
+    case 'responded':
+      return 'bg-text/[0.06] text-text2 border border-text/10'
     case 'saved':
+      return surface === 'parchment'
+        ? 'bg-[#2D2B2A]/10 text-[#2D2B2A] border border-[#2D2B2A]/10'
+        : 'bg-lifecycleSaved/12 text-lifecycleSaved border border-lifecycleSaved/25'
     case 'contacted':
       return surface === 'parchment'
         ? 'bg-[#2D2B2A]/10 text-[#2D2B2A] border border-[#2D2B2A]/10'
-        : 'bg-text/[0.06] text-text/65 border border-text/10'
+        : 'bg-lifecycleContacted/12 text-lifecycleContacted border border-lifecycleContacted/25'
     case 'lost':
+      return surface === 'parchment'
+        ? 'bg-[#2D2B2A]/8 text-[#2D2B2A]/60 border border-[#2D2B2A]/10'
+        : 'bg-lifecycleLost/12 text-lifecycleLost border border-lifecycleLost/25'
     case 'skipped':
-    case 'expired':
       return surface === 'parchment'
         ? 'bg-[#2D2B2A]/8 text-[#2D2B2A]/60 border border-[#2D2B2A]/10'
         : 'bg-text/[0.06] text-text/55 border border-text/10'
+    case 'expired':
+      return surface === 'parchment'
+        ? 'bg-[#2D2B2A]/8 text-[#2D2B2A]/60 border border-[#2D2B2A]/10'
+        : 'bg-semanticAmber/12 text-semanticAmber border border-semanticAmber/25'
     default:
       return surface === 'parchment'
         ? 'bg-[#2D2B2A]/8 text-[#2D2B2A]/65 border border-[#2D2B2A]/10'
         : 'bg-text/[0.08] text-text/65 border border-text/10'
+  }
+}
+
+function pipelineStatusBorder(status: string | null | undefined): string {
+  switch (status) {
+    case 'saved':
+      return 'border-l-lifecycleSaved'
+    case 'contacted':
+      return 'border-l-lifecycleContacted'
+    case 'won':
+      return 'border-l-lifecycleWon'
+    case 'responded':
+      return 'border-l-textMuted'
+    default:
+      return 'border-l-fetchiAccent'
   }
 }
 
@@ -156,11 +181,12 @@ function ListCard({
   const cardSurface: CardSurface = intentRecord ? 'parchment' : 'dark'
 
   const surface = cn(
-    'group block rounded-2xl shadow-fetchi-soft transition-all hover:-translate-y-0.5 hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+    'group block rounded-xl border border-border bg-surface transition-[background-color,border-color,box-shadow,transform] hover:-translate-y-px hover:border-[var(--fetchi-border-strong)] hover:bg-raised motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
     large ? 'p-5 lg:p-6' : 'p-4 lg:p-5',
-    pipeline && 'bg-raised text-text border-l-[3px] border-l-ok',
+    pipeline && 'bg-raised text-text border-l-2',
+    pipeline && pipelineStatusBorder(status),
     intentRecord && 'bg-parch text-[#2D2B2A] ring-1 ring-inset ring-[#2D2B2A]/10',
-    !pipeline && opportunityClass === 'aging' && 'bg-raised text-text border-l-[3px] border-l-warn',
+    !pipeline && opportunityClass === 'aging' && 'bg-raised text-text border-l-2 border-l-semanticAmber',
     !pipeline && opportunityClass === 'discovery' && 'bg-raised text-text',
   )
   const title = inverted ? 'text-[#2D2B2A]' : 'text-text'
@@ -221,7 +247,7 @@ function ListCard({
                   </span>
                 </div>
               )}
-              <h3 className={cn('font-outfit text-[17px] lg:text-[18px] font-semibold leading-tight mt-2 truncate', title)}>
+              <h3 className={cn('font-fetchi text-[17px] lg:text-[18px] font-semibold leading-tight mt-2 truncate', title)}>
                 {businessName}
               </h3>
               {location && <div className={cn('mt-0.5 text-[12.5px] truncate', muted)}>{location}</div>}
@@ -266,14 +292,14 @@ function ListCard({
 
 function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location, ageLabel, evidenceChips, verticalFitLabel, fallbackState }: Props) {
   return (
-    <div className="rounded-2xl bg-raised shadow-fetchi-soft p-4 lg:p-5">
+    <div className="rounded-xl border border-border bg-raised p-4 lg:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="font-outfit text-[17px] font-semibold text-text leading-tight">{businessName}</div>
+          <div className="font-fetchi text-[17px] font-semibold text-text leading-tight">{businessName}</div>
           <div className="text-[12.5px] text-text/55 mt-1">{location ?? signalLabel}</div>
         </div>
         <div className="text-right flex-shrink-0">
-          <div className="font-outfit text-[34px] leading-none font-bold tabular-nums text-text">
+          <div className="font-fetchi text-[34px] leading-none font-bold tabular-nums text-text">
             {score}
           </div>
           <div className="text-[10px] uppercase tracking-[1px] text-text/45 mt-1 font-bold">score</div>
@@ -307,10 +333,10 @@ function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location
       {whyNow && <p className="mt-3 text-[13.5px] text-text/75 leading-[1.6]">{whyNow}</p>}
 
       <div className="mt-4 flex items-center gap-2">
-        <Link href={href} className="flex-1 inline-flex items-center justify-center h-11 rounded-full bg-coral text-white text-[14px] font-semibold hover:bg-coralDeep transition-colors">
+        <Link href={href} className="flex-1 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-fetchiAccent text-white text-[14px] font-semibold transition-colors hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55">
           Open lead
         </Link>
-        <button type="button" className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-surface text-text/75 text-[14px] font-semibold border border-text/8 hover:text-text hover:bg-raised transition-colors" aria-label="Pass on this lead">
+        <button type="button" className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-border bg-surface px-5 text-[14px] font-semibold text-text/75 transition-colors hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55" aria-label="Pass on this lead">
           Pass
         </button>
       </div>
@@ -320,7 +346,7 @@ function ChatHeroCard({ href, businessName, signalLabel, score, whyNow, location
 
 function ChatCard({ href, businessName, signalLabel, signalType, score, status, location, ageLabel }: Props) {
   return (
-    <Link href={href} className="group block rounded-2xl bg-raised shadow-fetchi-soft transition-all hover:-translate-y-px hover:shadow-fetchi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg p-3.5">
+    <Link href={href} className="group block rounded-xl border border-border bg-raised p-3.5 transition-all hover:-translate-y-px hover:border-[var(--fetchi-border-strong)] motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 focus-visible:ring-offset-2 focus-visible:ring-offset-bg">
       <div className="flex items-start gap-3">
         <GlyphTile glyph={glyphForSignalType(signalType ?? null)} size="sm" tone="muted" />
         <div className="flex-1 min-w-0">

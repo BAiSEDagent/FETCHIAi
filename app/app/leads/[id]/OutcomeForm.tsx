@@ -7,18 +7,15 @@ import { Textarea } from '@/components/ui/textarea'
 
 type Status = 'new' | 'saved' | 'contacted' | 'responded' | 'won' | 'lost' | 'skipped'
 
-// Calm CP2.5B-aligned tones: positive outcomes use ok (success), negative
-// outcomes use a near-black wash so the destructive choices still read
-// clearly without screaming.
-type ActiveTone = 'positive' | 'negative'
+type ActiveTone = 'neutral' | 'success' | 'destructive'
 
 const OPTIONS: { id: Status; label: string; tone: ActiveTone }[] = [
-  { id: 'saved',     label: 'Save for later', tone: 'positive' },
-  { id: 'contacted', label: 'Contacted',      tone: 'positive' },
-  { id: 'responded', label: 'Responded',      tone: 'positive' },
-  { id: 'won',       label: 'Won',            tone: 'positive' },
-  { id: 'lost',      label: 'Lost',           tone: 'negative' },
-  { id: 'skipped',   label: 'Skip',           tone: 'negative' },
+  { id: 'saved',     label: 'Save for later', tone: 'neutral' },
+  { id: 'contacted', label: 'Contacted',      tone: 'neutral' },
+  { id: 'responded', label: 'Responded',      tone: 'neutral' },
+  { id: 'won',       label: 'Won',            tone: 'success' },
+  { id: 'lost',      label: 'Lost',           tone: 'destructive' },
+  { id: 'skipped',   label: 'Skip',           tone: 'neutral' },
 ]
 
 const VALID_STATUSES: readonly Status[] = [
@@ -125,10 +122,11 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
       <div className="flex flex-wrap gap-2 mb-4">
         {OPTIONS.map(o => {
           const active = status === o.id
-          const activeClass =
-            o.tone === 'positive'
-              ? 'bg-ok text-white border-ok'
-              : 'bg-text/15 text-text border-text/25'
+          const activeClass = o.tone === 'success'
+            ? 'bg-lifecycleWon text-[#08090A] border-lifecycleWon'
+            : o.tone === 'destructive'
+              ? 'bg-bad/12 text-bad border-bad/25'
+              : 'bg-fetchiAccent text-white border-fetchiAccent'
           return (
             <button
               key={o.id}
@@ -136,10 +134,10 @@ export function OutcomeForm({ opportunityId, currentStatus, currentNotes }: Prop
               onClick={() => save(o.id)}
               disabled={pending}
               aria-pressed={active}
-              className={`text-[13px] font-semibold px-4 rounded-xl transition-colors min-h-[44px] border ${
+              className={`text-[13px] font-semibold px-4 rounded-lg transition-colors min-h-[44px] border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55 ${
                 active
                   ? activeClass
-                  : 'bg-raised text-text border-text/10 hover:border-text/25 hover:bg-text/[0.06]'
+                  : 'bg-raised text-text border-border hover:border-[var(--fetchi-border-strong)] hover:bg-fetchiOverlayHover'
               }`}
             >
               {o.label}

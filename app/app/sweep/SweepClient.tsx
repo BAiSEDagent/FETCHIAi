@@ -138,21 +138,27 @@ function ResultRow({
   onToggle: () => void
 }) {
   return (
-    <tr className={['border-t border-text/8 align-top', lead.alreadySaved ? 'bg-ok/4' : ''].join(' ')}>
-      <td className="w-[54px] px-4 py-3">
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={onToggle}
-          aria-label={`Select ${lead.businessName}`}
-          className="h-4 w-4 rounded border-text/20 bg-bg accent-ok"
-        />
+    <tr className={[
+      'border-t border-border/70 align-top transition-colors',
+      lead.alreadySaved ? 'bg-semanticGreen/4' : '',
+      selected && 'fetchi-selected-row',
+    ].filter(Boolean).join(' ')}>
+      <td className="w-[54px] px-[5px] py-1">
+        <label className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center" data-fetchi-sweep-checkbox-target>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggle}
+            aria-label={`Select ${lead.businessName}`}
+            className="fetchi-focus-ring h-4 w-4 rounded border-text/20 bg-bg accent-fetchiAccent"
+          />
+        </label>
       </td>
       <td className="min-w-[260px] px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-semibold text-text leading-snug">{lead.businessName}</span>
           {lead.alreadySaved && (
-            <span className="rounded bg-ok/12 px-2 py-0.5 text-[11px] font-bold text-ok">
+            <span className="rounded-md bg-semanticGreen/12 px-2 py-0.5 text-[11px] font-semibold text-semanticGreen">
               {savedStatusLabel(lead.savedLeadStatus)}
             </span>
           )}
@@ -165,7 +171,7 @@ function ResultRow({
         )}
       </td>
       <td className="min-w-[260px] px-4 py-3">
-        <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 text-text font-medium">
+        <a href={`tel:${lead.phone}`} className="fetchi-focus-ring inline-flex min-h-[44px] items-center gap-1.5 rounded-md text-text font-medium">
           <Phone className="h-3.5 w-3.5 text-text/45" />
           {lead.phone}
         </a>
@@ -174,7 +180,7 @@ function ResultRow({
             href={lead.website}
             target="_blank"
             rel="noreferrer"
-            className="mt-2 flex items-center gap-1.5 text-ok hover:text-ok/80 font-medium"
+            className="fetchi-focus-ring mt-2 flex min-h-[44px] items-center gap-1.5 rounded-md text-evidence hover:text-evidence/80 font-medium"
           >
             <Globe2 className="h-3.5 w-3.5" />
             <span className="break-all">{displayUrl(lead.website)}</span>
@@ -182,7 +188,7 @@ function ResultRow({
           </a>
         )}
         {lead.email && (
-          <a href={`mailto:${lead.email}`} className="mt-2 flex items-center gap-1.5 text-ok font-medium">
+          <a href={`mailto:${lead.email}`} className="fetchi-focus-ring mt-2 flex min-h-[44px] items-center gap-1.5 rounded-md text-evidence font-medium hover:text-evidence/80">
             <Mail className="h-3.5 w-3.5" />
             <span className="break-all">{lead.email}</span>
           </a>
@@ -210,7 +216,7 @@ function ResultRow({
             href={lead.sourceUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-ok hover:text-ok/80"
+            className="fetchi-focus-ring mt-2 inline-flex min-h-[44px] items-center gap-1.5 rounded-md text-[12px] text-evidence hover:text-evidence/80"
           >
             Source
             <ExternalLink className="h-3 w-3 opacity-60" />
@@ -498,13 +504,13 @@ export function SweepClient() {
     <div className="min-h-full bg-bg text-text">
       <div className="mx-auto flex w-full max-w-[1420px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
         <section className="grid gap-5 xl:grid-cols-[390px_minmax(0,1fr)]">
-          <div className="rounded-lg bg-surface border border-text/8 p-5 lg:p-6">
+          <div className="rounded-xl bg-surface border border-border p-5 lg:p-6">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-ok/14 text-ok">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-fetchiAccent/15 text-fetchiAccent">
                 <Search className="h-5 w-5" />
               </span>
               <div>
-                <h1 className="font-outfit text-[30px] leading-tight">Fetch</h1>
+                <h1 className="font-fetchi text-[30px] font-semibold leading-tight tracking-[-0.02em]">Fetch</h1>
                 <p className="mt-1 text-[13px] text-text/55">
                   Find contactable leads from one market.
                 </p>
@@ -547,7 +553,7 @@ export function SweepClient() {
                         key={lane}
                         type="button"
                         onClick={() => addSuggestedBuyerLane(lane)}
-                        className="rounded-lg bg-bg px-2.5 py-1.5 text-[12px] font-semibold text-text/65 hover:bg-text/8"
+                        className="fetchi-focus-ring min-h-[44px] rounded-lg bg-bg px-2.5 py-1.5 text-[12px] font-semibold text-text/65 hover:bg-fetchiOverlayHover"
                       >
                         {lane}
                       </button>
@@ -569,9 +575,9 @@ export function SweepClient() {
               <Button
                 type="submit"
                 disabled={pending}
-                className="h-12 w-full gap-2 bg-ok text-bg hover:bg-ok/90"
+                className="h-12 w-full gap-2 bg-fetchiAccent text-white hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)]"
               >
-                {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                {pending ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Search className="h-4 w-4" />}
                 Fetch leads
               </Button>
             </form>
@@ -582,7 +588,7 @@ export function SweepClient() {
                   key={`${example.service}-${example.icp}-${example.market}`}
                   type="button"
                   onClick={() => applyExample(example)}
-                  className="rounded-lg bg-bg px-3 py-2 text-left text-[12.5px] leading-tight text-text/70 hover:bg-text/8"
+                  className="fetchi-focus-ring min-h-[44px] rounded-lg bg-bg px-3 py-2 text-left text-[12.5px] leading-tight text-text/70 hover:bg-fetchiOverlayHover"
                 >
                   <span className="font-semibold text-text">{example.icp}</span>
                   <span className="block text-text/45">{example.market}</span>
@@ -593,9 +599,9 @@ export function SweepClient() {
 
           <div className="flex min-w-0 flex-col gap-4">
             {pending && (
-              <section className="rounded-lg bg-surface border border-ok/18 p-5">
+              <section className="rounded-xl bg-surface border border-fetchiAccent/20 p-5" role="status" aria-live="polite">
                 <div className="flex items-center gap-3">
-                  <Loader2 className="h-5 w-5 animate-spin text-ok" />
+                  <Loader2 className="h-5 w-5 animate-spin text-fetchiAccent motion-reduce:animate-none" aria-hidden="true" />
                   <div>
                     <div className="font-semibold text-text">Fetching leads</div>
                     <div className="mt-1 text-[13px] text-text/55">{PROGRESS_LINES[progressIndex]}</div>
@@ -607,7 +613,7 @@ export function SweepClient() {
                       key={line}
                       className={[
                         'h-1.5 rounded-full transition-colors',
-                        index <= progressIndex ? 'bg-ok' : 'bg-text/10',
+                        index <= progressIndex ? 'bg-fetchiAccent' : 'bg-text/10',
                       ].join(' ')}
                     />
                   ))}
@@ -621,7 +627,7 @@ export function SweepClient() {
               </section>
             )}
 
-            <section className="overflow-hidden rounded-lg bg-surface border border-text/8">
+            <section className="overflow-hidden rounded-xl bg-surface border border-border">
               <div className="flex min-h-[58px] flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <Table2 className="h-4 w-4 text-text/45" />
@@ -661,14 +667,14 @@ export function SweepClient() {
                           aria-pressed={active}
                           onClick={() => setViewFilter(filter)}
                           className={[
-                            'inline-flex min-h-9 items-center gap-2 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                            'fetchi-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
                             active
-                              ? 'bg-ok text-bg'
-                              : 'bg-bg text-text/62 hover:bg-text/8',
+                              ? 'bg-fetchiAccent text-white'
+                              : 'bg-bg text-text/62 hover:bg-fetchiOverlayHover',
                           ].join(' ')}
                         >
                           <span>{SWEEP_LEAD_VIEW_FILTER_LABELS[filter]}</span>
-                          <span className={active ? 'text-bg/72' : 'text-text/40'}>
+                          <span className={active ? 'text-white/75' : 'text-text/40'}>
                             {viewCounts[filter]}
                           </span>
                         </button>
@@ -684,7 +690,7 @@ export function SweepClient() {
                       onClick={enrichResults}
                       className="gap-2"
                     >
-                      {enrichmentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      {enrichmentPending ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Sparkles className="h-4 w-4" />}
                       Find emails
                     </Button>
                     <Button
@@ -694,7 +700,7 @@ export function SweepClient() {
                       onClick={saveSelected}
                       className="gap-2"
                     >
-                      {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {savePending ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Save className="h-4 w-4" />}
                       {visibleSelectedCount > 0 && visibleSelectedNewCount === 0 ? 'No new selected' : 'Save selected'}
                     </Button>
                     <Button
@@ -704,7 +710,7 @@ export function SweepClient() {
                       onClick={saveAll}
                       className="gap-2"
                     >
-                      {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {savePending ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Save className="h-4 w-4" />}
                       {newToSaveCount === 0 ? 'No new leads to save' : 'Save all'}
                     </Button>
                     <Button type="button" variant="outline" onClick={exportCsv} className="gap-2">
@@ -746,7 +752,7 @@ export function SweepClient() {
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
                     <Search className="h-6 w-6" />
                   </div>
-                  <h3 className="mt-4 font-outfit text-[24px]">Fetch leads to fill the list.</h3>
+                  <h3 className="mt-4 font-fetchi text-[24px] font-semibold tracking-[-0.02em]">Fetch leads to fill the list.</h3>
                   <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-relaxed text-text/50">
                     Results appear here with filters, save actions, and export controls after leads are fetched.
                   </p>
@@ -756,7 +762,7 @@ export function SweepClient() {
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-text/8 text-text/55">
                     <Table2 className="h-6 w-6" />
                   </div>
-                  <h3 className="mt-4 font-outfit text-[24px]">{sweepLeadViewEmptyCopy(viewFilter)}</h3>
+                  <h3 className="mt-4 font-fetchi text-[24px] font-semibold tracking-[-0.02em]">{sweepLeadViewEmptyCopy(viewFilter)}</h3>
                   <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-relaxed text-text/50">
                     {leadMemorySummary}.
                   </p>
@@ -766,15 +772,17 @@ export function SweepClient() {
                   <table className="w-full border-collapse text-left text-[13.5px]">
                     <thead className="sticky top-0 z-10 bg-raised text-[11px] uppercase tracking-[0.9px] text-text/42">
                       <tr>
-                        <th className="w-[54px] px-4 py-3 font-bold">
-                          <input
-                            type="checkbox"
-                            checked={allSelected}
-                            disabled={visibleNewLeadIds.length === 0}
-                            onChange={toggleAllSelection}
-                            aria-label="Select all new sweep leads"
-                            className="h-4 w-4 rounded border-text/20 bg-bg accent-ok"
-                          />
+                        <th className="w-[54px] px-[5px] py-1 font-bold">
+                          <label className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center" data-fetchi-sweep-checkbox-target>
+                            <input
+                              type="checkbox"
+                              checked={allSelected}
+                              disabled={visibleNewLeadIds.length === 0}
+                              onChange={toggleAllSelection}
+                              aria-label="Select all new sweep leads"
+                              className="fetchi-focus-ring h-4 w-4 rounded border-text/20 bg-bg accent-fetchiAccent"
+                            />
+                          </label>
                         </th>
                         <th className="px-4 py-3 font-bold">Business</th>
                         <th className="px-4 py-3 font-bold">Contact routes</th>

@@ -72,12 +72,14 @@ export function MapFilterSheet({ open, filters, onOpenChange, onApply, onReset }
       <SheetContent
         side="bottom"
         data-fetchi-theme-root
+        data-fetchi-brand-system="v5"
         data-cp25a-filter-sheet
-        className="theme-dark max-h-[82dvh] overflow-y-auto rounded-t-[28px] border-0 bg-bg px-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] pt-5 text-text shadow-2xl shadow-black/45 lg:bottom-6 lg:left-auto lg:right-6 lg:max-h-[680px] lg:w-[420px] lg:rounded-[28px]"
+        data-fetchi-reduced-motion-sheet
+        className="fetchi-app theme-dark max-h-[82dvh] overflow-y-auto rounded-t-2xl border-x border-t border-border bg-[var(--fetchi-bg-elevated)] px-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] pt-4 text-text shadow-[0_-18px_52px_-26px_rgba(0,0,0,0.85)] lg:bottom-6 lg:left-auto lg:right-6 lg:max-h-[680px] lg:w-[420px] lg:rounded-2xl lg:border"
       >
-        <div className="mx-auto mb-6 h-1.5 w-14 rounded-full bg-text/28" aria-hidden="true" />
-        <SheetHeader className="mb-7 text-left">
-          <SheetTitle className="font-outfit text-[34px] font-semibold leading-none text-text">
+        <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-textMuted" aria-hidden="true" />
+        <SheetHeader className="mb-6 text-left">
+          <SheetTitle className="font-fetchi text-[24px] font-semibold leading-none tracking-[-0.02em] text-text">
             Filters
           </SheetTitle>
           <SheetDescription className="sr-only">
@@ -87,7 +89,7 @@ export function MapFilterSheet({ open, filters, onOpenChange, onApply, onReset }
 
         <div className="space-y-8">
           <section aria-labelledby="map-lifecycle-filter">
-            <h3 id="map-lifecycle-filter" className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-text/45">
+            <h3 id="map-lifecycle-filter" className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-textMuted">
               Lifecycle
             </h3>
             <div className="grid grid-cols-1 gap-2">
@@ -104,7 +106,7 @@ export function MapFilterSheet({ open, filters, onOpenChange, onApply, onReset }
           </section>
 
           <section aria-labelledby="map-data-filter">
-            <h3 id="map-data-filter" className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-text/45">
+            <h3 id="map-data-filter" className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-textMuted">
               Data availability
             </h3>
             <div className="grid grid-cols-1 gap-2">
@@ -137,14 +139,14 @@ export function MapFilterSheet({ open, filters, onOpenChange, onApply, onReset }
               onApply(draftFilters)
               onOpenChange(false)
             }}
-            className="min-h-[56px] rounded-full bg-text px-5 text-[16px] font-semibold text-bg transition hover:bg-text/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/55"
+            className="min-h-[44px] rounded-lg bg-fetchiAccent px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55"
           >
             Apply
           </button>
           <button
             type="button"
             onClick={resetDraft}
-            className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-raised px-5 text-[15px] font-semibold text-text transition hover:bg-text/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/55"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-fetchiOverlay px-5 text-[14px] font-semibold text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55"
           >
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             Reset
@@ -172,13 +174,18 @@ function FilterToggle({
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-[58px] items-center gap-4 rounded-[18px] bg-raised/80 px-4 text-left transition hover:bg-text/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/55"
+      className={cn(
+        'flex min-h-[52px] items-center gap-4 rounded-xl border px-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55',
+        checked
+          ? 'border-[var(--fetchi-accent-border)] bg-[var(--fetchi-accent-subtle)]'
+          : 'border-border bg-fetchiOverlay hover:bg-fetchiOverlayHover',
+      )}
       aria-pressed={checked}
     >
       <span
         className={cn(
-          'grid h-9 w-9 shrink-0 place-items-center rounded-full text-[12px] font-black',
-          iconClassName || 'bg-bg text-text',
+          'grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[12px] font-black',
+          iconClassName || 'bg-bg text-text2',
         )}
         aria-hidden="true"
       >
@@ -188,7 +195,7 @@ function FilterToggle({
       <span
         className={cn(
           'grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border transition',
-          checked ? 'border-text bg-text text-bg' : 'border-text/18 bg-bg text-transparent',
+          checked ? 'border-fetchiAccent bg-fetchiAccent text-white' : 'border-border bg-bg text-transparent',
         )}
         aria-hidden="true"
       >

@@ -6,14 +6,6 @@ import {
   TODAYS_RUN_PASS_REASONS,
   type TodaysRunPassReason,
 } from '@/lib/today/pass-reasons'
-import {
-  ACTION_BUTTON_HEIGHT,
-  CARD_RADIUS,
-  CARD_SHADOW,
-  CARD_SURFACE,
-  PRIMARY_BUTTON_SURFACE,
-  SECONDARY_BUTTON_SURFACE,
-} from './tokens'
 
 const REASON_LABEL: Record<TodaysRunPassReason, string> = {
   wrong_contact: 'Wrong contact',
@@ -42,19 +34,18 @@ export function PassReasonPanel({ businessName, pending, onCancel, onSubmit }: P
 
   return (
     <section
+      data-fetchi-pass-panel-v5
+      data-fetchi-flat-panel-v5
       role="dialog"
       aria-label="Why are you passing on this lead?"
       className={cn(
-        'p-6 lg:p-7 text-text',
-        CARD_SURFACE,
-        CARD_RADIUS,
-        CARD_SHADOW,
+        'rounded-xl border border-text/10 bg-raised p-6 text-text lg:p-7',
       )}
     >
       <div className="text-[10.5px] uppercase tracking-[0.12em] font-bold text-text/45">
         Tell Fetchi why
       </div>
-      <h3 className="font-outfit text-[20px] lg:text-[22px] font-bold mt-1.5 leading-tight">
+      <h3 className="mt-1.5 text-[20px] font-semibold leading-tight tracking-[-0.02em] lg:text-[22px]">
         Pass on {businessName}
       </h3>
       <p className="text-[13px] text-text/60 mt-1.5 leading-relaxed">
@@ -72,10 +63,11 @@ export function PassReasonPanel({ businessName, pending, onCancel, onSubmit }: P
               onClick={() => toggle(r)}
               aria-pressed={active}
               className={cn(
-                'inline-flex items-center rounded-full px-3.5 h-[36px] text-[13px] font-semibold transition-colors min-h-[44px] sm:min-h-0',
+                'inline-flex h-11 min-h-[44px] items-center rounded-full border px-3.5 text-[13px] font-semibold transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
                 active
-                  ? 'bg-text/10 text-text'
-                  : 'bg-white text-text/75 shadow-[inset_0_0_0_1px_rgba(45,43,42,0.12)] hover:text-text',
+                  ? 'border-semanticRed/30 bg-semanticRed/10 text-semanticRed'
+                  : 'border-text/10 bg-fetchiOverlay text-text/75 hover:bg-fetchiOverlayHover hover:text-text',
               )}
             >
               {REASON_LABEL[r]}
@@ -94,7 +86,7 @@ export function PassReasonPanel({ businessName, pending, onCancel, onSubmit }: P
           maxLength={240}
           rows={3}
           placeholder="Add context — Fetchi&rsquo;s feedback loop reads this."
-          className="mt-1.5 w-full rounded-xl bg-white px-3.5 py-2.5 text-[13.5px] leading-relaxed text-text shadow-[inset_0_0_0_1px_rgba(45,43,42,0.10)] placeholder:text-text/35 focus:outline-none focus:shadow-[inset_0_0_0_2px_rgba(88,147,126,0.5)]"
+          className="mt-1.5 min-h-[96px] w-full rounded-lg border border-text/10 bg-fetchiOverlay px-3.5 py-2.5 text-[13.5px] leading-relaxed text-text placeholder:text-text/35 focus:border-fetchiAccent focus:outline-none focus:ring-2 focus:ring-fetchiAccent/30"
         />
         <div className="text-right text-[11px] text-text/40 mt-1 tabular-nums">
           {note.length}/240
@@ -107,9 +99,9 @@ export function PassReasonPanel({ businessName, pending, onCancel, onSubmit }: P
           onClick={onCancel}
           disabled={pending}
           className={cn(
-            'inline-flex items-center justify-center rounded-[18px] text-[14px] font-semibold transition-all disabled:opacity-60',
-            ACTION_BUTTON_HEIGHT,
-            SECONDARY_BUTTON_SURFACE,
+            'inline-flex h-11 min-h-[44px] items-center justify-center rounded-lg border border-text/10 bg-fetchiOverlay px-4 text-[14px] font-semibold text-text/85 transition-colors',
+            'hover:bg-fetchiOverlayHover hover:text-text disabled:opacity-60',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
           )}
         >
           Cancel
@@ -119,9 +111,9 @@ export function PassReasonPanel({ businessName, pending, onCancel, onSubmit }: P
           onClick={() => onSubmit({ reasons, note: note.trim() ? note.trim() : null })}
           disabled={!canSubmit}
           className={cn(
-            'inline-flex items-center justify-center rounded-[18px] text-[14px] font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed',
-            ACTION_BUTTON_HEIGHT,
-            PRIMARY_BUTTON_SURFACE,
+            'inline-flex h-11 min-h-[44px] items-center justify-center rounded-lg bg-semanticRed px-4 text-[14px] font-semibold text-[#08090A] transition-colors',
+            'hover:bg-semanticRed/85 disabled:cursor-not-allowed disabled:opacity-60',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
           )}
         >
           {pending ? 'Saving…' : 'Submit & pass'}

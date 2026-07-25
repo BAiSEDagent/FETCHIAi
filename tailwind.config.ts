@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss'
 
-/** Fetchi v2.3 dual-surface Tailwind theme map. */
+/** Fetchi dual-surface theme map; authenticated customer UI opts into v5 aliases. */
 const config: Config = {
   darkMode: ['class'],
   content: [
@@ -43,6 +43,17 @@ const config: Config = {
         text: 'rgb(var(--text) / <alpha-value>)',
         text2: 'rgb(var(--text2) / <alpha-value>)',
         textMuted: 'rgb(var(--textMuted) / <alpha-value>)',
+        fetchiAccent: 'rgb(var(--fetchi-accent-rgb) / <alpha-value>)',
+        fetchiOverlay: 'var(--fetchi-overlay)',
+        fetchiOverlayHover: 'var(--fetchi-overlay-hover)',
+        evidence: 'rgb(var(--blue) / <alpha-value>)',
+        semanticGreen: 'rgb(var(--ok) / <alpha-value>)',
+        semanticAmber: 'rgb(var(--warn) / <alpha-value>)',
+        semanticRed: 'rgb(var(--bad) / <alpha-value>)',
+        lifecycleSaved: 'rgb(var(--life-saved) / <alpha-value>)',
+        lifecycleContacted: 'rgb(var(--life-contacted) / <alpha-value>)',
+        lifecycleWon: 'rgb(var(--life-won) / <alpha-value>)',
+        lifecycleLost: 'rgb(var(--life-lost) / <alpha-value>)',
         coral: 'rgb(var(--coral) / <alpha-value>)',
         coralDeep: 'rgb(var(--coralDeep) / <alpha-value>)',
         coralSoft: 'rgb(var(--coralSoft) / <alpha-value>)',

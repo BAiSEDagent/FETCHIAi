@@ -20,10 +20,10 @@ function formatDate(value: Date | string | null | undefined): string | null {
 function StatusPill({ label, tone }: { label: string; tone: 'ok' | 'warn' | 'muted' }) {
   const toneClass =
     tone === 'ok'
-      ? 'bg-ok/15 text-text2 border-ok/30'
+      ? 'bg-semanticGreen/15 text-semanticGreen border-semanticGreen/30'
       : tone === 'warn'
-      ? 'bg-warn/15 text-warn border-warn/30'
-      : 'bg-raised text-text/65 border-text/10'
+      ? 'bg-semanticAmber/15 text-semanticAmber border-semanticAmber/30'
+      : 'bg-fetchiOverlay text-text/65 border-text/10'
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border ${toneClass}`}
@@ -35,7 +35,7 @@ function StatusPill({ label, tone }: { label: string; tone: 'ok' | 'warn' | 'mut
 
 function ComingSoonNote() {
   return (
-    <div className="flex items-center justify-center rounded-xl border border-dashed border-text/15 bg-raised px-4 min-h-11 text-[13px] font-semibold text-text/55">
+    <div className="flex min-h-11 items-center justify-center rounded-lg border border-dashed border-text/15 bg-fetchiOverlay px-4 text-[13px] font-medium text-text/55">
       Plan selection coming soon
     </div>
   )
@@ -50,13 +50,13 @@ export default async function BillingPage() {
   // ── D. Missing / unsynced subscription row ──────────────────────────
   if (!sub) {
     return (
-      <div className="max-w-3xl">
+      <div data-fetchi-billing-v5 className="max-w-3xl">
         <MobileScreenHeader
           title="Plan & Billing"
           description="Your plan and billing details."
         />
         <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
-          <SectionCard title="Billing is syncing">
+          <SectionCard density="compact" title="Billing is syncing">
             <p className="text-[14px] text-text/65 leading-relaxed">
               {'Plan details are syncing — check back shortly.'}
             </p>
@@ -71,13 +71,14 @@ export default async function BillingPage() {
   // ── C. Past due ─────────────────────────────────────────────────────
   if (status === 'past_due') {
     return (
-      <div className="max-w-3xl">
+      <div data-fetchi-billing-v5 className="max-w-3xl">
         <MobileScreenHeader
           title="Plan & Billing"
           description="Your plan and billing details."
         />
         <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
           <SectionCard
+            density="compact"
             title="Payment needs attention"
             actions={<StatusPill label="Payment needed" tone="warn" />}
           >
@@ -98,18 +99,18 @@ export default async function BillingPage() {
     const resetAt = formatDate(sub.opportunitiesResetAt)
 
     return (
-      <div className="max-w-3xl">
+      <div data-fetchi-billing-v5 className="max-w-3xl">
         <MobileScreenHeader
           title="Plan & Billing"
           description="Your current plan, billing interval, and usage limit."
         />
         <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
-          <SettingsGroup title="Current subscription">
+          <SettingsGroup mode="rows" title="Current subscription">
             {planName && (
               <SettingsRow
                 label="Plan"
                 value={
-                  <span className="font-outfit text-[17px] font-semibold text-text capitalize">
+                  <span className="font-fetchi text-[17px] font-semibold capitalize tracking-[-0.02em] text-text">
                     {planName}
                   </span>
                 }
@@ -145,13 +146,14 @@ export default async function BillingPage() {
   // and to workspaces that only have old pre-payment data. Treated as
   // plan-required in customer-facing UI — never as an active paid plan.
   return (
-    <div className="max-w-3xl">
+    <div data-fetchi-billing-v5 className="max-w-3xl">
       <MobileScreenHeader
         title="Plan & Billing"
         description="Choose a plan before Fetchi starts delivering opportunities."
       />
       <div className="px-4 lg:px-7 pb-10 space-y-3 lg:space-y-4">
         <SectionCard
+          density="compact"
           title="Plan required"
           actions={<StatusPill label="Plan required" tone="muted" />}
         >

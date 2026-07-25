@@ -43,25 +43,26 @@ export function SelectedLeadSheet({ lead, open, onOpenChange }: Props) {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/25 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/25 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 motion-reduce:animate-none" />
         <DialogPrimitive.Content
           data-fetchi-theme-root
+          data-fetchi-brand-system="v5"
           data-cp25a-selected-lead-sheet
           data-cp25b-selected-lead-sheet
           data-cp25b1-selected-lead-sheet
-          className="theme-dark fixed inset-x-0 bottom-0 z-50 max-h-[78dvh] overflow-y-auto rounded-t-[30px] border border-b-0 border-text/10 bg-bg px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)] pt-3 text-text shadow-2xl shadow-black/50 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom sm:px-5 lg:bottom-6 lg:left-auto lg:right-6 lg:max-h-[720px] lg:w-[430px] lg:rounded-[30px] lg:border-b"
+          className="fetchi-app theme-dark fixed inset-x-0 bottom-0 z-50 max-h-[78dvh] overflow-y-auto rounded-t-2xl border border-b-0 border-border bg-[var(--fetchi-bg-elevated)] px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)] pt-3 text-text shadow-[0_-20px_54px_-24px_rgba(0,0,0,0.9)] data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom motion-reduce:animate-none sm:px-5 lg:bottom-6 lg:left-auto lg:right-6 lg:max-h-[720px] lg:w-[430px] lg:rounded-2xl lg:border-b"
         >
-          <DialogPrimitive.Close className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-raised/75 text-text/65 transition hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/50">
+          <DialogPrimitive.Close className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-lg bg-fetchiOverlay text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55">
             <X className="h-[18px] w-[18px]" aria-hidden="true" />
             <span className="sr-only">Close lead details</span>
           </DialogPrimitive.Close>
-          <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-text/25" aria-hidden="true" />
+          <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-textMuted" aria-hidden="true" />
           {lead && (
             <>
               <div className="mb-5 pr-11 text-left">
                 <DialogPrimitive.Title
                   className={cn(
-                    'break-words font-outfit font-semibold text-text',
+                    'break-words font-fetchi font-semibold tracking-[-0.02em] text-text',
                     titleSizeClass,
                   )}
                 >
@@ -70,13 +71,13 @@ export function SelectedLeadSheet({ lead, open, onOpenChange }: Props) {
                 <DialogPrimitive.Description className="sr-only">
                   Read-only saved lead details.
                 </DialogPrimitive.Description>
-                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-medium leading-snug text-text/65">
+                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-medium leading-snug text-text2">
                   {lead.category && <span>{lead.category}</span>}
                   {lead.category && marketLabel && <span aria-hidden="true">·</span>}
                   {marketLabel && <span>{marketLabel}</span>}
                 </div>
                 {lead.address && (
-                  <p className="mt-2.5 flex items-start gap-2 text-[13px] leading-relaxed text-text/50">
+                  <p className="mt-2.5 flex items-start gap-2 text-[13px] leading-relaxed text-textMuted">
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                     <span>{lead.address.trim()}</span>
                   </p>
@@ -114,7 +115,7 @@ export function SelectedLeadSheet({ lead, open, onOpenChange }: Props) {
                 />
               </div>
 
-              <dl className="mt-5 divide-y divide-text/10 border-y border-text/10">
+              <dl className="mt-5 divide-y divide-border border-y border-border">
                 <MetadataRow
                   label="Lifecycle"
                   value={
@@ -151,8 +152,8 @@ function MetadataRow({
 }) {
   return (
     <div className="grid grid-cols-[78px_1fr] gap-3 py-3 text-[13px] leading-relaxed">
-      <dt className="text-text/45">{label}</dt>
-      <dd className="min-w-0 text-right font-medium text-text/80">{value}</dd>
+      <dt className="text-textMuted">{label}</dt>
+      <dd className="min-w-0 text-right font-medium text-text">{value}</dd>
     </div>
   )
 }
@@ -175,10 +176,12 @@ function ActionTile({
   internal?: boolean
 }) {
   const className = cn(
-    'inline-flex min-h-[78px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 py-3 text-center text-[11.5px] font-semibold leading-tight transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/50',
+    'inline-flex min-h-[78px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-3 text-center text-[11.5px] font-semibold leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fetchiAccent/55',
     disabled
-      ? 'cursor-not-allowed bg-raised/35 text-text/35'
-      : 'bg-raised text-text hover:bg-text/10 active:scale-[0.98]',
+      ? 'cursor-not-allowed border-border bg-surface text-textMuted opacity-55'
+      : internal
+        ? 'border-[var(--fetchi-accent-border)] bg-[var(--fetchi-accent-subtle)] text-fetchiAccent hover:bg-fetchiOverlayHover'
+        : 'border-border bg-fetchiOverlay text-evidence hover:bg-fetchiOverlayHover',
   )
 
   if (disabled || !href) {

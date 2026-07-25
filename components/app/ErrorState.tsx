@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { CircleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -13,16 +14,16 @@ export function ErrorState({ title, body, retry, className }: Props) {
     <div
       role="alert"
       className={cn(
-        'rounded-2xl bg-coral/8 border border-coral/20 px-5 py-5 lg:px-6 lg:py-6',
+        'rounded-xl bg-bad/[0.08] border border-bad/20 px-5 py-5 lg:px-6 lg:py-6',
         className,
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-full bg-coral/15 text-coral flex items-center justify-center font-bold flex-shrink-0">
-          !
+        <div className="w-9 h-9 rounded-lg bg-bad/15 text-bad flex items-center justify-center flex-shrink-0" aria-hidden>
+          <CircleAlert className="h-[18px] w-[18px]" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-outfit text-[16px] font-semibold text-text">
+          <h3 className="font-fetchi text-[15px] font-semibold text-text">
             {title}
           </h3>
           {body && (
