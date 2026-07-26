@@ -1,13 +1,4 @@
 import * as React from 'react'
-import {
-  Bookmark,
-  Circle,
-  CircleCheck,
-  CircleDashed,
-  CircleX,
-  Phone,
-  type LucideIcon,
-} from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -35,15 +26,12 @@ const STATE_CLASS: Record<StatusGlyphState, string> = {
   lost: 'text-lifecycleLost',
 }
 
-const CENTER_ICON: Partial<Record<StatusGlyphState, LucideIcon>> = {
-  saved: Bookmark,
-  contacted: Phone,
-}
-
-const CENTER_ICON_SCALE: Partial<Record<StatusGlyphState, number>> = {
-  saved: 0.425,
-  contacted: 0.35,
-}
+const OUTER_DIAMETER = 40
+const OUTER_RING_RADIUS = 18
+const OUTER_RING_STROKE = 4
+const SAVED_DOT_RADIUS = 7.2
+const CONTACTED_DISC_RADIUS = 10.4
+const TERMINAL_RADIUS = 20
 
 const StatusGlyph = React.forwardRef<HTMLSpanElement, StatusGlyphProps>(
   (
@@ -51,25 +39,18 @@ const StatusGlyph = React.forwardRef<HTMLSpanElement, StatusGlyphProps>(
       className,
       size = 16,
       state = 'new',
-      strokeWidth = 1.65,
+      strokeWidth: legacyStrokeWidth,
       style,
       ...props
     },
     ref,
   ) => {
-    const CenterIcon = CENTER_ICON[state]
-    const centerIconSize = Math.max(
-      8,
-      Math.round(size * (CENTER_ICON_SCALE[state] ?? 0.425)),
-    )
-    const RingIcon =
-      state === 'reviewing'
-        ? CircleDashed
-        : state === 'won'
-          ? CircleCheck
-          : state === 'lost'
-            ? CircleX
-            : Circle
+    // The legacy prop remains accepted for call-site compatibility. Lifecycle
+    // geometry is intentionally fixed so every state shares literal v5 bounds.
+    void legacyStrokeWidth
+
+    const isTerminal = state === 'won' || state === 'lost'
+    const isReviewing = state === 'reviewing'
 
     return (
       <span
@@ -83,19 +64,79 @@ const StatusGlyph = React.forwardRef<HTMLSpanElement, StatusGlyphProps>(
         style={{ width: size, height: size, ...style }}
         {...props}
       >
-        <RingIcon
+        <svg
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full"
-          strokeWidth={strokeWidth}
-        />
-        {CenterIcon ? (
-          <CenterIcon
-            aria-hidden="true"
-            data-fetchi-status-center-icon={state}
-            size={centerIconSize}
-            strokeWidth={strokeWidth}
-          />
-        ) : null}
+          className="block h-full w-full"
+          data-fetchi-status-outer-diameter={OUTER_DIAMETER}
+          focusable="false"
+          shapeRendering="geometricPrecision"
+          viewBox={`0 0 ${OUTER_DIAMETER} ${OUTER_DIAMETER}`}
+        >
+          {isTerminal ? (
+            <circle
+              cx="20"
+              cy="20"
+              data-fetchi-status-terminal-fill={state}
+              fill="currentColor"
+              r={TERMINAL_RADIUS}
+            />
+          ) : (
+            <circle
+              cx="20"
+              cy="20"
+              data-fetchi-status-outer-ring={state}
+              fill="none"
+              r={OUTER_RING_RADIUS}
+              stroke="currentColor"
+              strokeDasharray={isReviewing ? '5 9.137' : undefined}
+              strokeLinecap={isReviewing ? 'round' : undefined}
+              strokeWidth={OUTER_RING_STROKE}
+            />
+          )}
+
+          {state === 'saved' ? (
+            <circle
+              cx="20"
+              cy="20"
+              data-fetchi-status-center-dot="saved"
+              fill="currentColor"
+              r={SAVED_DOT_RADIUS}
+            />
+          ) : null}
+
+          {state === 'contacted' ? (
+            <circle
+              cx="20"
+              cy="20"
+              data-fetchi-status-center-disc="contacted"
+              fill="currentColor"
+              r={CONTACTED_DISC_RADIUS}
+            />
+          ) : null}
+
+          {state === 'won' ? (
+            <path
+              d="M12 20.5 17.5 26 28 14.5"
+              data-fetchi-status-terminal-mark="check"
+              fill="none"
+              stroke="#08090A"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3.2"
+            />
+          ) : null}
+
+          {state === 'lost' ? (
+            <path
+              d="M12.5 12.5 27.5 27.5 M27.5 12.5 12.5 27.5"
+              data-fetchi-status-terminal-mark="x"
+              fill="none"
+              stroke="#08090A"
+              strokeLinecap="round"
+              strokeWidth="3.2"
+            />
+          ) : null}
+        </svg>
       </span>
     )
   },

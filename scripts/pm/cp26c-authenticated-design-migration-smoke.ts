@@ -53,14 +53,18 @@ function approvedFence(plan: string): Set<string> {
 
 async function main() {
   const coverageIndicatorPath = 'components/fetchi-ui/CoverageIndicator.tsx'
+  const signalBarsPath = 'components/fetchi-ui/SignalBars.tsx'
   const sourceAttributionPath = 'components/fetchi-ui/SourceAttribution.tsx'
   const statusGlyphPath = 'components/fetchi-ui/StatusGlyph.tsx'
   assert(existsSync(coverageIndicatorPath), 'The reusable CoverageIndicator primitive is missing')
+  assert(existsSync(signalBarsPath), 'The reusable SignalBars primitive is missing')
   assert(existsSync(sourceAttributionPath), 'The reusable SourceAttribution primitive is missing')
   assert(existsSync(statusGlyphPath), 'The reusable StatusGlyph primitive is missing')
+  const statusGlyphSource = source(statusGlyphPath)
 
-  const [{ CoverageIndicator }, { SourceAttribution }, { StatusGlyph }] = await Promise.all([
+  const [{ CoverageIndicator }, { SignalBars }, { SourceAttribution }, { StatusGlyph }] = await Promise.all([
     import('../../components/fetchi-ui/CoverageIndicator'),
+    import('../../components/fetchi-ui/SignalBars'),
     import('../../components/fetchi-ui/SourceAttribution'),
     import('../../components/fetchi-ui/StatusGlyph'),
   ])
@@ -104,6 +108,146 @@ async function main() {
       !partialCoverageMarkup.includes('lifecycle'),
     'CoverageIndicator icons must not become circular or lifecycle-colored controls',
   )
+  const coverageCases = [
+    {
+      label: 'phone unavailable only',
+      props: { phoneAvailable: false, websiteAvailable: true, addressAvailable: true },
+      unavailable: 1,
+    },
+    {
+      label: 'website unavailable only',
+      props: { phoneAvailable: true, websiteAvailable: false, addressAvailable: true },
+      unavailable: 1,
+    },
+    {
+      label: 'address unavailable only',
+      props: { phoneAvailable: true, websiteAvailable: true, addressAvailable: false },
+      unavailable: 1,
+    },
+    {
+      label: 'phone and website unavailable',
+      props: { phoneAvailable: false, websiteAvailable: false, addressAvailable: true },
+      unavailable: 2,
+    },
+    {
+      label: 'website and address unavailable',
+      props: { phoneAvailable: true, websiteAvailable: false, addressAvailable: false },
+      unavailable: 2,
+    },
+    {
+      label: 'all unavailable',
+      props: { phoneAvailable: false, websiteAvailable: false, addressAvailable: false },
+      unavailable: 3,
+    },
+    {
+      label: 'all available',
+      props: { phoneAvailable: true, websiteAvailable: true, addressAvailable: true },
+      unavailable: 0,
+    },
+  ] as const
+  const coverageCaseMarkup = coverageCases.map(({ label, props, unavailable }) => ({
+    label,
+    markup: renderToStaticMarkup(createElement(CoverageIndicator, props)),
+    unavailable,
+  }))
+  for (const { label, markup, unavailable } of coverageCaseMarkup) {
+    assert.equal(
+      (markup.match(/data-fetchi-coverage-strike="true"/g) ?? []).length,
+      unavailable,
+      `CoverageIndicator strike count changed for ${label}`,
+    )
+  }
+  const unavailableCoverageMarkup = coverageCaseMarkup.find(
+    ({ label }) => label === 'all unavailable',
+  )?.markup ?? ''
+  assert.equal(
+    (unavailableCoverageMarkup.match(/data-fetchi-coverage-item=/g) ?? []).length,
+    3,
+    'CoverageIndicator must retain three separate item footprints',
+  )
+  assert.equal(
+    (unavailableCoverageMarkup.match(/data-fetchi-coverage-strike-angle="-45"/g) ?? []).length,
+    3,
+    'Every missing coverage item must use the same exact 45-degree strike',
+  )
+  assert.equal(
+    (unavailableCoverageMarkup.match(/viewBox="0 0 15 15"/g) ?? []).length,
+    3,
+    'Every missing strike must be contained inside its own 15px icon footprint',
+  )
+  assert.equal(
+    (unavailableCoverageMarkup.match(/x1="2" y1="13" x2="13" y2="2"/g) ?? []).length,
+    3,
+    'Every missing strike must use identical contained endpoints',
+  )
+  assert.equal(
+    (unavailableCoverageMarkup.match(/stroke-width="1.5"/g) ?? []).length,
+    3,
+    'Every missing strike must use the canonical 1.5px hairline',
+  )
+  assert.equal(
+    (
+      unavailableCoverageMarkup.match(
+        /stroke="currentColor" stroke-linecap="round" stroke-width="1.5" x1="2"/g,
+      ) ?? []
+    ).length,
+    3,
+    'Every missing strike must use matching rounded endpoints',
+  )
+  assert(
+    !unavailableCoverageMarkup.includes('left-[-2px]') &&
+      !unavailableCoverageMarkup.includes('w-5') &&
+      !unavailableCoverageMarkup.includes('rotate-45'),
+    'CoverageIndicator strikes must not depend on oversized or negatively offset CSS transforms',
+  )
+
+  const signalBarsMarkup = Object.fromEntries(
+    (['unchecked', 'none', 'weak', 'moderate', 'strong', 'time-sensitive'] as const).map(
+      level => [
+        level,
+        renderToStaticMarkup(createElement(SignalBars, { level, size: 16 })),
+      ],
+    ),
+  )
+  for (const [level, markup] of Object.entries(signalBarsMarkup)) {
+    assert(
+      markup.includes(`data-fetchi-signal-level="${level}"`) &&
+        markup.includes('role="img"') &&
+        markup.includes('viewBox="0 0 16 16"'),
+      `SignalBars ${level} must expose its semantic level and accessible SVG geometry`,
+    )
+  }
+  assert(
+    signalBarsMarkup.unchecked.includes('aria-label="Signal not checked"') &&
+      signalBarsMarkup.unchecked.includes('data-fetchi-signal-unchecked-bar=') &&
+      signalBarsMarkup.unchecked.includes('stroke-dasharray=') &&
+      !signalBarsMarkup.unchecked.includes('data-fetchi-signal-none-dot=') &&
+      !/green|amber|blue|lifecycle|evidence/i.test(signalBarsMarkup.unchecked),
+    'Unchecked SignalBars must use a neutral dashed three-bar outline with the exact honest label',
+  )
+  assert.equal(
+    (signalBarsMarkup.unchecked.match(/data-fetchi-signal-unchecked-bar=/g) ?? []).length,
+    3,
+    'Unchecked SignalBars must retain the compact three-bar signal shape',
+  )
+  assert(
+    signalBarsMarkup.none.includes('aria-label="No signal"') &&
+      signalBarsMarkup.none.includes('data-fetchi-signal-none-dot=') &&
+      !signalBarsMarkup.none.includes('data-fetchi-signal-unchecked-bar='),
+    'Completed-analysis No signal must remain visually distinct from unchecked',
+  )
+  assert(
+    signalBarsMarkup.weak.includes('aria-label="Weak"') &&
+      signalBarsMarkup.moderate.includes('aria-label="Moderate"') &&
+      signalBarsMarkup.strong.includes('aria-label="Strong"') &&
+      signalBarsMarkup['time-sensitive'].includes('aria-label="Time-sensitive"'),
+    'SignalBars must retain accessible labels for the complete approved state family',
+  )
+  assert(
+    signalBarsMarkup.strong.includes('text-fetchiAccent') &&
+      !/57CE95|green|semanticGreen|lifecycleWon/i.test(signalBarsMarkup.strong),
+    'Strong SignalBars must use the canonical indigo interaction accent and never the green success treatment',
+  )
 
   const sourceAttributionMarkup = renderToStaticMarkup(createElement(SourceAttribution, {
     source: 'Google Maps',
@@ -133,36 +277,82 @@ async function main() {
     'SourceAttribution must retain the canonical permits source icon mapping',
   )
 
-  const savedStatusGlyphMarkup = renderToStaticMarkup(createElement(StatusGlyph, {
-    state: 'saved',
-    size: 40,
-  }))
-  assert(
-    savedStatusGlyphMarkup.includes('data-fetchi-status-glyph="saved"') &&
-      savedStatusGlyphMarkup.includes('lucide-circle') &&
-      savedStatusGlyphMarkup.includes('lucide-bookmark'),
-    'Saved StatusGlyph must retain its hollow amber ring and use a centered Lucide bookmark',
+  const statusGlyphMarkup = Object.fromEntries(
+    (['new', 'reviewing', 'saved', 'contacted', 'won', 'lost'] as const).map((state) => [
+      state,
+      renderToStaticMarkup(createElement(StatusGlyph, { state, size: 40 })),
+    ]),
   )
   assert(
-    !savedStatusGlyphMarkup.includes('lucide-circle-dot') &&
-      !savedStatusGlyphMarkup.includes('data-fetchi-status-center-dot'),
-    'Saved StatusGlyph must not retain a center dot',
-  )
-
-  const contactedStatusGlyphMarkup = renderToStaticMarkup(createElement(StatusGlyph, {
-    state: 'contacted',
-    size: 40,
-  }))
-  assert(
-    contactedStatusGlyphMarkup.includes('data-fetchi-status-glyph="contacted"') &&
-      contactedStatusGlyphMarkup.includes('lucide-circle') &&
-      contactedStatusGlyphMarkup.includes('lucide-phone'),
-    'Contacted StatusGlyph must retain its hollow blue ring and use a centered Lucide phone',
+    Object.values(statusGlyphMarkup).every((markup) =>
+      markup.includes('data-fetchi-status-outer-diameter="40"') &&
+      markup.includes('viewBox="0 0 40 40"')
+    ),
+    'Every StatusGlyph state must share an explicit 40px outer coordinate system',
   )
   assert(
-    !contactedStatusGlyphMarkup.includes('lucide-circle-dot') &&
-      !contactedStatusGlyphMarkup.includes('data-fetchi-status-center-dot'),
-    'Contacted StatusGlyph must not retain a center dot',
+    statusGlyphMarkup.new.includes('data-fetchi-status-glyph="new"') &&
+      statusGlyphMarkup.new.includes('data-fetchi-status-outer-ring="new"') &&
+      statusGlyphMarkup.new.includes('r="18"') &&
+      statusGlyphMarkup.new.includes('stroke-width="4"') &&
+      statusGlyphMarkup.new.includes('fill="none"') &&
+      !statusGlyphMarkup.new.includes('data-fetchi-status-center'),
+    'New StatusGlyph must use an explicit 4px neutral hollow ring with a transparent center',
+  )
+  assert(
+    statusGlyphMarkup.reviewing.includes('data-fetchi-status-glyph="reviewing"') &&
+      statusGlyphMarkup.reviewing.includes('data-fetchi-status-outer-ring="reviewing"') &&
+      statusGlyphMarkup.reviewing.includes('r="18"') &&
+      statusGlyphMarkup.reviewing.includes('stroke-width="4"') &&
+      statusGlyphMarkup.reviewing.includes('stroke-dasharray="5 9.137"') &&
+      statusGlyphMarkup.reviewing.includes('stroke-linecap="round"') &&
+      statusGlyphMarkup.reviewing.includes('fill="none"') &&
+      !statusGlyphMarkup.reviewing.includes('data-fetchi-status-center'),
+    'Reviewing StatusGlyph must use the same explicit 4px ring with evenly spaced rounded dashes',
+  )
+  assert(
+    statusGlyphMarkup.saved.includes('data-fetchi-status-glyph="saved"') &&
+      statusGlyphMarkup.saved.includes('data-fetchi-status-outer-ring="saved"') &&
+      statusGlyphMarkup.saved.includes('stroke-width="4"') &&
+      statusGlyphMarkup.saved.includes('data-fetchi-status-center-dot="saved"') &&
+      statusGlyphMarkup.saved.includes('r="7.2"') &&
+      statusGlyphMarkup.saved.includes('fill="currentColor"'),
+    'Saved StatusGlyph must use a 4px amber ring and a solid 14.4px center dot',
+  )
+  assert(
+    statusGlyphMarkup.contacted.includes('data-fetchi-status-glyph="contacted"') &&
+      statusGlyphMarkup.contacted.includes('data-fetchi-status-outer-ring="contacted"') &&
+      statusGlyphMarkup.contacted.includes('stroke-width="4"') &&
+      statusGlyphMarkup.contacted.includes('data-fetchi-status-center-disc="contacted"') &&
+      statusGlyphMarkup.contacted.includes('r="10.4"') &&
+      statusGlyphMarkup.contacted.includes('fill="currentColor"') &&
+      !statusGlyphMarkup.contacted.includes('data-fetchi-status-inner-ring') &&
+      !statusGlyphMarkup.contacted.includes('fill="none" data-fetchi-status-center'),
+    'Contacted StatusGlyph must use a 4px blue ring and a solid 20.8px center disc without a hole',
+  )
+  assert(
+    statusGlyphMarkup.won.includes('data-fetchi-status-glyph="won"') &&
+      statusGlyphMarkup.won.includes('data-fetchi-status-terminal-fill="won"') &&
+      statusGlyphMarkup.won.includes('r="20"') &&
+      statusGlyphMarkup.won.includes('data-fetchi-status-terminal-mark="check"') &&
+      !statusGlyphMarkup.won.includes('lucide-check'),
+    'Won StatusGlyph must use the full 40px outer bounds with a compact centered dark check',
+  )
+  assert(
+    statusGlyphMarkup.lost.includes('data-fetchi-status-glyph="lost"') &&
+      statusGlyphMarkup.lost.includes('data-fetchi-status-terminal-fill="lost"') &&
+      statusGlyphMarkup.lost.includes('r="20"') &&
+      statusGlyphMarkup.lost.includes('data-fetchi-status-terminal-mark="x"') &&
+      !statusGlyphMarkup.lost.includes('lucide-x'),
+    'Lost StatusGlyph must use the full 40px outer bounds with a compact centered dark x',
+  )
+  assert(
+    !Object.values(statusGlyphMarkup).some((markup) =>
+      markup.includes('lucide-') ||
+      markup.includes('data-fetchi-status-center-icon') ||
+      markup.includes('data-fetchi-status-inner-ring')
+    ),
+    'StatusGlyph must use literal lifecycle geometry without Lucide, bookmark, phone, or hollow-center substitutions',
   )
 
   const plan = source('docs/superpowers/plans/2026-07-22-cp26c-authenticated-design-migration.md')
@@ -178,6 +368,9 @@ async function main() {
   const signOutControl = source('components/app/SignOutControl.tsx')
   const sweep = source('app/app/sweep/SweepClient.tsx')
   const myLeads = source('components/app/MyLeadsView.tsx')
+  const leadActionSheetPath = 'components/app/LeadActionSheet.tsx'
+  assert(existsSync(leadActionSheetPath), 'The focused My Leads LeadActionSheet presentation is missing')
+  const leadActionSheet = source(leadActionSheetPath)
   const leadCard = source('components/app/LeadCard.tsx')
   const glyphTile = source('components/app/GlyphTile.tsx')
   const leadDetail = source('app/app/leads/[id]/page.tsx')
@@ -275,7 +468,119 @@ async function main() {
   assert(myLeads.includes('data-fetchi-my-leads-v5'), 'My Leads must declare its v5 mailbox surface')
   assert(myLeads.includes('data-fetchi-search-control'), 'My Leads must expose the v5 search-control contract')
   assert(myLeads.includes('data-fetchi-export-control'), 'My Leads must expose the v5 export-control contract')
-  assert(myLeads.includes('data-fetchi-action-sheet-v5'), 'My Leads must expose the v5 action-sheet contract')
+  assert(leadActionSheet.includes('data-fetchi-action-sheet-v5'), 'My Leads must expose the v5 action-sheet contract')
+  assert(
+    myLeads.includes("import { LeadActionSheet } from '@/components/app/LeadActionSheet'") &&
+      myLeads.includes('<LeadActionSheet'),
+    'My Leads must render the focused reusable LeadActionSheet without changing its existing behavior wiring',
+  )
+  assert(
+    leadActionSheet.includes("from '@/components/fetchi-ui/StatusGlyph'") &&
+      leadActionSheet.includes("import { CoverageIndicator } from '@/components/fetchi-ui/CoverageIndicator'") &&
+      leadActionSheet.includes("from '@/components/fetchi-ui/SignalBars'") &&
+      leadActionSheet.includes("import { SourceAttribution } from '@/components/fetchi-ui/SourceAttribution'"),
+    'LeadActionSheet must compose the frozen production lifecycle, coverage, signal, and source primitives',
+  )
+  assert(
+    leadActionSheet.includes('data-fetchi-action-sheet-header') &&
+      leadActionSheet.includes('data-fetchi-action-sheet-drag-handle') &&
+      leadActionSheet.includes('size={40}') &&
+      leadActionSheet.includes('displayedSignal.evidenceDate') &&
+      leadActionSheet.includes('displayedSignal.whyNow') &&
+      leadActionSheet.includes('row.sourceUrl') &&
+      leadActionSheet.includes('Signal not checked') &&
+      leadActionSheet.includes('level={displayedSignal.level}'),
+    'LeadActionSheet must use a native bottom-sheet handle, lifecycle glyph header, and dated source-linked time-sensitive evidence gate',
+  )
+  const actionLifecycleSelector =
+    leadActionSheet.split('data-fetchi-action-sheet-lifecycle-selector')[1]?.slice(0, 4200) ?? ''
+  const actionSignalRegion =
+    leadActionSheet.split('data-fetchi-action-sheet-signal-summary')[1]?.slice(0, 4200) ?? ''
+  assert(
+    leadActionSheet.indexOf('data-fetchi-action-sheet-lifecycle-selector') <
+      leadActionSheet.indexOf('data-fetchi-action-sheet-signal-summary') &&
+      actionLifecycleSelector.includes('role="group"') &&
+      actionLifecycleSelector.includes('aria-pressed={isSelected}') &&
+      !actionLifecycleSelector.includes('role="radiogroup"') &&
+      !actionLifecycleSelector.includes('role="radio"') &&
+      !actionLifecycleSelector.includes('aria-checked') &&
+      actionLifecycleSelector.includes('if (isSelected) return') &&
+      leadActionSheet.includes("actionLabel: 'Saved'") &&
+      leadActionSheet.includes("actionLabel: 'Contacted'") &&
+      leadActionSheet.includes("actionLabel: 'Won'") &&
+      leadActionSheet.includes("actionLabel: 'Dismiss'"),
+    'LeadActionSheet must expose its immediate-action lifecycle selector as a pressed-button group directly after the header',
+  )
+  const lifecycleLabelResolver =
+    leadActionSheet.split('function lifecycleSelectorLabels')[1]?.slice(0, 1500) ?? ''
+  assert(
+    lifecycleLabelResolver.includes("currentStatus === 'lost'") &&
+      lifecycleLabelResolver.includes("? 'Lost'") &&
+      lifecycleLabelResolver.includes(": 'Dismissed'") &&
+      lifecycleLabelResolver.includes('accessibleLabel: `${currentLabel}, current lifecycle`') &&
+      lifecycleLabelResolver.includes('visibleLabel: meta.actionLabel') &&
+      lifecycleLabelResolver.includes('accessibleLabel: meta.accessibleLabel'),
+    'LeadActionSheet must truthfully label selected Lost and Dismissed rows while retaining Dismiss as the unselected terminal action',
+  )
+  assert(
+    actionSignalRegion.includes(
+      '<SignalBars aria-hidden="true" level={displayedSignal.level} />',
+    ) &&
+      actionSignalRegion.includes('<span>{displayedSignal.label}</span>'),
+    'LeadActionSheet must hide the redundant signal glyph announcement while preserving the visible signal label',
+  )
+  assert(
+    leadActionSheet.includes(
+      'Saved from Fetch. This lead has not been checked for fresh buying signals yet.',
+    ) &&
+      !leadActionSheet.includes('No fresh signal yet') &&
+      !leadActionSheet.includes('Fetchi found nothing'),
+    'LeadActionSheet unchecked signal copy must truthfully state that analysis has not run',
+  )
+  const actionTruthRow = leadActionSheet.split('data-fetchi-action-sheet-truth-row')[1]?.slice(0, 1800) ?? ''
+  assert(
+    actionTruthRow.indexOf('<CoverageIndicator') >= 0 &&
+      !actionTruthRow.includes('<SignalBars') &&
+      actionTruthRow.indexOf('<SourceAttribution') > actionTruthRow.indexOf('<CoverageIndicator'),
+    'LeadActionSheet provenance row must preserve coverage then source without repeating SignalBars',
+  )
+  assert(
+    leadActionSheet.includes('row.sourceUrl ? (') &&
+      leadActionSheet.includes('href={row.sourceUrl}') &&
+      leadActionSheet.includes('data-fetchi-source-link'),
+    'LeadActionSheet must link source attribution only when a persisted source URL exists',
+  )
+  for (const route of ['Call', 'Email', 'Website', 'Directions']) {
+    assert(leadActionSheet.includes(route), `LeadActionSheet is missing the truthful ${route} route`)
+  }
+  for (const forbidden of ['No phone', 'No website', 'No address', 'Source:', 'Saved {displayDate', 'Website:']) {
+    assert(!leadActionSheet.includes(forbidden), `LeadActionSheet must not retain duplicate or disabled metadata: ${forbidden}`)
+  }
+  assert(
+    leadActionSheet.includes('data-fetchi-action-sheet-contact-routes') &&
+      leadActionSheet.includes('data-fetchi-action-sheet-utilities') &&
+      !leadActionSheet.includes('data-fetchi-action-sheet-lifecycle"'),
+    'LeadActionSheet must keep contact routes and utilities separate and remove the old bottom lifecycle action group',
+  )
+  assert(
+    leadActionSheet.includes('onOpenAutoFocus') &&
+      !leadActionSheet.includes('detailLine(row) || row.source'),
+    'LeadActionSheet must prevent default tile focus and must not duplicate source attribution in the header',
+  )
+  assert(
+    leadActionSheet.includes("actionLabel: 'Contacted'") &&
+      leadActionSheet.includes("actionLabel: 'Won'") &&
+      leadActionSheet.includes("actionLabel: 'Dismiss'") &&
+      !leadActionSheet.includes("actionLabel: 'Mark as"),
+    'LeadActionSheet lifecycle labels must be compact while accessible names preserve mutation intent',
+  )
+  assert(
+    !leadActionSheet.includes('bg-lifecycleSaved/10') &&
+      !leadActionSheet.includes('bg-lifecycleContacted/10') &&
+      !leadActionSheet.includes('bg-lifecycleWon/10') &&
+      !leadActionSheet.includes('bg-lifecycleLost/10'),
+    'LeadActionSheet lifecycle containers must stay neutral; lifecycle color belongs only to glyphs',
+  )
   assert(myLeads.includes('text-[22px]') && !myLeads.includes('text-[32px]'), 'My Leads mobile title must use the compact reference hierarchy')
   assert(myLeads.includes('leadCountLabel') && myLeads.includes('updatedLabel'), 'My Leads subtitle must remain grounded in saved-lead count and persisted update age')
   assert(!myLeads.includes('opportunities') && !myLeads.includes('new today'), 'My Leads must not relabel saved leads as opportunities or invent new-today truth')
@@ -317,12 +622,17 @@ async function main() {
       lifecycleGlyphWrapper.includes('aria-label={statusLabel(row.lifecycleStatus)}'),
     'My Leads lifecycle glyph wrapper must expose the truthful lifecycle label through explicit image semantics',
   )
+  const dismissedStatusMeta = myLeads.split('dismissed: {')[1]?.split('},')[0] ?? ''
+  assert(
+    dismissedStatusMeta.includes("label: 'Dismissed'") &&
+      myLeads.includes("state={row.lifecycleStatus === 'dismissed' ? 'lost' : row.lifecycleStatus}"),
+    'Dismissed rows must retain a truthful accessible label while reusing the Lost visual grammar',
+  )
   assert(
     myLeads.includes("import { StatusGlyph } from '@/components/fetchi-ui/StatusGlyph'") &&
       myLeads.includes('<StatusGlyph') &&
-      !myLeads.includes('CircleDot') &&
       !myLeads.includes('const StatusGlyph = meta.glyphIcon'),
-    'My Leads must consume the reusable bookmark/phone StatusGlyph without local center-dot glyphs',
+    'My Leads must consume the reusable six-state StatusGlyph without hardcoded local lifecycle geometry',
   )
   assert(
     myLeads.includes("import { CoverageIndicator } from '@/components/fetchi-ui/CoverageIndicator'") &&
@@ -332,10 +642,18 @@ async function main() {
   assert(myLeads.includes('function hasAddress('), 'My Leads address coverage must check the persisted address field directly')
   const denseRowMetadata = myLeads.split('data-fetchi-dense-row')[1]?.split('data-fetchi-row-metadata')[0] ?? ''
   const coverageIndex = denseRowMetadata.indexOf('<CoverageIndicator')
+  const signalIndex = denseRowMetadata.indexOf('<SignalBars')
   const sourceIndex = denseRowMetadata.indexOf('<SourceAttribution')
+  const denseSignalSource =
+    signalIndex >= 0
+      ? denseRowMetadata.slice(
+          signalIndex,
+          denseRowMetadata.indexOf('/>', signalIndex) + 2,
+        )
+      : ''
   assert(
-    coverageIndex >= 0 && sourceIndex > coverageIndex,
-    'My Leads dense metadata must keep coverage visible before source attribution',
+    coverageIndex >= 0 && signalIndex > coverageIndex && sourceIndex > signalIndex,
+    'My Leads dense metadata must keep coverage, unchecked signal, and source as separate ordered channels',
   )
   for (const fieldMapping of [
     'phoneAvailable={hasPhone(row)}',
@@ -346,9 +664,31 @@ async function main() {
     assert(denseRowMetadata.includes(fieldMapping), `My Leads dense metadata lost its truthful field mapping: ${fieldMapping}`)
   }
   assert(
-    denseRowMetadata.includes('className="min-w-0 shrink-0"') &&
+    denseRowMetadata.includes('level="unchecked"') &&
+      denseRowMetadata.includes('data-fetchi-dense-signal-state') &&
+      !denseSignalSource.includes('aria-hidden') &&
+      denseRowMetadata.includes('className="min-w-0 flex-1"') &&
       denseRowMetadata.includes('variant="inline"'),
-    'My Leads must keep the complete, icon-free inline source attribution visible',
+    'My Leads must keep its icon-only unchecked signal accessible and allow the icon-free source to truncate last',
+  )
+  assert(
+    myLeads.includes(
+      'onChangeStatus={(row, status) => changeStatus(row, status, { closeSheet: true })}',
+    ) &&
+      myLeads.includes('setUndoToast({') &&
+      myLeads.includes('function undoStatusChange(toast: UndoToast)') &&
+      myLeads.includes('changeStatus(row, toast.previousStatus, { showUndo: false })'),
+    'My Leads lifecycle actions must close the production sheet, expose Undo, and restore the previous persisted lifecycle',
+  )
+  assert(
+    !denseRowMetadata.includes('level="none"') &&
+      !denseRowMetadata.includes('level="weak"') &&
+      !denseRowMetadata.includes('level="moderate"') &&
+      !denseRowMetadata.includes('level="strong"') &&
+      !denseRowMetadata.includes('level="time-sensitive"') &&
+      !denseRowMetadata.includes('No signal') &&
+      !denseRowMetadata.includes('playbook'),
+    'Current saved rows must not invent completed signal analysis, urgency, badges, or playbook labels',
   )
   assert(
     !myLeads.includes('function SourceChip(') &&
@@ -358,6 +698,31 @@ async function main() {
     'My Leads must remove the legacy local Source pill and avoid duplicating source as row detail',
   )
   assert(myLeads.includes('data-fetchi-row-metadata'), 'My Leads rows must expose compact right-aligned update metadata')
+  assert(
+    myLeads.includes('const SYSTEM_COVERAGE_NOTES = new Set([') &&
+      [
+        'no website',
+        'website unavailable',
+        'no phone',
+        'phone unavailable',
+        'no address',
+        'address unavailable',
+        'no location',
+        'location unavailable',
+      ].every((note) => myLeads.includes(`'${note}'`)),
+    'My Leads must enumerate the exact generated missing-coverage notes suppressed from dense rows',
+  )
+  assert(
+    myLeads.includes('const denseNote = denseRowNote(row.note)') &&
+      myLeads.includes('{denseNote && (') &&
+      myLeads.includes('{denseNote}'),
+    'My Leads dense rows must render only notes that survive generated-coverage suppression',
+  )
+  assert(
+    myLeads.includes("setNoteDrafts((current) => ({ ...current, [row.id]: denseRowNote(row.note) ?? '' }))") &&
+      leadActionSheet.includes("noteDraft === (displayNote ?? '')"),
+    'My Leads must preserve stored-note editing and real user notes in the action sheet',
+  )
   assert(myLeads.includes('data-fetchi-dense-row') && myLeads.includes('min-h-[96px]') && myLeads.includes('rounded-lg py-3'), 'My Leads must retain dense 96px rows with quiet divider rhythm')
   assert(!myLeads.includes('data-fetchi-score-unavailable') && !myLeads.includes('BarChart3'), 'My Leads must not render score or signal placeholders without source fields')
   assert(!myLeads.includes('data-cp23c-icon-status-strip'), 'My Leads rows must not retain the old phone, website, and location icon strip')
@@ -373,8 +738,8 @@ async function main() {
   assert(rowActionStart >= 0 && rowActionEnd > rowActionStart && rowNavigationStart > rowActionEnd, 'My Leads row action and business navigation must be non-nested native siblings')
   assert(mailboxRowSource.includes('data-fetchi-row-action') && mailboxRowSource.includes('type="button"') && mailboxRowSource.includes('onClick={() => setActiveLeadId(row.id)}'), 'My Leads row activation must use a native button and preserve action-sheet opening')
   assert(mailboxRowSource.includes('aria-expanded={activeLeadId === row.id}') && mailboxRowSource.includes('aria-controls={`fetchi-lead-action-sheet-${row.id}`}'), 'My Leads row action must expose current open state and its action-sheet association')
-  assert(myLeads.includes('id={row ? `fetchi-lead-action-sheet-${row.id}` : undefined}'), 'My Leads action sheet must expose the row association target')
-  assert(myLeads.includes('aria-label="Search saved leads"') && myLeads.includes('aria-label={`Note for ${row.businessName}`}'), 'My Leads search and note controls must have explicit accessible labels')
+  assert(leadActionSheet.includes('id={row ? `fetchi-lead-action-sheet-${row.id}` : undefined}'), 'My Leads action sheet must expose the row association target')
+  assert(myLeads.includes('aria-label="Search saved leads"') && leadActionSheet.includes('aria-label={`Note for ${row.businessName}`}'), 'My Leads search and note controls must have explicit accessible labels')
   const mailboxChevronIndex = myLeads.indexOf('group-hover:translate-x-0.5')
   assert.notEqual(mailboxChevronIndex, -1, 'My Leads row chevron affordance must remain present')
   const mailboxChevronSource = myLeads.slice(Math.max(0, mailboxChevronIndex - 250), mailboxChevronIndex + 250)
@@ -382,8 +747,11 @@ async function main() {
   assert(myLeads.includes("type MailboxNoticeTone = 'success' | 'error'"), 'My Leads must model success and mutation-error notices separately')
   assert(myLeads.includes("message.tone === 'error' ? 'alert' : 'status'"), 'My Leads mutation errors must announce as alerts while successes use status semantics')
   assert(myLeads.includes('AlertCircle') && myLeads.includes('text-semanticRed'), 'My Leads mutation errors must render a real red error glyph')
-  for (const lifecycleClass of ['bg-lifecycleSaved', 'bg-lifecycleContacted', 'bg-lifecycleWon', 'bg-lifecycleLost']) {
-    assert(myLeads.includes(lifecycleClass), `My Leads is missing lifecycle carrier ownership: ${lifecycleClass}`)
+  for (const lifecycleClass of ['text-lifecycleSaved', 'text-lifecycleContacted', 'text-lifecycleWon', 'text-lifecycleLost']) {
+    assert(
+      myLeads.includes(lifecycleClass) && statusGlyphSource.includes(lifecycleClass),
+      `My Leads is missing lifecycle carrier ownership: ${lifecycleClass}`,
+    )
   }
   const forbiddenWarmMailboxHex = [
     '#0B0D0C', '#F7F3E8', '#B8B0A2', '#7E786D', '#5E574E',
@@ -557,13 +925,20 @@ async function main() {
     assert(mapShell.includes(preservedHook), `Map behavior contract changed or disappeared: ${preservedHook}`)
   }
 
-  const authenticatedSheetFiles = lines(git('ls-files', 'app/app', 'components/app'))
+  const authenticatedSheetFiles = lines(git(
+    'ls-files',
+    '--cached',
+    '--others',
+    '--exclude-standard',
+    'app/app',
+    'components/app',
+  ))
     .filter(path => path.endsWith('.tsx') && !path.startsWith('app/app/onboarding/'))
     .filter(path => source(path).includes('<SheetContent'))
     .sort()
   assert.deepEqual(authenticatedSheetFiles, [
+    'components/app/LeadActionSheet.tsx',
     'components/app/MobileHeader.tsx',
-    'components/app/MyLeadsView.tsx',
     'components/app/map/MapFilterSheet.tsx',
   ], 'Authenticated SheetContent inventory changed; reduced-motion coverage must be reviewed')
   for (const path of authenticatedSheetFiles) {
@@ -797,6 +1172,8 @@ async function main() {
   assert(chatBubble.includes('role="status"') && chatBubble.includes('aria-live="polite"') && chatBubble.includes('Fetchi is typing'), 'Chat pending feedback must expose a polite text status')
 
   const allowed = approvedFence(plan)
+  allowed.add(signalBarsPath)
+  allowed.add(leadActionSheetPath)
   const changed = changedFiles()
   const outsideFence = changed.filter(path => !allowed.has(path))
   assert.deepEqual(outsideFence, [], `Changed files escaped the CP26C fence: ${outsideFence.join(', ')}`)
@@ -829,6 +1206,7 @@ async function main() {
     coralBrandOnly: true,
     fetchAndLeadSurfacesV5: true,
     lifecycleAndEvidenceOwnershipLocked: true,
+    signalNotCheckedTruthful: true,
     mailboxBehaviorHooksPreserved: true,
     chatAndMapSurfacesV5: true,
     chatSubmissionHooksPreserved: true,

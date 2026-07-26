@@ -2,35 +2,20 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
-import type { LucideIcon } from 'lucide-react'
 import {
   AlertCircle,
   ArrowDownToLine,
-  Bookmark,
   CheckCircle2,
   ChevronRight,
-  ExternalLink,
   FileJson,
-  Globe2,
   ListFilter,
   Loader2,
-  NotebookPen,
-  Phone,
-  PhoneCall,
-  Save,
   Search,
-  Trophy,
   X,
-  XCircle,
 } from 'lucide-react'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+import { LeadActionSheet } from '@/components/app/LeadActionSheet'
 import { CoverageIndicator } from '@/components/fetchi-ui/CoverageIndicator'
+import { SignalBars } from '@/components/fetchi-ui/SignalBars'
 import { SourceAttribution } from '@/components/fetchi-ui/SourceAttribution'
 import { StatusGlyph } from '@/components/fetchi-ui/StatusGlyph'
 import { exportSavedLeadsCsv, exportSavedLeadsJson } from '@/lib/runtime/sweep/export'
@@ -49,11 +34,7 @@ type FilterKey = 'all' | 'saved' | 'contacted' | 'won' | 'lost'
 
 type LifecycleMeta = {
   label: string
-  actionLabel: string
-  discClass: string
   quietClass: string
-  actionClass: string
-  icon: LucideIcon
 }
 
 type LifecycleFilter = {
@@ -77,52 +58,29 @@ type MailboxNotice = {
   tone: MailboxNoticeTone
 }
 
-const PRIMARY_ACTION_CLASS =
-  'bg-fetchiAccent text-white hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)] focus-visible:ring-fetchiAccent'
-
 const ACTIVE_FILTER_CLASS =
   'border-fetchiAccent bg-fetchiAccent text-text shadow-[0_1px_2px_rgba(0,0,0,0.30),0_8px_20px_-10px_rgba(94,106,210,0.50)] group-hover:bg-[var(--fetchi-accent-hover)] group-active:bg-[var(--fetchi-accent-press)]'
 
 const STATUS_META: Record<SavedLeadLifecycleStatus, LifecycleMeta> = {
   saved: {
     label: 'Saved',
-    actionLabel: 'Save',
-    discClass: 'bg-lifecycleSaved text-[#08090A]',
     quietClass: 'text-lifecycleSaved',
-    actionClass: 'bg-lifecycleSaved/10 text-lifecycleSaved hover:bg-lifecycleSaved/15',
-    icon: Bookmark,
   },
   contacted: {
     label: 'Contacted',
-    actionLabel: 'Mark as Contacted',
-    discClass: 'bg-lifecycleContacted text-[#08090A]',
     quietClass: 'text-lifecycleContacted',
-    actionClass: 'bg-lifecycleContacted/10 text-lifecycleContacted hover:bg-lifecycleContacted/15',
-    icon: PhoneCall,
   },
   won: {
     label: 'Won',
-    actionLabel: 'Mark as Won',
-    discClass: 'bg-lifecycleWon text-[#08090A]',
     quietClass: 'text-lifecycleWon',
-    actionClass: 'bg-lifecycleWon/10 text-lifecycleWon hover:bg-lifecycleWon/15',
-    icon: Trophy,
   },
   lost: {
     label: 'Lost',
-    actionLabel: 'Dismiss',
-    discClass: 'bg-lifecycleLost text-[#08090A]',
     quietClass: 'text-lifecycleLost',
-    actionClass: 'bg-lifecycleLost/10 text-lifecycleLost hover:bg-lifecycleLost/15',
-    icon: XCircle,
   },
   dismissed: {
     label: 'Dismissed',
-    actionLabel: 'Dismiss',
-    discClass: 'bg-lifecycleLost text-[#08090A]',
     quietClass: 'text-lifecycleLost',
-    actionClass: 'bg-lifecycleLost/10 text-lifecycleLost hover:bg-lifecycleLost/15',
-    icon: XCircle,
   },
 }
 
@@ -154,15 +112,19 @@ const LIFECYCLE_FILTERS: LifecycleFilter[] = [
   },
 ]
 
-const ACTION_STATUS_OPTIONS: SavedLeadLifecycleStatus[] = [
-  'saved',
-  'contacted',
-  'won',
-  'dismissed',
-]
-
 const FILTER_MOTION_CLASS =
   'transition-colors duration-200 motion-reduce:transition-none'
+
+const SYSTEM_COVERAGE_NOTES = new Set([
+  'no website',
+  'website unavailable',
+  'no phone',
+  'phone unavailable',
+  'no address',
+  'address unavailable',
+  'no location',
+  'location unavailable',
+])
 
 const FILTER_MOTION_STYLE = {
   transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -180,15 +142,6 @@ function downloadText(filename: string, mimeType: string, value: string) {
   URL.revokeObjectURL(url)
 }
 
-function displayUrl(value: string): string {
-  try {
-    const url = new URL(value)
-    return url.hostname.replace(/^www\./, '')
-  } catch {
-    return value
-  }
-}
-
 function displayDate(value: string): string {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -199,6 +152,12 @@ function displayDate(value: string): string {
 
 function textValue(value: string | null | undefined): string {
   return (value ?? '').trim()
+}
+
+function denseRowNote(value: string | null | undefined): string | null {
+  const normalized = value?.trim().replace(/\s+/g, ' ').toLowerCase() ?? ''
+  if (!normalized || SYSTEM_COVERAGE_NOTES.has(normalized)) return null
+  return value ?? null
 }
 
 function displayTitleCase(value: string): string {
@@ -228,17 +187,6 @@ function displayCategory(value: string | null | undefined): string {
 
 function statusLabel(status: SavedLeadLifecycleStatus): string {
   return STATUS_META[status]?.label ?? status
-}
-
-function initialsForName(value: string): string {
-  const letters = value
-    .split(/\s+/)
-    .map((part) => part.trim()[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-  return letters || 'FL'
 }
 
 function hasPhone(row: SavedLeadPipelineRow): boolean {
@@ -323,20 +271,6 @@ function formatCompactAge(valueMs: number, nowMs: number): string {
   return formatAge(valueMs, nowMs).replace(' ago', '').replace('just now', 'now')
 }
 
-function statusAgeLabel(row: SavedLeadPipelineRow, nowMs: number): string {
-  return `${statusLabel(row.lifecycleStatus)} ${formatCompactAge(row.updatedAtMs, nowMs)}`
-}
-
-function statusActionsFor(row: SavedLeadPipelineRow): SavedLeadLifecycleStatus[] {
-  return ACTION_STATUS_OPTIONS.filter((status) => {
-    if (row.lifecycleStatus === status) return false
-    if ((row.lifecycleStatus === 'lost' || row.lifecycleStatus === 'dismissed') && status === 'dismissed') {
-      return false
-    }
-    return true
-  })
-}
-
 function OpenLeadLink({ row, className }: { row: SavedLeadPipelineRow; className?: string }) {
   return (
     <Link
@@ -415,7 +349,7 @@ export function MyLeadsView({ leads }: Props) {
 
   function startEditingNote(row: SavedLeadPipelineRow) {
     setEditingNoteId(row.id)
-    setNoteDrafts((current) => ({ ...current, [row.id]: row.note ?? '' }))
+    setNoteDrafts((current) => ({ ...current, [row.id]: denseRowNote(row.note) ?? '' }))
   }
 
   function closeSheet() {
@@ -728,6 +662,7 @@ export function MyLeadsView({ leads }: Props) {
               const meta = STATUS_META[row.lifecycleStatus]
               const detail = detailLine(row)
               const source = textValue(row.source)
+              const denseNote = denseRowNote(row.note)
               const isRowPending = isPending && pendingId === row.id
               return (
                 <div
@@ -778,7 +713,7 @@ export function MyLeadsView({ leads }: Props) {
                       </div>
                     ) : null}
                     <div
-                      className="mt-1 flex min-w-0 items-center gap-2"
+                      className="mt-1 flex min-w-0 items-center gap-2 overflow-hidden"
                       data-fetchi-dense-contact-metadata
                     >
                       <CoverageIndicator
@@ -786,6 +721,17 @@ export function MyLeadsView({ leads }: Props) {
                         className="shrink-0"
                         phoneAvailable={hasPhone(row)}
                         websiteAvailable={hasWebsite(row)}
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="shrink-0 text-[12px] text-[#4A4E54]"
+                      >
+                        ·
+                      </span>
+                      <SignalBars
+                        data-fetchi-dense-signal-state
+                        level="unchecked"
+                        size={16}
                       />
                       {source ? (
                         <>
@@ -796,16 +742,16 @@ export function MyLeadsView({ leads }: Props) {
                             ·
                           </span>
                           <SourceAttribution
-                            className="min-w-0 shrink-0"
+                            className="min-w-0 flex-1"
                             source={row.source}
                             variant="inline"
                           />
                         </>
                       ) : null}
                     </div>
-                    {row.note && (
+                    {denseNote && (
                       <div className="mt-1 hidden truncate text-[12px] font-medium leading-snug text-text2/80 sm:block">
-                        {row.note}
+                        {denseNote}
                       </div>
                     )}
                     {isRowPending && (
@@ -855,7 +801,8 @@ export function MyLeadsView({ leads }: Props) {
         isPending={isPending}
         pendingId={pendingId}
         editingNoteId={editingNoteId}
-        noteDraft={activeLead ? noteDrafts[activeLead.id] ?? '' : ''}
+        noteDraft={activeLead ? denseRowNote(noteDrafts[activeLead.id]) ?? '' : ''}
+        displayNote={activeLead ? denseRowNote(activeLead.note) : null}
         onOpenChange={(open) => {
           if (!open) closeSheet()
         }}
@@ -873,190 +820,4 @@ export function MyLeadsView({ leads }: Props) {
 
 function createNoteDrafts(leads: readonly SavedLeadPipelineRow[]): Record<string, string> {
   return Object.fromEntries(leads.map((lead) => [lead.id, lead.note ?? '']))
-}
-
-function LeadActionSheet({
-  row,
-  nowMs,
-  isPending,
-  pendingId,
-  editingNoteId,
-  noteDraft,
-  onOpenChange,
-  onStartEditingNote,
-  onCancelEditingNote,
-  onNoteDraftChange,
-  onSaveNote,
-  onChangeStatus,
-}: {
-  row: SavedLeadPipelineRow | null
-  nowMs: number
-  isPending: boolean
-  pendingId: string | null
-  editingNoteId: string | null
-  noteDraft: string
-  onOpenChange: (open: boolean) => void
-  onStartEditingNote: (row: SavedLeadPipelineRow) => void
-  onCancelEditingNote: () => void
-  onNoteDraftChange: (rowId: string, value: string) => void
-  onSaveNote: (row: SavedLeadPipelineRow) => void
-  onChangeStatus: (row: SavedLeadPipelineRow, status: SavedLeadLifecycleStatus) => void
-}) {
-  const isEditingNote = row ? editingNoteId === row.id : false
-  const isRowPending = Boolean(row && isPending && pendingId === row.id)
-
-  return (
-    <Sheet open={Boolean(row)} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        id={row ? `fetchi-lead-action-sheet-${row.id}` : undefined}
-        className="max-h-[88vh] w-full max-w-none overflow-y-auto rounded-t-2xl border-x border-t border-border bg-fetchiOverlay px-5 pb-6 pt-5 text-text shadow-[0_-24px_70px_-30px_rgba(0,0,0,0.9)] sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-[min(460px,calc(100%-32px))] sm:-translate-x-1/2 sm:rounded-2xl sm:border"
-        data-cp23b-action-sheet
-        data-fetchi-action-sheet-v5
-        data-fetchi-reduced-motion-sheet
-      >
-        {row && (
-          <>
-            <SheetHeader className="space-y-0 pr-8 text-left">
-              <div className="flex items-start gap-3">
-                <div className={cn('flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold', STATUS_META[row.lifecycleStatus].discClass)}>
-                  {initialsForName(row.businessName)}
-                </div>
-                <div className="min-w-0">
-                  <SheetTitle className="truncate font-fetchi text-[18px] font-semibold leading-tight text-text">
-                    {row.businessName}
-                  </SheetTitle>
-                  <SheetDescription className="mt-1 truncate text-[13px] text-text2">
-                    {detailLine(row) || row.source}
-                  </SheetDescription>
-                  <div className="mt-1 text-[12px] font-semibold text-textMuted">
-                    {statusAgeLabel(row, nowMs)}
-                  </div>
-                </div>
-              </div>
-            </SheetHeader>
-
-            <div className="mt-5 grid grid-cols-4 gap-2">
-              {hasPhone(row) ? (
-                <a
-                  href={`tel:${row.phone}`}
-                  className="fetchi-focus-ring flex h-16 min-h-[44px] flex-col items-center justify-center gap-1 rounded-xl bg-fetchiOverlayHover text-[11px] font-semibold text-text transition-colors hover:bg-[var(--fetchi-overlay-active)]"
-                >
-                  <Phone className="h-4 w-4" />
-                  Call
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="flex h-16 min-h-[44px] flex-col items-center justify-center gap-1 rounded-xl bg-fetchiOverlayHover text-[11px] font-semibold text-textMuted opacity-55"
-                >
-                  <Phone className="h-4 w-4" />
-                  No phone
-                </button>
-              )}
-
-              {hasWebsite(row) && row.website ? (
-                <a
-                  href={row.website}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="fetchi-focus-ring flex h-16 min-h-[44px] flex-col items-center justify-center gap-1 rounded-xl bg-fetchiOverlayHover text-[11px] font-semibold text-evidence transition-colors hover:bg-[var(--fetchi-overlay-active)]"
-                >
-                  <Globe2 className="h-4 w-4" />
-                  Website
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="flex h-16 min-h-[44px] flex-col items-center justify-center gap-1 rounded-xl bg-fetchiOverlayHover text-[11px] font-semibold text-textMuted opacity-55"
-                >
-                  <Globe2 className="h-4 w-4" />
-                  No website
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => onStartEditingNote(row)}
-                className="fetchi-focus-ring flex h-16 min-h-[44px] flex-col items-center justify-center gap-1 rounded-xl bg-fetchiOverlayHover text-[11px] font-semibold text-text transition-colors hover:bg-[var(--fetchi-overlay-active)]"
-              >
-                <NotebookPen className="h-4 w-4" />
-                {row.note ? 'Edit note' : 'Add note'}
-              </button>
-
-              <Link
-                href={`/app/leads/${row.id}`}
-                className="fetchi-focus-ring flex h-16 min-h-[44px] flex-col items-center justify-center gap-1 rounded-xl bg-fetchiOverlayHover text-[11px] font-semibold text-fetchiAccent transition-colors hover:bg-[var(--fetchi-overlay-active)]"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Open
-              </Link>
-            </div>
-
-            {isEditingNote && (
-              <div className="mt-4 rounded-xl bg-fetchiOverlayHover p-3">
-                <textarea
-                  value={noteDraft}
-                  onChange={(event) => onNoteDraftChange(row.id, event.target.value)}
-                  aria-label={`Note for ${row.businessName}`}
-                  className="fetchi-focus-ring min-h-[92px] w-full resize-y rounded-lg border border-border bg-bg px-3 py-2 text-[14px] leading-relaxed text-text placeholder:text-textMuted"
-                  placeholder="Add note"
-                />
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    disabled={isRowPending || noteDraft === (row.note ?? '')}
-                    onClick={() => onSaveNote(row)}
-                    className={cn('fetchi-focus-ring inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg text-[13px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45', PRIMARY_ACTION_CLASS)}
-                  >
-                    <Save className="h-4 w-4" />
-                    Save note
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onCancelEditingNote}
-                    className="fetchi-focus-ring inline-flex min-h-[44px] items-center justify-center rounded-lg border border-border px-4 text-[13px] font-semibold text-text2 hover:border-[var(--fetchi-border-strong)] hover:text-text"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-4 space-y-2">
-              {statusActionsFor(row).map((status) => {
-                const meta = STATUS_META[status]
-                const Icon = meta.icon
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    disabled={isRowPending}
-                    onClick={() => onChangeStatus(row, status)}
-                    className={cn(
-                      'fetchi-focus-ring flex min-h-[44px] w-full items-center justify-between rounded-lg px-4 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-                      meta.actionClass,
-                    )}
-                  >
-                    <span>{meta.actionLabel}</span>
-                    <Icon className="h-4 w-4" />
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="mt-4 grid gap-1 text-[12px] font-medium text-textMuted">
-              <span>Source: {row.source}</span>
-              <span>Saved {displayDate(row.savedAtIso)} · Updated {displayDate(row.updatedAtIso)}</span>
-              {hasWebsite(row) && row.website && (
-                <span className="truncate">Website: {displayUrl(row.website)}</span>
-              )}
-            </div>
-          </>
-        )}
-      </SheetContent>
-    </Sheet>
-  )
 }
