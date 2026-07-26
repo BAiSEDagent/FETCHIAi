@@ -184,6 +184,32 @@ function selectedLifecycleStatus(
   return status === 'lost' || status === 'dismissed' ? 'dismissed' : status
 }
 
+function lifecycleSelectorLabels(
+  optionStatus: SavedLeadLifecycleStatus,
+  currentStatus: SavedLeadLifecycleStatus,
+  isSelected: boolean,
+): { visibleLabel: string; accessibleLabel: string } {
+  const meta = LIFECYCLE_ACTION_META[optionStatus]
+  if (!isSelected) {
+    return {
+      visibleLabel: meta.actionLabel,
+      accessibleLabel: meta.accessibleLabel,
+    }
+  }
+
+  const currentLabel =
+    optionStatus === 'dismissed'
+      ? currentStatus === 'lost'
+        ? 'Lost'
+        : 'Dismissed'
+      : meta.actionLabel
+
+  return {
+    visibleLabel: currentLabel,
+    accessibleLabel: `${currentLabel}, current lifecycle`,
+  }
+}
+
 function effectiveSignalSummary(
   row: SavedLeadPipelineRow,
   summary: LeadActionSheetSignalSummary,
@@ -309,28 +335,27 @@ export function LeadActionSheet({
               <div
                 aria-label="Lead lifecycle"
                 className="grid grid-cols-4 gap-1 rounded-xl border border-border bg-fetchiSurface p-1"
-                role="radiogroup"
+                role="group"
               >
                 {LIFECYCLE_SELECTOR_OPTIONS.map((status) => {
-                  const meta = LIFECYCLE_ACTION_META[status]
                   const isSelected =
                     selectedLifecycleStatus(row.lifecycleStatus) === status
+                  const labels = lifecycleSelectorLabels(
+                    status,
+                    row.lifecycleStatus,
+                    isSelected,
+                  )
                   return (
                     <button
                       key={status}
                       type="button"
-                      aria-checked={isSelected}
-                      aria-label={
-                        isSelected
-                          ? `${meta.actionLabel}, current lifecycle`
-                          : meta.accessibleLabel
-                      }
+                      aria-label={labels.accessibleLabel}
+                      aria-pressed={isSelected}
                       disabled={isRowPending}
                       onClick={() => {
                         if (isSelected) return
                         onChangeStatus(row, status)
                       }}
-                      role="radio"
                       className={cn(
                         'fetchi-focus-ring inline-flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
                         isSelected
@@ -343,7 +368,7 @@ export function LeadActionSheet({
                         size={20}
                         state={lifecycleGlyphState(status)}
                       />
-                      <span className="truncate">{meta.actionLabel}</span>
+                      <span className="truncate">{labels.visibleLabel}</span>
                     </button>
                   )
                 })}
@@ -362,7 +387,7 @@ export function LeadActionSheet({
               </h3>
               <div className="rounded-xl border border-border bg-fetchiSurface px-3 py-3">
                 <div className="flex items-center gap-2 text-[13px] font-medium text-text2">
-                  <SignalBars level={displayedSignal.level} />
+                  <SignalBars aria-hidden="true" level={displayedSignal.level} />
                   <span>{displayedSignal.label}</span>
                 </div>
                 {displayedSignal.level === 'unchecked' ? (

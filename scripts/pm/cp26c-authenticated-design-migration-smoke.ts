@@ -499,15 +499,35 @@ async function main() {
   assert(
     leadActionSheet.indexOf('data-fetchi-action-sheet-lifecycle-selector') <
       leadActionSheet.indexOf('data-fetchi-action-sheet-signal-summary') &&
-      actionLifecycleSelector.includes('role="radiogroup"') &&
-      actionLifecycleSelector.includes('role="radio"') &&
-      actionLifecycleSelector.includes('aria-checked={isSelected}') &&
+      actionLifecycleSelector.includes('role="group"') &&
+      actionLifecycleSelector.includes('aria-pressed={isSelected}') &&
+      !actionLifecycleSelector.includes('role="radiogroup"') &&
+      !actionLifecycleSelector.includes('role="radio"') &&
+      !actionLifecycleSelector.includes('aria-checked') &&
       actionLifecycleSelector.includes('if (isSelected) return') &&
       leadActionSheet.includes("actionLabel: 'Saved'") &&
       leadActionSheet.includes("actionLabel: 'Contacted'") &&
       leadActionSheet.includes("actionLabel: 'Won'") &&
       leadActionSheet.includes("actionLabel: 'Dismiss'"),
-    'LeadActionSheet must place a complete four-state segmented lifecycle selector directly after the header',
+    'LeadActionSheet must expose its immediate-action lifecycle selector as a pressed-button group directly after the header',
+  )
+  const lifecycleLabelResolver =
+    leadActionSheet.split('function lifecycleSelectorLabels')[1]?.slice(0, 1500) ?? ''
+  assert(
+    lifecycleLabelResolver.includes("currentStatus === 'lost'") &&
+      lifecycleLabelResolver.includes("? 'Lost'") &&
+      lifecycleLabelResolver.includes(": 'Dismissed'") &&
+      lifecycleLabelResolver.includes('accessibleLabel: `${currentLabel}, current lifecycle`') &&
+      lifecycleLabelResolver.includes('visibleLabel: meta.actionLabel') &&
+      lifecycleLabelResolver.includes('accessibleLabel: meta.accessibleLabel'),
+    'LeadActionSheet must truthfully label selected Lost and Dismissed rows while retaining Dismiss as the unselected terminal action',
+  )
+  assert(
+    actionSignalRegion.includes(
+      '<SignalBars aria-hidden="true" level={displayedSignal.level} />',
+    ) &&
+      actionSignalRegion.includes('<span>{displayedSignal.label}</span>'),
+    'LeadActionSheet must hide the redundant signal glyph announcement while preserving the visible signal label',
   )
   assert(
     leadActionSheet.includes(
@@ -624,6 +644,13 @@ async function main() {
   const coverageIndex = denseRowMetadata.indexOf('<CoverageIndicator')
   const signalIndex = denseRowMetadata.indexOf('<SignalBars')
   const sourceIndex = denseRowMetadata.indexOf('<SourceAttribution')
+  const denseSignalSource =
+    signalIndex >= 0
+      ? denseRowMetadata.slice(
+          signalIndex,
+          denseRowMetadata.indexOf('/>', signalIndex) + 2,
+        )
+      : ''
   assert(
     coverageIndex >= 0 && signalIndex > coverageIndex && sourceIndex > signalIndex,
     'My Leads dense metadata must keep coverage, unchecked signal, and source as separate ordered channels',
@@ -639,9 +666,19 @@ async function main() {
   assert(
     denseRowMetadata.includes('level="unchecked"') &&
       denseRowMetadata.includes('data-fetchi-dense-signal-state') &&
+      !denseSignalSource.includes('aria-hidden') &&
       denseRowMetadata.includes('className="min-w-0 flex-1"') &&
       denseRowMetadata.includes('variant="inline"'),
-    'My Leads must show only unchecked signal and allow the icon-free source to truncate last',
+    'My Leads must keep its icon-only unchecked signal accessible and allow the icon-free source to truncate last',
+  )
+  assert(
+    myLeads.includes(
+      'onChangeStatus={(row, status) => changeStatus(row, status, { closeSheet: true })}',
+    ) &&
+      myLeads.includes('setUndoToast({') &&
+      myLeads.includes('function undoStatusChange(toast: UndoToast)') &&
+      myLeads.includes('changeStatus(row, toast.previousStatus, { showUndo: false })'),
+    'My Leads lifecycle actions must close the production sheet, expose Undo, and restore the previous persisted lifecycle',
   )
   assert(
     !denseRowMetadata.includes('level="none"') &&
