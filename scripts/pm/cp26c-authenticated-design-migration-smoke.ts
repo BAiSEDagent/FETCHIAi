@@ -332,19 +332,23 @@ async function main() {
   )
   assert(
     statusGlyphMarkup.won.includes('data-fetchi-status-glyph="won"') &&
-      statusGlyphMarkup.won.includes('data-fetchi-status-terminal-fill="won"') &&
-      statusGlyphMarkup.won.includes('r="20"') &&
+      statusGlyphMarkup.won.includes('data-fetchi-status-outer-ring="won"') &&
+      statusGlyphMarkup.won.includes('data-fetchi-status-terminal-core="won"') &&
+      statusGlyphMarkup.won.includes('r="14.4"') &&
       statusGlyphMarkup.won.includes('data-fetchi-status-terminal-mark="check"') &&
+      !statusGlyphMarkup.won.includes('data-fetchi-status-terminal-fill') &&
       !statusGlyphMarkup.won.includes('lucide-check'),
-    'Won StatusGlyph must use the full 40px outer bounds with a compact centered dark check',
+    'Won StatusGlyph must retain the lifecycle ring around a grown terminal core with a knockout check',
   )
   assert(
     statusGlyphMarkup.lost.includes('data-fetchi-status-glyph="lost"') &&
-      statusGlyphMarkup.lost.includes('data-fetchi-status-terminal-fill="lost"') &&
-      statusGlyphMarkup.lost.includes('r="20"') &&
+      statusGlyphMarkup.lost.includes('data-fetchi-status-outer-ring="lost"') &&
+      statusGlyphMarkup.lost.includes('data-fetchi-status-terminal-core="lost"') &&
+      statusGlyphMarkup.lost.includes('r="14.4"') &&
       statusGlyphMarkup.lost.includes('data-fetchi-status-terminal-mark="x"') &&
+      !statusGlyphMarkup.lost.includes('data-fetchi-status-terminal-fill') &&
       !statusGlyphMarkup.lost.includes('lucide-x'),
-    'Lost StatusGlyph must use the full 40px outer bounds with a compact centered dark x',
+    'Lost StatusGlyph must retain the lifecycle ring around a grown terminal core with a knockout x',
   )
   assert(
     !Object.values(statusGlyphMarkup).some((markup) =>
@@ -468,7 +472,7 @@ async function main() {
   assert(myLeads.includes('data-fetchi-my-leads-v5'), 'My Leads must declare its v5 mailbox surface')
   assert(myLeads.includes('data-fetchi-search-control'), 'My Leads must expose the v5 search-control contract')
   assert(myLeads.includes('data-fetchi-export-control'), 'My Leads must expose the v5 export-control contract')
-  assert(leadActionSheet.includes('data-fetchi-action-sheet-v5'), 'My Leads must expose the v5 action-sheet contract')
+  assert(leadActionSheet.includes('data-fetchi-action-sheet-v6'), 'My Leads must expose the binding v6 lead-sheet contract')
   assert(
     myLeads.includes("import { LeadActionSheet } from '@/components/app/LeadActionSheet'") &&
       myLeads.includes('<LeadActionSheet'),
@@ -476,26 +480,36 @@ async function main() {
   )
   assert(
     leadActionSheet.includes("from '@/components/fetchi-ui/StatusGlyph'") &&
-      leadActionSheet.includes("import { CoverageIndicator } from '@/components/fetchi-ui/CoverageIndicator'") &&
-      leadActionSheet.includes("from '@/components/fetchi-ui/SignalBars'") &&
-      leadActionSheet.includes("import { SourceAttribution } from '@/components/fetchi-ui/SourceAttribution'"),
-    'LeadActionSheet must compose the frozen production lifecycle, coverage, signal, and source primitives',
+      !leadActionSheet.includes('<SignalBars'),
+    'LeadActionSheet must compose the production lifecycle primitive without using SignalBars for the unchecked fallback',
   )
   assert(
     leadActionSheet.includes('data-fetchi-action-sheet-header') &&
       leadActionSheet.includes('data-fetchi-action-sheet-drag-handle') &&
-      leadActionSheet.includes('size={40}') &&
+      leadActionSheet.includes('data-fetchi-action-sheet-header-actions') &&
+      leadActionSheet.includes('size={20}') &&
+      leadActionSheet.includes('text-[19px]') &&
+      leadActionSheet.includes('tracking-[-0.02em]') &&
+      leadActionSheet.includes('data-fetchi-action-sheet-open-lead') &&
+      leadActionSheet.includes('data-fetchi-action-sheet-close') &&
       leadActionSheet.includes('displayedSignal.evidenceDate') &&
       leadActionSheet.includes('displayedSignal.whyNow') &&
       leadActionSheet.includes('row.sourceUrl') &&
-      leadActionSheet.includes('Signal not checked') &&
-      leadActionSheet.includes('level={displayedSignal.level}'),
-    'LeadActionSheet must use a native bottom-sheet handle, lifecycle glyph header, and dated source-linked time-sensitive evidence gate',
+      leadActionSheet.includes('Signal not checked'),
+    'LeadActionSheet must keep Open and Close on the compact v6 title row with a 20px lifecycle glyph while preserving the dated source-linked time-sensitive evidence gate',
   )
   const actionLifecycleSelector =
     leadActionSheet.split('data-fetchi-action-sheet-lifecycle-selector')[1]?.slice(0, 4200) ?? ''
   const actionSignalRegion =
     leadActionSheet.split('data-fetchi-action-sheet-signal-summary')[1]?.slice(0, 4200) ?? ''
+  const actionSignalCheckControl =
+    actionSignalRegion.split('data-fetchi-signal-check-action')[0]?.slice(-1200) ?? ''
+  const actionAddNoteControl =
+    leadActionSheet.split('data-fetchi-action-sheet-add-note')[0]?.slice(-1200) ?? ''
+  const actionSaveNoteControl =
+    leadActionSheet.split('data-fetchi-primary-action="save-note"')[0]?.slice(-1200) ?? ''
+  const actionCancelNoteControl =
+    leadActionSheet.split('onClick={onCancelEditingNote}')[1]?.slice(0, 900) ?? ''
   assert(
     leadActionSheet.indexOf('data-fetchi-action-sheet-lifecycle-selector') <
       leadActionSheet.indexOf('data-fetchi-action-sheet-signal-summary') &&
@@ -508,41 +522,83 @@ async function main() {
       leadActionSheet.includes("actionLabel: 'Saved'") &&
       leadActionSheet.includes("actionLabel: 'Contacted'") &&
       leadActionSheet.includes("actionLabel: 'Won'") &&
-      leadActionSheet.includes("actionLabel: 'Dismiss'"),
-    'LeadActionSheet must expose its immediate-action lifecycle selector as a pressed-button group directly after the header',
-  )
-  const lifecycleLabelResolver =
-    leadActionSheet.split('function lifecycleSelectorLabels')[1]?.slice(0, 1500) ?? ''
-  assert(
-    lifecycleLabelResolver.includes("currentStatus === 'lost'") &&
-      lifecycleLabelResolver.includes("? 'Lost'") &&
-      lifecycleLabelResolver.includes(": 'Dismissed'") &&
-      lifecycleLabelResolver.includes('accessibleLabel: `${currentLabel}, current lifecycle`') &&
-      lifecycleLabelResolver.includes('visibleLabel: meta.actionLabel') &&
-      lifecycleLabelResolver.includes('accessibleLabel: meta.accessibleLabel'),
-    'LeadActionSheet must truthfully label selected Lost and Dismissed rows while retaining Dismiss as the unselected terminal action',
+      leadActionSheet.includes("actionLabel: 'Lost'") &&
+      leadActionSheet.includes("'saved',\n  'contacted',\n  'won',\n  'lost'") &&
+      !actionLifecycleSelector.includes('Dismiss'),
+    'LeadActionSheet must expose Saved, Contacted, Won, and Lost as a pressed-button group directly after the header',
   )
   assert(
-    actionSignalRegion.includes(
-      '<SignalBars aria-hidden="true" level={displayedSignal.level} />',
-    ) &&
-      actionSignalRegion.includes('<span>{displayedSignal.label}</span>'),
-    'LeadActionSheet must hide the redundant signal glyph announcement while preserving the visible signal label',
+    leadActionSheet.includes("return status === 'lost' || status === 'dismissed' ? 'lost' : status") &&
+      leadActionSheet.includes("status === 'dismissed' ? 'lost' : status"),
+    'Persisted dismissed records must render through Lost without rewriting their stored value',
+  )
+  assert(
+    leadActionSheet.includes('data-fetchi-action-sheet-lifecycle-heading') &&
+      leadActionSheet.includes('data-fetchi-updated-age') &&
+      leadActionSheet.includes("updated {updatedAge === 'now' ? 'now' : `${updatedAge} ago`}") &&
+      !leadActionSheet.includes('{lifecycleLabel(row.lifecycleStatus)} ·'),
+    'LeadActionSheet must place compact updated age beside Lifecycle and remove the duplicated header status line',
+  )
+  assert(
+    actionLifecycleSelector.includes('data-fetchi-lifecycle-group-surface') &&
+      actionLifecycleSelector.includes('bg-[var(--fetchi-raised)]') &&
+      actionLifecycleSelector.includes('grid-cols-4') &&
+      actionLifecycleSelector.includes('gap-0') &&
+      actionLifecycleSelector.includes('rounded-xl') &&
+      actionLifecycleSelector.includes('data-fetchi-lifecycle-segment') &&
+    actionLifecycleSelector.includes('data-fetchi-lifecycle-selected-surface') &&
+      actionLifecycleSelector.includes('bg-[var(--fetchi-overlay-active)]') &&
+      actionLifecycleSelector.includes('rounded-[8px]') &&
+      actionLifecycleSelector.includes('shadow-[inset_0_0_0_1px_var(--fetchi-border-strong)]') &&
+      !actionLifecycleSelector.includes('border border-border bg-fetchiSurface'),
+    'LeadActionSheet lifecycle selector must be one continuous 12px raised group with one 8px overlay-active selected cell',
   )
   assert(
     leadActionSheet.includes(
-      'Saved from Fetch. This lead has not been checked for fresh buying signals yet.',
+      'Saved from Fetch. I haven’t checked this one for fresh buying signals yet.',
     ) &&
+      actionSignalRegion.includes('data-fetchi-signal-fallback') &&
+      actionSignalRegion.includes('rounded-xl') &&
+      actionSignalRegion.includes('border-dashed') &&
+      actionSignalRegion.includes('data-fetchi-signal-fallback-ellipsis') &&
+      !actionSignalRegion.includes('<SignalBars') &&
       !leadActionSheet.includes('No fresh signal yet') &&
       !leadActionSheet.includes('Fetchi found nothing'),
-    'LeadActionSheet unchecked signal copy must truthfully state that analysis has not run',
+    'LeadActionSheet must use the honest dashed v6 unchecked fallback without SignalBars or invented evidence',
   )
-  const actionTruthRow = leadActionSheet.split('data-fetchi-action-sheet-truth-row')[1]?.slice(0, 1800) ?? ''
   assert(
-    actionTruthRow.indexOf('<CoverageIndicator') >= 0 &&
-      !actionTruthRow.includes('<SignalBars') &&
-      actionTruthRow.indexOf('<SourceAttribution') > actionTruthRow.indexOf('<CoverageIndicator'),
-    'LeadActionSheet provenance row must preserve coverage then source without repeating SignalBars',
+    leadActionSheet.includes(
+      'onCheckSignals?: (row: SavedLeadPipelineRow) => void',
+    ) &&
+      leadActionSheet.includes('isSignalCheckPending?: boolean') &&
+      actionSignalRegion.includes('onCheckSignals ? (') &&
+      actionSignalRegion.includes('onClick={() => onCheckSignals(row)}') &&
+      actionSignalRegion.includes('data-fetchi-signal-check-action') &&
+      actionSignalRegion.includes("'Checking signals…'") &&
+      actionSignalRegion.includes("'Check for signals'"),
+    'LeadActionSheet must expose an optional signal-check contract and render its pending-aware CTA only when a callback exists',
+  )
+  assert(
+    actionSignalCheckControl.includes('min-h-10') &&
+      actionSignalCheckControl.includes('rounded-[8px]') &&
+      actionSignalCheckControl.includes('bg-[var(--fetchi-raised)]') &&
+      actionSignalCheckControl.includes('shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]') &&
+      actionSignalCheckControl.includes('text-[13px]') &&
+      actionSignalCheckControl.includes('font-semibold') &&
+      actionSignalCheckControl.includes('hover:bg-fetchiOverlayHover'),
+    'Check for signals must use the raised 40px secondary-control recipe with an 8px radius, quiet inset hairline, and canonical hover',
+  )
+  assert(
+    !myLeads.includes('onCheckSignals=') &&
+      !myLeads.includes('isSignalCheckPending='),
+    'Current production My Leads must not wire the Stage 2 signal-check runtime during Stage 1',
+  )
+  assert(
+    actionSignalRegion.includes('data-fetchi-action-sheet-source') &&
+      actionSignalRegion.includes('shortSourceLabel(row.source)') &&
+      !actionSignalRegion.includes('<CoverageIndicator') &&
+      !actionSignalRegion.includes('<SourceAttribution'),
+    'LeadActionSheet signal fallback must use a short truthful source label without dense-row provenance primitives',
   )
   assert(
     leadActionSheet.includes('row.sourceUrl ? (') &&
@@ -550,17 +606,38 @@ async function main() {
       leadActionSheet.includes('data-fetchi-source-link'),
     'LeadActionSheet must link source attribution only when a persisted source URL exists',
   )
-  for (const route of ['Call', 'Email', 'Website', 'Directions']) {
-    assert(leadActionSheet.includes(route), `LeadActionSheet is missing the truthful ${route} route`)
-  }
+  assert(
+    leadActionSheet.includes('data-fetchi-contact-row="phone"') &&
+      leadActionSheet.includes('{row.phone}') &&
+      leadActionSheet.includes('data-fetchi-contact-row="email"') &&
+      leadActionSheet.includes('{row.email}') &&
+      leadActionSheet.includes('data-fetchi-contact-row="website"') &&
+      leadActionSheet.includes('websiteDisplayValue(row.website)') &&
+      leadActionSheet.includes('data-fetchi-contact-row="address"') &&
+      leadActionSheet.includes('{row.address}') &&
+      leadActionSheet.includes('min-h-[44px]') &&
+      leadActionSheet.includes('text-[15px]') &&
+      leadActionSheet.includes('data-fetchi-contact-value') &&
+      leadActionSheet.includes('text-[var(--fetchi-text-strong-muted,#D0D6E0)]') &&
+      leadActionSheet.includes('divide-y'),
+    'LeadActionSheet contact section must show persisted values in the strong-muted token as 44px divided row actions',
+  )
+  assert(
+    !leadActionSheet.includes('grid-cols-[repeat(auto-fit,minmax(68px,1fr))]') &&
+      !leadActionSheet.includes('>Call<') &&
+      !leadActionSheet.includes('>Email<') &&
+      !leadActionSheet.includes('>Website<') &&
+      !leadActionSheet.includes('>Directions<'),
+    'LeadActionSheet must remove the four equal contact action boxes',
+  )
   for (const forbidden of ['No phone', 'No website', 'No address', 'Source:', 'Saved {displayDate', 'Website:']) {
     assert(!leadActionSheet.includes(forbidden), `LeadActionSheet must not retain duplicate or disabled metadata: ${forbidden}`)
   }
   assert(
     leadActionSheet.includes('data-fetchi-action-sheet-contact-routes') &&
-      leadActionSheet.includes('data-fetchi-action-sheet-utilities') &&
+      leadActionSheet.includes('data-fetchi-action-sheet-note') &&
       !leadActionSheet.includes('data-fetchi-action-sheet-lifecycle"'),
-    'LeadActionSheet must keep contact routes and utilities separate and remove the old bottom lifecycle action group',
+    'LeadActionSheet must keep real contact rows and genuine notes separate and remove the old bottom lifecycle action group',
   )
   assert(
     leadActionSheet.includes('onOpenAutoFocus') &&
@@ -568,11 +645,9 @@ async function main() {
     'LeadActionSheet must prevent default tile focus and must not duplicate source attribution in the header',
   )
   assert(
-    leadActionSheet.includes("actionLabel: 'Contacted'") &&
-      leadActionSheet.includes("actionLabel: 'Won'") &&
-      leadActionSheet.includes("actionLabel: 'Dismiss'") &&
+    leadActionSheet.includes("actionLabel: 'Lost'") &&
       !leadActionSheet.includes("actionLabel: 'Mark as"),
-    'LeadActionSheet lifecycle labels must be compact while accessible names preserve mutation intent',
+    'LeadActionSheet lifecycle labels must use the compact v6 visible vocabulary while accessible names preserve mutation intent',
   )
   assert(
     !leadActionSheet.includes('bg-lifecycleSaved/10') &&
@@ -580,6 +655,28 @@ async function main() {
       !leadActionSheet.includes('bg-lifecycleWon/10') &&
       !leadActionSheet.includes('bg-lifecycleLost/10'),
     'LeadActionSheet lifecycle containers must stay neutral; lifecycle color belongs only to glyphs',
+  )
+  assert(
+    leadActionSheet.includes('data-fetchi-primary-action="save-note"') &&
+      leadActionSheet.includes('PRIMARY_ACTION_CLASS') &&
+      leadActionSheet.includes('data-fetchi-note-sticky-footer') &&
+      leadActionSheet.includes('sticky bottom-0') &&
+      leadActionSheet.includes('bg-[var(--fetchi-accent)]') &&
+      leadActionSheet.includes('text-[var(--fetchi-accent-contrast)]') &&
+      actionSaveNoteControl.includes('rounded-[8px]') &&
+      actionCancelNoteControl.includes('rounded-[8px]') &&
+      leadActionSheet.includes('<Check className="h-4 w-4" />') &&
+      leadActionSheet.includes('<NotebookPen') &&
+      !leadActionSheet.includes('data-fetchi-primary-action="open-lead"'),
+    'Save note must remain the only filled indigo action and stay visible in the sticky v6 editing footer',
+  )
+  assert(
+    actionAddNoteControl.includes('rounded-[8px]'),
+    'Add note must use the explicit v5 8px control radius',
+  )
+  assert(
+    !changedFiles().includes(signalBarsPath),
+    'Stage 1 must leave the frozen SignalBars primitive unchanged',
   )
   assert(myLeads.includes('text-[22px]') && !myLeads.includes('text-[32px]'), 'My Leads mobile title must use the compact reference hierarchy')
   assert(myLeads.includes('leadCountLabel') && myLeads.includes('updatedLabel'), 'My Leads subtitle must remain grounded in saved-lead count and persisted update age')

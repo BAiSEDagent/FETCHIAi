@@ -3,21 +3,20 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import {
+  Check,
   ExternalLink,
-  Globe2,
+  Globe,
+  Loader2,
   Mail,
   MapPin,
+  Navigation,
   NotebookPen,
   Phone,
-  Save,
+  RefreshCw,
+  X,
 } from 'lucide-react'
 
-import { CoverageIndicator } from '@/components/fetchi-ui/CoverageIndicator'
-import {
-  SignalBars,
-  type SignalBarsLevel,
-} from '@/components/fetchi-ui/SignalBars'
-import { SourceAttribution } from '@/components/fetchi-ui/SourceAttribution'
+import type { SignalBarsLevel } from '@/components/fetchi-ui/SignalBars'
 import {
   StatusGlyph,
   type StatusGlyphState,
@@ -60,6 +59,8 @@ type Props = {
   onNoteDraftChange: (rowId: string, value: string) => void
   onSaveNote: (row: SavedLeadPipelineRow) => void
   onChangeStatus: (row: SavedLeadPipelineRow, status: SavedLeadLifecycleStatus) => void
+  onCheckSignals?: (row: SavedLeadPipelineRow) => void
+  isSignalCheckPending?: boolean
 }
 
 type LifecycleActionMeta = {
@@ -76,7 +77,7 @@ const LIFECYCLE_SELECTOR_OPTIONS: SavedLeadLifecycleStatus[] = [
   'saved',
   'contacted',
   'won',
-  'dismissed',
+  'lost',
 ]
 
 const LIFECYCLE_ACTION_META: Record<SavedLeadLifecycleStatus, LifecycleActionMeta> = {
@@ -97,13 +98,13 @@ const LIFECYCLE_ACTION_META: Record<SavedLeadLifecycleStatus, LifecycleActionMet
     accessibleLabel: 'Mark as Lost',
   },
   dismissed: {
-    actionLabel: 'Dismiss',
-    accessibleLabel: 'Dismiss lead',
+    actionLabel: 'Lost',
+    accessibleLabel: 'Mark as Lost',
   },
 }
 
 const PRIMARY_ACTION_CLASS =
-  'bg-fetchiAccent text-white hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)] focus-visible:ring-fetchiAccent'
+  'bg-[var(--fetchi-accent)] text-[var(--fetchi-accent-contrast)] hover:bg-[var(--fetchi-accent-hover)] active:bg-[var(--fetchi-accent-press)] focus-visible:ring-fetchiAccent'
 
 function textValue(value: string | null | undefined): string {
   return (value ?? '').trim()
@@ -181,7 +182,7 @@ function lifecycleGlyphState(status: SavedLeadLifecycleStatus): StatusGlyphState
 function selectedLifecycleStatus(
   status: SavedLeadLifecycleStatus,
 ): SavedLeadLifecycleStatus {
-  return status === 'lost' || status === 'dismissed' ? 'dismissed' : status
+  return status === 'lost' || status === 'dismissed' ? 'lost' : status
 }
 
 function lifecycleSelectorLabels(
@@ -197,16 +198,12 @@ function lifecycleSelectorLabels(
     }
   }
 
-  const currentLabel =
-    optionStatus === 'dismissed'
-      ? currentStatus === 'lost'
-        ? 'Lost'
-        : 'Dismissed'
-      : meta.actionLabel
-
   return {
-    visibleLabel: currentLabel,
-    accessibleLabel: `${currentLabel}, current lifecycle`,
+    visibleLabel: meta.actionLabel,
+    accessibleLabel:
+      currentStatus === 'dismissed' && optionStatus === 'lost'
+        ? 'Lost, current lifecycle; persisted as Dismissed'
+        : `${meta.actionLabel}, current lifecycle`,
   }
 }
 
@@ -237,12 +234,29 @@ function directionsHref(row: SavedLeadPipelineRow): string | null {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
 
-function MetaSeparator() {
-  return (
-    <span aria-hidden="true" className="shrink-0 text-[11px] text-textMuted">
-      ·
-    </span>
-  )
+function websiteHref(value: string | null | undefined): string | null {
+  const website = textValue(value)
+  if (!website) return null
+  return /^https?:\/\//i.test(website) ? website : `https://${website}`
+}
+
+function websiteDisplayValue(value: string | null | undefined): string {
+  const website = textValue(value)
+  if (!website) return ''
+  try {
+    return new URL(websiteHref(website) ?? website).hostname.replace(/^www\./i, '')
+  } catch {
+    return website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0]
+  }
+}
+
+function shortSourceLabel(value: string | null | undefined): string {
+  const source = textValue(value)
+  if (!source) return 'Fetch'
+  if (/google[\s_-]*(maps|places)|maps[\s_-]*google/i.test(source)) {
+    return 'Google Maps'
+  }
+  return source
 }
 
 export function LeadActionSheet({
@@ -260,11 +274,15 @@ export function LeadActionSheet({
   onNoteDraftChange,
   onSaveNote,
   onChangeStatus,
+  onCheckSignals,
+  isSignalCheckPending = false,
 }: Props) {
   const contentRef = useRef<HTMLDivElement>(null)
   const isEditingNote = row ? editingNoteId === row.id : false
   const isRowPending = Boolean(row && isPending && pendingId === row.id)
   const directions = row ? directionsHref(row) : null
+  const website = row ? websiteHref(row.website) : null
+  const updatedAge = row ? formatCompactAge(row.updatedAtMs, nowMs) : ''
   const displayedSignal = row
     ? effectiveSignalSummary(row, signalSummary)
     : SIGNAL_NOT_CHECKED
@@ -280,315 +298,415 @@ export function LeadActionSheet({
           contentRef.current?.focus({ preventScroll: true })
         }}
         id={row ? `fetchi-lead-action-sheet-${row.id}` : undefined}
-        className="max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-2xl border-x border-t border-border bg-fetchiOverlay px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 text-text shadow-[0_-18px_48px_-28px_rgba(0,0,0,0.88)] outline-none sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-[min(460px,calc(100%-32px))] sm:-translate-x-1/2 sm:rounded-2xl sm:border"
+        className="flex max-h-[90dvh] w-full max-w-none flex-col overflow-hidden rounded-t-[24px] border-x border-t border-white/[0.08] bg-[var(--fetchi-bg-elevated)] p-0 text-text shadow-[0_-20px_56px_-30px_rgba(0,0,0,0.92)] outline-none [&>button]:hidden sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-[min(460px,calc(100%-32px))] sm:-translate-x-1/2 sm:rounded-[24px] sm:border"
         data-cp23b-action-sheet
-        data-fetchi-action-sheet-v5
+        data-fetchi-action-sheet-v6
         data-fetchi-reduced-motion-sheet
       >
         {row ? (
-          <div className="space-y-5">
+          <>
             <div
-              aria-hidden="true"
-              className="mx-auto h-1 w-10 rounded-full bg-white/15"
-              data-fetchi-action-sheet-drag-handle
-            />
-            <SheetHeader
-              className="space-y-0 pr-8 text-left"
-              data-fetchi-action-sheet-header
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-3"
+              data-fetchi-action-sheet-scroll-region
             >
-              <div className="flex items-start gap-3">
-                <span
-                  aria-label={lifecycleLabel(row.lifecycleStatus)}
-                  className="mt-0.5 inline-flex shrink-0"
-                  role="img"
-                >
-                  <StatusGlyph
-                    aria-hidden="true"
-                    size={40}
-                    state={lifecycleGlyphState(row.lifecycleStatus)}
-                  />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <SheetTitle className="truncate font-fetchi text-[18px] font-semibold leading-tight tracking-[-0.02em] text-text">
-                    {row.businessName}
-                  </SheetTitle>
-                  <SheetDescription className="mt-1 truncate text-[13px] leading-snug text-text2">
-                    {detailLine(row) || 'Saved lead'}
-                  </SheetDescription>
-                  <div className="mt-1 text-[12px] font-medium text-textMuted">
-                    {lifecycleLabel(row.lifecycleStatus)} · {formatCompactAge(row.updatedAtMs, nowMs)}
-                  </div>
-                </div>
-              </div>
-            </SheetHeader>
+              <div className="space-y-6">
+                <div
+                  aria-hidden="true"
+                  className="mx-auto h-1 w-10 rounded-full bg-white/15"
+                  data-fetchi-action-sheet-drag-handle
+                />
 
-            <section
-              aria-labelledby="lead-lifecycle-selector-label"
-              data-fetchi-action-sheet-lifecycle-selector
-            >
-              <h3
-                id="lead-lifecycle-selector-label"
-                className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-textMuted"
-              >
-                Lifecycle
-              </h3>
-              <div
-                aria-label="Lead lifecycle"
-                className="grid grid-cols-4 gap-1 rounded-xl border border-border bg-fetchiSurface p-1"
-                role="group"
-              >
-                {LIFECYCLE_SELECTOR_OPTIONS.map((status) => {
-                  const isSelected =
-                    selectedLifecycleStatus(row.lifecycleStatus) === status
-                  const labels = lifecycleSelectorLabels(
-                    status,
-                    row.lifecycleStatus,
-                    isSelected,
-                  )
-                  return (
-                    <button
-                      key={status}
-                      type="button"
-                      aria-label={labels.accessibleLabel}
-                      aria-pressed={isSelected}
-                      disabled={isRowPending}
-                      onClick={() => {
-                        if (isSelected) return
-                        onChangeStatus(row, status)
-                      }}
-                      className={cn(
-                        'fetchi-focus-ring inline-flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-                        isSelected
-                          ? 'bg-fetchiRaised text-text shadow-[inset_0_0_0_1px_var(--fetchi-border-strong)]'
-                          : 'text-textMuted hover:bg-fetchiOverlayHover hover:text-text2',
-                      )}
+                <SheetHeader
+                  className="space-y-0 text-left"
+                  data-fetchi-action-sheet-header
+                >
+                  <div className="flex items-start gap-2">
+                    <span
+                      aria-label={lifecycleLabel(row.lifecycleStatus)}
+                      className="mt-1 inline-flex shrink-0"
+                      role="img"
                     >
                       <StatusGlyph
                         aria-hidden="true"
                         size={20}
-                        state={lifecycleGlyphState(status)}
+                        state={lifecycleGlyphState(row.lifecycleStatus)}
                       />
-                      <span className="truncate">{labels.visibleLabel}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </section>
-
-            <section
-              aria-labelledby="lead-signal-summary-label"
-              data-fetchi-action-sheet-signal-summary
-            >
-              <h3
-                id="lead-signal-summary-label"
-                className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-textMuted"
-              >
-                Signal
-              </h3>
-              <div className="rounded-xl border border-border bg-fetchiSurface px-3 py-3">
-                <div className="flex items-center gap-2 text-[13px] font-medium text-text2">
-                  <SignalBars aria-hidden="true" level={displayedSignal.level} />
-                  <span>{displayedSignal.label}</span>
-                </div>
-                {displayedSignal.level === 'unchecked' ? (
-                  <p className="mt-2 text-[12px] leading-relaxed text-textMuted">
-                    Saved from Fetch. This lead has not been checked for fresh buying signals yet.
-                  </p>
-                ) : null}
-                {displayedSignal.level === 'none' && displayedSignal.checkedAt ? (
-                  <p className="mt-2 text-[12px] leading-relaxed text-textMuted">
-                    Checked {displayedSignal.checkedAt}
-                  </p>
-                ) : null}
-                {displayedSignal.level !== 'unchecked' &&
-                displayedSignal.level !== 'none' ? (
-                  <div className="mt-2 grid gap-0.5 text-[12px] leading-relaxed text-textMuted">
-                    {displayedSignal.signalType ? (
-                      <span>{displayedSignal.signalType}</span>
-                    ) : null}
-                    {displayedSignal.checkedAt ? (
-                      <span>Checked {displayedSignal.checkedAt}</span>
-                    ) : null}
-                    {typeof displayedSignal.evidenceCount === 'number' ? (
-                      <span>
-                        {displayedSignal.evidenceCount}{' '}
-                        {displayedSignal.evidenceCount === 1
-                          ? 'evidence item'
-                          : 'evidence items'}
-                      </span>
-                    ) : null}
-                    {displayedSignal.evidenceDate ? (
-                      <span>{displayedSignal.evidenceDate}</span>
-                    ) : null}
-                    {displayedSignal.whyNow ? (
-                      <span>{displayedSignal.whyNow}</span>
-                    ) : null}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start gap-1">
+                        <SheetTitle className="min-w-0 flex-1 font-fetchi text-[19px] font-semibold leading-tight tracking-[-0.02em] text-text">
+                          {row.businessName}
+                        </SheetTitle>
+                        <div
+                          className="-mr-2 -mt-2 flex shrink-0 items-center"
+                          data-fetchi-action-sheet-header-actions
+                        >
+                          <Link
+                            href={`/app/leads/${row.id}`}
+                            aria-label={`Open ${row.businessName}`}
+                            className="fetchi-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-lg text-textMuted transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                            data-fetchi-action-sheet-open-lead
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                          <button
+                            type="button"
+                            aria-label="Close lead sheet"
+                            onClick={() => onOpenChange(false)}
+                            className="fetchi-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-lg text-textMuted transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                            data-fetchi-action-sheet-close
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <SheetDescription className="mt-1 text-[13px] leading-snug text-text2">
+                        {detailLine(row) || 'Saved lead'}
+                      </SheetDescription>
+                    </div>
                   </div>
-                ) : null}
-                <div
-                  className="mt-2 flex min-w-0 items-center gap-2 overflow-hidden"
-                  data-fetchi-action-sheet-truth-row
+                </SheetHeader>
+
+                <section
+                  aria-labelledby="lead-lifecycle-selector-label"
+                  data-fetchi-action-sheet-lifecycle-selector
                 >
-                  <CoverageIndicator
-                    addressAvailable={hasAddress(row)}
-                    phoneAvailable={hasPhone(row)}
-                    websiteAvailable={hasWebsite(row)}
-                  />
-                  <MetaSeparator />
-                  <span className="min-w-0 flex-1 overflow-hidden">
-                    {row.sourceUrl ? (
-                      <a
-                        href={row.sourceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="fetchi-focus-ring block min-w-0 rounded-sm"
-                        data-fetchi-source-link
+                  <div
+                    className="mb-2 flex items-center justify-between gap-4"
+                    data-fetchi-action-sheet-lifecycle-heading
+                  >
+                    <h3
+                      id="lead-lifecycle-selector-label"
+                      className="text-[11px] font-semibold uppercase tracking-[0.14em] text-textMuted"
+                    >
+                      Lifecycle
+                    </h3>
+                    <span
+                      className="text-[12px] text-textMuted"
+                      data-fetchi-updated-age
+                    >
+                      updated {updatedAge === 'now' ? 'now' : `${updatedAge} ago`}
+                    </span>
+                  </div>
+                  <div
+                    aria-label="Lead lifecycle"
+                    className="grid grid-cols-4 gap-0 rounded-xl bg-[var(--fetchi-raised)] p-1 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                    data-fetchi-lifecycle-group-surface
+                    role="group"
+                  >
+                    {LIFECYCLE_SELECTOR_OPTIONS.map((status) => {
+                      const isSelected =
+                        selectedLifecycleStatus(row.lifecycleStatus) === status
+                      const labels = lifecycleSelectorLabels(
+                        status,
+                        row.lifecycleStatus,
+                        isSelected,
+                      )
+                      return (
+                        <button
+                          key={status}
+                          type="button"
+                          aria-label={labels.accessibleLabel}
+                          aria-pressed={isSelected}
+                          disabled={isRowPending}
+                          onClick={() => {
+                            if (isSelected) return
+                            onChangeStatus(row, status)
+                          }}
+                          className={cn(
+                            'fetchi-focus-ring inline-flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-[8px] px-1 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                            isSelected
+                              ? 'bg-[var(--fetchi-overlay-active)] text-text shadow-[inset_0_0_0_1px_var(--fetchi-border-strong)]'
+                              : 'text-textMuted hover:bg-fetchiOverlayHover hover:text-text2',
+                          )}
+                          data-fetchi-lifecycle-segment={status}
+                          data-fetchi-lifecycle-selected-surface={
+                            isSelected ? 'true' : undefined
+                          }
+                        >
+                          <StatusGlyph
+                            aria-hidden="true"
+                            size={18}
+                            state={lifecycleGlyphState(status)}
+                          />
+                          <span className="truncate">{labels.visibleLabel}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </section>
+
+                <section
+                  aria-labelledby="lead-signal-summary-label"
+                  data-fetchi-action-sheet-signal-summary
+                >
+                  <h3
+                    id="lead-signal-summary-label"
+                    className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-textMuted"
+                  >
+                    Signal
+                  </h3>
+                  {displayedSignal.level === 'unchecked' ? (
+                    <div
+                      className="rounded-xl border border-dashed border-white/[0.14] bg-white/[0.025] px-4 py-4"
+                      data-fetchi-signal-fallback
+                    >
+                      <div className="flex items-center gap-2 text-[14px] font-semibold text-text2">
+                        <span
+                          aria-hidden="true"
+                          className="text-[14px] tracking-[0.12em] text-textMuted"
+                          data-fetchi-signal-fallback-ellipsis
+                        >
+                          •••
+                        </span>
+                        <span>{displayedSignal.label}</span>
+                      </div>
+                      <p className="mt-3 text-[13px] leading-relaxed text-text2">
+                        Saved from Fetch. I haven’t checked this one for fresh buying signals yet.
+                      </p>
+                      <div
+                        className={cn(
+                          'mt-4 flex items-center gap-3',
+                          onCheckSignals ? 'justify-between' : 'justify-end',
+                        )}
                       >
-                        <SourceAttribution
-                          className="max-w-full"
-                          source={row.source}
-                          variant="inline"
-                        />
-                      </a>
-                    ) : (
-                      <SourceAttribution
-                        className="max-w-full"
-                        source={row.source}
-                        variant="inline"
-                      />
-                    )}
-                  </span>
-                </div>
-              </div>
-            </section>
+                        {onCheckSignals ? (
+                          <button
+                            type="button"
+                            disabled={isSignalCheckPending}
+                            onClick={() => onCheckSignals(row)}
+                            className="fetchi-focus-ring inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-[8px] bg-[var(--fetchi-raised)] px-3 text-[13px] font-semibold text-text shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] transition-colors hover:bg-fetchiOverlayHover disabled:cursor-wait disabled:opacity-60"
+                            data-fetchi-signal-check-action
+                          >
+                            {isSignalCheckPending ? (
+                              <Loader2
+                                aria-hidden="true"
+                                className="h-4 w-4 animate-spin motion-reduce:animate-none"
+                              />
+                            ) : (
+                              <RefreshCw aria-hidden="true" className="h-4 w-4" />
+                            )}
+                            {isSignalCheckPending
+                              ? 'Checking signals…'
+                              : 'Check for signals'}
+                          </button>
+                        ) : null}
+                        <div
+                          className="min-w-0 text-right text-[12px] text-textMuted"
+                          data-fetchi-action-sheet-source
+                        >
+                          {row.sourceUrl ? (
+                            <a
+                              href={row.sourceUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="fetchi-focus-ring rounded-sm whitespace-nowrap"
+                              data-fetchi-source-link
+                            >
+                              source {shortSourceLabel(row.source)}
+                            </a>
+                          ) : (
+                            <span className="whitespace-nowrap">
+                              source {shortSourceLabel(row.source)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl bg-[var(--fetchi-raised)] px-4 py-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
+                      <div className="text-[14px] font-semibold text-text2">
+                        {displayedSignal.label}
+                      </div>
+                      <div className="mt-2 grid gap-0.5 text-[13px] leading-relaxed text-textMuted">
+                        {displayedSignal.signalType ? (
+                          <span>{displayedSignal.signalType}</span>
+                        ) : null}
+                        {displayedSignal.checkedAt ? (
+                          <span>Checked {displayedSignal.checkedAt}</span>
+                        ) : null}
+                        {typeof displayedSignal.evidenceCount === 'number' ? (
+                          <span>
+                            {displayedSignal.evidenceCount}{' '}
+                            {displayedSignal.evidenceCount === 1
+                              ? 'evidence item'
+                              : 'evidence items'}
+                          </span>
+                        ) : null}
+                        {displayedSignal.evidenceDate ? (
+                          <span>{displayedSignal.evidenceDate}</span>
+                        ) : null}
+                        {displayedSignal.whyNow ? (
+                          <span>{displayedSignal.whyNow}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
+                </section>
 
-            {(hasPhone(row) ||
-              textValue(row.email) ||
-              hasWebsite(row) ||
-              directions) ? (
-              <section aria-labelledby="lead-contact-routes">
-                <h3
-                  id="lead-contact-routes"
-                  className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-textMuted"
+                {(hasPhone(row) ||
+                  textValue(row.email) ||
+                  hasWebsite(row) ||
+                  directions) ? (
+                  <section aria-labelledby="lead-contact-routes">
+                    <h3
+                      id="lead-contact-routes"
+                      className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-textMuted"
+                    >
+                      Contact
+                    </h3>
+                    <div
+                      className="divide-y divide-white/[0.06]"
+                      data-fetchi-action-sheet-contact-routes
+                    >
+                      {hasPhone(row) ? (
+                        <a
+                          href={`tel:${row.phone}`}
+                          data-fetchi-contact-route="phone"
+                          data-fetchi-contact-row="phone"
+                          className="fetchi-focus-ring flex min-h-[44px] items-center gap-3 py-2 text-[15px] leading-5 text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                        >
+                          <Phone className="h-4 w-4 shrink-0 text-textMuted" />
+                          <span
+                            className="min-w-0 flex-1 text-[var(--fetchi-text-strong-muted,#D0D6E0)]"
+                            data-fetchi-contact-value
+                          >
+                            {row.phone}
+                          </span>
+                          <Phone className="h-4 w-4 shrink-0 text-textMuted" />
+                        </a>
+                      ) : null}
+                      {textValue(row.email) ? (
+                        <a
+                          href={`mailto:${row.email}`}
+                          data-fetchi-contact-route="email"
+                          data-fetchi-contact-row="email"
+                          className="fetchi-focus-ring flex min-h-[44px] items-center gap-3 py-2 text-[15px] leading-5 text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                        >
+                          <Mail className="h-4 w-4 shrink-0 text-textMuted" />
+                          <span
+                            className="min-w-0 flex-1 break-words text-[var(--fetchi-text-strong-muted,#D0D6E0)]"
+                            data-fetchi-contact-value
+                          >
+                            {row.email}
+                          </span>
+                          <ExternalLink className="h-4 w-4 shrink-0 text-textMuted" />
+                        </a>
+                      ) : null}
+                      {website ? (
+                        <a
+                          href={website}
+                          data-fetchi-contact-route="website"
+                          data-fetchi-contact-row="website"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="fetchi-focus-ring flex min-h-[44px] items-center gap-3 py-2 text-[15px] leading-5 text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                        >
+                          <Globe className="h-4 w-4 shrink-0 text-textMuted" />
+                          <span
+                            className="min-w-0 flex-1 break-words text-[var(--fetchi-text-strong-muted,#D0D6E0)]"
+                            data-fetchi-contact-value
+                          >
+                            {websiteDisplayValue(row.website)}
+                          </span>
+                          <ExternalLink className="h-4 w-4 shrink-0 text-textMuted" />
+                        </a>
+                      ) : null}
+                      {directions ? (
+                        <a
+                          href={directions}
+                          data-fetchi-contact-route="directions"
+                          data-fetchi-contact-row="address"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="fetchi-focus-ring flex min-h-[44px] items-center gap-3 py-2 text-[15px] leading-5 text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                        >
+                          <MapPin className="h-4 w-4 shrink-0 text-textMuted" />
+                          <span
+                            className="min-w-0 flex-1 text-[var(--fetchi-text-strong-muted,#D0D6E0)]"
+                            data-fetchi-contact-value
+                          >
+                            {row.address}
+                          </span>
+                          <Navigation className="h-4 w-4 shrink-0 text-textMuted" />
+                        </a>
+                      ) : null}
+                    </div>
+                  </section>
+                ) : null}
+
+                <section
+                  aria-labelledby="lead-note-label"
+                  data-fetchi-action-sheet-note
                 >
-                  Contact
-                </h3>
-                <div
-                  className="grid grid-cols-[repeat(auto-fit,minmax(68px,1fr))] gap-2"
-                  data-fetchi-action-sheet-contact-routes
-                >
-                  {hasPhone(row) ? (
-                    <a
-                      href={`tel:${row.phone}`}
-                      data-fetchi-contact-route="phone"
-                      className="fetchi-focus-ring inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-fetchiRaised px-2 text-[12px] font-medium text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                  <h3
+                    id="lead-note-label"
+                    className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-textMuted"
+                  >
+                    Note
+                  </h3>
+                  {isEditingNote ? (
+                    <textarea
+                      value={noteDraft}
+                      onChange={(event) =>
+                        onNoteDraftChange(row.id, event.target.value)
+                      }
+                      aria-label={`Note for ${row.businessName}`}
+                      className="fetchi-focus-ring min-h-[112px] w-full resize-y rounded-xl bg-[var(--fetchi-overlay)] px-3 py-3 text-[15px] leading-relaxed text-text shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] placeholder:text-textMuted"
+                      placeholder="Add note"
+                    />
+                  ) : displayNote ? (
+                    <button
+                      type="button"
+                      onClick={() => onStartEditingNote(row)}
+                      className="fetchi-focus-ring min-h-[72px] w-full rounded-xl bg-[var(--fetchi-overlay)] px-3 py-3 text-left text-[15px] leading-relaxed text-text2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                      data-fetchi-action-sheet-note-preview
                     >
-                      <Phone className="h-4 w-4" />
-                      Call
-                    </a>
-                  ) : null}
-                  {textValue(row.email) ? (
-                    <a
-                      href={`mailto:${row.email}`}
-                      data-fetchi-contact-route="email"
-                      className="fetchi-focus-ring inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-fetchiRaised px-2 text-[12px] font-medium text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                      {displayNote}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onStartEditingNote(row)}
+                      className="fetchi-focus-ring inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-[8px] bg-[var(--fetchi-raised)] px-3 text-[13px] font-medium text-text2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                      data-fetchi-action-sheet-add-note
                     >
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </a>
-                  ) : null}
-                  {hasWebsite(row) && row.website ? (
-                    <a
-                      href={row.website}
-                      data-fetchi-contact-route="website"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="fetchi-focus-ring inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-fetchiRaised px-2 text-[12px] font-medium text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
-                    >
-                      <Globe2 className="h-4 w-4" />
-                      Website
-                    </a>
-                  ) : null}
-                  {directions ? (
-                    <a
-                      href={directions}
-                      data-fetchi-contact-route="directions"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="fetchi-focus-ring inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-fetchiRaised px-2 text-[12px] font-medium text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
-                    >
-                      <MapPin className="h-4 w-4" />
-                      Directions
-                    </a>
-                  ) : null}
-                </div>
-              </section>
-            ) : null}
-
-            {displayNote && !isEditingNote ? (
-              <div
-                className="rounded-lg border border-border bg-fetchiSurface px-3 py-2.5 text-[13px] leading-relaxed text-text2"
-                data-fetchi-action-sheet-note-preview
-              >
-                {displayNote}
+                      <NotebookPen aria-hidden="true" className="h-4 w-4" />
+                      Add note
+                    </button>
+                  )}
+                </section>
               </div>
-            ) : null}
-
-            <div
-              className="grid grid-cols-2 gap-2"
-              data-fetchi-action-sheet-utilities
-            >
-              <button
-                type="button"
-                onClick={() => onStartEditingNote(row)}
-                className="fetchi-focus-ring inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-fetchiRaised px-3 text-[13px] font-medium text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
-              >
-                <NotebookPen className="h-4 w-4" />
-                {displayNote ? 'Edit note' : 'Add note'}
-              </button>
-              <Link
-                href={`/app/leads/${row.id}`}
-                className="fetchi-focus-ring inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-fetchiRaised px-3 text-[13px] font-medium text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Open lead
-              </Link>
             </div>
 
             {isEditingNote ? (
-              <div className="rounded-xl border border-border bg-fetchiRaised p-3">
-                <textarea
-                  value={noteDraft}
-                  onChange={(event) => onNoteDraftChange(row.id, event.target.value)}
-                  aria-label={`Note for ${row.businessName}`}
-                  className="fetchi-focus-ring min-h-[92px] w-full resize-y rounded-lg border border-border bg-bg px-3 py-2 text-[14px] leading-relaxed text-text placeholder:text-textMuted"
-                  placeholder="Add note"
-                />
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    disabled={isRowPending || noteDraft === (displayNote ?? '')}
-                    onClick={() => onSaveNote(row)}
-                    className={cn(
-                      'fetchi-focus-ring inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg text-[13px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45',
-                      PRIMARY_ACTION_CLASS,
-                    )}
-                  >
-                    <Save className="h-4 w-4" />
-                    Save note
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onCancelEditingNote}
-                    className="fetchi-focus-ring inline-flex min-h-[44px] items-center justify-center rounded-lg border border-border px-4 text-[13px] font-medium text-text2 hover:border-[var(--fetchi-border-strong)] hover:text-text"
-                  >
-                    Cancel
-                  </button>
-                </div>
+              <div
+                className="sticky bottom-0 z-20 flex shrink-0 items-center gap-2 border-t border-white/[0.08] bg-[var(--fetchi-bg-elevated)] px-5 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-16px_32px_-28px_rgba(0,0,0,0.95)]"
+                data-fetchi-note-sticky-footer
+              >
+                <button
+                  type="button"
+                  disabled={isRowPending || noteDraft === (displayNote ?? '')}
+                  onClick={() => onSaveNote(row)}
+                  className={cn(
+                    'fetchi-focus-ring inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-[8px] text-[14px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+                    PRIMARY_ACTION_CLASS,
+                  )}
+                  data-fetchi-primary-action="save-note"
+                >
+                  <Check className="h-4 w-4" />
+                  Save note
+                </button>
+                <button
+                  type="button"
+                  onClick={onCancelEditingNote}
+                  className="fetchi-focus-ring inline-flex min-h-[44px] items-center justify-center rounded-[8px] px-4 text-[14px] font-medium text-text2 transition-colors hover:bg-fetchiOverlayHover hover:text-text"
+                >
+                  Cancel
+                </button>
               </div>
             ) : null}
-
-          </div>
+          </>
         ) : null}
       </SheetContent>
     </Sheet>
