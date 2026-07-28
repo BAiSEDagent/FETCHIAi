@@ -104,6 +104,7 @@ export interface ArcGisStructuredSourceConfig<
   externalIdFields: string[]
   dateFields: string[]
   outFields: string[]
+  orderByFields?: string[]
   fieldMap: StructuredFieldMap<TRecord>
   limitations: string[]
 }
@@ -130,11 +131,12 @@ export interface StructuredSourceRequest {
 export interface StructuredSourceFailure {
   code:
     | 'source_unavailable'
-    | 'timeout'
+    | 'provider_timeout'
     | 'invalid_response'
     | 'transport_failed'
     | 'budget_refused'
   retryable: boolean
+  metadata?: Readonly<Record<string, string | number | boolean>>
 }
 export interface StructuredSourceUsage {
   requestCount: number

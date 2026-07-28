@@ -34,6 +34,7 @@ const COST_ESTIMATE_USD = 0.01
 
 /** SerpApi REST endpoint. SerpApi is called only from this file. */
 const SERPAPI_ENDPOINT = 'https://serpapi.com/search.json'
+const DEFAULT_TIMEOUT_MS = 8000
 
 /** Keep surfaced provider errors useful without leaking secrets or long payloads. */
 const MAX_PROVIDER_ERROR_MESSAGE_LENGTH = 240
@@ -50,6 +51,13 @@ interface SerpApiOrganicResult {
 interface SerpApiResponse {
   error?: unknown
   organic_results?: unknown
+}
+
+export interface SerpApiSearchProviderOptions {
+  fetch?: typeof fetch
+  timeoutMs?: number
+  setTimeout?: typeof setTimeout
+  clearTimeout?: typeof clearTimeout
 }
 
 function newRunId(): string {
@@ -84,6 +92,18 @@ function parseSerpApiErrorPayload(value: unknown): string | null {
   return sanitizeProviderErrorMessage(payload.error)
 }
 
+function isAbortError(error: unknown): boolean {
+  return (
+    (typeof DOMException !== 'undefined' &&
+      error instanceof DOMException &&
+      error.name === 'AbortError') ||
+    (typeof error === 'object' &&
+      error !== null &&
+      'name' in error &&
+      error.name === 'AbortError')
+  )
+}
+
 async function parseSerpApiErrorResponse(response: Response): Promise<string | null> {
   try {
     const body = await response.text()
@@ -107,9 +127,17 @@ export class SerpApiSearchProvider implements SearchProvider {
   public readonly name = 'serpapi' as const
 
   private readonly apiKey: string
+  private readonly fetcher: typeof fetch
+  private readonly timeoutMs: number
+  private readonly setTimer: typeof setTimeout
+  private readonly clearTimer: typeof clearTimeout
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, options: SerpApiSearchProviderOptions = {}) {
     this.apiKey = apiKey
+    this.fetcher = options.fetch ?? fetch
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
+    this.setTimer = options.setTimeout ?? setTimeout
+    this.clearTimer = options.clearTimeout ?? clearTimeout
   }
 
   async discover(task: SearchTask): Promise<SearchDiscoverResult> {
@@ -144,18 +172,31 @@ export class SerpApiSearchProvider implements SearchProvider {
     })
 
     let response: Response
+    const controller = new AbortController()
+    const timer = this.setTimer(() => controller.abort(), Math.max(1, this.timeoutMs))
     try {
-      response = await fetch(`${SERPAPI_ENDPOINT}?${params.toString()}`, {
+      response = await this.fetcher(`${SERPAPI_ENDPOINT}?${params.toString()}`, {
         method: 'GET',
         headers: { accept: 'application/json' },
+        signal: controller.signal,
       })
-    } catch {
+    } catch (error) {
+      if (controller.signal.aborted || isAbortError(error)) {
+        return this.errorResult(providerRunId, {
+          code: 'provider_timeout',
+          message: 'SerpApi discovery request timed out.',
+          retryable: true,
+          providerRunId,
+        })
+      }
       return this.errorResult(providerRunId, {
         code: 'provider_request_failed',
         message: 'SerpApi discovery request could not be completed.',
         retryable: true,
         providerRunId,
       })
+    } finally {
+      this.clearTimer(timer)
     }
 
     if (!response.ok) {

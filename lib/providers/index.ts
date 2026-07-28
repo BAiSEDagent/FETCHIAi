@@ -45,6 +45,7 @@ export type {
 
 export { noopSearchProvider } from './noop-search-provider'
 export { noopEvidenceProvider } from './noop-evidence-provider'
+export { ArcGisFeatureProvider } from './structured/arcgis-feature-provider'
 
 export {
   STRUCTURED_SOURCE_ADAPTER_CONCEPTS,
@@ -64,7 +65,6 @@ export {
 export type {
   ApprovedStructuredEvidenceSnapshot,
   ArcGisStructuredSourceConfig,
-  ArcGisFeatureProvider,
   NoaaEventProvider,
   SamGovProvider,
   SourceAvailability,
