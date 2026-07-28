@@ -45,3 +45,49 @@ export type {
 
 export { noopSearchProvider } from './noop-search-provider'
 export { noopEvidenceProvider } from './noop-evidence-provider'
+
+export {
+  STRUCTURED_SOURCE_ADAPTER_CONCEPTS,
+  STRUCTURED_SOURCE_CLASSES,
+  STRUCTURED_PERMIT_EVIDENCE_FIELDS,
+  STRUCTURED_PERMIT_EVIDENCE_SCHEMA_ID,
+  STRUCTURED_SOURCE_PUBLIC_METADATA_FIELDS,
+  createStructuredEvidenceFingerprint,
+  createStructuredEvidenceArtifactKey,
+  createStructuredPermitEvidenceRecord,
+  createStructuredPermitEvidenceSnapshot,
+  mapStructuredRecord,
+  resolveStructuredSourceAvailability,
+  selectStructuredPermitPublicMetadata,
+} from './structured-source-provider'
+
+export type {
+  ApprovedStructuredEvidenceSnapshot,
+  ArcGisStructuredSourceConfig,
+  ArcGisFeatureProvider,
+  NoaaEventProvider,
+  SamGovProvider,
+  SourceAvailability,
+  SourceCheckState,
+  SourceTier,
+  StructuredFieldMap,
+  StructuredEvidenceScalar,
+  StructuredPermitRecord,
+  StructuredPermitEvidenceField,
+  StructuredSourceClass,
+  StructuredSourceConfig,
+  StructuredSourceDefinition,
+  StructuredSourceEvidenceRecord,
+  StructuredSourceFailure,
+  StructuredSourceFormat,
+  StructuredSourcePlanItem,
+  StructuredSourceProvider,
+  StructuredSourcePublicMetadata,
+  StructuredSourcePublicMetadataField,
+  StructuredSourceRequest,
+  StructuredSourceResult,
+  StructuredSourceTerritory,
+  StructuredSourceUsage,
+  SocrataDatasetProvider,
+  TdlrTabsProvider,
+} from './structured-source-provider'

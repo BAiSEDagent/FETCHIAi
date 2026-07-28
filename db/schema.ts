@@ -15,8 +15,11 @@ import {
   index,
   uniqueIndex,
   doublePrecision,
+  check,
+  foreignKey,
+  primaryKey,
 } from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 
 // ─────────────────────────────────────────────
 // WORKSPACE SETTINGS
@@ -252,6 +255,8 @@ export const savedLeads = pgTable('saved_leads', {
                            .on(table.workspaceId, table.updatedAt),
   workspaceMarketIdx:    index('saved_leads_workspace_market_idx')
                            .on(table.workspaceId, table.market),
+  workspaceIdUnique:     uniqueIndex('saved_leads_workspace_id_unique')
+                           .on(table.workspaceId, table.id),
 }))
 
 // ─────────────────────────────────────────────
@@ -319,6 +324,431 @@ export const runtimeLineageRuns = pgTable('runtime_lineage_runs', {
                        .on(table.evidenceSourceId),
   sourceUrlIdx:      index('runtime_lineage_source_url_idx').on(table.sourceUrl),
 }))
+
+// ─────────────────────────────────────────────
+// SAVED-LEAD INVESTIGATION CONTRACT STORAGE
+// CP26C.2A additive definitions only. These tables are not applied by this
+// checkpoint and no runtime imports or database writes are introduced.
+// ─────────────────────────────────────────────
+
+export const savedLeadInvestigationDailyUsage = pgTable(
+  'saved_lead_investigation_daily_usage',
+  {
+    workspaceId:     text('workspace_id').notNull(),
+    workspaceDayKey: text('workspace_day_key').notNull(),
+    timezone:        text('timezone').notNull(),
+    resetAt:         timestamp('reset_at', { withTimezone: true }).notNull(),
+    usedCount:       integer('used_count').default(0).notNull(),
+    limitSnapshot:   integer('limit_snapshot').notNull(),
+    createdAt:       timestamp('created_at', { withTimezone: true })
+                       .defaultNow().notNull(),
+    updatedAt:       timestamp('updated_at', { withTimezone: true })
+                       .defaultNow().notNull(),
+  },
+  (table) => ({
+    workspaceFk: foreignKey({
+      name: 'saved_lead_inv_usage_workspace_fk',
+      columns: [table.workspaceId],
+      foreignColumns: [workspaceSettings.workspaceId],
+    }),
+    pk: primaryKey({
+      name: 'saved_lead_inv_daily_usage_pk',
+      columns: [table.workspaceId, table.workspaceDayKey],
+    }),
+    nonnegativeUsage: check(
+      'saved_lead_inv_daily_usage_nonnegative',
+      sql`${table.usedCount} >= 0`,
+    ),
+    positiveLimit: check(
+      'saved_lead_inv_daily_usage_positive_limit',
+      sql`${table.limitSnapshot} > 0`,
+    ),
+    withinLimit: check(
+      'saved_lead_inv_daily_usage_within_limit',
+      sql`${table.usedCount} <= ${table.limitSnapshot}`,
+    ),
+  }),
+)
+
+export const savedLeadInvestigationRuns = pgTable(
+  'saved_lead_investigation_runs',
+  {
+    id:                        uuid('id').defaultRandom().primaryKey(),
+    workspaceId:               text('workspace_id').notNull(),
+    savedLeadId:               uuid('saved_lead_id').notNull(),
+    clientRequestId:           text('client_request_id').notNull(),
+    playbookId:                text('playbook_id').notNull(),
+    playbookVersion:           text('playbook_version').notNull(),
+    status:                    text('status').default('created').notNull(),
+    currentPhase:              text('current_phase')
+                                 .default('resolving_identity').notNull(),
+    heartbeatAt:               timestamp('heartbeat_at', { withTimezone: true }),
+    initialIdentityResolution: jsonb('initial_identity_resolution'),
+    identityResolution:        jsonb('identity_resolution'),
+    sourcePlan:                jsonb('source_plan'),
+    budgetCeiling:             jsonb('budget_ceiling').notNull(),
+    usageActual:               jsonb('usage_actual').default({}).notNull(),
+    workspaceDayKey:           text('workspace_day_key'),
+    usageCountedAt:            timestamp('usage_counted_at', { withTimezone: true }),
+    categoryIdsChecked:        jsonb('category_ids_checked').default([]).notNull(),
+    triggerState:              text('trigger_state'),
+    triggerReasonCode:         text('trigger_reason_code'),
+    startedAt:                 timestamp('started_at', { withTimezone: true }),
+    updatedAt:                 timestamp('updated_at', { withTimezone: true })
+                                 .defaultNow().notNull(),
+    checkedAt:                 timestamp('checked_at', { withTimezone: true }),
+    recheckEligibleAt:         timestamp('recheck_eligible_at', { withTimezone: true }),
+    resultExpiresAt:           timestamp('result_expires_at', { withTimezone: true }),
+    failureCode:               text('failure_code'),
+    failureRetryable:          boolean('failure_retryable').default(false).notNull(),
+    createdAt:                 timestamp('created_at', { withTimezone: true })
+                                 .defaultNow().notNull(),
+  },
+  (table) => ({
+    workspaceFk: foreignKey({
+      name: 'saved_lead_inv_run_workspace_fk',
+      columns: [table.workspaceId],
+      foreignColumns: [workspaceSettings.workspaceId],
+    }),
+    workspaceClientRequestUnique: uniqueIndex('saved_lead_inv_run_client_unique')
+      .on(table.workspaceId, table.clientRequestId),
+    activeRunUnique: uniqueIndex('saved_lead_inv_run_active_unique')
+      .on(table.workspaceId, table.savedLeadId)
+      .where(sql`${table.status} in ('created', 'running')`),
+    latestRunIdx: index('saved_lead_inv_run_latest_idx')
+      .on(table.workspaceId, table.savedLeadId, table.createdAt),
+    workspaceRunUnique: uniqueIndex('saved_lead_inv_run_workspace_id_unique')
+      .on(table.workspaceId, table.id),
+    workspaceLeadRunUnique: uniqueIndex('saved_lead_inv_run_scope_unique')
+      .on(table.workspaceId, table.savedLeadId, table.id),
+    savedLeadOwnershipFk: foreignKey({
+      name: 'saved_lead_inv_run_saved_lead_fk',
+      columns: [table.workspaceId, table.savedLeadId],
+      foreignColumns: [savedLeads.workspaceId, savedLeads.id],
+    }),
+    dailyUsageFk: foreignKey({
+      name: 'saved_lead_inv_run_daily_usage_fk',
+      columns: [table.workspaceId, table.workspaceDayKey],
+      foreignColumns: [
+        savedLeadInvestigationDailyUsage.workspaceId,
+        savedLeadInvestigationDailyUsage.workspaceDayKey,
+      ],
+    }),
+    usagePairCheck: check(
+      'saved_lead_inv_run_usage_pair_check',
+      sql`(${table.workspaceDayKey} is null and ${table.usageCountedAt} is null) or (${table.workspaceDayKey} is not null and ${table.usageCountedAt} is not null)`,
+    ),
+    statusCheck: check(
+      'saved_lead_inv_run_status_check',
+      sql`${table.status} in ('created', 'running', 'completed', 'failed')`,
+    ),
+    phaseCheck: check(
+      'saved_lead_inv_run_phase_check',
+      sql`${table.currentPhase} in ('resolving_identity', 'checking_structured_sources', 'searching_entity_domain', 'searching_public_web', 'reading_sources', 'validating_evidence', 'completed')`,
+    ),
+    triggerStateCheck: check(
+      'saved_lead_inv_run_trigger_state_check',
+      sql`${table.triggerState} is null or ${table.triggerState} in ('signal_found', 'no_signal')`,
+    ),
+  }),
+)
+
+export const savedLeadInvestigationState = pgTable(
+  'saved_lead_investigation_state',
+  {
+    workspaceId:          text('workspace_id').notNull(),
+    savedLeadId:          uuid('saved_lead_id').notNull(),
+    latestAttemptRunId:   uuid('latest_attempt_run_id').notNull(),
+    latestSuccessfulRunId: uuid('latest_successful_run_id'),
+    checkedAt:            timestamp('checked_at', { withTimezone: true }),
+    recheckEligibleAt:    timestamp('recheck_eligible_at', { withTimezone: true }),
+    resultExpiresAt:      timestamp('result_expires_at', { withTimezone: true }),
+    createdAt:            timestamp('created_at', { withTimezone: true })
+                            .defaultNow().notNull(),
+    updatedAt:            timestamp('updated_at', { withTimezone: true })
+                            .defaultNow().notNull(),
+  },
+  (table) => ({
+    workspaceFk: foreignKey({
+      name: 'saved_lead_inv_state_workspace_fk',
+      columns: [table.workspaceId],
+      foreignColumns: [workspaceSettings.workspaceId],
+    }),
+    pk: primaryKey({
+      name: 'saved_lead_inv_state_pk',
+      columns: [table.workspaceId, table.savedLeadId],
+    }),
+    savedLeadOwnershipFk: foreignKey({
+      name: 'saved_lead_inv_state_saved_lead_fk',
+      columns: [table.workspaceId, table.savedLeadId],
+      foreignColumns: [savedLeads.workspaceId, savedLeads.id],
+    }),
+    latestAttemptFk: foreignKey({
+      name: 'saved_lead_inv_state_attempt_fk',
+      columns: [
+        table.workspaceId,
+        table.savedLeadId,
+        table.latestAttemptRunId,
+      ],
+      foreignColumns: [
+        savedLeadInvestigationRuns.workspaceId,
+        savedLeadInvestigationRuns.savedLeadId,
+        savedLeadInvestigationRuns.id,
+      ],
+    }),
+    latestSuccessfulFk: foreignKey({
+      name: 'saved_lead_inv_state_success_fk',
+      columns: [
+        table.workspaceId,
+        table.savedLeadId,
+        table.latestSuccessfulRunId,
+      ],
+      foreignColumns: [
+        savedLeadInvestigationRuns.workspaceId,
+        savedLeadInvestigationRuns.savedLeadId,
+        savedLeadInvestigationRuns.id,
+      ],
+    }),
+    latestSuccessfulIdx: index('saved_lead_inv_state_success_idx')
+      .on(table.workspaceId, table.latestSuccessfulRunId),
+  }),
+)
+
+export const savedLeadInvestigationSources = pgTable(
+  'saved_lead_investigation_sources',
+  {
+    id:                  uuid('id').defaultRandom().primaryKey(),
+    workspaceId:         text('workspace_id').notNull(),
+    investigationRunId:  uuid('investigation_run_id').notNull(),
+    registrySourceKey:   text('registry_source_key').notNull(),
+    tier:                integer('tier').notNull(),
+    availability:        text('availability').notNull(),
+    checkState:          text('check_state').notNull(),
+    candidateRank:       integer('candidate_rank'),
+    fallbackReason:      text('fallback_reason'),
+    runtimeLineageRunId: uuid('runtime_lineage_run_id'),
+    evidenceSourceId:    uuid('evidence_source_id'),
+    createdAt:           timestamp('created_at', { withTimezone: true })
+                           .defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true })
+                           .defaultNow().notNull(),
+  },
+  (table) => ({
+    workspaceFk: foreignKey({
+      name: 'saved_lead_inv_source_workspace_fk',
+      columns: [table.workspaceId],
+      foreignColumns: [workspaceSettings.workspaceId],
+    }),
+    runtimeLineageFk: foreignKey({
+      name: 'saved_lead_inv_source_lineage_fk',
+      columns: [table.runtimeLineageRunId],
+      foreignColumns: [runtimeLineageRuns.id],
+    }),
+    evidenceSourceFk: foreignKey({
+      name: 'saved_lead_inv_source_evidence_fk',
+      columns: [table.evidenceSourceId],
+      foreignColumns: [evidenceSources.id],
+    }),
+    workspaceSourceUnique: uniqueIndex('saved_lead_inv_source_workspace_id_unique')
+      .on(table.workspaceId, table.id),
+    workspaceRunSourceUnique: uniqueIndex('saved_lead_inv_source_run_id_unique')
+      .on(table.workspaceId, table.investigationRunId, table.id),
+    sourceArtifactUnique: uniqueIndex('saved_lead_inv_source_artifact_unique')
+      .on(
+        table.workspaceId,
+        table.investigationRunId,
+        table.id,
+        table.evidenceSourceId,
+      ),
+    runFk: foreignKey({
+      name: 'saved_lead_inv_source_run_fk',
+      columns: [table.workspaceId, table.investigationRunId],
+      foreignColumns: [
+        savedLeadInvestigationRuns.workspaceId,
+        savedLeadInvestigationRuns.id,
+      ],
+    }),
+    primarySourceUnique: uniqueIndex('saved_lead_inv_source_primary_unique')
+      .on(table.workspaceId, table.investigationRunId, table.registrySourceKey)
+      .where(sql`${table.candidateRank} is null`),
+    candidateSourceUnique: uniqueIndex('saved_lead_inv_source_candidate_unique')
+      .on(
+        table.workspaceId,
+        table.investigationRunId,
+        table.registrySourceKey,
+        table.candidateRank,
+      )
+      .where(sql`${table.candidateRank} is not null`),
+    lookupIdx: index('saved_lead_inv_source_lookup_idx')
+      .on(
+        table.workspaceId,
+        table.investigationRunId,
+        table.tier,
+        table.candidateRank,
+      ),
+    tierCheck: check(
+      'saved_lead_inv_source_tier_check',
+      sql`${table.tier} between 1 and 3`,
+    ),
+    rankCheck: check(
+      'saved_lead_inv_source_rank_check',
+      sql`${table.candidateRank} is null or ${table.candidateRank} > 0`,
+    ),
+    availabilityCheck: check(
+      'saved_lead_inv_source_avail_check',
+      sql`${table.availability} in ('available', 'unavailable', 'unsupported', 'not_applicable')`,
+    ),
+    checkStateCheck: check(
+      'saved_lead_inv_source_state_check',
+      sql`${table.checkState} in ('planned', 'checked', 'failed', 'skipped_budget', 'not_checked')`,
+    ),
+  }),
+)
+
+export const savedLeadTriggerFindings = pgTable(
+  'saved_lead_trigger_findings',
+  {
+    id:                       uuid('id').defaultRandom().primaryKey(),
+    workspaceId:              text('workspace_id').notNull(),
+    investigationRunId:       uuid('investigation_run_id').notNull(),
+    investigationSourceId:    uuid('investigation_source_id').notNull(),
+    evidenceSourceId:         uuid('evidence_source_id').notNull(),
+    approvedSignalFamilyId:   text('approved_signal_family_id').notNull(),
+    approvedSignalLabelId:    text('approved_signal_label_id').notNull(),
+    exactExcerpt:             text('exact_excerpt'),
+    structuredEvidenceSnapshot: jsonb('structured_evidence_snapshot'),
+    eventDate:                timestamp('event_date', { withTimezone: true }).notNull(),
+    freshnessEnd:             timestamp('freshness_end', { withTimezone: true }).notNull(),
+    identityMatchReasonCodes: jsonb('identity_match_reason_codes').default([]).notNull(),
+    qualificationReasonCodes: jsonb('qualification_reason_codes').default([]).notNull(),
+    proofHash:                text('proof_hash').notNull(),
+    createdAt:                timestamp('created_at', { withTimezone: true })
+                                .defaultNow().notNull(),
+  },
+  (table) => ({
+    workspaceFk: foreignKey({
+      name: 'saved_lead_trigger_workspace_fk',
+      columns: [table.workspaceId],
+      foreignColumns: [workspaceSettings.workspaceId],
+    }),
+    evidenceSourceFk: foreignKey({
+      name: 'saved_lead_trigger_evidence_fk',
+      columns: [table.evidenceSourceId],
+      foreignColumns: [evidenceSources.id],
+    }),
+    workspaceProofUnique: uniqueIndex('saved_lead_trigger_workspace_proof_unique')
+      .on(table.workspaceId, table.proofHash),
+    runUnique: uniqueIndex('saved_lead_trigger_run_unique')
+      .on(table.workspaceId, table.investigationRunId),
+    runFk: foreignKey({
+      name: 'saved_lead_trigger_run_fk',
+      columns: [table.workspaceId, table.investigationRunId],
+      foreignColumns: [
+        savedLeadInvestigationRuns.workspaceId,
+        savedLeadInvestigationRuns.id,
+      ],
+    }),
+    sourceFk: foreignKey({
+      name: 'saved_lead_trigger_source_artifact_fk',
+      columns: [
+        table.workspaceId,
+        table.investigationRunId,
+        table.investigationSourceId,
+        table.evidenceSourceId,
+      ],
+      foreignColumns: [
+        savedLeadInvestigationSources.workspaceId,
+        savedLeadInvestigationSources.investigationRunId,
+        savedLeadInvestigationSources.id,
+        savedLeadInvestigationSources.evidenceSourceId,
+      ],
+    }),
+    evidenceCheck: check(
+      'saved_lead_trigger_evidence_check',
+      sql`nullif(trim(${table.exactExcerpt}), '') is not null or ${table.structuredEvidenceSnapshot} is not null`,
+    ),
+    freshnessCheck: check(
+      'saved_lead_trigger_freshness_check',
+      sql`${table.freshnessEnd} >= ${table.eventDate}`,
+    ),
+  }),
+)
+
+export const savedLeadProfileFindings = pgTable(
+  'saved_lead_profile_findings',
+  {
+    id:                       uuid('id').defaultRandom().primaryKey(),
+    workspaceId:              text('workspace_id').notNull(),
+    investigationRunId:       uuid('investigation_run_id').notNull(),
+    investigationSourceId:    uuid('investigation_source_id').notNull(),
+    evidenceSourceId:         uuid('evidence_source_id').notNull(),
+    factKey:                  text('fact_key').notNull(),
+    value:                    text('value').notNull(),
+    exactExcerpt:             text('exact_excerpt'),
+    structuredEvidenceSnapshot: jsonb('structured_evidence_snapshot'),
+    observedDate:             timestamp('observed_date', { withTimezone: true }).notNull(),
+    eventDate:                timestamp('event_date', { withTimezone: true }),
+    identityMatchReasonCodes: jsonb('identity_match_reason_codes').default([]).notNull(),
+    conflictGroupId:          text('conflict_group_id'),
+    conflictReasonCodes:      jsonb('conflict_reason_codes').default([]).notNull(),
+    factExpiration:           timestamp('fact_expiration', { withTimezone: true }).notNull(),
+    proofHash:                text('proof_hash').notNull(),
+    createdAt:                timestamp('created_at', { withTimezone: true })
+                                .defaultNow().notNull(),
+  },
+  (table) => ({
+    workspaceFk: foreignKey({
+      name: 'saved_lead_profile_workspace_fk',
+      columns: [table.workspaceId],
+      foreignColumns: [workspaceSettings.workspaceId],
+    }),
+    evidenceSourceFk: foreignKey({
+      name: 'saved_lead_profile_evidence_fk',
+      columns: [table.evidenceSourceId],
+      foreignColumns: [evidenceSources.id],
+    }),
+    workspaceProofUnique: uniqueIndex('saved_lead_profile_workspace_proof_unique')
+      .on(table.workspaceId, table.proofHash),
+    conflictLookupIdx: index('saved_lead_profile_conflict_idx')
+      .on(table.workspaceId, table.investigationRunId, table.conflictGroupId)
+      .where(sql`${table.conflictGroupId} is not null`),
+    runFk: foreignKey({
+      name: 'saved_lead_profile_run_fk',
+      columns: [table.workspaceId, table.investigationRunId],
+      foreignColumns: [
+        savedLeadInvestigationRuns.workspaceId,
+        savedLeadInvestigationRuns.id,
+      ],
+    }),
+    sourceFk: foreignKey({
+      name: 'saved_lead_profile_source_artifact_fk',
+      columns: [
+        table.workspaceId,
+        table.investigationRunId,
+        table.investigationSourceId,
+        table.evidenceSourceId,
+      ],
+      foreignColumns: [
+        savedLeadInvestigationSources.workspaceId,
+        savedLeadInvestigationSources.investigationRunId,
+        savedLeadInvestigationSources.id,
+        savedLeadInvestigationSources.evidenceSourceId,
+      ],
+    }),
+    evidenceCheck: check(
+      'saved_lead_profile_evidence_check',
+      sql`nullif(trim(${table.exactExcerpt}), '') is not null or ${table.structuredEvidenceSnapshot} is not null`,
+    ),
+    factKeyCheck: check(
+      'saved_lead_profile_fact_key_check',
+      sql`${table.factKey} in ('official_name', 'business_category', 'domain', 'phone', 'email', 'street_address', 'ownership_or_management', 'facility_or_property_type', 'service_area', 'opening_or_founded_date', 'license_or_permit_reference', 'permit_history', 'latest_permit_date', 'project_or_expansion_context', 'careers_or_hiring_context')`,
+    ),
+    conflictPairCheck: check(
+      'saved_lead_profile_conflict_pair_check',
+      sql`(${table.conflictGroupId} is null and jsonb_array_length(${table.conflictReasonCodes}) = 0) or (${table.conflictGroupId} is not null and jsonb_array_length(${table.conflictReasonCodes}) > 0)`,
+    ),
+  }),
+)
 
 // ─────────────────────────────────────────────
 // OPPORTUNITY EVIDENCE PROOFS
@@ -990,6 +1420,36 @@ export type NewEvidenceSource  = typeof evidenceSources.$inferInsert
 
 export type RuntimeLineageRun     = typeof runtimeLineageRuns.$inferSelect
 export type NewRuntimeLineageRun  = typeof runtimeLineageRuns.$inferInsert
+
+export type SavedLeadInvestigationStateRow =
+  typeof savedLeadInvestigationState.$inferSelect
+export type NewSavedLeadInvestigationStateRow =
+  typeof savedLeadInvestigationState.$inferInsert
+
+export type SavedLeadInvestigationRunRow =
+  typeof savedLeadInvestigationRuns.$inferSelect
+export type NewSavedLeadInvestigationRunRow =
+  typeof savedLeadInvestigationRuns.$inferInsert
+
+export type SavedLeadInvestigationSourceRow =
+  typeof savedLeadInvestigationSources.$inferSelect
+export type NewSavedLeadInvestigationSourceRow =
+  typeof savedLeadInvestigationSources.$inferInsert
+
+export type SavedLeadTriggerFindingRow =
+  typeof savedLeadTriggerFindings.$inferSelect
+export type NewSavedLeadTriggerFindingRow =
+  typeof savedLeadTriggerFindings.$inferInsert
+
+export type SavedLeadProfileFindingRow =
+  typeof savedLeadProfileFindings.$inferSelect
+export type NewSavedLeadProfileFindingRow =
+  typeof savedLeadProfileFindings.$inferInsert
+
+export type SavedLeadInvestigationDailyUsageRow =
+  typeof savedLeadInvestigationDailyUsage.$inferSelect
+export type NewSavedLeadInvestigationDailyUsageRow =
+  typeof savedLeadInvestigationDailyUsage.$inferInsert
 
 export type OpportunityEvidenceProof     = typeof opportunityEvidenceProofs.$inferSelect
 export type NewOpportunityEvidenceProof  = typeof opportunityEvidenceProofs.$inferInsert
