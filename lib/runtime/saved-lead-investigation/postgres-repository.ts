@@ -51,6 +51,10 @@ function json<T>(value: unknown, fallback: T): T {
   return typeof value === 'object' && value !== null ? value as T : fallback
 }
 
+function jsonParam(value: unknown): string {
+  return JSON.stringify(value ?? {})
+}
+
 function noSignalReason(value: unknown) {
   return value === 'identity_ambiguous' ||
     value === 'identity_unresolved' ||
@@ -82,12 +86,100 @@ export function validateInvestigationSourceInsert(
   }
 }
 
+function uniqueViolation(error: unknown, constraintName: string): boolean {
+  if (typeof error !== 'object' || error === null) return false
+  const code = 'code' in error ? String(error.code) : ''
+  const constraint = [
+    'constraint_name' in error ? error.constraint_name : null,
+    'constraint' in error ? error.constraint : null,
+  ].filter(Boolean).map(String).join(' ')
+  return code === '23505' && constraint.includes(constraintName)
+}
+
 class PostgresSavedLeadInvestigationRepository
   implements SavedLeadInvestigationRepository {
   constructor(private readonly db: DrizzleLikeExecutor) {}
 
   private transaction<T>(fn: (executor: DrizzleLikeExecutor) => Promise<T>) {
     return this.db.transaction ? this.db.transaction(fn) : fn(this.db)
+  }
+
+  private async lockedAdmissionRun(
+    executor: DrizzleLikeExecutor,
+    input: Parameters<SavedLeadInvestigationRepository['admitRun']>[0],
+  ) {
+    return rows(await executor.execute(sql`
+      select id, saved_lead_id, client_request_id, status, workspace_day_key,
+             usage_counted_at is not null as usage_counted
+      from saved_lead_investigation_runs
+      where workspace_id = ${input.workspaceId}
+        and saved_lead_id = ${input.savedLeadId}::uuid
+        and id = ${input.runId}::uuid
+      for update
+    `))[0]
+  }
+
+  private async usageForRun(
+    executor: DrizzleLikeExecutor,
+    workspaceId: string,
+    workspaceDayKey: unknown,
+  ) {
+    return rows(await executor.execute(sql`
+      select used_count, limit_snapshot, reset_at
+      from saved_lead_investigation_daily_usage
+      where workspace_id = ${workspaceId}
+        and workspace_day_key = ${workspaceDayKey}
+      limit 1
+    `))[0] ?? {}
+  }
+
+  private async ensureWorkspaceDay(
+    executor: DrizzleLikeExecutor,
+    workspaceId: string,
+  ) {
+    return rows(await executor.execute(sql`
+      insert into saved_lead_investigation_daily_usage
+        (workspace_id, workspace_day_key, timezone, reset_at, used_count, limit_snapshot)
+      values (${workspaceId}, to_char(now() at time zone 'UTC', 'YYYY-MM-DD'), 'UTC', date_trunc('day', now()) + interval '1 day', 0, 10)
+      on conflict (workspace_id, workspace_day_key) do update set updated_at = now()
+      returning workspace_day_key
+    `))[0]
+  }
+
+  private async incrementWorkspaceDay(
+    executor: DrizzleLikeExecutor,
+    workspaceId: string,
+    workspaceDayKey: unknown,
+  ) {
+    return rows(await executor.execute(sql`
+      update saved_lead_investigation_daily_usage
+      set used_count = used_count + 1, updated_at = now()
+      where workspace_id = ${workspaceId}
+        and workspace_day_key = ${workspaceDayKey}
+        and used_count < limit_snapshot
+      returning workspace_day_key, used_count, limit_snapshot
+    `))[0]
+  }
+
+  private async markRunAdmitted(
+    executor: DrizzleLikeExecutor,
+    input: Parameters<SavedLeadInvestigationRepository['admitRun']>[0],
+    workspaceDayKey: unknown,
+  ) {
+    return rows(await executor.execute(sql`
+      update saved_lead_investigation_runs
+      set status = 'running',
+          started_at = coalesce(started_at, now()),
+          heartbeat_at = now(),
+          workspace_day_key = ${workspaceDayKey},
+          usage_counted_at = now(),
+          updated_at = now()
+      where workspace_id = ${input.workspaceId}
+        and saved_lead_id = ${input.savedLeadId}::uuid
+        and id = ${input.runId}::uuid
+        and usage_counted_at is null
+      returning id, saved_lead_id
+    `))[0]
   }
 
   async loadOwnedSavedLead({ workspaceId, savedLeadId }: {
@@ -137,14 +229,30 @@ class PostgresSavedLeadInvestigationRepository
   }
 
   async createOrGetRun(input: Parameters<SavedLeadInvestigationRepository['createOrGetRun']>[0]) {
-    const inserted = rows(await this.db.execute(sql`
-      insert into saved_lead_investigation_runs
-        (id, workspace_id, saved_lead_id, client_request_id, playbook_id, playbook_version, budget_ceiling)
-      values
-        (${input.runId}::uuid, ${input.workspaceId}, ${input.savedLeadId}::uuid, ${input.clientRequestId}, ${input.playbook.id}, ${input.playbook.version}, '{}'::jsonb)
-      on conflict (workspace_id, client_request_id) do nothing
-      returning id
-    `))[0]?.id
+    let inserted: unknown
+    try {
+      inserted = rows(await this.db.execute(sql`
+        insert into saved_lead_investigation_runs
+          (id, workspace_id, saved_lead_id, client_request_id, playbook_id, playbook_version, budget_ceiling)
+        values
+          (${input.runId}::uuid, ${input.workspaceId}, ${input.savedLeadId}::uuid, ${input.clientRequestId}, ${input.playbook.id}, ${input.playbook.version}, '{}'::jsonb)
+        on conflict (workspace_id, client_request_id) do nothing
+        returning id
+      `))[0]?.id
+    } catch (error) {
+      if (!uniqueViolation(error, 'saved_lead_inv_run_active_unique')) {
+        throw error
+      }
+      const active = rows(await this.db.execute(sql`
+        select id from saved_lead_investigation_runs
+        where workspace_id = ${input.workspaceId}
+          and saved_lead_id = ${input.savedLeadId}::uuid
+          and status in ('created', 'running')
+        order by created_at desc
+        limit 1
+      `))[0]?.id
+      return { runId: String(active ?? input.runId), idempotent: true }
+    }
     if (inserted) return { runId: String(inserted), idempotent: false }
     const existing = rows(await this.db.execute(sql`
       select id from saved_lead_investigation_runs
@@ -156,37 +264,8 @@ class PostgresSavedLeadInvestigationRepository
 
   async admitRun(input: Parameters<SavedLeadInvestigationRepository['admitRun']>[0]) {
     return this.transaction(async (executor) => {
-      const admitted = rows(await executor.execute(sql`
-        with usage_row as (
-          insert into saved_lead_investigation_daily_usage
-            (workspace_id, workspace_day_key, timezone, reset_at, used_count, limit_snapshot)
-          values (${input.workspaceId}, to_char(now() at time zone 'UTC', 'YYYY-MM-DD'), 'UTC', date_trunc('day', now()) + interval '1 day', 0, 10)
-          on conflict (workspace_id, workspace_day_key) do update set updated_at = now()
-          returning workspace_day_key
-        ),
-        admitted_usage as (
-          update saved_lead_investigation_daily_usage usage
-          set used_count = used_count + 1, updated_at = now()
-          from usage_row
-          where usage.workspace_id = ${input.workspaceId}
-            and usage.workspace_day_key = usage_row.workspace_day_key
-            and usage.used_count < usage.limit_snapshot
-          returning usage.workspace_day_key, usage.used_count, usage.limit_snapshot
-        )
-        update saved_lead_investigation_runs run
-        set status = 'running',
-            started_at = now(),
-            heartbeat_at = now(),
-            workspace_day_key = admitted_usage.workspace_day_key,
-            usage_counted_at = now()
-        from admitted_usage
-        where run.workspace_id = ${input.workspaceId}
-          and run.saved_lead_id = ${input.savedLeadId}::uuid
-          and run.id = ${input.runId}::uuid
-          and run.usage_counted_at is null
-        returning run.id, run.saved_lead_id, admitted_usage.used_count, admitted_usage.limit_snapshot
-      `))[0]
-      if (!admitted) {
+      const run = await this.lockedAdmissionRun(executor, input)
+      if (!run) {
         return {
           state: 'daily_limit_reached' as const,
           runId: input.runId,
@@ -197,14 +276,73 @@ class PostgresSavedLeadInvestigationRepository
           limit: 10,
         }
       }
+      if (
+        String(run.client_request_id) !== input.clientRequestId &&
+        (run.status === 'created' || run.status === 'running')
+      ) {
+        const usage = run.workspace_day_key
+          ? await this.usageForRun(executor, input.workspaceId, run.workspace_day_key)
+          : {}
+        return {
+          state: 'already_running' as const,
+          runId: String(run.id),
+          savedLeadId: String(run.saved_lead_id),
+          usedCount: Number(usage.used_count ?? 0),
+          usageCounted: false,
+          externalCalls: 0 as const,
+          limit: Number(usage.limit_snapshot ?? 10),
+        }
+      }
+      if (run.usage_counted) {
+        const usage = await this.usageForRun(executor, input.workspaceId, run.workspace_day_key)
+        return {
+          state: 'idempotent_replay' as const,
+          runId: String(run.id),
+          savedLeadId: String(run.saved_lead_id),
+          usedCount: Number(usage.used_count ?? 0),
+          usageCounted: false,
+          externalCalls: 0 as const,
+          limit: Number(usage.limit_snapshot ?? 10),
+        }
+      }
+      const usageRow = await this.ensureWorkspaceDay(executor, input.workspaceId)
+      const admittedUsage = await this.incrementWorkspaceDay(
+        executor,
+        input.workspaceId,
+        usageRow?.workspace_day_key,
+      )
+      if (!admittedUsage) {
+        const usage = await this.usageForRun(
+          executor,
+          input.workspaceId,
+          usageRow?.workspace_day_key,
+        )
+        return {
+          state: 'daily_limit_reached' as const,
+          runId: input.runId,
+          savedLeadId: input.savedLeadId,
+          usedCount: Number(usage.used_count ?? 10),
+          usageCounted: false,
+          externalCalls: 0 as const,
+          limit: Number(usage.limit_snapshot ?? 10),
+        }
+      }
+      const admitted = await this.markRunAdmitted(
+        executor,
+        input,
+        admittedUsage.workspace_day_key,
+      )
+      if (!admitted) {
+        throw new Error('saved lead investigation admission lost locked run')
+      }
       return {
         state: 'admitted' as const,
         runId: String(admitted.id),
         savedLeadId: String(admitted.saved_lead_id),
-        usedCount: Number(admitted.used_count),
+        usedCount: Number(admittedUsage.used_count),
         usageCounted: true,
         externalCalls: 0 as const,
-        limit: Number(admitted.limit_snapshot),
+        limit: Number(admittedUsage.limit_snapshot),
       }
     })
   }
@@ -220,14 +358,14 @@ class PostgresSavedLeadInvestigationRepository
   async persistInitialIdentity(runId: string, identity: unknown) {
     await this.db.execute(sql`
       update saved_lead_investigation_runs
-      set initial_identity_resolution = ${identity}::jsonb, identity_resolution = ${identity}::jsonb
+      set initial_identity_resolution = ${jsonParam(identity)}::jsonb, identity_resolution = ${jsonParam(identity)}::jsonb
       where id = ${runId}::uuid
     `)
   }
 
   async persistSourcePlan(runId: string, plan: unknown) {
     await this.db.execute(sql`
-      update saved_lead_investigation_runs set source_plan = ${plan}::jsonb
+      update saved_lead_investigation_runs set source_plan = ${jsonParam(plan)}::jsonb
       where id = ${runId}::uuid
     `)
   }
@@ -245,7 +383,7 @@ class PostgresSavedLeadInvestigationRepository
       insert into runtime_lineage_runs
         (provider, provider_run_id, run_role, status, source_url, query, request_metadata, response_metadata)
       values
-        (${input.provider}, ${input.providerRunId}, ${input.runRole}, ${input.status}, ${input.sourceUrl ?? null}, ${input.query ?? null}, ${input.requestMetadata ?? {}}::jsonb, ${input.responseMetadata ?? {}}::jsonb)
+        (${input.provider}, ${input.providerRunId}, ${input.runRole}, ${input.status}, ${input.sourceUrl ?? null}, ${input.query ?? null}, ${jsonParam(input.requestMetadata)}::jsonb, ${jsonParam(input.responseMetadata)}::jsonb)
       on conflict (provider_run_id) do update set completed_at = now()
       returning id
     `))[0]
@@ -257,7 +395,7 @@ class PostgresSavedLeadInvestigationRepository
       insert into evidence_sources
         (source_type, source_authority, external_id, source_url, source_title, source_date, evidence_fingerprint, source_metadata)
       values
-        (${input.sourceType}, ${input.sourceAuthority}, ${input.externalId}, ${input.sourceUrl}, ${input.sourceTitle ?? null}, ${input.sourceDate}::timestamptz, ${input.evidenceFingerprint}, ${input.sourceMetadata}::jsonb)
+        (${input.sourceType}, ${input.sourceAuthority}, ${input.externalId}, ${input.sourceUrl}, ${input.sourceTitle ?? null}, ${input.sourceDate}::timestamptz, ${input.evidenceFingerprint}, ${jsonParam(input.sourceMetadata)}::jsonb)
       on conflict (source_type, external_id) do update
         set last_seen_at = now(), evidence_fingerprint = excluded.evidence_fingerprint
       returning id
@@ -281,7 +419,7 @@ class PostgresSavedLeadInvestigationRepository
   async persistProfileFindings(runId: string, findings: SavedLeadProfileFinding[]) {
     await this.db.execute(sql`
       update saved_lead_investigation_runs
-      set category_ids_checked = ${findings.map((finding) => finding.factKey)}::jsonb
+      set category_ids_checked = ${jsonParam(findings.map((finding) => finding.factKey))}::jsonb
       where id = ${runId}::uuid
     `)
   }
@@ -303,7 +441,8 @@ class PostgresSavedLeadInvestigationRepository
           checked_at = ${result.checkedAt}::timestamptz,
           recheck_eligible_at = ${result.recheckEligibleAt}::timestamptz,
           result_expires_at = ${result.resultExpiresAt}::timestamptz,
-          identity_resolution = ${result.identity}::jsonb
+          identity_resolution = ${jsonParam(result.identity)}::jsonb,
+          usage_actual = ${jsonParam(result.profileReport.usage)}::jsonb
       where id = ${result.runId}::uuid
     `)
   }
@@ -336,7 +475,20 @@ class PostgresSavedLeadInvestigationRepository
     return row ? latestResult(row, savedLeadId) : null
   }
 
-  async reconcileAbandonedRuns() {}
+  async reconcileAbandonedRuns(input: Parameters<SavedLeadInvestigationRepository['reconcileAbandonedRuns']>[0]) {
+    await this.db.execute(sql`
+      update saved_lead_investigation_runs
+      set status = 'failed',
+          failure_code = 'abandoned_request',
+          failure_retryable = true,
+          updated_at = ${input.now}::timestamptz
+      where workspace_id = ${input.workspaceId}
+        and saved_lead_id = ${input.savedLeadId}::uuid
+        and status in ('created', 'running')
+        and coalesce(heartbeat_at, updated_at, created_at) <=
+          ${input.now}::timestamptz - interval '120 seconds'
+    `)
+  }
 }
 
 function latestResult(row: Record<string, unknown>, savedLeadId: string): CompletedSignalCheck {
