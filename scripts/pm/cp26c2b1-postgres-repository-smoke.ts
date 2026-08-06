@@ -3,7 +3,7 @@
  *
  * This intentionally refuses to run without explicit proof-branch guards.
  * It never prints DATABASE_URL and only creates deterministic
- * cp26c2b-db-proof- fixtures, which are cleaned in FK-safe order.
+ * proof-prefixed fixtures, which are cleaned in FK-safe order.
  */
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
@@ -24,9 +24,9 @@ import {
   type SavedLeadInvestigationPlaybook,
 } from '@/lib/playbooks/saved-lead-investigation-registry'
 
-const PREFIX = 'cp26c2b-db-proof-'
+const PREFIX = process.env.CP26C2B_PROOF_PREFIX ?? 'cp26c2b-db-proof-'
 const EXPECTED_PROJECT_ID = 'plain-king-65928893'
-const EXPECTED_BRANCH_ID = 'br-aged-lake-ahligui6'
+const PARENT_BRANCH_ID = process.env.CP26C2B_PARENT_BRANCH_ID ?? 'br-orange-dawn-ahhq1jyw'
 const REPORT_PATH = '/private/tmp/cp26c2b1-postgres-correction-proof.json'
 const NOW = '2026-07-30T12:00:00.000Z'
 const ACTIVE_HEARTBEAT = '2026-07-30T11:58:00.001Z'
@@ -65,15 +65,18 @@ function maskHost(host: string): string {
 function validateEnvironment() {
   assert.equal(process.env.CP26C2B_DB_PROOF, '1')
   assert.equal(process.env.CP26C2B_EXPECTED_PROJECT_ID, EXPECTED_PROJECT_ID)
-  assert.equal(process.env.CP26C2B_EXPECTED_BRANCH_ID, EXPECTED_BRANCH_ID)
   assert.equal(process.env.CP26C2B_PROOF_PREFIX, PREFIX)
+  assert.equal(process.env.CP26C2B_PARENT_BRANCH_ID, PARENT_BRANCH_ID)
+  const branchId = requireEnv('CP26C2B_EXPECTED_BRANCH_ID')
+  assert.notEqual(branchId, PARENT_BRANCH_ID, 'proof branch must not be parent')
+  assert.notEqual(branchId, 'br-aged-lake-ahligui6', 'stale proof branch is revoked')
+  assert.notEqual(branchId, 'main', 'proof branch must not be main')
   const databaseUrl = requireEnv('DATABASE_URL')
   const allowedHost = requireEnv('CP26C2B_ALLOWED_HOST')
   const parsed = new URL(databaseUrl)
   assert.equal(parsed.hostname, allowedHost)
   assert.match(parsed.hostname, /\.neon\.tech$/)
-  assert.notEqual(process.env.CP26C2B_EXPECTED_BRANCH_ID, 'main')
-  return { databaseUrl, allowedHost }
+  return { databaseUrl, allowedHost, branchId }
 }
 
 async function cleanup(db: Db) {
@@ -524,6 +527,10 @@ async function lineageEvidenceProof(db: Db, repo: Repo, playbook: SavedLeadInves
        ${NOW}::timestamptz, '2026-08-29T12:00:00.000Z'::timestamptz,
        '[]'::jsonb, '[]'::jsonb, ${`${PREFIX}trigger-proof`})
   `)
+  const manualTriggerCount = countRows(await db.execute(sql`
+    select count(*)::int as count from saved_lead_trigger_findings
+    where workspace_id = ${workspaceId} and investigation_run_id = ${runId}::uuid
+  `))
   await insertProfileFinding(db, {
     id: '26264400-0000-4000-8000-000000000001',
     workspaceId,
@@ -546,6 +553,10 @@ async function lineageEvidenceProof(db: Db, repo: Repo, playbook: SavedLeadInves
   } catch {
     duplicateRejected = true
   }
+  const manualProfileCount = countRows(await db.execute(sql`
+    select count(*)::int as count from saved_lead_profile_findings
+    where workspace_id = ${workspaceId} and investigation_run_id = ${runId}::uuid
+  `))
   const otherEvidence = rows(await db.execute(sql`
     insert into evidence_sources
       (source_type, source_authority, external_id, source_url, source_title, source_date, evidence_fingerprint, source_metadata)
@@ -571,21 +582,33 @@ async function lineageEvidenceProof(db: Db, repo: Repo, playbook: SavedLeadInves
   await repo.persistTriggerFinding(runId, { state: 'no_signal', reasonCode: 'none_found' })
   await repo.persistCompletedResult(completedResult({ savedLeadId: leadId, runId }))
   const latest = await repo.readLatestSuccessfulResult({ workspaceId, savedLeadId: leadId })
-  const profileCount = countRows(await db.execute(sql`
+  const profileCountAfterCompletion = countRows(await db.execute(sql`
     select count(*)::int as count from saved_lead_profile_findings
     where workspace_id = ${workspaceId} and investigation_run_id = ${runId}::uuid
   `))
-  const triggerCount = countRows(await db.execute(sql`
+  const triggerCountAfterCompletion = countRows(await db.execute(sql`
     select count(*)::int as count from saved_lead_trigger_findings
     where workspace_id = ${workspaceId} and investigation_run_id = ${runId}::uuid
   `))
   assert.equal(evidence.id, replayedEvidence.id)
-  assert.equal(profileCount, 1)
-  assert.equal(triggerCount, 1)
+  assert.equal(manualProfileCount, 1)
+  assert.equal(manualTriggerCount, 1)
+  assert.equal(profileCountAfterCompletion, 0)
+  assert.equal(triggerCountAfterCompletion, 0)
   assert.equal(duplicateRejected, true)
   assert.equal(invalidRelationshipRejected, true)
   assert.equal(latest?.runId, runId)
-  return { lineage, evidence, replayedEvidence, source, profileCount, triggerCount, latest }
+  return {
+    lineage,
+    evidence,
+    replayedEvidence,
+    source,
+    manualProfileCount,
+    manualTriggerCount,
+    profileCountAfterCompletion,
+    triggerCountAfterCompletion,
+    latest,
+  }
 }
 
 async function persistenceReplayProof(db: Db, repo: Repo, playbook: SavedLeadInvestigationPlaybook) {
@@ -675,7 +698,7 @@ function reportHash(report: unknown): string {
 }
 
 async function main() {
-  const { databaseUrl, allowedHost } = validateEnvironment()
+  const { databaseUrl, allowedHost, branchId } = validateEnvironment()
   delete process.env.DATABASE_URL
   const client = postgres(databaseUrl, { max: 20, prepare: false })
   const db = drizzle(client)
@@ -685,7 +708,8 @@ async function main() {
   const report: Record<string, unknown> = {
     checkpoint: 'CP26C.2B.1',
     projectId: EXPECTED_PROJECT_ID,
-    branchId: EXPECTED_BRANCH_ID,
+    branchId,
+    parentBranchId: PARENT_BRANCH_ID,
     allowedHost: maskHost(allowedHost),
     proofPrefix: PREFIX,
     generatedAt: new Date().toISOString(),

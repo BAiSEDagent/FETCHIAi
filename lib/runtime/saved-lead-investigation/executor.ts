@@ -96,6 +96,10 @@ export interface SavedLeadInvestigationRepository
     failureCode: string
     latestSuccessfulRunId: string | null
   }): Promise<void>
+  readUsageSnapshot?(input: {
+    workspaceId: string
+    runId: string
+  }): Promise<InvestigationUsageSnapshot>
   readLatestSuccessfulResult(input: {
     workspaceId: string
     savedLeadId: string
@@ -199,7 +203,7 @@ function evaluateStructuredTrigger(input: {
           evidenceSourceId: linked.evidenceSourceId,
           structuredEvidenceSnapshot: snapshot,
           observedAt: input.checkedAt,
-          eventDate: linked.evidence.record.issuedAt,
+          eventDate: new Date(linked.evidence.record.issuedAt).toISOString(),
           identityMatch: {
             matchedOn: permitIdentity.identity.matchedOn,
             reasonCodes: permitIdentity.identity.reasonCodes,
@@ -328,7 +332,7 @@ export async function executeSavedLeadInvestigation(
     await input.repository.persistRetryableFailure({
       runId: created.runId,
       failureCode,
-      latestSuccessfulRunId: null,
+      latestSuccessfulRunId: runState.latestCompletedRunId,
     })
     return {
       state: 'failed',
@@ -356,7 +360,12 @@ export async function executeSavedLeadInvestigation(
     trigger: gate.trigger,
     profileFindings: gate.profileFindings,
     sourceObservations: observations,
-    usage: createInvestigationUsage(),
+    usage: input.repository.readUsageSnapshot
+      ? await input.repository.readUsageSnapshot({
+          workspaceId: input.workspaceId,
+          runId: created.runId,
+        })
+      : createInvestigationUsage(),
     playbook,
   })
   await input.repository.persistProfileFindings(created.runId, gate.profileFindings)

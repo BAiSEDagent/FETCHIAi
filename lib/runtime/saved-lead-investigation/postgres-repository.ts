@@ -1,12 +1,19 @@
+import { createHash } from 'node:crypto'
 import { sql, type SQL } from 'drizzle-orm'
 import type {
   CompletedSignalCheck,
+  IdentityResolution,
+  InvestigationUsageCategory,
   InvestigationUsageSnapshot,
   SavedLeadIdentity,
   SavedLeadProfileFinding,
+  SavedLeadSignalFinding,
   TriggerResult,
 } from './contracts'
-import { createInvestigationUsage } from './budget'
+import {
+  createInvestigationUsage,
+  SAVED_LEAD_INVESTIGATION_CEILINGS,
+} from './budget'
 import type {
   OwnedSavedLeadForInvestigation,
   SavedLeadInvestigationRepository,
@@ -44,7 +51,11 @@ function rows(result: unknown): Record<string, unknown>[] {
 
 function iso(value: unknown): string | null {
   if (value instanceof Date) return value.toISOString()
-  return typeof value === 'string' ? value : null
+  if (typeof value === 'string') {
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString()
+  }
+  return null
 }
 
 function json<T>(value: unknown, fallback: T): T {
@@ -53,6 +64,72 @@ function json<T>(value: unknown, fallback: T): T {
 
 function jsonParam(value: unknown): string {
   return JSON.stringify(value ?? {})
+}
+
+type UsageLedgerEntry = {
+  category: InvestigationUsageCategory
+  reservedUnits: number
+  credited: boolean
+  actualUnits?: number
+  providerKey?: string
+  providerRequestCount?: number
+  providerReportedCredits?: number | null
+}
+
+type UsageState = InvestigationUsageSnapshot & {
+  _reservations?: Record<string, UsageLedgerEntry>
+}
+
+function numeric(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0
+}
+
+function publicUsage(value: unknown): InvestigationUsageSnapshot {
+  const current = json<Partial<UsageState>>(value, {})
+  return {
+    structuredCalls: numeric(current.structuredCalls),
+    serpApiCalls: numeric(current.serpApiCalls),
+    hydrationPages: numeric(current.hydrationPages),
+    interpretationCalls: numeric(current.interpretationCalls),
+    totalProviderEquivalents: numeric(current.totalProviderEquivalents),
+    providerRequestCounts: typeof current.providerRequestCounts === 'object' &&
+      current.providerRequestCounts !== null
+      ? current.providerRequestCounts as Record<string, number>
+      : {},
+    providerReportedCredits: typeof current.providerReportedCredits === 'object' &&
+      current.providerReportedCredits !== null
+      ? current.providerReportedCredits as Record<string, number>
+      : {},
+  }
+}
+
+function usageState(value: unknown): UsageState {
+  const current = json<Partial<UsageState>>(value, {})
+  return {
+    ...publicUsage(current),
+    _reservations: typeof current._reservations === 'object' &&
+      current._reservations !== null
+      ? current._reservations as Record<string, UsageLedgerEntry>
+      : {},
+  }
+}
+
+function usageWithLedger(
+  usage: InvestigationUsageSnapshot,
+  reservations: Record<string, UsageLedgerEntry>,
+): UsageState {
+  return {
+    ...usage,
+    _reservations: reservations,
+  }
+}
+
+function proofHash(input: unknown): string {
+  return createHash('sha256').update(JSON.stringify(input)).digest('hex')
+}
+
+function eventDate(value: string | undefined): string | null {
+  return value ? new Date(value).toISOString() : null
 }
 
 function noSignalReason(value: unknown) {
@@ -370,12 +447,146 @@ class PostgresSavedLeadInvestigationRepository
     `)
   }
 
-  async reserveUsage() {
-    return { state: 'reserved', usage: createInvestigationUsage() }
+  private async lockedUsageRun(
+    executor: DrizzleLikeExecutor,
+    input: { workspaceId: string; runId: string },
+  ) {
+    return rows(await executor.execute(sql`
+      select id, usage_actual
+      from saved_lead_investigation_runs
+      where workspace_id = ${input.workspaceId}
+        and id = ${input.runId}::uuid
+        and status in ('created', 'running')
+      for update
+    `))[0]
   }
 
-  async creditUsage() {
-    return { state: 'credited', usage: createInvestigationUsage() }
+  async reserveUsage(input: {
+    workspaceId: string
+    runId: string
+    operationKey: string
+    category: InvestigationUsageCategory
+    units: number
+  }) {
+    return this.transaction(async (executor) => {
+      const run = await this.lockedUsageRun(executor, input)
+      if (!run || input.units <= 0 || !Number.isInteger(input.units)) {
+        return { state: 'budget_refused', usage: createInvestigationUsage() }
+      }
+      const current = usageState(run.usage_actual)
+      const reservations = { ...current._reservations }
+      const existing = reservations[input.operationKey]
+      if (existing) {
+        if (
+          existing.category === input.category &&
+          existing.reservedUnits === input.units
+        ) {
+          return { state: 'idempotent_replay', usage: publicUsage(current) }
+        }
+        return { state: 'budget_refused', usage: publicUsage(current) }
+      }
+      const nextCategory = current[input.category] + input.units
+      const nextTotal = current.totalProviderEquivalents + input.units
+      if (
+        nextCategory > SAVED_LEAD_INVESTIGATION_CEILINGS[input.category] ||
+        nextTotal > SAVED_LEAD_INVESTIGATION_CEILINGS.totalProviderEquivalents
+      ) {
+        return { state: 'budget_refused', usage: publicUsage(current) }
+      }
+      const nextUsage: InvestigationUsageSnapshot = {
+        ...publicUsage(current),
+        [input.category]: nextCategory,
+        totalProviderEquivalents: nextTotal,
+      }
+      reservations[input.operationKey] = {
+        category: input.category,
+        reservedUnits: input.units,
+        credited: false,
+      }
+      await executor.execute(sql`
+        update saved_lead_investigation_runs
+        set usage_actual = ${jsonParam(usageWithLedger(nextUsage, reservations))}::jsonb,
+            updated_at = now()
+        where id = ${input.runId}::uuid
+      `)
+      return { state: 'reserved', usage: nextUsage }
+    })
+  }
+
+  async creditUsage(input: {
+    workspaceId: string
+    runId: string
+    operationKey: string
+    providerKey: string
+    actualUnits: number
+    providerRequestCount: number
+    providerReportedCredits: number | null
+  }) {
+    return this.transaction(async (executor) => {
+      const run = await this.lockedUsageRun(executor, input)
+      if (!run) return { state: 'budget_refused', usage: createInvestigationUsage() }
+      const current = usageState(run.usage_actual)
+      const reservations = { ...current._reservations }
+      const reservation = reservations[input.operationKey]
+      if (!reservation || input.actualUnits > reservation.reservedUnits) {
+        return { state: 'budget_refused', usage: publicUsage(current) }
+      }
+      if (reservation.credited) {
+        if (
+          reservation.actualUnits === input.actualUnits &&
+          reservation.providerKey === input.providerKey &&
+          reservation.providerRequestCount === input.providerRequestCount &&
+          reservation.providerReportedCredits === input.providerReportedCredits
+        ) {
+          return { state: 'idempotent_replay', usage: publicUsage(current) }
+        }
+        return { state: 'budget_refused', usage: publicUsage(current) }
+      }
+      const release = reservation.reservedUnits - input.actualUnits
+      const nextUsage: InvestigationUsageSnapshot = {
+        ...publicUsage(current),
+        [reservation.category]: current[reservation.category] - release,
+        totalProviderEquivalents: current.totalProviderEquivalents - release,
+        providerRequestCounts: {
+          ...current.providerRequestCounts,
+          [input.providerKey]:
+            (current.providerRequestCounts[input.providerKey] ?? 0) +
+            input.providerRequestCount,
+        },
+        providerReportedCredits: {
+          ...current.providerReportedCredits,
+          [input.providerKey]:
+            (current.providerReportedCredits[input.providerKey] ?? 0) +
+            (input.providerReportedCredits ?? 0),
+        },
+      }
+      reservations[input.operationKey] = {
+        ...reservation,
+        credited: true,
+        actualUnits: input.actualUnits,
+        providerKey: input.providerKey,
+        providerRequestCount: input.providerRequestCount,
+        providerReportedCredits: input.providerReportedCredits,
+      }
+      await executor.execute(sql`
+        update saved_lead_investigation_runs
+        set usage_actual = ${jsonParam(usageWithLedger(nextUsage, reservations))}::jsonb,
+            updated_at = now()
+        where id = ${input.runId}::uuid
+      `)
+      return { state: 'credited', usage: nextUsage }
+    })
+  }
+
+  async readUsageSnapshot(input: { workspaceId: string; runId: string }) {
+    const row = rows(await this.db.execute(sql`
+      select usage_actual
+      from saved_lead_investigation_runs
+      where workspace_id = ${input.workspaceId}
+        and id = ${input.runId}::uuid
+      limit 1
+    `))[0]
+    return publicUsage(row?.usage_actual)
   }
 
   async recordLineage(input: Parameters<SavedLeadInvestigationRepository['recordLineage']>[0]) {
@@ -433,29 +644,212 @@ class PostgresSavedLeadInvestigationRepository
     `)
   }
 
-  async persistCompletedResult(result: CompletedSignalCheck) {
-    await this.db.execute(sql`
-      update saved_lead_investigation_runs
-      set status = 'completed',
-          current_phase = 'completed',
-          checked_at = ${result.checkedAt}::timestamptz,
-          recheck_eligible_at = ${result.recheckEligibleAt}::timestamptz,
-          result_expires_at = ${result.resultExpiresAt}::timestamptz,
-          identity_resolution = ${jsonParam(result.identity)}::jsonb,
-          usage_actual = ${jsonParam(result.profileReport.usage)}::jsonb
+  private async ownedRunForPersistence(
+    executor: DrizzleLikeExecutor,
+    result: Pick<CompletedSignalCheck, 'runId' | 'savedLeadId'>,
+  ) {
+    return rows(await executor.execute(sql`
+      select id, workspace_id, saved_lead_id
+      from saved_lead_investigation_runs
       where id = ${result.runId}::uuid
+        and saved_lead_id = ${result.savedLeadId}::uuid
+      for update
+    `))[0]
+  }
+
+  private async insertProfileFinding(
+    executor: DrizzleLikeExecutor,
+    workspaceId: string,
+    result: CompletedSignalCheck,
+    finding: SavedLeadProfileFinding,
+  ) {
+    await executor.execute(sql`
+      insert into saved_lead_profile_findings
+        (id, workspace_id, investigation_run_id, investigation_source_id,
+         evidence_source_id, fact_key, value, exact_excerpt,
+         structured_evidence_snapshot, observed_date, event_date,
+         identity_match_reason_codes, conflict_group_id,
+         conflict_reason_codes, fact_expiration, proof_hash)
+      values
+        (${finding.id}::uuid, ${workspaceId}, ${result.runId}::uuid,
+         ${finding.investigationSourceId}::uuid, ${finding.evidenceSourceId}::uuid,
+         ${finding.factKey}, ${finding.value}, ${finding.exactExcerpt ?? null},
+         ${jsonParam(finding.structuredEvidenceSnapshot ?? null)}::jsonb,
+         ${finding.observedAt}::timestamptz,
+         ${eventDate(finding.eventDate)}::timestamptz,
+         ${jsonParam(finding.identityMatch.reasonCodes)}::jsonb,
+         ${finding.conflict?.groupId ?? null},
+         ${jsonParam(finding.conflict?.reasonCodes ?? [])}::jsonb,
+         ${result.resultExpiresAt}::timestamptz,
+         ${proofHash({ workspaceId, type: 'profile', finding })})
+      on conflict (workspace_id, proof_hash) do update set
+        value = excluded.value,
+        exact_excerpt = excluded.exact_excerpt,
+        structured_evidence_snapshot = excluded.structured_evidence_snapshot,
+        observed_date = excluded.observed_date,
+        event_date = excluded.event_date,
+        identity_match_reason_codes = excluded.identity_match_reason_codes,
+        conflict_group_id = excluded.conflict_group_id,
+        conflict_reason_codes = excluded.conflict_reason_codes,
+        fact_expiration = excluded.fact_expiration
     `)
   }
 
-  async persistRetryableFailure(input: Parameters<SavedLeadInvestigationRepository['persistRetryableFailure']>[0]) {
-    await this.db.execute(sql`
-      update saved_lead_investigation_runs
-      set status = 'failed',
-          failure_code = ${input.failureCode},
-          failure_retryable = true,
-          updated_at = now()
-      where id = ${input.runId}::uuid
+  private async insertTriggerFinding(
+    executor: DrizzleLikeExecutor,
+    workspaceId: string,
+    runId: string,
+    finding: SavedLeadSignalFinding,
+  ) {
+    await executor.execute(sql`
+      insert into saved_lead_trigger_findings
+        (id, workspace_id, investigation_run_id, investigation_source_id,
+         evidence_source_id, approved_signal_family_id,
+         approved_signal_label_id, exact_excerpt,
+         structured_evidence_snapshot, event_date, freshness_end,
+         identity_match_reason_codes, qualification_reason_codes, proof_hash)
+      values
+        (${finding.id}::uuid, ${workspaceId}, ${runId}::uuid,
+         ${finding.investigationSourceId}::uuid, ${finding.evidenceSourceId}::uuid,
+         ${finding.approvedSignalFamilyId}, ${finding.approvedSignalLabelId},
+         ${finding.exactExcerpt ?? null},
+         ${jsonParam(finding.structuredEvidenceSnapshot ?? null)}::jsonb,
+         ${finding.eventDate}::timestamptz,
+         ${finding.freshnessEndsAt}::timestamptz,
+         ${jsonParam(finding.identityMatchReasonCodes)}::jsonb,
+         ${jsonParam(finding.qualificationReasonCodes)}::jsonb,
+         ${proofHash({ workspaceId, type: 'trigger', finding })})
+      on conflict (workspace_id, investigation_run_id) do update set
+        investigation_source_id = excluded.investigation_source_id,
+        evidence_source_id = excluded.evidence_source_id,
+        approved_signal_family_id = excluded.approved_signal_family_id,
+        approved_signal_label_id = excluded.approved_signal_label_id,
+        exact_excerpt = excluded.exact_excerpt,
+        structured_evidence_snapshot = excluded.structured_evidence_snapshot,
+        event_date = excluded.event_date,
+        freshness_end = excluded.freshness_end,
+        identity_match_reason_codes = excluded.identity_match_reason_codes,
+        qualification_reason_codes = excluded.qualification_reason_codes,
+        proof_hash = excluded.proof_hash
     `)
+  }
+
+  async persistCompletedResult(result: CompletedSignalCheck) {
+    await this.transaction(async (executor) => {
+      const run = await this.ownedRunForPersistence(executor, result)
+      if (!run) throw new Error('saved lead investigation completed result run not found')
+      const workspaceId = String(run.workspace_id)
+      await executor.execute(sql`
+        delete from saved_lead_profile_findings
+        where workspace_id = ${workspaceId}
+          and investigation_run_id = ${result.runId}::uuid
+      `)
+      await executor.execute(sql`
+        delete from saved_lead_trigger_findings
+        where workspace_id = ${workspaceId}
+          and investigation_run_id = ${result.runId}::uuid
+      `)
+      for (const finding of result.profileReport.findings) {
+        await this.insertProfileFinding(executor, workspaceId, result, finding)
+      }
+      if (result.trigger.state === 'signal_found') {
+        await this.insertTriggerFinding(
+          executor,
+          workspaceId,
+          result.runId,
+          result.trigger.finding,
+        )
+      }
+      await executor.execute(sql`
+        update saved_lead_investigation_runs
+        set status = 'completed',
+            current_phase = 'completed',
+            checked_at = ${result.checkedAt}::timestamptz,
+            recheck_eligible_at = ${result.recheckEligibleAt}::timestamptz,
+            result_expires_at = ${result.resultExpiresAt}::timestamptz,
+            identity_resolution = ${jsonParam(result.identity)}::jsonb,
+            usage_actual = ${jsonParam(result.profileReport.usage)}::jsonb,
+            category_ids_checked = ${jsonParam(result.profileReport.categoryIdsChecked)}::jsonb,
+            trigger_state = ${result.trigger.state},
+            trigger_reason_code = ${result.trigger.state === 'no_signal'
+              ? result.trigger.reasonCode
+              : null},
+            updated_at = now()
+        where id = ${result.runId}::uuid
+      `)
+      await executor.execute(sql`
+        insert into saved_lead_investigation_state
+          (workspace_id, saved_lead_id, latest_attempt_run_id,
+           latest_successful_run_id, checked_at, recheck_eligible_at,
+           result_expires_at, updated_at)
+        values
+          (${workspaceId}, ${result.savedLeadId}::uuid, ${result.runId}::uuid,
+           ${result.runId}::uuid, ${result.checkedAt}::timestamptz,
+           ${result.recheckEligibleAt}::timestamptz,
+           ${result.resultExpiresAt}::timestamptz, now())
+        on conflict (workspace_id, saved_lead_id) do update set
+          latest_attempt_run_id = excluded.latest_attempt_run_id,
+          latest_successful_run_id = excluded.latest_successful_run_id,
+          checked_at = excluded.checked_at,
+          recheck_eligible_at = excluded.recheck_eligible_at,
+          result_expires_at = excluded.result_expires_at,
+          updated_at = now()
+      `)
+    })
+  }
+
+  async persistRetryableFailure(input: Parameters<SavedLeadInvestigationRepository['persistRetryableFailure']>[0]) {
+    await this.transaction(async (executor) => {
+      const run = rows(await executor.execute(sql`
+        select id, workspace_id, saved_lead_id
+        from saved_lead_investigation_runs
+        where id = ${input.runId}::uuid
+        for update
+      `))[0]
+      if (!run) throw new Error('saved lead investigation failed run not found')
+      const workspaceId = String(run.workspace_id)
+      const savedLeadId = String(run.saved_lead_id)
+      const existingState = rows(await executor.execute(sql`
+        select latest_successful_run_id, checked_at, recheck_eligible_at, result_expires_at
+        from saved_lead_investigation_state
+        where workspace_id = ${workspaceId}
+          and saved_lead_id = ${savedLeadId}::uuid
+        for update
+      `))[0]
+      const latestSuccessfulRunId =
+        input.latestSuccessfulRunId ??
+        (existingState?.latest_successful_run_id
+          ? String(existingState.latest_successful_run_id)
+          : null)
+      await executor.execute(sql`
+        update saved_lead_investigation_runs
+        set status = 'failed',
+            failure_code = ${input.failureCode},
+            failure_retryable = true,
+            updated_at = now()
+        where id = ${input.runId}::uuid
+      `)
+      await executor.execute(sql`
+        insert into saved_lead_investigation_state
+          (workspace_id, saved_lead_id, latest_attempt_run_id,
+           latest_successful_run_id, checked_at, recheck_eligible_at,
+           result_expires_at, updated_at)
+        values
+          (${workspaceId}, ${savedLeadId}::uuid, ${input.runId}::uuid,
+           ${latestSuccessfulRunId}::uuid,
+           ${iso(existingState?.checked_at)}::timestamptz,
+           ${iso(existingState?.recheck_eligible_at)}::timestamptz,
+           ${iso(existingState?.result_expires_at)}::timestamptz,
+           now())
+        on conflict (workspace_id, saved_lead_id) do update set
+          latest_attempt_run_id = excluded.latest_attempt_run_id,
+          latest_successful_run_id = excluded.latest_successful_run_id,
+          checked_at = coalesce(saved_lead_investigation_state.checked_at, excluded.checked_at),
+          recheck_eligible_at = coalesce(saved_lead_investigation_state.recheck_eligible_at, excluded.recheck_eligible_at),
+          result_expires_at = coalesce(saved_lead_investigation_state.result_expires_at, excluded.result_expires_at),
+          updated_at = now()
+      `)
+    })
   }
 
   async readLatestSuccessfulResult({ workspaceId, savedLeadId }: {
@@ -463,16 +857,57 @@ class PostgresSavedLeadInvestigationRepository
     savedLeadId: string
   }): Promise<CompletedSignalCheck | null> {
     const row = rows(await this.db.execute(sql`
+      with selected_state as (
+        select latest_successful_run_id
+        from saved_lead_investigation_state
+        where workspace_id = ${workspaceId}
+          and saved_lead_id = ${savedLeadId}::uuid
+        limit 1
+      )
       select identity_resolution, trigger_state, trigger_reason_code, checked_at,
-             recheck_eligible_at, result_expires_at, usage_actual, id
+             recheck_eligible_at, result_expires_at, usage_actual,
+             category_ids_checked, id
       from saved_lead_investigation_runs
       where workspace_id = ${workspaceId}
         and saved_lead_id = ${savedLeadId}::uuid
         and status = 'completed'
-      order by checked_at desc
+        and id = coalesce(
+          (select latest_successful_run_id from selected_state),
+          id
+        )
+      order by checked_at desc, created_at desc
       limit 1
     `))[0]
-    return row ? latestResult(row, savedLeadId) : null
+    if (!row) return null
+    const runId = String(row.id)
+    const sources = rows(await this.db.execute(sql`
+      select registry_source_key, availability, check_state
+      from saved_lead_investigation_sources
+      where workspace_id = ${workspaceId}
+        and investigation_run_id = ${runId}::uuid
+      order by candidate_rank nulls first, registry_source_key
+    `))
+    const triggerRow = rows(await this.db.execute(sql`
+      select id::text, investigation_source_id::text, evidence_source_id::text,
+             approved_signal_family_id, approved_signal_label_id, exact_excerpt,
+             structured_evidence_snapshot, event_date, freshness_end,
+             identity_match_reason_codes, qualification_reason_codes
+      from saved_lead_trigger_findings
+      where workspace_id = ${workspaceId}
+        and investigation_run_id = ${runId}::uuid
+      limit 1
+    `))[0]
+    const profileRows = rows(await this.db.execute(sql`
+      select id::text, investigation_source_id::text, evidence_source_id::text,
+             fact_key, value, exact_excerpt, structured_evidence_snapshot,
+             observed_date, event_date, identity_match_reason_codes,
+             conflict_group_id, conflict_reason_codes
+      from saved_lead_profile_findings
+      where workspace_id = ${workspaceId}
+        and investigation_run_id = ${runId}::uuid
+      order by created_at, id
+    `))
+    return latestResult(row, savedLeadId, sources, triggerRow, profileRows)
   }
 
   async reconcileAbandonedRuns(input: Parameters<SavedLeadInvestigationRepository['reconcileAbandonedRuns']>[0]) {
@@ -491,33 +926,110 @@ class PostgresSavedLeadInvestigationRepository
   }
 }
 
-function latestResult(row: Record<string, unknown>, savedLeadId: string): CompletedSignalCheck {
+function uniqueStrings(values: unknown[]): string[] {
+  return Array.from(new Set(values.filter((value): value is string => typeof value === 'string')))
+}
+
+function profileFindingFromRow(
+  row: Record<string, unknown>,
+  matchedOn: SavedLeadProfileFinding['identityMatch']['matchedOn'],
+): SavedLeadProfileFinding {
+  const conflictGroupId = typeof row.conflict_group_id === 'string'
+    ? row.conflict_group_id
+    : null
+  return {
+    id: String(row.id),
+    factKey: String(row.fact_key) as SavedLeadProfileFinding['factKey'],
+    value: String(row.value),
+    investigationSourceId: String(row.investigation_source_id),
+    evidenceSourceId: String(row.evidence_source_id),
+    ...(typeof row.exact_excerpt === 'string'
+      ? { exactExcerpt: row.exact_excerpt }
+      : {}),
+    ...(row.structured_evidence_snapshot
+      ? { structuredEvidenceSnapshot: json(row.structured_evidence_snapshot, null) as never }
+      : {}),
+    observedAt: iso(row.observed_date) ?? new Date(0).toISOString(),
+    ...(iso(row.event_date) ? { eventDate: iso(row.event_date) as string } : {}),
+    identityMatch: {
+      matchedOn,
+      reasonCodes: json<string[]>(row.identity_match_reason_codes, []),
+    },
+    ...(conflictGroupId
+      ? {
+          conflict: {
+            groupId: conflictGroupId,
+            reasonCodes: json<string[]>(row.conflict_reason_codes, []),
+          },
+        }
+      : {}),
+  }
+}
+
+function triggerFindingFromRow(row: Record<string, unknown>): SavedLeadSignalFinding {
+  return {
+    id: String(row.id),
+    approvedSignalFamilyId: String(row.approved_signal_family_id),
+    approvedSignalLabelId: String(row.approved_signal_label_id),
+    investigationSourceId: String(row.investigation_source_id),
+    evidenceSourceId: String(row.evidence_source_id),
+    ...(typeof row.exact_excerpt === 'string'
+      ? { exactExcerpt: row.exact_excerpt }
+      : {}),
+    ...(row.structured_evidence_snapshot
+      ? { structuredEvidenceSnapshot: json(row.structured_evidence_snapshot, null) as never }
+      : {}),
+    eventDate: iso(row.event_date) ?? new Date(0).toISOString(),
+    freshnessEndsAt: iso(row.freshness_end) ?? new Date(0).toISOString(),
+    identityMatchReasonCodes: json<string[]>(row.identity_match_reason_codes, []),
+    qualificationReasonCodes: json<string[]>(row.qualification_reason_codes, []),
+  }
+}
+
+function latestResult(
+  row: Record<string, unknown>,
+  savedLeadId: string,
+  sources: Record<string, unknown>[],
+  triggerRow: Record<string, unknown> | undefined,
+  profileRows: Record<string, unknown>[],
+): CompletedSignalCheck {
+  const checkedSources = sources.filter((source) => source.check_state === 'checked')
+  const unavailableSources = sources.filter((source) => source.availability !== 'available')
+  const identity = json<IdentityResolution>(row.identity_resolution, {
+    state: 'unresolved',
+    confidence: 0,
+    matchedOn: [],
+    conflicts: [],
+    reasonCodes: ['missing_snapshot'],
+    evaluatedAt: new Date(0).toISOString(),
+  })
   return {
     status: 'completed',
     savedLeadId,
     runId: String(row.id),
     checkedAt: iso(row.checked_at) ?? new Date(0).toISOString(),
-    identity: json(row.identity_resolution, {
-      state: 'unresolved',
-      confidence: 0,
-      matchedOn: [],
-      conflicts: [],
-      reasonCodes: ['missing_snapshot'],
-      evaluatedAt: new Date(0).toISOString(),
-    }),
+    identity,
     trigger: row.trigger_state === 'signal_found'
-      ? { state: 'no_signal', reasonCode: 'insufficient_evidence' }
+      ? triggerRow
+        ? { state: 'signal_found', finding: triggerFindingFromRow(triggerRow) }
+        : { state: 'no_signal', reasonCode: 'insufficient_evidence' }
       : { state: 'no_signal', reasonCode: noSignalReason(row.trigger_reason_code) },
     profileReport: {
-      findings: [],
-      sourcesChecked: 0,
-      structuredSourcesChecked: 0,
+      findings: profileRows.map((profileRow) =>
+        profileFindingFromRow(profileRow, identity.matchedOn),
+      ),
+      sourcesChecked: checkedSources.length,
+      structuredSourcesChecked: checkedSources.length,
       webQueriesRun: 0,
       hydratedSources: 0,
-      categoryIdsChecked: [],
-      unavailableSourceKeys: [],
-      checkedSourceKeys: [],
-      usage: json<InvestigationUsageSnapshot>(row.usage_actual, createInvestigationUsage()),
+      categoryIdsChecked: json<string[]>(row.category_ids_checked, []),
+      unavailableSourceKeys: uniqueStrings(
+        unavailableSources.map((source) => source.registry_source_key),
+      ),
+      checkedSourceKeys: uniqueStrings(
+        checkedSources.map((source) => source.registry_source_key),
+      ),
+      usage: publicUsage(row.usage_actual),
       expiresAt: iso(row.result_expires_at) ?? new Date(0).toISOString(),
     },
     recheckEligibleAt: iso(row.recheck_eligible_at) ?? new Date(0).toISOString(),
