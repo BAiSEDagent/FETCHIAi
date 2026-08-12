@@ -668,7 +668,7 @@ class PostgresSavedLeadInvestigationRepository
         (id, workspace_id, investigation_run_id, investigation_source_id,
          evidence_source_id, fact_key, value, exact_excerpt,
          structured_evidence_snapshot, observed_date, event_date,
-         identity_match_reason_codes, conflict_group_id,
+         identity_match_reason_codes, identity_match_keys, conflict_group_id,
          conflict_reason_codes, fact_expiration, proof_hash)
       values
         (${finding.id}::uuid, ${workspaceId}, ${result.runId}::uuid,
@@ -678,6 +678,7 @@ class PostgresSavedLeadInvestigationRepository
          ${finding.observedAt}::timestamptz,
          ${eventDate(finding.eventDate)}::timestamptz,
          ${jsonParam(finding.identityMatch.reasonCodes)}::jsonb,
+         ${jsonParam(finding.identityMatch.matchedOn)}::jsonb,
          ${finding.conflict?.groupId ?? null},
          ${jsonParam(finding.conflict?.reasonCodes ?? [])}::jsonb,
          ${result.resultExpiresAt}::timestamptz,
@@ -689,6 +690,7 @@ class PostgresSavedLeadInvestigationRepository
         observed_date = excluded.observed_date,
         event_date = excluded.event_date,
         identity_match_reason_codes = excluded.identity_match_reason_codes,
+        identity_match_keys = excluded.identity_match_keys,
         conflict_group_id = excluded.conflict_group_id,
         conflict_reason_codes = excluded.conflict_reason_codes,
         fact_expiration = excluded.fact_expiration
@@ -881,7 +883,7 @@ class PostgresSavedLeadInvestigationRepository
     if (!row) return null
     const runId = String(row.id)
     const sources = rows(await this.db.execute(sql`
-      select registry_source_key, availability, check_state
+      select registry_source_key, tier, availability, check_state, candidate_rank
       from saved_lead_investigation_sources
       where workspace_id = ${workspaceId}
         and investigation_run_id = ${runId}::uuid
@@ -901,7 +903,7 @@ class PostgresSavedLeadInvestigationRepository
       select id::text, investigation_source_id::text, evidence_source_id::text,
              fact_key, value, exact_excerpt, structured_evidence_snapshot,
              observed_date, event_date, identity_match_reason_codes,
-             conflict_group_id, conflict_reason_codes
+             identity_match_keys, conflict_group_id, conflict_reason_codes
       from saved_lead_profile_findings
       where workspace_id = ${workspaceId}
         and investigation_run_id = ${runId}::uuid
@@ -932,7 +934,6 @@ function uniqueStrings(values: unknown[]): string[] {
 
 function profileFindingFromRow(
   row: Record<string, unknown>,
-  matchedOn: SavedLeadProfileFinding['identityMatch']['matchedOn'],
 ): SavedLeadProfileFinding {
   const conflictGroupId = typeof row.conflict_group_id === 'string'
     ? row.conflict_group_id
@@ -952,7 +953,10 @@ function profileFindingFromRow(
     observedAt: iso(row.observed_date) ?? new Date(0).toISOString(),
     ...(iso(row.event_date) ? { eventDate: iso(row.event_date) as string } : {}),
     identityMatch: {
-      matchedOn,
+      matchedOn: json<SavedLeadProfileFinding['identityMatch']['matchedOn']>(
+        row.identity_match_keys,
+        [],
+      ),
       reasonCodes: json<string[]>(row.identity_match_reason_codes, []),
     },
     ...(conflictGroupId
@@ -993,8 +997,9 @@ function latestResult(
   triggerRow: Record<string, unknown> | undefined,
   profileRows: Record<string, unknown>[],
 ): CompletedSignalCheck {
-  const checkedSources = sources.filter((source) => source.check_state === 'checked')
-  const unavailableSources = sources.filter((source) => source.availability !== 'available')
+  const primarySources = sources.filter((source) => source.candidate_rank === null)
+  const checkedSources = primarySources.filter((source) => source.check_state === 'checked')
+  const unavailableSources = primarySources.filter((source) => source.availability !== 'available')
   const identity = json<IdentityResolution>(row.identity_resolution, {
     state: 'unresolved',
     confidence: 0,
@@ -1016,12 +1021,12 @@ function latestResult(
       : { state: 'no_signal', reasonCode: noSignalReason(row.trigger_reason_code) },
     profileReport: {
       findings: profileRows.map((profileRow) =>
-        profileFindingFromRow(profileRow, identity.matchedOn),
+        profileFindingFromRow(profileRow),
       ),
       sourcesChecked: checkedSources.length,
-      structuredSourcesChecked: checkedSources.length,
-      webQueriesRun: 0,
-      hydratedSources: 0,
+      structuredSourcesChecked: checkedSources.filter((source) => Number(source.tier) === 1).length,
+      webQueriesRun: checkedSources.filter((source) => Number(source.tier) === 3).length,
+      hydratedSources: checkedSources.filter((source) => Number(source.tier) === 2).length,
       categoryIdsChecked: json<string[]>(row.category_ids_checked, []),
       unavailableSourceKeys: uniqueStrings(
         unavailableSources.map((source) => source.registry_source_key),

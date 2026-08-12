@@ -689,6 +689,7 @@ export const savedLeadProfileFindings = pgTable(
     observedDate:             timestamp('observed_date', { withTimezone: true }).notNull(),
     eventDate:                timestamp('event_date', { withTimezone: true }),
     identityMatchReasonCodes: jsonb('identity_match_reason_codes').default([]).notNull(),
+    identityMatchKeys:        jsonb('identity_match_keys').default([]).notNull(),
     conflictGroupId:          text('conflict_group_id'),
     conflictReasonCodes:      jsonb('conflict_reason_codes').default([]).notNull(),
     factExpiration:           timestamp('fact_expiration', { withTimezone: true }).notNull(),

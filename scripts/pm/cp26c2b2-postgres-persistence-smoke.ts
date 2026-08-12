@@ -227,6 +227,17 @@ async function createSourceArtifact(input: {
     evidenceFingerprint: `${PREFIX}${input.suffix}-fingerprint`,
     sourceMetadata: { permitNumber: `${PREFIX}${input.suffix}-permit` },
   })
+  await input.repo.linkInvestigationSource({
+    workspaceId: input.workspaceId,
+    runId: input.runId,
+    registrySourceKey: ALBUQUERQUE_BUILDING_PERMITS.registrySourceKey,
+    tier: 1,
+    availability: 'available',
+    checkState: 'checked',
+    candidateRank: null,
+    runtimeLineageRunId: lineage.id,
+    evidenceSourceId: null,
+  })
   const source = await input.repo.linkInvestigationSource({
     workspaceId: input.workspaceId,
     runId: input.runId,

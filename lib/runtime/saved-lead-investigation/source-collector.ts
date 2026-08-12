@@ -148,6 +148,29 @@ async function collectStructuredSource(
     })
   }
 
+  const provider = input.providers.structured[source.registrySourceKey]
+  if (!provider) {
+    const linked = await input.repository.linkInvestigationSource({
+      workspaceId: input.workspaceId,
+      runId: input.runId,
+      registrySourceKey: source.registrySourceKey,
+      tier: 1,
+      availability: 'unavailable',
+      checkState: 'not_checked',
+      fallbackReason: 'structured_source_provider_missing',
+    })
+    return sourceFailureObservation({
+      id: linked.id,
+      registrySourceKey: source.registrySourceKey,
+      tier: 1,
+      kind: 'structured',
+      sourceClass: source.sourceClass,
+      availability: 'unavailable',
+      checkState: 'not_checked',
+      fallbackReason: 'structured_source_provider_missing',
+    })
+  }
+
   const operationKey = `structured:${source.registrySourceKey}`
   const reservation = await input.repository.reserveUsage({
     workspaceId: input.workspaceId,
@@ -175,29 +198,6 @@ async function collectStructuredSource(
       availability: source.availability,
       checkState: 'skipped_budget',
       fallbackReason: 'structured_source_call_limit',
-    })
-  }
-
-  const provider = input.providers.structured[source.registrySourceKey]
-  if (!provider) {
-    const linked = await input.repository.linkInvestigationSource({
-      workspaceId: input.workspaceId,
-      runId: input.runId,
-      registrySourceKey: source.registrySourceKey,
-      tier: 1,
-      availability: 'unavailable',
-      checkState: 'not_checked',
-      fallbackReason: 'structured_source_provider_missing',
-    })
-    return sourceFailureObservation({
-      id: linked.id,
-      registrySourceKey: source.registrySourceKey,
-      tier: 1,
-      kind: 'structured',
-      sourceClass: source.sourceClass,
-      availability: 'unavailable',
-      checkState: 'not_checked',
-      fallbackReason: 'structured_source_provider_missing',
     })
   }
 
@@ -263,6 +263,17 @@ async function collectStructuredSource(
     })
   }
 
+  const primary = await input.repository.linkInvestigationSource({
+    workspaceId: input.workspaceId,
+    runId: input.runId,
+    registrySourceKey: source.registrySourceKey,
+    tier: 1,
+    availability: source.availability,
+    checkState: 'checked',
+    candidateRank: null,
+    runtimeLineageRunId: lineage.id,
+    evidenceSourceId: null,
+  })
   const structuredRecords: LinkedStructuredRecord[] = []
   for (const [index, record] of result.records.entries()) {
     const evidence = await input.repository.recordEvidence({
@@ -295,7 +306,7 @@ async function collectStructuredSource(
   }
 
   return {
-    id: structuredRecords[0]?.investigationSourceId ?? lineage.id,
+    id: primary.id,
     registrySourceKey: source.registrySourceKey,
     tier: 1,
     kind: 'structured',

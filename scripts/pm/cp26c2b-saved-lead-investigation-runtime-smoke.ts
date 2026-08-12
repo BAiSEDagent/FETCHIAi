@@ -24,6 +24,7 @@ import {
 import {
   collectSavedLeadInvestigationSources,
   type SemanticSourceObservation,
+  type SourceCollectorRepository,
 } from '@/lib/runtime/saved-lead-investigation/source-collector'
 import { buildCompletedSignalCheck } from '@/lib/runtime/saved-lead-investigation/result-builder'
 import {
@@ -53,7 +54,10 @@ const IDS = {
   trigger: '55555555-5555-4555-8555-555555555555',
   profile: '66666666-6666-4666-8666-666666666666',
 }
-const AUTHORIZED_STAGE_2B_PATHS = [
+const AUTHORIZED_CP26C_CHECKPOINT_PATHS = [
+  'components/app/LeadActionSheet.tsx',
+  'components/fetchi-ui/StatusGlyph.tsx',
+  'db/schema.ts',
   'lib/providers/index.ts',
   'lib/providers/structured-source-provider.ts',
   'lib/providers/serpapi-search-provider.ts',
@@ -62,6 +66,7 @@ const AUTHORIZED_STAGE_2B_PATHS = [
   'lib/gates/saved-lead-investigation-gate.ts',
   'lib/runtime/saved-lead-investigation/contracts.ts',
   'lib/runtime/saved-lead-investigation/budget.ts',
+  'lib/runtime/saved-lead-investigation/identity-resolution.ts',
   'lib/runtime/saved-lead-investigation/planner.ts',
   'lib/runtime/saved-lead-investigation/persistence.ts',
   'lib/runtime/saved-lead-investigation/run-state.ts',
@@ -73,7 +78,13 @@ const AUTHORIZED_STAGE_2B_PATHS = [
   'lib/runtime/saved-lead-investigation/postgres-repository.ts',
   'scripts/pm/cp26c2b-saved-lead-investigation-runtime-smoke.ts',
   'scripts/pm/cp26c2b-live-arcgis-proof.ts',
+  'scripts/pm/cp26c-authenticated-design-migration-smoke.ts',
+  'scripts/pm/cp26c2a-saved-lead-investigation-contract-smoke.ts',
+  'scripts/pm/cp26c2b1-postgres-repository-smoke.ts',
+  'scripts/pm/cp26c2b2-postgres-persistence-smoke.ts',
+  'scripts/pm/cp26c2b3-source-replay-smoke.ts',
 ] as const
+const AUTHORIZED_CP26C_CHECKPOINT_PATH_SET = new Set<string>(AUTHORIZED_CP26C_CHECKPOINT_PATHS)
 const FORBIDDEN_REPOSITORY_EVENTS = new Set([
   'createOpportunity',
   'writeScore',
@@ -90,13 +101,17 @@ function dirtyFiles(): string[] {
   const untracked = git(['ls-files', '--others', '--exclude-standard']).split('\n').filter(Boolean)
   return [...new Set([...modified, ...untracked])].sort()
 }
+function checkpointFiles(): string[] {
+  const committed = git(['diff', '--name-only', 'origin/main..HEAD']).split('\n').filter(Boolean)
+  return [...new Set([...committed, ...dirtyFiles()])].sort()
+}
 function routes(current = join(ROOT, 'app')): string[] {
   const out: string[] = []
   for (const entry of readdirSync(current)) {
     const path = join(current, entry)
     const stat = statSync(path)
     if (stat.isDirectory()) out.push(...routes(path))
-    else if (entry === 'page.tsx') out.push(relative(ROOT, path))
+    else if (entry === 'page.tsx' || entry === 'route.ts') out.push(relative(ROOT, path))
   }
   return out.sort()
 }
@@ -273,8 +288,11 @@ async function providerDeadlineProof(): Promise<void> {
   assert.equal(fireClear, 1, 'Firecrawl timeout timer is cleared')
 }
 
+type SourceLinkInput = Parameters<SourceCollectorRepository['linkInvestigationSource']>[0]
+
 class FakeRepository implements SavedLeadInvestigationRepository {
   events: string[] = []
+  sourceLinks: SourceLinkInput[] = []
   usageCount = 0
   latestSuccessfulResult: CompletedSignalCheck | null = null
   admission: 'admitted' | 'already_running' | 'cooldown' | 'daily_limit_reached' | 'idempotent_replay' = 'admitted'
@@ -295,7 +313,16 @@ class FakeRepository implements SavedLeadInvestigationRepository {
   async creditUsage() { this.events.push('creditUsage'); return { state: 'credited' as const, usage: createInvestigationUsage() } }
   async recordLineage() { this.events.push('lineage'); return { id: IDS.lineage } }
   async recordEvidence() { this.events.push('evidence'); return { id: IDS.evidence } }
-  async linkInvestigationSource() { this.events.push('linkSource'); return { id: IDS.source } }
+  async linkInvestigationSource(input: SourceLinkInput) {
+    this.sourceLinks.push(input)
+    const isPrimaryExecution =
+      input.candidateRank === null &&
+      input.checkState === 'checked' &&
+      input.runtimeLineageRunId != null &&
+      input.evidenceSourceId == null
+    this.events.push(input.candidateRank != null ? 'linkSource:candidate' : isPrimaryExecution ? 'linkSource:primary' : 'linkSource:status')
+    return { id: IDS.source }
+  }
   async persistProfileFindings() { this.events.push('profileFindings') }
   async persistTriggerFinding() { this.events.push('triggerFinding') }
   async persistCompletedResult(_result: CompletedSignalCheck) { this.events.push('completed') }
@@ -355,8 +382,22 @@ async function collectorAndExecutorProof(): Promise<void> {
   const observations = await collectSavedLeadInvestigationSources({ workspaceId: 'ws', runId: IDS.run, savedLeadIdentity: albuquerqueIdentity, playbook, plan, repository: repo, providers: fakeRegistry(), clock: () => NOW })
   assert.equal(observations[0]?.tier, 1)
   assert.equal(observations[0]?.checkState, 'checked')
+  const primaryLinks = repo.sourceLinks.filter((link) =>
+    link.candidateRank === null &&
+    link.checkState === 'checked' &&
+    link.runtimeLineageRunId != null &&
+    link.evidenceSourceId == null,
+  )
+  const candidateLinks = repo.sourceLinks.filter((link) => link.candidateRank != null)
+  assert.equal(primaryLinks.length, 1, 'one primary source execution row is linked')
+  assert.equal(primaryLinks[0]?.evidenceSourceId ?? null, null, 'primary source execution row has no evidence artifact')
+  assert.equal(primaryLinks[0]?.runtimeLineageRunId, IDS.lineage, 'primary source execution row keeps lineage')
+  assert.equal(candidateLinks.length, observations[0]?.structuredRecords.length, 'candidate source links match accepted evidence count')
+  assert(candidateLinks.every((link) => typeof link.candidateRank === 'number' && link.candidateRank > 0), 'candidate evidence rows are ranked')
+  assert(candidateLinks.every((link) => link.evidenceSourceId === IDS.evidence), 'candidate evidence rows link evidence')
+  assert(repo.events.indexOf('lineage') < repo.events.indexOf('linkSource:primary'), 'primary source execution row follows lineage')
   assert(repo.events.indexOf('lineage') < repo.events.indexOf('evidence'), 'lineage is recorded before accepted evidence')
-  assert(repo.events.indexOf('evidence') < repo.events.indexOf('linkSource'), 'evidence is linked through investigation source')
+  assert(repo.events.indexOf('evidence') < repo.events.indexOf('linkSource:candidate'), 'candidate evidence link follows evidence recording')
   assert(!repo.events.some((event) => FORBIDDEN_REPOSITORY_EVENTS.has(event)))
   const noSignal = buildCompletedSignalCheck({ savedLeadId: 'lead-1', runId: IDS.run, checkedAt: NOW, identity, trigger: { state: 'no_signal', reasonCode: 'none_found' }, profileFindings: [], sourceObservations: observations, usage: createInvestigationUsage(), playbook })
   assert.equal(noSignal.trigger.state, 'no_signal')
@@ -421,11 +462,14 @@ function repositoryContractProof(): void {
 function scopeProof(): void {
   assert.equal(git(['merge-base', '--is-ancestor', STAGE_1, 'HEAD']).length, 0)
   assert.equal(git(['merge-base', '--is-ancestor', STAGE_2A, 'HEAD']).length, 0)
-  assert.equal(routes().length, 23)
-  const dirty = dirtyFiles()
-  assert(dirty.length > 0, 'Stage 2B should remain uncommitted for review')
-  assert.deepEqual(dirty.filter((file) => !AUTHORIZED_STAGE_2B_PATHS.includes(file as never)), [])
-  assert(!dirty.some((file) => file.startsWith('app/') || file.startsWith('components/') || file === 'db/schema.ts'))
+  assert.equal(routes().length, 24)
+  const scoped = checkpointFiles()
+  assert.deepEqual(scoped.filter((file) => !AUTHORIZED_CP26C_CHECKPOINT_PATH_SET.has(file)), [])
+  assert.deepEqual(scoped.filter((file) => file.startsWith('app/')), [], 'routes are outside CP26C.2 scope')
+  assert.deepEqual(scoped.filter((file) => file.startsWith('db/') && file !== 'db/schema.ts'), [], 'db/schema.ts is the only approved db file')
+  assert.deepEqual(scoped.filter((file) => file === 'package.json' || file === 'package-lock.json'), [], 'package files are outside CP26C.2 scope')
+  assert.deepEqual(scoped.filter((file) => file === 'middleware.ts'), [], 'middleware is outside CP26C.2 scope')
+  assert.deepEqual(scoped.filter((file) => /(^|\/)(auth|billing|crm|outreach|signal-watch|watch)(\/|$)/i.test(file)), [], 'auth/billing/CRM/outreach/Watch files are outside CP26C.2 scope')
 }
 
 async function main(): Promise<void> {
@@ -439,7 +483,7 @@ async function main(): Promise<void> {
     arcgis: 'generic address-bounded provider passed',
     providers: 'SerpApi and Firecrawl deadline proofs passed',
     executor: 'admission, source order, lineage, result, and failure semantics passed',
-    scope: { routeCount: routes().length, dirtyFiles: dirtyFiles() },
+    scope: { routeCount: routes().length, checkpointFiles: checkpointFiles(), dirtyFiles: dirtyFiles() },
   }, null, 2))
 }
 
