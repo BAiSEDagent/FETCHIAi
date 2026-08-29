@@ -31,7 +31,7 @@ const OUTER_RING_RADIUS = 18
 const OUTER_RING_STROKE = 4
 const SAVED_DOT_RADIUS = 7.2
 const CONTACTED_DISC_RADIUS = 10.4
-const TERMINAL_RADIUS = 20
+const TERMINAL_CORE_RADIUS = 14.4
 
 const StatusGlyph = React.forwardRef<HTMLSpanElement, StatusGlyphProps>(
   (
@@ -72,27 +72,27 @@ const StatusGlyph = React.forwardRef<HTMLSpanElement, StatusGlyphProps>(
           shapeRendering="geometricPrecision"
           viewBox={`0 0 ${OUTER_DIAMETER} ${OUTER_DIAMETER}`}
         >
+          <circle
+            cx="20"
+            cy="20"
+            data-fetchi-status-outer-ring={state}
+            fill="none"
+            r={OUTER_RING_RADIUS}
+            stroke="currentColor"
+            strokeDasharray={isReviewing ? '5 9.137' : undefined}
+            strokeLinecap={isReviewing ? 'round' : undefined}
+            strokeWidth={OUTER_RING_STROKE}
+          />
+
           {isTerminal ? (
             <circle
               cx="20"
               cy="20"
-              data-fetchi-status-terminal-fill={state}
+              data-fetchi-status-terminal-core={state}
               fill="currentColor"
-              r={TERMINAL_RADIUS}
+              r={TERMINAL_CORE_RADIUS}
             />
-          ) : (
-            <circle
-              cx="20"
-              cy="20"
-              data-fetchi-status-outer-ring={state}
-              fill="none"
-              r={OUTER_RING_RADIUS}
-              stroke="currentColor"
-              strokeDasharray={isReviewing ? '5 9.137' : undefined}
-              strokeLinecap={isReviewing ? 'round' : undefined}
-              strokeWidth={OUTER_RING_STROKE}
-            />
-          )}
+          ) : null}
 
           {state === 'saved' ? (
             <circle

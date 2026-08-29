@@ -42,6 +42,7 @@ const COST_ESTIMATE_USD = 0.01
 
 /** Firecrawl REST endpoint. Firecrawl is called only from this file. */
 const FIRECRAWL_SCRAPE_ENDPOINT = 'https://api.firecrawl.dev/v1/scrape'
+const DEFAULT_TIMEOUT_MS = 8000
 
 /** Shape of the slice of the Firecrawl scrape response this adapter reads. */
 interface FirecrawlScrapeData {
@@ -60,12 +61,31 @@ interface FirecrawlScrapeResponse {
   data?: FirecrawlScrapeData
 }
 
+export interface FirecrawlEvidenceProviderOptions {
+  fetch?: typeof fetch
+  timeoutMs?: number
+  setTimeout?: typeof setTimeout
+  clearTimeout?: typeof clearTimeout
+}
+
 function newRunId(): string {
   return `firecrawl:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`
 }
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (typeof DOMException !== 'undefined' &&
+      error instanceof DOMException &&
+      error.name === 'AbortError') ||
+    (typeof error === 'object' &&
+      error !== null &&
+      'name' in error &&
+      error.name === 'AbortError')
+  )
 }
 
 /**
@@ -76,9 +96,17 @@ export class FirecrawlEvidenceProvider implements EvidenceProvider {
   public readonly name = 'firecrawl' as const
 
   private readonly apiKey: string
+  private readonly fetcher: typeof fetch
+  private readonly timeoutMs: number
+  private readonly setTimer: typeof setTimeout
+  private readonly clearTimer: typeof clearTimeout
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, options: FirecrawlEvidenceProviderOptions = {}) {
     this.apiKey = apiKey
+    this.fetcher = options.fetch ?? fetch
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
+    this.setTimer = options.setTimeout ?? setTimeout
+    this.clearTimer = options.clearTimeout ?? clearTimeout
   }
 
   async scrapeUrl(input: ScrapeUrlInput): Promise<EvidenceDocResult> {
@@ -103,8 +131,10 @@ export class FirecrawlEvidenceProvider implements EvidenceProvider {
     }
 
     let response: Response
+    const controller = new AbortController()
+    const timer = this.setTimer(() => controller.abort(), Math.max(1, this.timeoutMs))
     try {
-      response = await fetch(FIRECRAWL_SCRAPE_ENDPOINT, {
+      response = await this.fetcher(FIRECRAWL_SCRAPE_ENDPOINT, {
         method: 'POST',
         headers: {
           authorization: `Bearer ${this.apiKey}`,
@@ -115,14 +145,25 @@ export class FirecrawlEvidenceProvider implements EvidenceProvider {
           url: input.url,
           formats: ['markdown'],
         }),
+        signal: controller.signal,
       })
-    } catch {
+    } catch (error) {
+      if (controller.signal.aborted || isAbortError(error)) {
+        return this.errorResult(providerRunId, {
+          code: 'provider_timeout',
+          message: 'Firecrawl evidence hydration request timed out.',
+          retryable: true,
+          providerRunId,
+        })
+      }
       return this.errorResult(providerRunId, {
         code: 'provider_request_failed',
         message: 'Firecrawl evidence hydration request could not be completed.',
         retryable: true,
         providerRunId,
       })
+    } finally {
+      this.clearTimer(timer)
     }
 
     if (!response.ok) {
